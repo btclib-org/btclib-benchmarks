@@ -78,7 +78,6 @@ from importlib.util import find_spec
 from itertools import cycle
 from pathlib import Path
 
-import btclib_secp256k1
 import btclib_secp256k1.dsa
 import btclib_secp256k1.keys
 import btclib_secp256k1.ssa
@@ -86,25 +85,51 @@ import coincurve
 import electrum_ecc
 import electrum_ecc.ecc_fast
 import secp256k1
-from _provenance import report
+from _provenance import from_a_declared_source, origin_of
 from _vectors import signing, verification
 
 
 def report_provenance() -> None:
-    """Say which build of each package these rows are about.
+    """Print one row per wrapper: what it is, and what is under it.
 
-    Printed before any number: a released wheel and a working
-    tree satisfy the same requirement and resolve in silence, so
-    which one ran is something the output has to state rather
-    than something the reader assumes.
+    Six columns, because the reader of this table needs all six and each
+    answers a different question. The version and the release date say which
+    build these rows are; the revision says which library that build carries,
+    the four being four vendored trees of one project; the bindings and the
+    binary say how a row crosses into it.
+
+    Two of the six cannot be read at run time and are recorded against the
+    release they were read for, printing `unrecorded` for any other: no
+    compiled artifact exports a version symbol, and no installed metadata
+    carries a release date.
+
+    A package installed from anywhere other than its declared source is named
+    under the table rather than in it: `editable:` and `sys.path:` are what a
+    reader has to act on, and a column of "released" repeated four times is
+    not.
     """
-    report(
-        ("btclib-secp256k1", btclib_secp256k1.__file__),
-        ("coincurve", coincurve.__file__),
-        ("secp256k1", secp256k1.__file__),
-        ("electrum-ecc", electrum_ecc.__file__),
-        dates=RELEASE_DATES,
+    print(
+        f"{'package':<18}{'version':<10}{'released':<13}"
+        f"{'libsecp256k1':<24}{'bindings':<10}binary"
     )
+    for dist_name, bindings, binary in WRAPPERS:
+        installed = version(dist_name)
+        recorded_pin, pin = LIBSECP256K1_PINS[dist_name]
+        recorded_date, date = RELEASE_DATES[dist_name]
+        underneath = pin if installed == recorded_pin else "unrecorded"
+        released = date if installed == recorded_date else "unrecorded"
+        print(
+            f"{dist_name:<18}{installed:<10}{released:<13}"
+            f"{underneath:<24}{bindings:<10}{binary}"
+        )
+    odd = {
+        dist_name: origin_of(dist_name)
+        for dist_name, _, _ in WRAPPERS
+        if not from_a_declared_source(dist_name)
+    }
+    for dist_name, origin in odd.items():
+        print(f"{dist_name} is installed from {origin}")
+    print()
 
 
 # every published vector, cycled, rather than one input repeated: a row that
@@ -314,27 +339,11 @@ LIBSECP256K1_PINS = {
 # script is about: three link it into a cffi extension at build time,
 # one opens the shared object beside the package through ctypes
 WRAPPERS = (
-    ("btclib-secp256k1", f"cffi bindings, {_artifact('_btclib_secp256k1')}"),
-    ("coincurve", f"cffi bindings, {_artifact('coincurve._libsecp256k1')}"),
-    ("secp256k1", f"cffi bindings, {_artifact('secp256k1._libsecp256k1')}"),
-    ("electrum-ecc", f"ctypes bindings, {_electrum_ecc_library()}"),
+    ("btclib-secp256k1", "cffi", _artifact("_btclib_secp256k1")),
+    ("coincurve", "cffi", _artifact("coincurve._libsecp256k1")),
+    ("secp256k1", "cffi", _artifact("secp256k1._libsecp256k1")),
+    ("electrum-ecc", "ctypes", _electrum_ecc_library()),
 )
-
-
-def report_libsecp256k1() -> None:
-    """Print which libsecp256k1 is under each row, and how the row calls it.
-
-    Beside the versions rather than in prose, because it is the premise
-    of the table: these four wrap one library, and they wrap four
-    different revisions of it.
-    """
-    print("libsecp256k1 under each row")
-    for dist_name, how in WRAPPERS:
-        recorded, pin = LIBSECP256K1_PINS[dist_name]
-        installed = version(dist_name)
-        underneath = pin if installed == recorded else f"unrecorded, read at {recorded}"
-        print(f"  {dist_name:<18}{installed:<10}{underneath:<22}  {how}")
-    print()
 
 
 def dsa_coincurve() -> None:
@@ -574,17 +583,18 @@ def main() -> None:
     which is a property of the run rather than of this file.
     """
     report_provenance()
-    report_libsecp256k1()
 
-    table("ECDSA verify (32-byte digest, the public key parsed per call)", DSA_ROWS)
+    table("1. ECDSA sign (32-byte digest)", DSA_SIGN_ROWS)
     print()
-    table("BIP340 verify (32-byte message, the public key parsed per call)", SSA_ROWS)
+    table("2. ECDSA verify (32-byte digest, the public key parsed per call)", DSA_ROWS)
     print()
-    table("ECDSA sign (32-byte digest)", DSA_SIGN_ROWS)
+    table("3. BIP340 sign (32-byte message)", SSA_SIGN_ROWS)
     print()
-    table("BIP340 sign (32-byte message)", SSA_SIGN_ROWS)
+    table(
+        "4. BIP340 verify (32-byte message, the public key parsed per call)", SSA_ROWS
+    )
     print()
-    table("public key tweak by a scalar, which is BIP32's step", TWEAK_ROWS)
+    table("5. public key tweak by a scalar, which is BIP32's step", TWEAK_ROWS)
 
 
 # a guard rather than bare module-level calls: the helpers above are

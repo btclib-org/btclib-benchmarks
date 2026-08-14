@@ -3,7 +3,7 @@
 ## What produced it
 
 ```text
-when    : 2026-08-14 22:21 CEST (20:21 UTC)
+when    : 2026-08-14 22:26 CEST (20:26 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/libsecp256k1_wrappers.py
@@ -20,9 +20,9 @@ per call, fastest row first, a ratio against whichever row came out
 quickest, and one loop count for every row — a table whose rows are all C
 needs no count of its own per row.
 
-The block naming which revision of libsecp256k1 sits under each row is not
-decoration: it is the premise of the table. Read [README.md][readme] on what
-these numbers are — an order of magnitude, never a figure to quote.
+The `libsecp256k1` column is not decoration: it is the premise of the table.
+Read [README.md][readme] on what these numbers are — an order of magnitude,
+never a figure to quote.
 
 The signatures being verified are BIP340's own, every vector the file
 publishes, cycled one per call: where every row wraps the same library, "they
@@ -37,52 +37,47 @@ table][pure] and to [the libraries table][libs], never to this one.
 ## The output
 
 ```text
-btclib-secp256k1    : 0.8.0.2, released 2026-08-14
-coincurve           : 21.0.0, released 2025-03-08
-secp256k1           : 0.14.0, released 2021-11-06
-electrum-ecc        : 0.0.7, released 2026-02-25
+package           version   released     libsecp256k1            bindings  binary
+btclib-secp256k1  0.8.0.2   2026-08-14   v0.8.0                  cffi      _btclib_secp256k1.cpython-313-darwin.so
+coincurve         21.0.0    2025-03-08   v0.6.0                  cffi      _libsecp256k1.cpython-313-darwin.so
+secp256k1         0.14.0    2021-11-06   9526874d, pre-v0.1.0    cffi      _libsecp256k1.cpython-313-darwin.so
+electrum-ecc      0.0.7     2026-02-25   v0.7.1                  ctypes    libsecp256k1.6.dylib
 
-libsecp256k1 under each row
-  btclib-secp256k1  0.8.0.2   v0.8.0                  cffi bindings, _btclib_secp256k1.cpython-313-darwin.so
-  coincurve         21.0.0    v0.6.0                  cffi bindings, _libsecp256k1.cpython-313-darwin.so
-  secp256k1         0.14.0    9526874d, pre-v0.1.0    cffi bindings, _libsecp256k1.cpython-313-darwin.so
-  electrum-ecc      0.0.7     v0.7.1                  ctypes bindings, libsecp256k1.6.dylib
-
-ECDSA verify (32-byte digest, the public key parsed per call)
+1. ECDSA sign (32-byte digest)
                                    μs/call     vs best
-  dsa_secp256k1                      11.82       1.00x   (100000 calls)
-  dsa_btclib_secp256k1               14.11       1.19x   (100000 calls)
-  dsa_coincurve                      14.12       1.19x   (100000 calls)
-  dsa_electrum_ecc                   16.19       1.37x   (100000 calls)
+  dsa_sign_secp256k1                 11.30       1.00x   (100000 calls)
+  dsa_sign_coincurve                 11.70       1.04x   (100000 calls)
+  dsa_sign_btclib_secp256k1          12.11       1.07x   (100000 calls)
+  dsa_sign_electrum_ecc              27.57       2.44x   (100000 calls)
+  dsa_sign_electrum_ecc_grind        60.15       5.32x   (100000 calls)
 
-BIP340 verify (32-byte message, the public key parsed per call)
+2. ECDSA verify (32-byte digest, the public key parsed per call)
                                    μs/call     vs best
-  ssa_coincurve                      14.63       1.00x   (100000 calls)
-  ssa_btclib_secp256k1               14.66       1.00x   (100000 calls)
-  ssa_secp256k1                      15.12       1.03x   (100000 calls)
-  ssa_electrum_ecc                   18.62       1.27x   (100000 calls)
+  dsa_secp256k1                      11.85       1.00x   (100000 calls)
+  dsa_btclib_secp256k1               14.14       1.19x   (100000 calls)
+  dsa_coincurve                      14.23       1.20x   (100000 calls)
+  dsa_electrum_ecc                   16.10       1.36x   (100000 calls)
 
-ECDSA sign (32-byte digest)
+3. BIP340 sign (32-byte message)
                                    μs/call     vs best
-  dsa_sign_secp256k1                 11.36       1.00x   (100000 calls)
-  dsa_sign_coincurve                 11.65       1.03x   (100000 calls)
-  dsa_sign_btclib_secp256k1          12.08       1.06x   (100000 calls)
-  dsa_sign_electrum_ecc              27.46       2.42x   (100000 calls)
-  dsa_sign_electrum_ecc_grind        59.61       5.25x   (100000 calls)
+  ssa_sign_secp256k1                  7.82       1.00x   (100000 calls)
+  ssa_sign_btclib_secp256k1          16.05       2.05x   (100000 calls)
+  ssa_sign_coincurve                 27.40       3.50x   (100000 calls)
+  ssa_sign_electrum_ecc              31.45       4.02x   (100000 calls)
 
-BIP340 sign (32-byte message)
+4. BIP340 verify (32-byte message, the public key parsed per call)
                                    μs/call     vs best
-  ssa_sign_secp256k1                  7.89       1.00x   (100000 calls)
-  ssa_sign_btclib_secp256k1          15.94       2.02x   (100000 calls)
-  ssa_sign_coincurve                 27.51       3.49x   (100000 calls)
-  ssa_sign_electrum_ecc              31.46       3.99x   (100000 calls)
+  ssa_btclib_secp256k1               14.64       1.00x   (100000 calls)
+  ssa_coincurve                      14.66       1.00x   (100000 calls)
+  ssa_secp256k1                      15.11       1.03x   (100000 calls)
+  ssa_electrum_ecc                   18.59       1.27x   (100000 calls)
 
-public key tweak by a scalar, which is BIP32's step
+5. public key tweak by a scalar, which is BIP32's step
                                    μs/call     vs best
-  tweak_coincurve                    10.42       1.00x   (100000 calls)
-  tweak_btclib_secp256k1             10.61       1.02x   (100000 calls)
-  tweak_secp256k1                    13.88       1.33x   (100000 calls)
-  tweak_electrum_ecc                 22.47       2.16x   (100000 calls)
+  tweak_coincurve                    10.41       1.00x   (100000 calls)
+  tweak_btclib_secp256k1             10.58       1.02x   (100000 calls)
+  tweak_secp256k1                    13.86       1.33x   (100000 calls)
+  tweak_electrum_ecc                 22.55       2.17x   (100000 calls)
 ```
 
 ## What it shows
@@ -93,9 +88,9 @@ measure is the boundary crossing. The ratio column prints two decimals
 where the other benchmarks print one, because at one decimal most of this
 column would read 1.0x and say nothing.
 
-The ctypes row is last in both verification tables. The three cffi rows are close
-enough that their order among themselves is not something one run on a
-machine like this settles: which of them the ratio column calls the fastest
+The ctypes row is last in both verification tables, 2 and 4. The three cffi
+rows are close enough that their order among themselves is not something one
+run on a machine like this settles: which of them the ratio column calls the fastest
 is not stable across runs. That is the column's other use — a row a few
 percent off the best is not behind it in any durable sense, and being able
 to see how few percent is the point.

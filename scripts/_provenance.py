@@ -67,7 +67,7 @@ def _under_install_root(module_file: str) -> bool:
     )
 
 
-def _from_a_declared_source(dist_name: str) -> bool:
+def from_a_declared_source(dist_name: str) -> bool:
     """Say whether an install came from an index or from a pinned revision.
 
     Those are the two origins that need no saying, being what a declared
@@ -108,7 +108,7 @@ def describe(dist_name: str, module_file: str) -> str:
         return f"{dist_name:<20}: not installed"
     if not _under_install_root(module_file):
         return f"{dist_name:<20}: {released:<24} (sys.path: {module_file})"
-    if _from_a_declared_source(dist_name):
+    if from_a_declared_source(dist_name):
         return f"{dist_name:<20}: {released}"
     return f"{dist_name:<20}: {released:<24} ({origin_of(dist_name)})"
 
