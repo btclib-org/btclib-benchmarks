@@ -65,6 +65,45 @@ The release notes, which say what a user has to act on, are in
   unrecorded for any other — a pin outliving its release would be the
   one figure in that output nothing re-derives.
 
+- **Every measured package answers the vendored vectors, in the
+  configuration it is measured in.** `tests/_data/` carries BIP340's own
+  vector file and BIP32's, copied from btclib's vendored copies at a pinned
+  commit with the digests published beside them and checked on every run, and
+  `tests/vectors_test.py` runs them against every implementation this project
+  times — btclib, btclib_secp256k1, coincurve, secp256k1-py, electrum-ecc,
+  embit, buidl and secp256k1lab, each in the spelling its API offers.
+
+  The negative cases are why it is worth having. Eight of BIP340's nineteen
+  rows are signatures to reproduce and the rest are verifications, the ones
+  expecting FALSE being a public key off the curve, an s past the order, an r
+  that is not a field element: an implementation that answers true to all of
+  them passes a round-trip check and fails this one. A raise counts as a
+  rejection, refusing to parse an unusable key being a correct answer
+  differently spelled.
+
+  btclib is held to them too, which duplicates its own suite on purpose: it
+  is the one package these tables exist to publish, and a benchmark that
+  checked every comparand but not its subject would be an odd thing to have
+  built. The pure-Python configuration is a subprocess -- `PYCOIN_NATIVE` is
+  read when pycoin is imported and btclib's dispatch flag cannot be restored
+  -- so the same file runs twice, once per arithmetic. BIP340's four
+  variable-length vectors from 2022 divide the packages by API rather than by
+  correctness, and which ones can be asked is written down: none of the
+  wrappers exposes `schnorrsig_sign_custom`, three of them pass a length
+  through to verification.
+
+  Nothing failed. The one wrong answer this project has found stays the one
+  the benchmark itself asserts: `python-bitcoinlib`'s bech32m.
+
+- **Grinding is represented the same way everywhere, including where that
+  means no row.** btclib and embit grind by default and `electrum-ecc`
+  offers it, so each has a `grind=False` row beside a row of its default in
+  the three benchmarks that compare packages. `btclib_two_paths.py` has
+  none, by the same rule rather than in spite of it: grinding multiplies both
+  paths by the same number of attempts, so the ratio the table is read for
+  does not move -- 10.3x against 10.4x, measured, at around eight attempts
+  for this vector -- and the rows would restate the pair above them.
+
 - **The interpreter is not in a script's output.** It belongs to the run
   rather than to the packages, as the machine and the time do, and no script
   can state those either -- so `results/` names all three in the block above

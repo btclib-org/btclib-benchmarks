@@ -67,8 +67,21 @@ of the code, so no test here asserts one, and **no workflow runs a
 benchmark**: a shared CI runner disagrees with a laptop by more than most
 of the differences being reported.
 
-What it does check is the two things that survive being automated:
+What it does check is what survives being automated:
 
+- that every measured package answers the vendored vectors, in the
+  configuration it is measured in. `tests/vectors_test.py` runs BIP340's
+  own vectors and BIP32's against every implementation this project times,
+  btclib included — redundant with btclib's own suite, deliberately, it
+  being the one package these tables exist to publish. The negative cases
+  are the point: an implementation that accepts a public key off the curve
+  or an s past the order passes a round-trip check and fails this one. The
+  pure-Python configuration is a subprocess, `PYCOIN_NATIVE` being read at
+  import and btclib's dispatch flag being unrestorable.
+- that each row of `btclib_two_paths.py` has a second path at all.
+  `tests/pure_python_path_test.py` blocks every bindings entry point and
+  calls every operation: a row that has kept a foot in C raises instead of
+  answering. BIP32 derivation was such a row.
 - that every script *loads*, which runs the fixtures at its top and the
   assertions comparing each comparand's answer against btclib's. A table
   whose rows compute different things is worth nothing, and importing the
@@ -111,6 +124,15 @@ What it does check is the two things that survive being automated:
   one, and quietly fall back to Python if they do not. A row that does
   not name what it resolved to is not a measurement of anything in
   particular.
+- **two rows where a library grinds, and none where grinding says
+  nothing.** btclib and embit grind for a low-r signature by default, and
+  `electrum-ecc` offers it; each gets a `grind=False` row, which is the one
+  comparable with libraries that sign once, and a row of its default beside
+  it. `btclib_two_paths.py` has no grinding row at all, and that is the same
+  rule: grinding multiplies both of its paths by the same number of
+  attempts, so the ratio it prints would not move — measured at 10.3x
+  against 10.4x — and two rows saying what one pair already says are two
+  rows to read.
 - **loop counts are per row** wherever a table mixes Python with C: the
   two differ by orders of magnitude, and one shared count either takes
   minutes or measures the clock's own resolution. A table whose rows are
@@ -128,11 +150,10 @@ What it does check is the two things that survive being automated:
   these tables that cannot be the reference: a column against it prints
   fractions under one for everything quicker, which reads as btclib's
   score rather than as the table's answer, and where btclib stands is its
-  own place in the order. `pure_python.py` carries two such columns, one
-  against the fastest row and one against the fastest *Python* row, and
-  `btclib_two_paths.py` divides each row by the quicker of its own pair,
-  its rows being one operation through two paths — the fastest row of that
-  whole table would divide a signature by a multiplication.
+  own place in the order. `btclib_two_paths.py` is the one exception and it
+  is not one: it divides each row by the quicker of its own *pair*, its rows
+  being one operation through two paths, where the fastest row of the whole
+  table would divide a signature by a point parse.
 
   An order written by hand is an opinion about the result, and a reader
   dividing two numbers to get the ratio is doing arithmetic the table

@@ -207,7 +207,18 @@ def mult() -> None:
 
 
 def dsa_sign() -> None:
-    """Time ECDSA signing, RFC6979's nonce and no low-r grinding."""
+    """Time one ECDSA signature: RFC6979's nonce, and no low-r grinding.
+
+    `grind=False`, and no second row for the default, where the three
+    benchmarks that compare packages carry one. Grinding signs repeatedly
+    until r fits in 32 bytes, and the number of attempts is a property of
+    the key and message rather than of the arithmetic: both paths make the
+    same number, so both rows would be multiplied by it and the ratio --
+    which is what this table is read for -- would not move. Measured at
+    around eight attempts for this vector, and 10.3x against 10.4x for the
+    pair. In a table of packages the multiple matters, not everybody
+    grinding; here it is a restatement.
+    """
     assert dsa.sign_(MSG, PRVKEY, grind=False) == DSA_SIG
 
 
