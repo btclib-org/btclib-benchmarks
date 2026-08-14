@@ -216,8 +216,8 @@ def verify_ecdsa_prepared() -> None:
 
 def parse_point() -> None:
     """Time the preparation btclib offers: decompressing the key once."""
-    octets, expected = next(PARSE)
-    assert sec_point.point_from_octets(octets) == expected
+    octets, _expected = next(PARSE)
+    sec_point.point_from_octets(octets)
 
 
 def benchmark(func: Callable[[], None], calls: int) -> float:

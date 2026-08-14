@@ -1,9 +1,9 @@
 # Every pure-Python implementation
 
-## What produced it
+## This run
 
 ```text
-when    : 2026-08-14 22:10 CEST (20:10 UTC)
+when    : 2026-08-14 22:59 CEST (20:59 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/pure_python.py
@@ -22,8 +22,7 @@ advance.
 One run, kept whole — the block above the tables says what holds each row
 to Python, which is the claim the whole file rests on, and says it once:
 with every row Python, a row repeating the word would be a column of it.
-Read [README.md][readme] on what these numbers are: an order of magnitude,
-never a figure to quote.
+The numbers are an order of magnitude, never a figure to quote.
 
 The inputs are every BIP340 vector the file publishes, cycled: each call takes
 the next, so a row is an average over inputs nobody here chose. Both
@@ -52,38 +51,38 @@ every row is pure Python arithmetic, held to it by
 
 public key from a private key: a multiplication of the generator
                                               vs best
-  btclib                         188.82 μs        1.0x
-  python-ecdsa                   217.45 μs        1.2x
-  secp256k1lab                   932.66 μs        4.9x
-  pycoin                        5879.73 μs       31.1x
-  buidl.pecc                   20996.51 μs      111.2x
+  btclib                         194.95 μs        1.0x
+  python-ecdsa                   221.78 μs        1.1x
+  secp256k1lab                   933.60 μs        4.8x
+  pycoin                        6063.55 μs       31.1x
+  buidl.pecc                   20801.83 μs      106.7x
 
 ECDSA sign, over a 32-byte digest
                                               vs best
-  btclib, one signature          178.92 μs        1.0x
-  python-ecdsa                   292.47 μs        1.6x
-  btclib, grinding (default)     674.43 μs        3.8x
-  pycoin                        5993.50 μs       33.5x
-  buidl.pecc                   29866.54 μs      166.9x
+  btclib, one signature          186.38 μs        1.0x
+  python-ecdsa                   288.72 μs        1.5x
+  btclib, grinding (default)     691.31 μs        3.7x
+  pycoin                        5960.12 μs       32.0x
+  buidl.pecc                   29688.52 μs      159.3x
 
 ECDSA verify, over a 32-byte digest
                                               vs best
-  btclib                         875.48 μs        1.0x
-  python-ecdsa                  1137.51 μs        1.3x
-  pycoin                       19720.62 μs       22.5x
-  buidl.pecc                   82892.72 μs       94.7x
+  btclib                         827.78 μs        1.0x
+  python-ecdsa                  1135.70 μs        1.4x
+  pycoin                       19086.95 μs       23.1x
+  buidl.pecc                   60971.90 μs       73.7x
 
 BIP340 sign, over a 32-byte message
                                               vs best
-  btclib                         341.63 μs        1.0x
-  secp256k1lab                  7429.75 μs       21.7x
-  buidl.pecc                  111175.15 μs      325.4x
+  btclib                         346.21 μs        1.0x
+  secp256k1lab                  7452.76 μs       21.5x
+  buidl.pecc                  110056.63 μs      317.9x
 
 BIP340 verify, over a 32-byte message
                                               vs best
-  btclib                         700.80 μs        1.0x
-  secp256k1lab                  5190.46 μs        7.4x
-  buidl.pecc                   68318.46 μs       97.5x
+  btclib                         700.20 μs        1.0x
+  secp256k1lab                  5150.31 μs        7.4x
+  buidl.pecc                   67927.10 μs       97.0x
 ```
 
 ## What it shows
@@ -123,9 +122,26 @@ it, where the other script imports it after something else has already put
 libsecp256k1 symbols in the process. Both files print which one they got,
 which is why the pair can be read at all.
 
-[readme]: https://github.com/btclib-org/btclib-benchmarks/blob/main/README.md
-[libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
 [two]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
+
+## More benchmarks
+
+Four other questions are published in `results/`, each with its own
+comparands:
+
+- [btclib's two paths][two-paths] — btclib against itself, its pure-Python
+  arithmetic against the libsecp256k1 it bundles
+- [btclib against the other bitcoin libraries][libs] — python libraries,
+  where bindings, if there are any, are one component of a library
+- [the libsecp256k1 wrappers][wrappers] — four packages wrapping one C
+  library, and which revision of it each vendors
+- [one key, every signature under it][reuse] — what the second verification
+  under a key costs, which a table of fresh keys cannot show
+
+[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
+[libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
+[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
 
 <!-- The output above is a script's, whose columns are the script's to
      choose; rewrapping it to 80 would make it something else. The

@@ -95,6 +95,24 @@ The release notes, which say what a user has to act on, are in
   Nothing failed. The one wrong answer this project has found stays the one
   the benchmark itself asserts: `python-bitcoinlib`'s bech32m.
 
+- **No timed function checks its own answer.** Rows across all five scripts
+  compared what they had just computed against an expected value, inside the
+  loop being timed: an equality on bytes, a `verify` whose result was
+  asserted, a membership test over a list of recovered keys. Each
+  of those is time charged to the comparand that did not spend it, and the
+  cost is not even across rows -- comparing DER against DER is not comparing
+  two Python integers, and a row whose API returns an object pays for
+  serializing it before the comparison can be written at all.
+
+  The checks did not move to nowhere. `tests/vectors_test.py` is where the
+  answers are checked, against what the specifications publish rather than
+  against a sibling row, and the cross-comparand assertions each script
+  still makes now sit where its fixtures are built -- at import, which is
+  what the suite runs when it loads the module. What a benchmark measures and
+  what a suite asserts had been one thing, and they are two.
+
+  Every published table was re-run, the verification rows moving most.
+
 - **Grinding is represented the same way everywhere, including where that
   means no row.** btclib and embit grind by default and `electrum-ecc`
   offers it, so each has a `grind=False` row beside a row of its default in
@@ -133,14 +151,16 @@ The release notes, which say what a user has to act on, are in
 
 - **The wrapper table signs as well as verifying, and tweaks a public
   key.** Verification was the whole of it, which left out the operation the
-  four APIs differ over most: signing separates them further, and
-  `electrum-ecc` is the only one of them offering low-r grinding, so it has
-  two rows where the others have one. The four also agree on one ECDSA
+  four APIs differ over most. `electrum-ecc` signs with
+  `grind_r_value=False`, it being the only one of the four offering low-r
+  grinding: a row that grinds is a multiple of a row that signs once, and
+  three of these rows sign once. Three of the four also agree on one
   signature exactly -- libsecp256k1's default nonce is RFC6979, so one key
-  and one message give one signature through four APIs, and the script now
-  asserts that. BIP340 is checked against the vector for three of them;
-  `secp256k1-py`'s `schnorr_sign` takes no aux_rand, so what its API leaves
-  checkable is that its signature verifies.
+  and one message give one signature through three APIs, and the fixtures
+  check that. `secp256k1-py`'s build agrees on x86-64 and not on aarch64, so
+  what every wrapper is held to is the portable claim, that the signature
+  verifies; BIP340 is checked against the vector for the three whose API
+  takes an aux_rand.
 
   The last table is BIP32's step and not BIP32: none of the four implements
   derivation, and all four expose the primitive it is built from, a public

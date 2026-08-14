@@ -1,9 +1,9 @@
 # One key, every signature under it
 
-## What produced it
+## This run
 
 ```text
-when    : 2026-08-14 22:11 CEST (20:11 UTC)
+when    : 2026-08-14 22:59 CEST (20:59 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/key_reuse.py
@@ -27,8 +27,8 @@ unprepared row rather than against the fastest of the table. Getting it
 there and nothing else: building the key is work the caller who does not
 prepare pays as well, so a column of differences must not carry it.
 
-One run, kept whole. Read [README.md][readme] on what these are: an order
-of magnitude, never a figure to quote.
+One run, kept whole. The numbers are an order of magnitude, never a figure
+to quote.
 
 ## The output
 
@@ -40,18 +40,18 @@ ecdsa               : 0.19.2
 
 ECDSA verify, one key, every signature under it
                                                   vs best
-  btclib, bindings, parsed point      20.38 μs        1.0x
+  btclib, bindings, parsed point      20.31 μs        1.0x
   btclib, bindings, octets            23.15 μs        1.1x
-  python-ecdsa, precomputed          538.45 μs       26.4x
-  btclib, Python, octets             700.21 μs       34.4x
-  btclib, Python, parsed point       724.69 μs       35.6x
-  python-ecdsa                      1087.38 μs       53.3x
+  python-ecdsa, precomputed          540.70 μs       26.6x
+  btclib, Python, parsed point       609.03 μs       30.0x
+  btclib, Python, octets             722.34 μs       35.6x
+  python-ecdsa                      1093.12 μs       53.8x
 
 what preparing the key costs, and after how many verifications it pays
                                     prepare  saves/call  break-even
-  btclib, bindings, parse once        3.61 μs      2.77 μs       1.3
-  btclib, Python, parse once        109.56 μs    -24.48 μs      -4.5
-  python-ecdsa, precompute()       3228.44 μs    548.93 μs       5.9
+  btclib, bindings, parse once        3.59 μs      2.85 μs       1.3
+  btclib, Python, parse once         74.29 μs    113.31 μs       0.7
+  python-ecdsa, precompute()       3314.94 μs    552.41 μs       6.0
 ```
 
 ## What it shows
@@ -115,8 +115,26 @@ memoizes; none of these implementations builds per-private-key state. So
 there is no signing half of this benchmark, and that absence is a result
 rather than an omission.
 
-[readme]: https://github.com/btclib-org/btclib-benchmarks/blob/main/README.md
 [issue]: https://github.com/btclib-org/btclib/issues/893
+
+## More benchmarks
+
+Four other questions are published in `results/`, each with its own
+comparands:
+
+- [btclib's two paths][two-paths] — btclib against itself, its pure-Python
+  arithmetic against the libsecp256k1 it bundles
+- [btclib against the other bitcoin libraries][libs] — python libraries,
+  where bindings, if there are any, are one component of a library
+- [every pure-Python implementation][pure] — the same operations with no
+  bindings anywhere
+- [the libsecp256k1 wrappers][wrappers] — four packages wrapping one C
+  library, and which revision of it each vendors
+
+[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
+[libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
+[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
 
 <!-- The output above is a script's, whose columns are the script's to
      choose; rewrapping it to 80 would make it something else. The

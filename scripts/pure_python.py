@@ -51,9 +51,14 @@ it: python-ecdsa returns the generator *object* as the public key of the
 private key 1, precomputed table and all, so a row verifying against that key
 verifies with a table no real key gets.
 
-Not part of the test suite and not run by CI, as the others are not: nothing
-here is a correctness check, though every row is checked before it is timed --
-against btclib's answer, and against BIP340's where there is one.
+A timed function calls one implementation and discards what it returns:
+nothing here is a correctness check. `tests/vectors_test.py` is, and it runs
+the vendored vectors against every implementation timed here, in this
+script's pure-Python configuration as well as the default one. The
+assertions below run at import, where the fixtures are built, so the suite
+loading this module runs them and no timing carries them.
+
+Not part of the test suite and not run by CI, as the others are not.
 """
 
 from __future__ import annotations
@@ -210,40 +215,34 @@ def report_setup() -> None:
 
 def pubkey_btclib() -> None:
     """Time the generator multiplication btclib answers a public key with."""
-    scalar, expected = next(PUBKEY_BTCLIB)
-    assert pub_keyinfo_from_prv_key(scalar)[0] == expected
+    scalar, _expected = next(PUBKEY_BTCLIB)
+    pub_keyinfo_from_prv_key(scalar)[0]
 
 
 def pubkey_lab() -> None:
     """Time secp256k1lab's, which multiplies G through a table of its own."""
-    scalar, expected = next(PUBKEY_LAB)
-    assert (scalar * LAB_G).to_bytes_compressed() == expected
+    scalar, _expected = next(PUBKEY_LAB)
+    (scalar * LAB_G).to_bytes_compressed()
 
 
 def pubkey_buidl() -> None:
     """Time buidl's pure-Python S256Point."""
-    scalar, expected = next(PUBKEY_BUIDL)
-    assert buidl.pecc.PrivateKey(scalar).point.sec() == expected
+    scalar, _expected = next(PUBKEY_BUIDL)
+    buidl.pecc.PrivateKey(scalar).point.sec()
 
 
 def pubkey_ecdsa() -> None:
     """Time python-ecdsa's."""
-    scalar, expected = next(PUBKEY_ECDSA)
-    assert (
-        ecdsa.SigningKey.from_secret_exponent(
-            scalar, curve=ecdsa.SECP256k1
-        ).verifying_key.to_string("compressed")
-        == expected
-    )
+    scalar, _expected = next(PUBKEY_ECDSA)
+    ecdsa.SigningKey.from_secret_exponent(
+        scalar, curve=ecdsa.SECP256k1
+    ).verifying_key.to_string("compressed")
 
 
 def pubkey_pycoin() -> None:
     """Time pycoin's, its native backends turned off."""
-    scalar, expected = next(PUBKEY_PYCOIN)
-    assert (
-        pycoin.symbols.btc.network.keys.private(secret_exponent=scalar).sec()
-        == expected
-    )
+    scalar, _expected = next(PUBKEY_PYCOIN)
+    pycoin.symbols.btc.network.keys.private(secret_exponent=scalar).sec()
 
 
 # ----------------------------------------------------------------- ECDSA
@@ -255,8 +254,8 @@ def dsa_sign_btclib() -> None:
     `grind=False`, which is not btclib's default: one signature is what every
     other row in the table produces, and the default is the row below.
     """
-    msg, prvkey, expected = next(DSA_SIGN_BTCLIB)
-    assert dsa.sign_(msg, prvkey, grind=False) == expected
+    msg, prvkey, _expected = next(DSA_SIGN_BTCLIB)
+    dsa.sign_(msg, prvkey, grind=False)
 
 
 def dsa_sign_btclib_grind() -> None:
@@ -288,7 +287,7 @@ def dsa_sign_ecdsa() -> None:
 def dsa_verify_ecdsa() -> None:
     """Time an ECDSA verification through python-ecdsa."""
     msg, key, sig = next(DSA_ECDSA)
-    assert key.verifying_key.verify_digest(sig, msg)
+    key.verifying_key.verify_digest(sig, msg)
 
 
 def dsa_sign_pycoin() -> None:
@@ -300,7 +299,7 @@ def dsa_sign_pycoin() -> None:
 def dsa_verify_pycoin() -> None:
     """Time an ECDSA verification through pycoin's Generator."""
     _, digest, pair, sig = next(DSA_PYCOIN)
-    assert PYCOIN_GENERATOR.verify(pair, digest, sig)
+    PYCOIN_GENERATOR.verify(pair, digest, sig)
 
 
 def dsa_sign_buidl() -> None:
@@ -312,7 +311,7 @@ def dsa_sign_buidl() -> None:
 def dsa_verify_buidl() -> None:
     """Time an ECDSA verification through buidl's pure-Python module."""
     key, digest, sig = next(DSA_BUIDL)
-    assert key.point.verify(digest, sig)
+    key.point.verify(digest, sig)
 
 
 # ---------------------------------------------------------------- BIP340
@@ -320,8 +319,8 @@ def dsa_verify_buidl() -> None:
 
 def ssa_sign_btclib() -> None:
     """Time a BIP340 signature through btclib, over the vector's aux_rand."""
-    msg, prvkey, aux, expected = next(SSA_BTCLIB_SIGN)
-    assert ssa.sign_(msg, prvkey, aux=aux).serialize() == expected
+    msg, prvkey, aux, _expected = next(SSA_BTCLIB_SIGN)
+    ssa.sign_(msg, prvkey, aux=aux).serialize()
 
 
 def ssa_verify_btclib() -> None:
@@ -332,14 +331,14 @@ def ssa_verify_btclib() -> None:
 
 def ssa_sign_lab() -> None:
     """Time a BIP340 signature through secp256k1lab."""
-    msg, prvkey, aux, expected = next(SSA_LAB_SIGN)
-    assert secp256k1lab.bip340.schnorr_sign(msg, prvkey, aux) == expected
+    msg, prvkey, aux, _expected = next(SSA_LAB_SIGN)
+    secp256k1lab.bip340.schnorr_sign(msg, prvkey, aux)
 
 
 def ssa_verify_lab() -> None:
     """Time a BIP340 verification through secp256k1lab."""
     msg, xonly_pubkey, sig = next(SSA_LAB_VERIFY)
-    assert secp256k1lab.bip340.schnorr_verify(msg, xonly_pubkey, sig)
+    secp256k1lab.bip340.schnorr_verify(msg, xonly_pubkey, sig)
 
 
 def ssa_sign_buidl() -> None:
@@ -351,7 +350,7 @@ def ssa_sign_buidl() -> None:
 def ssa_verify_buidl() -> None:
     """Time a BIP340 verification through buidl's pure-Python module."""
     key, msg, sig = next(SSA_BUIDL_VERIFY)
-    assert key.point.verify_schnorr(msg, sig)
+    key.point.verify_schnorr(msg, sig)
 
 
 # ------------------------------------------------------------- the timing

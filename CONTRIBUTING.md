@@ -92,13 +92,19 @@ What it does check is what survives being automated:
 
 ## Writing a row
 
-- **assert before you time.** Every comparand's answer is checked at
-  import against btclib's — or, where btclib is not a row, against the
-  package the script is about — so one that is merely fast and wrong
-  cannot win a row. `libsecp256k1_wrappers.py` also checks the other
-  half: that every row *rejects* a signature made for another message,
-  which a positive check alone cannot tell from a row that answers true
-  to anything.
+- **assert where the fixtures are built, never inside a timing.** A timed
+  function calls one API and discards what it returns: a comparison in the
+  loop is time attributed to a comparand that did not spend it, and a row
+  that checks itself is measuring the check. The assertions live at module
+  level, where each comparand's answer is checked against btclib's — or,
+  where btclib is not a row, against the package the script is about — so
+  one that is merely fast and wrong cannot win a row, and the suite
+  importing the module is what runs them.
+
+  Correctness itself belongs to the suite rather than to any of this.
+  `tests/vectors_test.py` runs the vendored vectors against every
+  implementation these scripts time, in the configuration each is timed
+  in, including the negative cases no benchmark row can express.
 - **take the input from a published test vector.** The fixtures are
   BIP340's first vector and BIP32's first, transcribed from btclib's
   vendored copies — the values, not the files, each row timing one input.

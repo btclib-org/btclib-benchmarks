@@ -62,9 +62,15 @@ one key would have flattered a row: the public key of 1 is the generator, and
 a pure-Python implementation handed it derives one ladder step rather than a
 full-width scalar's worth.
 
-Not part of the test suite and not run by CI: nothing here is a correctness
-check of btclib, and `tests/script_engine/python_path_test.py` in btclib
-already is one. No third-party dependency either.
+A timed function calls one path and discards what it returns: nothing here
+is a correctness check. `tests/vectors_test.py` is, and it runs the vendored
+vectors against both paths; `tests/pure_python_path_test.py` checks the
+second path exists at all, which is the failure this script cannot see. The
+assertions below run at import, where the fixtures are built, so the suite
+loading this module runs them and no timing carries them.
+
+Not part of the test suite and not run by CI. No third-party dependency
+either.
 """
 
 from __future__ import annotations
@@ -217,20 +223,20 @@ def python_arithmetic_only() -> None:
 
 def pubkey() -> None:
     """Time the public key btclib derives from a private key."""
-    prvkey, expected = next(PUBKEY_CYCLE)
-    assert pub_keyinfo_from_prv_key(prvkey)[0] == expected
+    prvkey, _expected = next(PUBKEY_CYCLE)
+    pub_keyinfo_from_prv_key(prvkey)[0]
 
 
 def point_parse() -> None:
     """Time parsing a compressed public key, which recovers y from x."""
-    pubkey_bytes, expected = next(POINT_PARSE_CYCLE)
-    assert sec_point.point_from_octets(pubkey_bytes) == expected
+    pubkey_bytes, _expected = next(POINT_PARSE_CYCLE)
+    sec_point.point_from_octets(pubkey_bytes)
 
 
 def mult() -> None:
     """Time the generator multiplication every key derivation is built on."""
-    scalar, expected = next(MULT_CYCLE)
-    assert curve.mult(scalar) == expected
+    scalar, _expected = next(MULT_CYCLE)
+    curve.mult(scalar)
 
 
 def dsa_sign() -> None:
@@ -243,62 +249,62 @@ def dsa_sign() -> None:
     so both rows would be multiplied by it and the ratio -- which is what
     this table is read for -- would not move, as measuring it confirms.
     """
-    msg, prvkey, expected = next(DSA_SIGN_CYCLE)
-    assert dsa.sign_(msg, prvkey, grind=False) == expected
+    msg, prvkey, _expected = next(DSA_SIGN_CYCLE)
+    dsa.sign_(msg, prvkey, grind=False)
 
 
 def dsa_verify() -> None:
     """Time ECDSA verification."""
     msg, pubkey_bytes, sig = next(DSA_VERIFY_CYCLE)
-    assert dsa.verify_(msg, pubkey_bytes, sig)
+    dsa.verify_(msg, pubkey_bytes, sig)
 
 
 def dsa_recover() -> None:
     """Time recovering the candidate public keys of an ECDSA signature."""
-    msg, sig, point = next(DSA_RECOVER_CYCLE)
-    assert point in dsa.recover_pub_keys_(msg, sig)
+    msg, sig, _point = next(DSA_RECOVER_CYCLE)
+    dsa.recover_pub_keys_(msg, sig)
 
 
 def ssa_sign() -> None:
     """Time BIP340 signing, over each vector's own aux_rand."""
-    msg, prvkey, aux, expected = next(SSA_SIGN_CYCLE)
-    assert ssa.sign_(msg, prvkey, aux=aux).serialize() == expected
+    msg, prvkey, aux, _expected = next(SSA_SIGN_CYCLE)
+    ssa.sign_(msg, prvkey, aux=aux).serialize()
 
 
 def ssa_verify() -> None:
     """Time BIP340 verification."""
     msg, xonly_pubkey, sig = next(SSA_VERIFY_CYCLE)
-    assert ssa.verify_(msg, xonly_pubkey, sig)
+    ssa.verify_(msg, xonly_pubkey, sig)
 
 
 def dh_shared_secret() -> None:
     """Time the ECDH shared secret of one vector key with another's point."""
-    scalar, point, expected = next(DH_CYCLE)
-    assert dh.diffie_hellman(scalar, point, 32) == expected
+    scalar, point, _expected = next(DH_CYCLE)
+    dh.diffie_hellman(scalar, point, 32)
 
 
 def bms_sign() -> None:
     """Time signing a bitcoin message, which signs recoverably."""
-    msg, prvkey, expected = next(BMS_SIGN_CYCLE)
-    assert bms.sign(msg, prvkey) == expected
+    msg, prvkey, _expected = next(BMS_SIGN_CYCLE)
+    bms.sign(msg, prvkey)
 
 
 def bms_verify() -> None:
     """Time verifying a bitcoin message, which recovers the key from it."""
     msg, address, sig = next(BMS_VERIFY_CYCLE)
-    assert bms.verify(msg, address, sig)
+    bms.verify(msg, address, sig)
 
 
 def taproot_tweak() -> None:
     """Time tweaking a public key into a taproot output key."""
-    pubkey_bytes, expected = next(TAPROOT_CYCLE)
-    assert taproot.output_pubkey(pubkey_bytes)[0] == expected
+    pubkey_bytes, _expected = next(TAPROOT_CYCLE)
+    taproot.output_pubkey(pubkey_bytes)[0]
 
 
 def ellswift_decode() -> None:
     """Time decoding an ElligatorSwift-encoded public key."""
-    ell, expected = next(ELLSWIFT_CYCLE)
-    assert ellswift.decode_var(ell) == expected
+    ell, _expected = next(ELLSWIFT_CYCLE)
+    ellswift.decode_var(ell)
 
 
 # every row is called once, through the bindings, before anything is

@@ -23,11 +23,21 @@ BIP32 itself, and all four expose the primitive it is built from.
 a scalar times the generator plus an addition: two crossings where the others
 make one.
 
-Grinding is one row rather than four. `electrum-ecc` is the only one of them
-offering low-r grinding, so it has a `grind=False` row and its default beside
-it; grinding is a loop around a wrapper rather than anything the C library
-does, which is why the tables about libraries carry the same distinction for
-btclib and embit.
+Every call cycles a published input rather than repeating one:
+`_vectors.signing()`'s keys and messages for tables 1-2 and the tweak, whose
+scalar is the next vector's secret key, and `_vectors.signing()` and
+`_vectors.verification()` for tables 3-4, where the *signature* is also the
+vector's own. The file has no signature published for tables 1-2's scheme --
+those rows sign a published key and message with RFC6979, which is what
+`btclib_secp256k1.dsa.sign` below produces and the other three are checked
+against.
+
+`electrum-ecc` is the only one of the four offering low-r grinding, so its
+row is `grind=False`: without it, its signing time would not be comparable
+with the other three, which sign once. The tables about libraries carry the
+distinction the other way, as a pair of rows, because there both btclib and
+embit grind by default -- two grinding libraries are worth comparing to each
+other, and one is not.
 
 ## The public key is parsed inside every timing
 
@@ -56,12 +66,24 @@ The durable fix belongs upstream rather than here: a wrapper that recorded its
 vendored revision at build time -- a constant its build script writes from the
 submodule it just compiled -- would let this row read what it now asserts.
 
-What the four agree on is asserted per vector before anything is timed, and
-what they agree on is not everything: three produce the same ECDSA bytes for
-a key and a message, libsecp256k1's default nonce being RFC6979, while
-secp256k1-py's build does on x86-64 and does not on aarch64. So every wrapper
-is held to the portable claim -- that its signature verifies -- and to
-BIP340's own signatures where its API takes an aux_rand. secp256k1-py's
+## Correctness is not measured here
+
+A timed function calls one API and discards what it returns. It compares
+nothing, because a comparison inside the loop is time attributed to the
+wrapper that did not spend it, and a row that checks itself is measuring the
+check.
+
+Whether the answers are right is `tests/vectors_test.py`'s subject: it runs
+the vendored vectors against every implementation this project times, in the
+configuration it times it in. The cross-wrapper assertions below run where
+the fixtures are built, at import, so the suite loading this module runs them
+and no timing carries them.
+
+What the four agree on there is not everything: three produce the same ECDSA
+bytes for a key and a message, libsecp256k1's default nonce being RFC6979,
+while secp256k1-py's build does on x86-64 and does not on aarch64. So every
+wrapper is held to the portable claim -- that its signature verifies -- and
+to BIP340's own signatures where its API takes an aux_rand. secp256k1-py's
 `schnorr_sign` does not.
 
 Not part of the test suite and not run by CI: measuring is done by a person on
@@ -96,7 +118,7 @@ def report_provenance() -> None:
     answers a different question. The version and the release date say which
     build these rows are; the revision says which library that build carries,
     the four being four vendored trees of one project; the bindings and the
-    binary say how a row crosses into it.
+    binary say how a row crosses into it. Sorted newest release first.
 
     Two of the six cannot be read at run time and are recorded against the
     release they were read for, printing `unrecorded` for any other: no
@@ -110,9 +132,10 @@ def report_provenance() -> None:
     """
     print(
         f"{'package':<18}{'version':<10}{'released':<13}"
-        f"{'libsecp256k1':<24}{'bindings':<10}binary"
+        f"{'libsecp256k1 pin':<24}{'bindings':<10}binary"
     )
-    for dist_name, bindings, binary in WRAPPERS:
+    by_date = sorted(WRAPPERS, key=lambda row: RELEASE_DATES[row[0]][1], reverse=True)
+    for dist_name, bindings, binary in by_date:
         installed = version(dist_name)
         recorded_pin, pin = LIBSECP256K1_PINS[dist_name]
         recorded_date, date = RELEASE_DATES[dist_name]
@@ -349,51 +372,49 @@ WRAPPERS = (
 def dsa_coincurve() -> None:
     """Time coincurve's ECDSA verification, which takes a DER signature."""
     pubkey, msg, sig = next(DSA_VERIFY)
-    assert coincurve.PublicKey(pubkey).verify(sig, msg, None)
+    coincurve.PublicKey(pubkey).verify(sig, msg, None)
 
 
 def dsa_secp256k1() -> None:
     """Time secp256k1-py's ECDSA verification, over its own parsed signature."""
     pubkey, msg, sig = next(DSA_VERIFY_SECP)
-    assert pubkey.ecdsa_verify(msg, pubkey.ecdsa_deserialize(sig), raw=True)
+    pubkey.ecdsa_verify(msg, pubkey.ecdsa_deserialize(sig), raw=True)
 
 
 def dsa_electrum_ecc() -> None:
     """Time electrum-ecc's ECDSA verification, over a 64-byte signature."""
     pubkey, msg, sig = next(DSA_VERIFY_64)
-    assert electrum_ecc.ECPubkey(pubkey).ecdsa_verify(sig, msg)
+    electrum_ecc.ECPubkey(pubkey).ecdsa_verify(sig, msg)
 
 
 def dsa_btclib_secp256k1() -> None:
     """Time btclib_secp256k1's ECDSA verification, bytes in every argument."""
     pubkey, msg, sig = next(DSA_VERIFY)
-    assert btclib_secp256k1.dsa.verify(msg, pubkey, sig)
+    btclib_secp256k1.dsa.verify(msg, pubkey, sig)
 
 
 def ssa_coincurve() -> None:
     """Time coincurve's BIP340 verification, over an x-only public key."""
     xonly, msg, sig = next(SSA_VERIFY)
-    assert coincurve.PublicKeyXOnly(xonly).verify(sig, msg)
+    coincurve.PublicKeyXOnly(xonly).verify(sig, msg)
 
 
 def ssa_secp256k1() -> None:
     """Time secp256k1-py's BIP340 verification, over a full public key."""
     pubkey, msg, sig = next(SSA_VERIFY_FULL)
-    assert secp256k1.PublicKey(pubkey, raw=True).schnorr_verify(
-        msg, sig, None, raw=True
-    )
+    secp256k1.PublicKey(pubkey, raw=True).schnorr_verify(msg, sig, None, raw=True)
 
 
 def ssa_electrum_ecc() -> None:
     """Time electrum-ecc's BIP340 verification, x-only derived per call."""
     pubkey, msg, sig = next(SSA_VERIFY_FULL)
-    assert electrum_ecc.ECPubkey(pubkey).schnorr_verify(sig, msg)
+    electrum_ecc.ECPubkey(pubkey).schnorr_verify(sig, msg)
 
 
 def ssa_btclib_secp256k1() -> None:
     """Time btclib_secp256k1's BIP340 verification, over an x-only key."""
     xonly, msg, sig = next(SSA_VERIFY)
-    assert btclib_secp256k1.ssa.verify(msg, xonly, sig)
+    btclib_secp256k1.ssa.verify(msg, xonly, sig)
 
 
 def dsa_sign_coincurve() -> None:
@@ -413,23 +434,10 @@ def dsa_sign_electrum_ecc() -> None:
 
     `grind_r_value=False`, which is not its default: it is the only wrapper
     of the four offering low-r grinding at all, and one signature is what
-    the other three produce. The row below times the default.
+    the other three produce.
     """
     prvkey, msg = next(DSA_SIGN_ELECTRUM)
     prvkey.ecdsa_sign(msg, grind_r_value=False)
-
-
-def dsa_sign_electrum_ecc_grind() -> None:
-    """Time electrum-ecc's ECDSA signing as it signs unless told otherwise.
-
-    Its `ENABLE_ECDSA_R_VALUE_GRINDING` is true, so a caller writing
-    `ecdsa_sign(msg32)` signs repeatedly until r fits in 32 bytes. Grinding
-    is a loop around a wrapper rather than anything libsecp256k1 does, which
-    is why it is one row of four here and a pair of rows in the tables about
-    libraries.
-    """
-    prvkey, msg = next(DSA_SIGN_ELECTRUM)
-    prvkey.ecdsa_sign(msg)
 
 
 def dsa_sign_btclib_secp256k1() -> None:
@@ -506,7 +514,6 @@ DSA_SIGN_ROWS = (
     dsa_sign_coincurve,
     dsa_sign_secp256k1,
     dsa_sign_electrum_ecc,
-    dsa_sign_electrum_ecc_grind,
     dsa_sign_btclib_secp256k1,
 )
 SSA_SIGN_ROWS = (
@@ -525,53 +532,63 @@ TWEAK_ROWS = (
 for _row in DSA_ROWS + SSA_ROWS + DSA_SIGN_ROWS + SSA_SIGN_ROWS + TWEAK_ROWS:
     _row()
 
-# one count for all eight rows, where the scripts that mix Python in
-# need one per function: every row here is a call into C, and they land
-# within a factor of a few of each other. Picked from a first timed call
-# to put a row near a second and a half of wall clock -- long enough
-# that Python's own call overhead is a rounding error beside the C, short
-# enough that the whole script is a run to wait for
-CALLS = 100_000
+# One count for every row, where the scripts that mix Python in need one per
+# function: every row here is a call into C and they land within a factor of a
+# few. Five rounds of it, and the row reports the *minimum*: interference on a
+# shared machine only ever adds time, so the fastest round is the one least
+# disturbed, and a mean would carry every interruption into the number. The
+# spread beside it says how much there was to discard -- a row whose rounds
+# disagree by a few percent measured a busy machine, and the reader can see it
+# rather than being told the machine was quiet.
+#
+# The count is a fifth of what one round used to be, so five rounds cost what
+# one run cost: robustness here is a rearrangement rather than a bill.
+CALLS = 20_000
+ROUNDS = 5
 
 
-def benchmark(func: Callable[[], None], calls: int) -> float:
-    """Call `func` `calls` times and return microseconds per call.
+def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
+    """Return the microseconds per call of the quickest round, and the spread.
 
-    Returned and not printed: a table sorted fastest to slowest, each row
-    divided by one of the others, cannot be written a line at a time --
-    every number has to be in hand before the first line is.
+    `ROUNDS` rounds of `calls` calls each. The minimum is the estimate: noise
+    is one-sided, so the quickest round is the one that ran with least taken
+    from it. The spread is how far the slowest round ran from the quickest, as
+    a fraction of the quickest, and it is printed rather than hidden because
+    it is the only thing in the output that says whether the machine was quiet.
     """
-    # perf_counter and not time(): the wall clock can step backwards
-    # under an NTP correction, and a benchmark is the one place that
-    # shows up as a negative duration
-    start = time.perf_counter()
-    for _ in range(calls):
-        func()
-    end = time.perf_counter()
-    return (end - start) / calls * 1e6
+    # perf_counter and not time(): the wall clock can step backwards under an
+    # NTP correction, and a benchmark is the one place that shows up as a
+    # negative duration
+    rounds = []
+    for _ in range(ROUNDS):
+        start = time.perf_counter()
+        for _ in range(calls):
+            func()
+        rounds.append((time.perf_counter() - start) / calls * 1e6)
+    quickest = min(rounds)
+    return quickest, max(rounds) / quickest - 1
 
 
 def table(title: str, rows: tuple[Callable[[], None], ...]) -> None:
     """Time every row of one operation, then print them fastest first.
 
-    The ratio is against the fastest row, whichever it turns out to be,
-    so the top row reads 1.0x and every other says what it costs to use
-    that one instead. Against a named row -- btclib_secp256k1's, the
-    obvious candidate here -- the column would answer a question the
-    reader did not ask on the runs where that row is not the quickest,
-    and half the column would sit under one, which reads as a defect
-    rather than as a result.
+    The ratio is against the fastest row, whichever it turns out to be, so the
+    top row reads 1.00x and every other says what it costs to use that one
+    instead. Against a named row the column would answer a question the reader
+    did not ask on the runs where that row is not the quickest.
     """
-    us = {func.__name__: benchmark(func, CALLS) for func in rows}
-    against = min(us.values())
+    measured = {func.__name__: benchmark(func, CALLS) for func in rows}
+    against = min(value for value, _ in measured.values())
     print(title)
-    print(f"  {'':<30}{'μs/call':>10}{'vs best':>12}")
-    for name, value in sorted(us.items(), key=lambda row: row[1]):
-        # two decimals on the ratio where the other scripts print one:
-        # every row here calls the same C and they land within a few
-        # percent of each other, so one decimal prints 1.0x for the whole
-        # column and says nothing at all
-        print(f"  {name:<30}{value:10.2f}{value / against:11.2f}x   ({CALLS} calls)")
+    print(f"  {'':<30}{'μs/call':>10}{'vs best':>12}{'spread':>9}")
+    for name, (value, spread) in sorted(measured.items(), key=lambda row: row[1][0]):
+        # two decimals on the ratio where the other scripts print one: every
+        # row here calls the same C and they land within a few percent of each
+        # other, so one decimal prints 1.0x for the whole column
+        print(
+            f"  {name:<30}{value:10.2f}{value / against:11.2f}x{spread:8.1%}"
+            f"   ({ROUNDS}x{CALLS} calls)"
+        )
 
 
 def main() -> None:

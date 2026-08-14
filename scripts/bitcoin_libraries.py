@@ -78,6 +78,13 @@ nor BIP32, so neither has a row in those tables. pycoin's `ecdsa.Generator`
 has no derivation function either, which is why its BIP32 row goes through
 `pycoin.symbols.btc.network`.
 
+A timed function calls one library and discards what it returns: no row
+checks its own answer, which would put the check inside the number.
+`tests/vectors_test.py` is where the answers are checked, running the
+vendored vectors against every library timed here. The assertions below run
+at import, where the fixtures are built, so the suite loading this module
+runs them and no timing carries them.
+
 Not part of the test suite and not run by CI: a shared runner disagrees with
 a laptop by more than most of the differences here.
 """
@@ -505,7 +512,7 @@ def dsa_sign_btclib_grind() -> None:
 def dsa_verify_btclib() -> None:
     """Time ECDSA verification through btclib, bindings enabled."""
     msg, _, pubkey, sig = next(DSA_BTCLIB)
-    assert dsa.verify_(msg, pubkey, sig)
+    dsa.verify_(msg, pubkey, sig)
 
 
 def dsa_sign_ecdsa() -> None:
@@ -519,7 +526,7 @@ def dsa_sign_ecdsa() -> None:
 def dsa_verify_ecdsa() -> None:
     """Time ECDSA verification through the `ecdsa` PyPI package."""
     msg, key, sig = next(DSA_ECDSA)
-    assert key.verifying_key.verify_digest(sig, msg, sigdecode=ecdsa.util.sigdecode_der)
+    key.verifying_key.verify_digest(sig, msg, sigdecode=ecdsa.util.sigdecode_der)
 
 
 def dsa_sign_pycoin() -> None:
@@ -531,7 +538,7 @@ def dsa_sign_pycoin() -> None:
 def dsa_verify_pycoin() -> None:
     """Time ECDSA verification through pycoin's Generator."""
     _, digest, pair, sig = next(DSA_PYCOIN)
-    assert pycoin_generator.verify(pair, digest, sig)
+    pycoin_generator.verify(pair, digest, sig)
 
 
 def dsa_sign_buidl() -> None:
@@ -543,7 +550,7 @@ def dsa_sign_buidl() -> None:
 def dsa_verify_buidl() -> None:
     """Time ECDSA verification through buidl's pure-Python S256Point."""
     key, digest, sig = next(DSA_BUIDL)
-    assert key.point.verify(digest, sig)
+    key.point.verify(digest, sig)
 
 
 def dsa_sign_bitcoinlib() -> None:
@@ -555,7 +562,7 @@ def dsa_sign_bitcoinlib() -> None:
 def dsa_verify_bitcoinlib() -> None:
     """Time ECDSA verification through python-bitcoinlib's CPubKey."""
     msg, _, pubkey, sig = next(DSA_BITCOINLIB)
-    assert pubkey.verify(msg, sig)
+    pubkey.verify(msg, sig)
 
 
 def dsa_sign_embit() -> None:
@@ -584,7 +591,7 @@ def dsa_sign_embit_grind() -> None:
 def dsa_verify_embit() -> None:
     """Time ECDSA verification through embit's bundled library."""
     msg, _, pubkey, sig = next(DSA_EMBIT)
-    assert pubkey.verify(sig, msg)
+    pubkey.verify(sig, msg)
 
 
 # --- BIP340 (Schnorr) sign and verify -----------------------------------
@@ -650,7 +657,7 @@ def ssa_sign_btclib() -> None:
 def ssa_verify_btclib() -> None:
     """Time BIP340 verification through btclib, bindings enabled."""
     msg, prvkey, _, sig = next(SSA_BTCLIB)
-    assert ssa.verify_(msg, pub_keyinfo_from_prv_key(prvkey)[0][1:], sig)
+    ssa.verify_(msg, pub_keyinfo_from_prv_key(prvkey)[0][1:], sig)
 
 
 def ssa_sign_buidl() -> None:
@@ -662,7 +669,7 @@ def ssa_sign_buidl() -> None:
 def ssa_verify_buidl() -> None:
     """Time BIP340 verification through buidl's pure-Python S256Point."""
     key, msg, _, sig = next(SSA_BUIDL)
-    assert key.point.verify_schnorr(msg, sig)
+    key.point.verify_schnorr(msg, sig)
 
 
 def ssa_sign_embit() -> None:
@@ -674,7 +681,7 @@ def ssa_sign_embit() -> None:
 def ssa_verify_embit() -> None:
     """Time BIP340 verification through embit's bundled library."""
     _, pubkey, msg, sig = next(SSA_EMBIT)
-    assert pubkey.schnorr_verify(sig, msg)
+    pubkey.schnorr_verify(sig, msg)
 
 
 # --- BIP32 derivation ---------------------------------------------------
@@ -725,26 +732,26 @@ BIP32 = cycle(list(zip(DERIVATIONS, EXPECTED_CHILDREN, strict=True)))
 
 def bip32_derive_btclib() -> None:
     """Time seed-to-child BIP32 derivation through btclib, bindings enabled."""
-    chain, expected = next(BIP32)
-    assert _btclib_child_pubkey(chain.seed, chain.path) == expected
+    chain, _expected = next(BIP32)
+    _btclib_child_pubkey(chain.seed, chain.path)
 
 
 def bip32_derive_pycoin() -> None:
     """Time seed-to-child BIP32 derivation through pycoin's BIP32Node."""
-    chain, expected = next(BIP32)
-    assert _pycoin_child_pubkey(chain.seed, chain.path) == expected
+    chain, _expected = next(BIP32)
+    _pycoin_child_pubkey(chain.seed, chain.path)
 
 
 def bip32_derive_embit() -> None:
     """Time seed-to-child BIP32 derivation through embit's HDKey."""
-    chain, expected = next(BIP32)
-    assert _embit_child_pubkey(chain.seed, chain.path) == expected
+    chain, _expected = next(BIP32)
+    _embit_child_pubkey(chain.seed, chain.path)
 
 
 def bip32_derive_buidl() -> None:
     """Time seed-to-child BIP32 derivation through buidl's HDPrivateKey."""
-    chain, expected = next(BIP32)
-    assert _buidl_child_pubkey(chain.seed, chain.path) == expected
+    chain, _expected = next(BIP32)
+    _buidl_child_pubkey(chain.seed, chain.path)
 
 
 # --- base58check, bech32 and bech32m, over published addresses ---------
@@ -768,22 +775,22 @@ BECH32M_ADDRESS = "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj
 
 def base58_encode_btclib() -> None:
     """Time btclib's base58check encoding of a P2PKH address."""
-    assert btclib.b58.address_from_h160("p2pkh", WITNESS_V0) == BASE58_ADDRESS
+    btclib.b58.address_from_h160("p2pkh", WITNESS_V0)
 
 
 def base58_encode_pycoin() -> None:
     """Time pycoin's, which takes the version byte in the payload."""
-    assert pycoin.encoding.b58.b2a_hashed_base58(BASE58_PAYLOAD) == BASE58_ADDRESS
+    pycoin.encoding.b58.b2a_hashed_base58(BASE58_PAYLOAD)
 
 
 def base58_encode_embit() -> None:
     """Time embit's, which spells the checksum in the function name."""
-    assert embit.base58.encode_check(BASE58_PAYLOAD) == BASE58_ADDRESS
+    embit.base58.encode_check(BASE58_PAYLOAD)
 
 
 def base58_encode_buidl() -> None:
     """Time buidl's, whose helper module carries it."""
-    assert buidl.helper.encode_base58_checksum(BASE58_PAYLOAD) == BASE58_ADDRESS
+    buidl.helper.encode_base58_checksum(BASE58_PAYLOAD)
 
 
 def base58_encode_bitcoinlib() -> None:
@@ -793,114 +800,106 @@ def base58_encode_bitcoinlib() -> None:
     operation the other four perform: `P2PKHBitcoinAddress.from_bytes` is
     where the checksummed encoding lives.
     """
-    assert str(bitcoinlib_wallet.P2PKHBitcoinAddress.from_bytes(WITNESS_V0, 0)) == (
-        BASE58_ADDRESS
-    )
+    str(bitcoinlib_wallet.P2PKHBitcoinAddress.from_bytes(WITNESS_V0, 0))
 
 
 def base58_decode_btclib() -> None:
     """Time btclib's base58check decoding, which returns the script type too."""
-    assert btclib.b58.h160_from_address(BASE58_ADDRESS)[1] == WITNESS_V0
+    btclib.b58.h160_from_address(BASE58_ADDRESS)[1]
 
 
 def base58_decode_pycoin() -> None:
     """Time pycoin's, which returns the version byte with the payload."""
-    assert pycoin.encoding.b58.a2b_hashed_base58(BASE58_ADDRESS) == BASE58_PAYLOAD
+    pycoin.encoding.b58.a2b_hashed_base58(BASE58_ADDRESS)
 
 
 def base58_decode_embit() -> None:
     """Time embit's."""
-    assert embit.base58.decode_check(BASE58_ADDRESS) == BASE58_PAYLOAD
+    embit.base58.decode_check(BASE58_ADDRESS)
 
 
 def base58_decode_buidl() -> None:
     """Time buidl's, which drops the version byte and returns the hash160."""
-    assert buidl.helper.decode_base58(BASE58_ADDRESS) == WITNESS_V0
+    buidl.helper.decode_base58(BASE58_ADDRESS)
 
 
 def base58_decode_bitcoinlib() -> None:
     """Time python-bitcoinlib's, through the address class again."""
-    assert bytes(bitcoinlib_wallet.CBitcoinAddress(BASE58_ADDRESS)) == WITNESS_V0
+    bytes(bitcoinlib_wallet.CBitcoinAddress(BASE58_ADDRESS))
 
 
 def bech32_encode_btclib() -> None:
     """Time btclib's bech32 encoding of a witness-v0 address."""
-    assert btclib.b32.address_from_witness(0, WITNESS_V0) == BECH32_ADDRESS
+    btclib.b32.address_from_witness(0, WITNESS_V0)
 
 
 def bech32_encode_embit() -> None:
     """Time embit's, which takes the human-readable part per call."""
-    assert embit.bech32.encode("bc", 0, WITNESS_V0) == BECH32_ADDRESS
+    embit.bech32.encode("bc", 0, WITNESS_V0)
 
 
 def bech32_encode_buidl() -> None:
     """Time buidl's, which takes a serialized witness program."""
-    assert (
-        buidl.bech32.encode_bech32_checksum(
-            b"\x00" + bytes([len(WITNESS_V0)]) + WITNESS_V0, network="mainnet"
-        )
-        == BECH32_ADDRESS
+    buidl.bech32.encode_bech32_checksum(
+        b"\x00" + bytes([len(WITNESS_V0)]) + WITNESS_V0, network="mainnet"
     )
 
 
 def bech32_encode_bitcoinlib() -> None:
     """Time python-bitcoinlib's, a copy of the reference implementation."""
-    assert bitcoin.bech32.encode("bc", 0, WITNESS_V0) == BECH32_ADDRESS
+    bitcoin.bech32.encode("bc", 0, WITNESS_V0)
 
 
 def bech32_decode_btclib() -> None:
     """Time btclib's bech32 decoding, which returns the witness version too."""
-    assert btclib.b32.witness_from_address(BECH32_ADDRESS)[1] == WITNESS_V0
+    btclib.b32.witness_from_address(BECH32_ADDRESS)[1]
 
 
 def bech32_decode_embit() -> None:
     """Time embit's, which returns the program as a list of integers."""
-    assert bytes(embit.bech32.decode("bc", BECH32_ADDRESS)[1]) == WITNESS_V0
+    bytes(embit.bech32.decode("bc", BECH32_ADDRESS)[1])
 
 
 def bech32_decode_buidl() -> None:
     """Time buidl's, which returns the network beside the program."""
-    assert buidl.bech32.decode_bech32(BECH32_ADDRESS)[2] == WITNESS_V0
+    buidl.bech32.decode_bech32(BECH32_ADDRESS)[2]
 
 
 def bech32_decode_bitcoinlib() -> None:
     """Time python-bitcoinlib's."""
-    assert bytes(bitcoin.bech32.decode("bc", BECH32_ADDRESS)[1]) == WITNESS_V0
+    bytes(bitcoin.bech32.decode("bc", BECH32_ADDRESS)[1])
 
 
 def bech32m_encode_btclib() -> None:
     """Time btclib's bech32m encoding of a witness-v1 address."""
-    assert btclib.b32.address_from_witness(1, WITNESS_V1) == BECH32M_ADDRESS
+    btclib.b32.address_from_witness(1, WITNESS_V1)
 
 
 def bech32m_encode_embit() -> None:
     """Time embit's, which picks the constant from the witness version."""
-    assert embit.bech32.encode("bc", 1, WITNESS_V1) == BECH32M_ADDRESS
+    embit.bech32.encode("bc", 1, WITNESS_V1)
 
 
 def bech32m_encode_buidl() -> None:
     """Time buidl's, from a serialized witness-v1 program."""
-    assert (
-        buidl.bech32.encode_bech32_checksum(
-            b"\x51" + bytes([len(WITNESS_V1)]) + WITNESS_V1, network="mainnet"
-        )
-        == BECH32M_ADDRESS
+    buidl.bech32.encode_bech32_checksum(
+        b"\x51" + bytes([len(WITNESS_V1)]) + WITNESS_V1, network="mainnet"
     )
 
 
 def bech32m_decode_btclib() -> None:
     """Time btclib's bech32m decoding."""
-    assert btclib.b32.witness_from_address(BECH32M_ADDRESS)[1] == WITNESS_V1
+    btclib.b32.witness_from_address(BECH32M_ADDRESS)[1]
 
 
 def bech32m_decode_embit() -> None:
     """Time embit's."""
-    assert bytes(embit.bech32.decode("bc", BECH32M_ADDRESS)[1]) == WITNESS_V1
+    bytes(embit.bech32.decode("bc", BECH32M_ADDRESS)[1])
 
 
 def bech32m_decode_buidl() -> None:
     """Time buidl's."""
-    assert buidl.bech32.decode_bech32(BECH32M_ADDRESS)[2] == WITNESS_V1
+    buidl.bech32.decode_bech32(BECH32M_ADDRESS)[2]
 
 
 # python-bitcoinlib has no bech32m row in either direction, and the reason

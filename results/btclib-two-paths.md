@@ -1,9 +1,9 @@
 # btclib against btclib
 
-## What produced it
+## This run
 
 ```text
-when    : 2026-08-14 22:09 CEST (20:09 UTC)
+when    : 2026-08-14 22:59 CEST (20:59 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/btclib_two_paths.py
@@ -33,8 +33,7 @@ operations holding one that a caller would call.
 One run, kept whole — the header the script printed above its numbers is
 part of it, because a table that does not say which build of btclib it
 timed cannot be checked. Nothing was repeated and no outlier was
-discarded, so what [README.md][readme] says about reading these applies
-here first: an order of magnitude, never a figure to quote.
+discarded. The numbers are an order of magnitude, never a figure to quote.
 
 ## The output
 
@@ -46,32 +45,32 @@ the two arithmetics under each pair
   pure python         btclib's own curves/curve_group.py, the dispatch off
 
                                 μs/call       vs best
-ellswift_decode_libsecp256k1     8.3310          1.0x
-point_parse_libsecp256k1         8.7365          1.0x
-dh_libsecp256k1                  13.847          1.0x
-taproot_tweak_libsecp256k1       17.348          1.0x
-mult_libsecp256k1                19.156          1.0x
-pubkey_libsecp256k1              19.303          1.0x
-dsa_verify_libsecp256k1          23.603          1.0x
-ssa_verify_libsecp256k1          23.914          1.0x
-bms_verify_libsecp256k1          24.050          1.0x
-dsa_sign_libsecp256k1            24.878          1.0x
-ssa_sign_libsecp256k1            25.119          1.0x
-bms_sign_libsecp256k1            30.526          1.0x
-dsa_recover_libsecp256k1         43.725          1.0x
-dsa_sign_pure_python             174.64          7.0x
-mult_pure_python                 139.10          7.3x
-pubkey_pure_python               148.00          7.7x
-point_parse_pure_python          74.896          8.6x
-bms_sign_pure_python             337.64         11.1x
-ssa_sign_pure_python             321.54         12.8x
-ellswift_decode_pure_python      128.26         15.4x
-taproot_tweak_pure_python        314.57         18.1x
-ssa_verify_pure_python           679.46         28.4x
-dsa_verify_pure_python           673.47         28.5x
-dh_pure_python                   548.84         39.6x
-bms_verify_pure_python           1329.4         55.3x
-dsa_recover_pure_python          3237.7         74.0x
+point_parse_libsecp256k1         3.5067          1.0x
+mult_libsecp256k1                8.2101          1.0x
+ellswift_decode_libsecp256k1     8.5816          1.0x
+pubkey_libsecp256k1              10.211          1.0x
+dh_libsecp256k1                  13.672          1.0x
+taproot_tweak_libsecp256k1       17.190          1.0x
+dsa_sign_libsecp256k1            19.585          1.0x
+dsa_verify_libsecp256k1          23.283          1.0x
+ssa_verify_libsecp256k1          23.689          1.0x
+bms_verify_libsecp256k1          23.749          1.0x
+ssa_sign_libsecp256k1            24.820          1.0x
+bms_sign_libsecp256k1            30.089          1.0x
+dsa_recover_libsecp256k1         42.515          1.0x
+dsa_sign_pure_python             174.02          8.9x
+bms_sign_pure_python             344.87         11.5x
+ssa_sign_pure_python             322.21         13.0x
+pubkey_pure_python               148.88         14.6x
+ellswift_decode_pure_python      133.60         15.6x
+mult_pure_python                 138.99         16.9x
+taproot_tweak_pure_python        308.85         18.0x
+point_parse_pure_python          74.799         21.3x
+ssa_verify_pure_python           680.12         28.7x
+dsa_verify_pure_python           670.48         28.8x
+dh_pure_python                   546.77         40.0x
+bms_verify_pure_python           1320.0         55.6x
+dsa_recover_pure_python          3221.8         75.8x
 ```
 
 ## What it shows
@@ -115,8 +114,24 @@ every row here is btclib, and every row is invoked from Python. The
 libsecp256k1 rows are timed first because `python_arithmetic_only()` cannot be
 undone inside a process; the sort happens afterwards.
 
-[readme]: https://github.com/btclib-org/btclib-benchmarks/blob/main/README.md
+## More benchmarks
+
+Four other questions are published in `results/`, each with its own
+comparands:
+
+- [btclib against the other bitcoin libraries][libs] — python libraries,
+  where bindings, if there are any, are one component of a library
+- [every pure-Python implementation][pure] — the same operations with no
+  bindings anywhere
+- [the libsecp256k1 wrappers][wrappers] — four packages wrapping one C
+  library, and which revision of it each vendors
+- [one key, every signature under it][reuse] — what the second verification
+  under a key costs, which a table of fresh keys cannot show
+
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
+[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
+[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
 
 <!-- The output above is a script's, whose columns are the script's to
      choose; rewrapping it to 80 would make it something else. The
