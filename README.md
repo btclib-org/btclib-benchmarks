@@ -13,17 +13,18 @@ Four benchmarks, each answering a different question:
 - **`pure_python.py`** — every pure-Python implementation of the same
   operation, with the bindings as the reference line
 - **`libsecp256k1_wrappers.py`** — btclib_secp256k1 against the other
-  wrappers of the same C library
+  wrappers of the same C library: `coincurve` and `secp256k1-py` through
+  cffi, `electrum-ecc` through ctypes
 
 ## Why this is its own repository
 
 The comparands are third-party packages: `ecdsa`, `pycoin`, `buidl`,
-`embit`, `python-bitcoinlib`, `coincurve`, `secp256k1`. Measured from
-inside btclib or btclib_secp256k1 they would be resolved into the lock of
-a library that never imports them — so a vulnerability reported against a
-comparand would be reported against btclib, and a reader of that alert
-would have to work out that the package was a benchmark row rather than a
-dependency.
+`embit`, `python-bitcoinlib`, `coincurve`, `secp256k1`, `electrum-ecc`.
+Measured from inside btclib or btclib_secp256k1 they would be resolved
+into the lock of a library that never imports them — so a vulnerability
+reported against a comparand would be reported against btclib, and a
+reader of that alert would have to work out that the package was a
+benchmark row rather than a dependency.
 
 Here the relationship is the right way round. The comparands are what
 this project is *for*, so an advisory against one names the package it is
@@ -47,11 +48,27 @@ means nothing without them.
 `coincurve` and `secp256k1` publish wheels up to `cp313` and no further,
 and neither builds from source without `pkg-config` and a C toolchain. A
 benchmark that cannot install its comparands measures nothing, so
-`.python-version` pins 3.13 where the rest of this org pins 3.14. The
-`requires-python` floor stays at 3.10, which is what the scripts
-themselves need.
+`.python-version` pins 3.13 where the rest of this org pins 3.14.
 
-Raise the pin when both publish a `cp314` wheel.
+Raise the pin when both publish a `cp314` wheel. Neither of the other two
+wrappers holds any part of it: `btclib_secp256k1` publishes past `cp313`
+already, and `electrum-ecc` has no wheel on PyPI at all — it compiles at
+install time, and what it builds is tagged `py3-none`, the C being
+reached through ctypes rather than linked into an extension.
+
+The `requires-python` floor is 3.11, and that end is set by a comparand
+too: `secp256k1lab` declares it, and `scripts/pure_python.py` imports it
+unguarded.
+
+### Installing the comparands needs a build toolchain
+
+Three of them compile a libsecp256k1 of their own: `coincurve` and
+`secp256k1` want `pkg-config`, and `electrum-ecc`, shipped as an sdist
+carrying libsecp256k1 as a submodule, runs its `autogen.sh` — so
+`autoconf`, `automake` and `libtool` have to be there as well. That cost
+is what makes the wrapper rows honest: each times the build that
+`pip install` produced, not whatever system library happened to be
+findable.
 
 ### Measuring a working tree instead of a release
 
@@ -80,6 +97,16 @@ by more than most of the differences being reported.
 
 No workflow runs these. CI lints and type-checks; measuring is something
 a person does, on a machine whose state they know.
+
+### The same C library is not the same binary
+
+`libsecp256k1_wrappers.py` compares four packages that all wrap
+`bitcoin-core/secp256k1`, which is true of the API and not of what is
+linked: each vendors a revision of its own, and they are not the same
+revision. So that script prints, per row, which one is underneath it and
+how the row reaches it. Read that beside the timings — a build against a
+stale one is not the comparison the table looks like, and where
+`btclib_secp256k1` is the one lagging, the output is where it says so.
 
 ## Licence
 
