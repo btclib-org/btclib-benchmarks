@@ -18,12 +18,12 @@ Four benchmarks, each answering a different question:
 ## Why this is its own repository
 
 The comparands are third-party packages: `ecdsa`, `pycoin`, `buidl`,
-`embit`, `python-bitcoinlib`, `coincurve`, `secp256k1`. They used to live
-in a `bench` dependency group inside btclib and inside btclib_secp256k1,
-where they were resolved into the lock of a library that never imports
-them — so a vulnerability reported against a comparand was reported
-against btclib, and a reader of that alert had to work out that the
-package was a benchmark row rather than a dependency.
+`embit`, `python-bitcoinlib`, `coincurve`, `secp256k1`. Measured from
+inside btclib or btclib_secp256k1 they would be resolved into the lock of
+a library that never imports them — so a vulnerability reported against a
+comparand would be reported against btclib, and a reader of that alert
+would have to work out that the package was a benchmark row rather than a
+dependency.
 
 Here the relationship is the right way round. The comparands are what
 this project is *for*, so an advisory against one names the package it is

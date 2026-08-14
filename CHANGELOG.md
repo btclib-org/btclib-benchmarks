@@ -10,28 +10,21 @@ The release notes, which say what a user has to act on, are in
 
 ### The benchmarks
 
-- **The four benchmarks of btclib and btclib_secp256k1 move here**, from
-  the `bench` dependency group of each of those two repositories. The
-  comparands — `ecdsa`, `pycoin`, `buidl`, `embit`,
-  `python-bitcoinlib`, `coincurve`, `secp256k1`, `secp256k1lab` — were
-  third-party packages resolved into the lock of a library that never
-  imports them, so an advisory against a comparand was an advisory
-  against btclib: all four of the Dependabot alerts open there were a
-  benchmark row, three of them transitive through `hwi`. Here the
-  comparands are what the project is for, and an alert names the package
-  it is about.
+- **The four benchmarks of btclib and btclib_secp256k1 live here**, and
+  the comparands with them: `ecdsa`, `pycoin`, `buidl`, `embit`,
+  `python-bitcoinlib`, `coincurve`, `secp256k1`, `secp256k1lab`.
+  Measured from inside either library, each of those would be a
+  third-party package resolved into the lock of something that never
+  imports it, and an advisory against a comparand would be an advisory
+  against the library it is compared with — a Dependabot alert whose
+  reader has to work out that the package is a benchmark row rather than
+  a dependency. Here the comparands are what the project is for, and an
+  alert names the package it is about.
 
-- **Every benchmark runs behind a `main()` guard.** They were bare
-  module-level statements, so importing one ran every timing loop in it
-  — which is why nothing could test them. The guard is what lets
-  `tests/scripts_import_test.py` import all four and check the thing a
-  test can actually check: that they load, and that the assertions
-  comparing every comparand against btclib still hold.
-
-  `scripts/libsecp256k1_wrappers.py` needed one more move for the same
-  reason: it called `python_arithmetic_only()` at import, which turns
-  btclib's dispatch off process-wide. Importing it in a suite would have
-  left every later test measuring the Python path.
+- **btclib_secp256k1's benchmark is `scripts/libsecp256k1_wrappers.py`
+  now**, that repository having shipped one up to v0.8.0.1: it is the
+  one of the four with a released ancestor, and the one HISTORY.md tells
+  a reader what to do about. The other three have none.
 
 - **Each benchmark prints where its packages came from** before any
   number, `scripts/_provenance.py` being what answers it. A released

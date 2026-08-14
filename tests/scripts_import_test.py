@@ -18,8 +18,8 @@ code -- so what is checked here is the two things that can be:
   every one of these tests into a benchmark run -- slow enough to notice,
   but the assertion below is what names the cause.
 
-Both are the reason `main()` exists at all: before it, importing any of
-these modules ran every timing loop in it.
+Both are what `main()` is for: a benchmark whose timings run at import
+is one no suite can hold to anything.
 """
 
 from __future__ import annotations

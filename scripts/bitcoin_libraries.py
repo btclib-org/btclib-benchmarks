@@ -466,7 +466,7 @@ def main() -> None:
 
 
 # a guard rather than bare module-level calls: the helpers above are
-# imported by the suite, and importing this module used to run every
-# timing in it. A measurement is the one thing a test must not do
+# imported by the suite, and a bare call would time every one of them on
+# the import. A measurement is the one thing a test must not do
 if __name__ == "__main__":
     main()
