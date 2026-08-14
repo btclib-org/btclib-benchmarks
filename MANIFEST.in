@@ -1,0 +1,16 @@
+# the sdist is not how this project is used -- the scripts are run from a
+# checkout -- but it is what check-manifest, pyroma and twine inspect, and
+# a distribution that omits the thing it is named after would pass none of
+# them. So the benchmarks and their tests ship, and the repository
+# furniture that means nothing outside a checkout does not
+include *.md
+include COPYRIGHT LICENSE
+include pyproject.toml uv.lock
+include .python-version
+recursive-include scripts *.py
+recursive-include tests *.py
+exclude .pre-commit-config.yaml .secrets.baseline
+exclude .gitattributes .markdownlint.jsonc .taplo.toml .yamllint.yaml
+exclude .readthedocs.yaml
+prune .github
+prune .vscode

@@ -1,0 +1,77 @@
+---
+name: test
+
+# what is tested here is the scripts' helpers -- the backend probes, the
+# table formatting -- and never a timing: a measurement is the one thing
+# a test cannot assert, and no workflow in this repository runs a
+# benchmark. tests/README.md says which helper each test judges
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["*.md"]
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    name: Run the suite on ${{ matrix.python }}, ${{ matrix.os }}
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.13 is the ceiling and not an omission: coincurve and
+        # secp256k1 publish no cp314 wheel, and this project installs its
+        # comparands rather than mocking them. .python-version carries
+        # the same fact and the condition for raising it
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+
+      # pkg-config and a toolchain: secp256k1 ships no wheel at all and
+      # coincurve none for every cell, so both are built from source here
+      - name: Install the build prerequisites of the wrapper comparands
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libtool
+
+      - name: Run pytest
+        run: uv run --locked --no-default-groups --group test pytest
+
+  test-passed:
+    name: "test: every job passed"
+    needs: [suite]
+    if: ${{ always() && !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # one required status check in branch protection instead of one per
+      # matrix cell, which would have to be re-listed on every change to
+      # the matrix. `always()` above is what makes a cancelled or skipped
+      # cell fail this job rather than silently satisfy it
+      - name: Fail if any job did not succeed
+        if: >-
+          contains(needs.*.result, 'failure')
+          || contains(needs.*.result, 'cancelled')
+          || contains(needs.*.result, 'skipped')
+        run: |
+          echo "::error::at least one test job did not succeed"
+          exit 1

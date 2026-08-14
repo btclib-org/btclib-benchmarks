@@ -1,0 +1,101 @@
+# Copyright (c) The btclib developers
+# Distributed under the MIT software license, see the accompanying
+# LICENSE file or https://opensource.org/license/mit for the full text.
+
+"""Where the packages being timed came from, printed before any number.
+
+A released wheel, a git checkout and an editable install of the same
+distribution all satisfy the same requirement, all resolve without a
+word, and all land in the same `site-packages`. They do not all perform
+the same, so a table that does not say which one ran is a table that
+cannot be checked -- and the wrong one is not an error message, it is a
+plausible number for a version nobody runs.
+
+That is the same argument the per-comparand backend probes make one layer
+down, where a package may or may not have found a C library to call: the
+rule here is that nothing claims a measurement without saying what
+produced it.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from importlib.metadata import PackageNotFoundError, version
+from importlib.metadata import distribution as _distribution
+from pathlib import Path
+
+
+def origin_of(dist_name: str) -> str:
+    """Say where a distribution came from: an index, a git ref, or a path.
+
+    PEP 610 is what makes this answerable rather than guessed: an
+    installer writes a `direct_url.json` beside the metadata whenever a
+    package came from anywhere *other* than an index, so the absence of
+    that file is the positive statement that this is a released
+    artifact.
+
+    Reading the import path instead answers nothing, a git build and a
+    PyPI wheel both sitting in `site-packages` -- which is not
+    hypothetical: the first version of this file did read the path, and
+    labelled a git build of btclib `released` on the very run that
+    introduced it.
+    """
+    try:
+        raw = _distribution(dist_name).read_text("direct_url.json")
+    except PackageNotFoundError:  # pragma: no cover - all are installed
+        return "not installed"
+    if raw is None:
+        return "released"
+    direct = json.loads(raw)
+    url = direct.get("url", "")
+    if "vcs_info" in direct:
+        vcs = direct["vcs_info"]
+        requested = vcs.get("requested_revision")
+        commit = (vcs.get("commit_id") or "")[:12]
+        ref = f"{requested}@{commit}" if requested else commit
+        return f"{url.removeprefix('https://github.com/')} {ref}".strip()
+    if direct.get("dir_info", {}).get("editable"):
+        return f"editable: {url.removeprefix('file://')}"
+    return f"local: {url.removeprefix('file://')}"
+
+
+def _under_install_root(module_file: str) -> bool:
+    """Say whether a module sits inside an install directory."""
+    return any(
+        parent.name in {"site-packages", "dist-packages"}
+        for parent in Path(module_file).resolve().parents
+    )
+
+
+def describe(dist_name: str, module_file: str) -> str:
+    """Return a line naming a package's version and where it came from.
+
+    `dist_name` is the name on the index and `module_file` the imported
+    module's `__file__`. Both are asked for because they answer different
+    halves: the metadata says how a package was installed, and only the
+    file says whether what got imported is the installed copy at all --
+    a directory on `sys.path` shadows an install silently, and no
+    metadata can see it.
+    """
+    try:
+        released = version(dist_name)
+    except PackageNotFoundError:  # pragma: no cover - all are installed
+        return f"{dist_name:<20}: not installed"
+    if not _under_install_root(module_file):
+        return f"{dist_name:<20}: {released:<24} (sys.path: {module_file})"
+    return f"{dist_name:<20}: {released:<24} ({origin_of(dist_name)})"
+
+
+def report(*packages: tuple[str, str]) -> None:
+    """Print a line per package, then the interpreter, then a blank line.
+
+    Written to stdout with the numbers rather than to stderr, because it
+    is part of the result rather than commentary on it: pasting the whole
+    of what the script printed has to be the easy path, and it only is if
+    the two arrive together.
+    """
+    for dist_name, module_file in packages:
+        print(describe(dist_name, module_file))
+    print(f"{'python':<20}: {sys.version.split()[0]}")
+    print()

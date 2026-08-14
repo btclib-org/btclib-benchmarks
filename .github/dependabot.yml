@@ -1,0 +1,83 @@
+---
+# three of the four ecosystems this repo has:
+# - the pre-commit hook revs are the one left out, because dependabot has no
+#   pre-commit ecosystem; pre-commit.ci updates them instead, weekly, as
+#   configured in the ci: block of .pre-commit-config.yaml
+#
+# every pull request here runs the whole test matrix, so each ecosystem
+# groups its updates into a single pull request. None declares a
+# target-branch: without one dependabot opens against the default branch,
+# which is the only branch a change lands on -- and a target-branch naming
+# a branch that is not there is not an error anywhere, it is a repository
+# where nothing is ever proposed.
+#
+# Weekly: the latest workflow upgrades everything uv resolves and runs
+# the suite, the lint gate and the packaging checks against it, on a
+# schedule, off the critical path, so each pull request is a diff whose
+# result is already known, and a smaller one is easier to read and to
+# revert. Monthly would be defensible only if nothing exercised the
+# drift beforehand -- a month of it arriving in one diff is harder on
+# both counts. The github-actions ecosystem gets the same interval for
+# symmetry rather than for evidence: nothing pre-validates an action bump,
+# but actions move rarely, and a week where none did produces no pull
+# request at all.
+#
+# The seven day cooldown is what the interval is really
+# trading against: a compromised release is usually yanked within days.
+# Weekly plus cooldown still means nothing is ever offered before it has
+# been public a week -- it means the offer comes at most a week after
+# that, rather than at most a month. Neither ecosystem tracks anything
+# security-critical, so nothing here wants to be faster than that
+version: 2
+updates:
+  # every action is pinned to a commit SHA, which nothing but this
+  # moves: without it a pin is frozen forever, and a fix (or a security
+  # advisory) upstream would never reach this repository
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      # thursday, where the latest workflow runs wednesday: the sentinel
+      # has just reported when the pull requests are opened. It buys the
+      # actions ecosystem nothing, which the sentinel does not cover, but
+      # two schedules a day apart are one thing to remember instead of two
+      day: thursday
+    groups:
+      actions:
+        patterns: ["*"]
+    cooldown:
+      default-days: 7
+
+  # uv.lock is committed and the workflows install from it with --locked,
+  # while the dependency groups declare no version at all: the whole
+  # drift of ruff, mypy, pytest and sphinx lives in the lock file, and
+  # this is the only thing that moves it. The uv-lock pre-commit hook
+  # only re-locks what pyproject.toml changed, it does not upgrade, and
+  # the latest workflow tests an upgrade it deliberately never commits
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+      day: thursday
+    groups:
+      dev-tooling:
+        patterns: ["*"]
+    cooldown:
+      default-days: 7
+
+  # the Gemfile, which is btclib.org rather than the library: one gem,
+  # github-pages, pinned to the version GitHub's own Pages builder runs.
+  # Nothing installs it to serve the site -- that build happens on
+  # GitHub's side -- so what a bump means here is that the builder itself
+  # moved, and website.yml is what then answers whether the site still
+  # renders under it. Ungrouped, a single gem having nothing to group
+  # with, and the cooldown left at the default above: this one tracks a
+  # release GitHub has already deployed, so the week is a formality rather
+  # than a quarantine
+  - package-ecosystem: bundler
+    directory: /
+    schedule:
+      interval: weekly
+      day: thursday
+    cooldown:
+      default-days: 7

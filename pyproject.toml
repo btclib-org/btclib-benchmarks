@@ -1,0 +1,362 @@
+[build-system]
+# 77 is the floor for the PEP 639 metadata below, and for both halves of
+# it at once: the SPDX string form of `project.license` and
+# `project.license-files` arrived in setuptools 77.0.0. An isolated build
+# resolving anything older fails on the syntax rather than ignoring it,
+# which is what the bound is for
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "btclib-benchmarks"
+# the one place the version is declared, and docs/source/conf.py parses
+# this file rather than the installed metadata, which would need the
+# package installed to build the documentation
+version = "2026.9"
+description = "Benchmarks of btclib and btclib_secp256k1 against their comparands"
+readme = "README.md"
+# PEP 639: a SPDX expression and the files it refers to, replacing the
+# deprecated license table and the License :: classifier
+license = "MIT"
+license-files = ["LICENSE", "COPYRIGHT", "AUTHORS.md"]
+authors = [{ name = "The btclib developers", email = "devs@btclib.org" }]
+requires-python = ">=3.10"
+# the comparands are dependencies here, where in btclib and
+# btclib_secp256k1 they were a `bench` dependency group -- and that
+# inversion is the whole reason this repository exists. There they were
+# third-party packages resolved into the lock of a library that does not
+# import them, so a Dependabot alert against one of them was an alert
+# against btclib; the four open ones (GHSA-wj6h-64fc-37mp on `ecdsa`,
+# two on `cbor2`, one on `protobuf`, the last three of them transitive
+# through `hwi`) were every one of them a comparand of a benchmark
+# nothing in the library ran. Here they are what the project is for, so
+# an alert against one names the package it is actually about.
+#
+# A floor and not a pin, for the reason btclib's `bench` group gave and
+# this inherits: the premise of the comparison is whatever `pip install`
+# currently gives a user, so a new release is to be picked up and
+# measured rather than refused. Each floor records the release the
+# numbers in the tables were taken against.
+#
+# `btclib` and `btclib_secp256k1` are comparands too, at their published
+# releases and not a checkout: `pip install btclib` is what an end user
+# gets, and that is the only performance an end user has. Measuring a
+# working tree instead is a different question, and scripts/README.md
+# says how to ask it without making it the default.
+dependencies = [
+    # 2026.9 is not on PyPI yet, and this floor names it deliberately:
+    # what these scripts reach into is btclib's *dispatch*, which is
+    # private and moves between releases -- `grind=` on dsa.sign_ and the
+    # `_libsecp256k1_available` switch are both in main and in no
+    # published wheel. Pinned to the last release the scripts would not
+    # run at all. Until the release lands, [tool.uv.sources] below
+    # resolves this from the branch, which is the reference these rows
+    # are written against; dropping that entry is the whole of what
+    # release day costs here
+    "btclib>=2026.9",
+    "btclib-secp256k1>=0.8.0.1",
+    "buidl>=0.2.36",
+    "coincurve>=21.0.0",
+    "ecdsa>=0.19.2",
+    "embit>=0.8.0",
+    "pycoin>=0.92718.20260405",
+    "python-bitcoinlib>=0.12.2",
+    "secp256k1>=0.14.0",
+    # on no index at all, so [tool.uv.sources] below takes it from its git
+    # tag, and it declares >=3.11 against this project's >=3.10 -- hence
+    # the marker rather than a floor. scripts/pure_python.py imports it
+    # unguarded and says so where its rows would otherwise be
+    "secp256k1lab; python_full_version >= '3.11'",
+]
+keywords = [
+    "bitcoin",
+    "benchmark",
+    "cryptography",
+    "elliptic-curves",
+    "secp256k1",
+    "ecdsa",
+    "schnorr",
+    "bip340",
+    "bip32",
+    "libsecp256k1",
+    "performance",
+]
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Security :: Cryptography",
+]
+
+[project.urls]
+homepage = "https://btclib.org"
+download = "https://github.com/btclib-org/btclib-benchmarks/releases"
+repository = "https://github.com/btclib-org/btclib-benchmarks"
+issues = "https://github.com/btclib-org/btclib-benchmarks/issues"
+pull_requests = "https://github.com/btclib-org/btclib-benchmarks/pulls"
+
+[dependency-groups]
+test = ["coverage", "pytest", "pytest-cov", "pytest-randomly"]
+lint = ["mypy", "pre-commit", "ruff>=0.16"]
+build = ["check-manifest", "check-wheel-contents", "pyroma", "twine"]
+docs = ["myst-parser", "sphinx", "sphinx_rtd_theme"]
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "build" },
+    { include-group = "docs" },
+]
+
+[tool.uv]
+# the rev of the uv-lock hook in .pre-commit-config.yaml, so the hook and
+# every other uv command write the lock in one format. setup-uv reads this
+# key when given no version input, so CI needs no second pin
+required-version = ">=0.12.3"
+
+[tool.uv.sources]
+# the one comparand with no release on any index, pinned to the tag its
+# own pyproject.toml calls 1.0.0
+secp256k1lab = { git = "https://github.com/secp256k1lab/secp256k1lab", tag = "v1.0.0" }
+# temporary, and the one line in this file with a date on it: btclib
+# 2026.9 is what these scripts are written against and is not published
+# yet, so the branch stands in for the release. Delete this entry the day
+# the release lands -- the floor above already names the version, so
+# nothing else here changes, and `uv lock` then resolves it from PyPI
+# like every other comparand.
+# A branch and not a commit on purpose: what this is standing in for is
+# "the next release", which is what main is, and pinning a commit would
+# freeze the reference at whatever main happened to be the day this was
+# written
+btclib = { git = "https://github.com/btclib-org/btclib", branch = "main" }
+
+[tool.setuptools]
+# the scripts are the deliverable, and they are modules rather than a
+# package: nothing imports them, and `py_modules` would put them at the
+# root of site-packages, which is not somewhere four benchmark scripts
+# belong. So nothing is installed -- this project is run from a checkout,
+# which is what `uv run` in README.md does
+packages = []
+
+[tool.check-manifest]
+ignore = [".vscode/*"]
+
+[tool.pytest.ini_options]
+# what the suite covers is the scripts' own helpers -- the backend
+# probes, the table formatting -- and never a timing, a measurement being
+# the one thing a test cannot assert. tests/README.md says which
+testpaths = ["tests"]
+addopts = "-ra --cov --durations=8 --strict-config --strict-markers"
+xfail_strict = true
+filterwarnings = ["error"]
+
+[tool.codespell]
+skip = ".secrets.baseline,uv.lock"
+# the PyPI package scripts/bitcoin_libraries.py compares against, which is
+# a real word to codespell by way of "build". It cannot be spelled
+# differently: it is the name on the index
+ignore-words-list = "buidl"
+ignore-regex = '`[^`]*`'
+
+[tool.typos.files]
+extend-exclude = [".secrets.baseline", "uv.lock"]
+
+[tool.typos.default]
+# an unbroken run of 26 characters or more is a key, a signature or a
+# hash, not a word: 26 is the length of the shortest possible base58
+# address, and the trailing = covers base64 padding
+extend-ignore-re = ['[0-9A-Za-z+/]{26,}={0,2}']
+
+[tool.typos.default.extend-words]
+# the PyPI package, not the "build" this hook offers to correct it to.
+# The hook runs with --write-changes, so without this line it renames a
+# comparand into a package that does not exist
+buidl = "buidl"
+
+[tool.typos.type.verbatim]
+extend-glob = ["CHANGELOG.md", "HISTORY.md", ".pre-commit-config.yaml"]
+extend-ignore-re = ['`[^`]*`']
+
+[tool.coverage.run]
+# `_provenance.py` and the suite, and deliberately not the four benchmark
+# scripts beside it. What their bodies do is time things: covering a
+# timing function means running it, so a coverage gate over them would
+# make every test run a benchmark -- slow, and worse, it would put a
+# measurement inside CI, where the numbers mean nothing. What *is*
+# testable in them is reached the other way round, by importing the
+# module: the `main()` guard exists so that an import runs the fixtures
+# and the cross-comparand assertions without timing anything, and
+# tests/scripts_import_test.py is what does it. So the scripts are
+# checked on the one property a test can hold them to -- that they load,
+# that their comparands agree -- and measured by a person
+source = ["scripts", "tests"]
+# the four benchmarks themselves. Naming them here rather than leaving
+# them to fail the gate is the same decision as the `source` comment
+# above, said in the form coverage understands: measured by a person, and
+# checked by a test only on whether they load
+omit = [
+    "*/site-packages/*",
+    "scripts/bitcoin_libraries.py",
+    "scripts/btclib_two_paths.py",
+    "scripts/libsecp256k1_wrappers.py",
+    "scripts/pure_python.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+precision = 2
+# 100 is not the same rule with the bar raised: coverage special-cases
+# it, so nothing short of an exact 100.00% passes. What is measured here
+# is the helpers, not the timing loops -- those carry `pragma: no cover`
+# with the reason beside them, a benchmark's own measurement being
+# something a test must not run
+fail_under = 100.0
+
+[tool.mypy]
+strict = true
+show_column_numbers = true
+show_error_codes = true
+enable_error_code = [
+    "deprecated",
+    "exhaustive-match",
+    "ignore-without-code",
+    "mutable-override",
+    "narrowed-type-not-subtype",
+    "possibly-undefined",
+    "redundant-expr",
+    "redundant-self",
+    "truthy-bool",
+    "truthy-iterable",
+    "unimported-reveal",
+]
+warn_unreachable = true
+# the oldest interpreter this project supports, and also the oldest mypy
+# can be aimed at. Aimed at the floor rather than at whatever runs it, a
+# typing construct missing from 3.10 is a type error here instead of a
+# runtime failure on the matrix
+python_version = "3.10"
+exclude = ["build"]
+# the benchmark scripts are modules reached by path, not an installed
+# package: this is the same `sys.path` entry tests/conftest.py makes, said
+# to the type checker
+mypy_path = "scripts"
+
+# the comparands: none of the nine ships py.typed or a stub on PyPI, so
+# the import is unresolved whether or not the package is installed.
+# ignore_missing_imports silences exactly that; the scripts' own logic
+# still gets strict mode, and only what comes back from a comparand is
+# `Any`. btclib and btclib_secp256k1 are not in this list -- both ship
+# py.typed, and a benchmark of them should type check against them
+[[tool.mypy.overrides]]
+module = [
+    "bitcoin.*",
+    "buidl.*",
+    "coincurve.*",
+    "ecdsa.*",
+    "embit.*",
+    "pycoin.*",
+    "secp256k1.*",
+    "secp256k1lab.*",
+]
+ignore_missing_imports = true
+
+[tool.ruff]
+# target-version is inferred from project.requires-python
+
+[tool.ruff.lint]
+preview = true
+explicit-preview-rules = true
+# the selection btclib-org holds its Python to, as bitcoin-core-rpc's own
+# pyproject.toml puts it. PTH is not here, and that is the one deliberate
+# subtraction: btclib selects it, and this project opens no file at all
+select = [
+    "A",
+    "B",
+    "BLE",
+    "C4",
+    "C90",
+    "CPY",
+    "D",
+    "E",
+    "ERA",
+    "F",
+    "FURB",
+    "I",
+    "ISC",
+    "PGH",
+    "PIE",
+    "PL",
+    "PT",
+    "RET",
+    "RSE",
+    "RUF",
+    "S",
+    "SIM",
+    "T20",
+    "TID",
+    "TRY",
+    "UP",
+    "W",
+]
+extend-select = ["unspecified-encoding"]
+ignore = [
+    "undocumented-magic-method",
+    "undocumented-public-init",
+    "incorrect-blank-line-before-class",
+    "multi-line-summary-second-line",
+    "line-too-long",
+    "too-many-arguments",
+    "too-many-statements",
+    "too-many-positional-arguments",
+    "magic-value-comparison",
+    "raise-vanilla-args",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# the whole output of every one of these is the table a manual run reads,
+# and each asserts its comparands agree with each other before timing any
+# of them. T20 is selected for the same reason it is everywhere in this
+# org -- a library writes to no stream of its own -- and a script whose
+# caller is a person at a terminal is the case it is not about
+"scripts/*.py" = [
+    "S101", # assert
+    "T201", # print
+]
+"tests/**" = [
+    "S101",
+    "B017",
+    "PT011",
+    "PT012",
+    "PT018",
+    "RUF043",
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pycodestyle]
+# 80 columns on the prose, where the code keeps the formatter's 88:
+# ruff-format reflows code and never a comment or a docstring, so 88 is
+# what it can enforce and this is the rest
+max-doc-length = 80
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"
+
+[tool.ruff.lint.flake8-copyright]
+# COPYRIGHT is the one place the notice text is written down; this is all
+# three of its lines as one regex, anchored so that the notice opens the
+# file rather than merely appearing in its first 4096 bytes
+notice-rgx = "^# Copyright \\(c\\) The btclib developers\\n# Distributed under the MIT software license, see the accompanying\\n# LICENSE file or https://opensource\\.org/license/mit for the full text\\."

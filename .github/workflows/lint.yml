@@ -1,0 +1,65 @@
+---
+name: lint
+
+# what this workflow runs is .pre-commit-config.yaml itself, never a
+# second list of the same tools: a commit and CI then enforce one thing,
+# and a hook added to that file needs no edit here
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # named literally, never through github.workflow: in a called workflow
+  # that expression is the *caller's* name, so two workflows called from
+  # one place would share a group and cancel each other
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint and type-check
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+
+      # the cache key needs the runner image, not only the OS: a
+      # pre-commit environment built on one image is not always usable on
+      # the next one, and a stale hit fails in the hook rather than here
+      - name: Identify the runner image
+        id: image
+        run: echo "os=${ImageOS:-unknown}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache the pre-commit environments
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: >-
+            pre-commit-${{ runner.os }}-${{ steps.image.outputs.os }}-${{
+            hashFiles('.pre-commit-config.yaml', '.python-version') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-${{ steps.image.outputs.os }}-
+
+      # --locked, never --frozen: a dependency added to pyproject.toml
+      # without a re-lock would otherwise be type checked against a stale
+      # environment, with nothing said about it
+      - name: Run every hook
+        run: >-
+          uv run --locked --only-group lint
+          pre-commit run --all-files --show-diff-on-failure
