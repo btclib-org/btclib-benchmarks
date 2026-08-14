@@ -58,6 +58,17 @@ dependencies = [
     "buidl>=0.2.36",
     "coincurve>=21.0.0",
     "ecdsa>=0.19.2",
+    # the closest comparand btclib_secp256k1 has, and the one that costs
+    # something to install: PyPI carries no wheel, only the sdist, so
+    # `uv sync` compiles the libsecp256k1 carried in it as a submodule.
+    # That is the same toolchain `coincurve` and `secp256k1` already ask
+    # for here, and it is what makes the row honest -- the binary timed
+    # is that build rather than whatever system library was findable.
+    # Unlike those two it builds a `py3-none-<platform>` wheel, the C
+    # being reached through ctypes and not linked into an extension, so
+    # it is indifferent to the interpreter and holds no part of the 3.13
+    # ceiling below
+    "electrum-ecc>=0.0.7",
     "embit>=0.8.0",
     "pycoin>=0.92718.20260405",
     "python-bitcoinlib>=0.12.2",
@@ -253,7 +264,7 @@ exclude = ["build"]
 # to the type checker
 mypy_path = "scripts"
 
-# the comparands: none of the nine ships py.typed or a stub on PyPI, so
+# the comparands: none of the ten ships py.typed or a stub on PyPI, so
 # the import is unresolved whether or not the package is installed.
 # ignore_missing_imports silences exactly that; the scripts' own logic
 # still gets strict mode, and only what comes back from a comparand is
@@ -265,6 +276,7 @@ module = [
     "buidl.*",
     "coincurve.*",
     "ecdsa.*",
+    "electrum_ecc.*",
     "embit.*",
     "pycoin.*",
     "secp256k1.*",

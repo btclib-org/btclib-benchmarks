@@ -9,10 +9,12 @@ linters and packaging tools itself.
 uv sync --locked
 ```
 
-That installs the comparands, which is most of the work: `coincurve` and
-`secp256k1` compile a libsecp256k1 of their own, so a C toolchain and
-`pkg-config` have to be present. `secp256k1lab` comes from a git tag,
-having no release on any index.
+That installs the comparands, which is most of the work: `coincurve`,
+`secp256k1` and `electrum-ecc` each compile a libsecp256k1 of their own,
+so a C toolchain has to be present — `pkg-config` for the first two, and
+`autoconf`, `automake` and `libtool` for the third, which ships as an
+sdist and runs libsecp256k1's `autogen.sh`. `secp256k1lab` comes from a
+git tag, having no release on any index.
 
 ## Running a benchmark
 
@@ -66,17 +68,22 @@ What it does check is the two things that survive being automated:
 
 ## Writing a row
 
-- **assert before you time.** Every comparand's answer is checked against
-  btclib's at import, so a package that is merely fast and wrong cannot
-  win a row.
+- **assert before you time.** Every comparand's answer is checked at
+  import against btclib's — or, where btclib is not a row, against the
+  package the script is about — so one that is merely fast and wrong
+  cannot win a row. `libsecp256k1_wrappers.py` also checks the other
+  half: that every row *rejects* a signature made for another message,
+  which a positive check alone cannot tell from a row that answers true
+  to anything.
 - **say which backend actually ran.** `pycoin`, `buidl` and
   `python-bitcoinlib` each reach for a C library at import if they find
   one, and quietly fall back to Python if they do not. A row that does
   not name what it resolved to is not a measurement of anything in
   particular.
-- **loop counts are per row.** A pure-Python implementation and a C one
-  differ by two orders of magnitude: one shared count either takes
-  minutes or measures the clock's own resolution.
+- **loop counts are per row** wherever a table mixes Python with C: the
+  two differ by orders of magnitude, and one shared count either takes
+  minutes or measures the clock's own resolution. A table whose rows are
+  all C can share one count, and `libsecp256k1_wrappers.py` does.
 - **never state a number in prose.** Not in a comment, not in a
   docstring, not in the README. The tables are produced by running the
   scripts; a figure written down anywhere else is a claim nothing

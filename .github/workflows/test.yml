@@ -49,10 +49,15 @@ jobs:
           enable-cache: true
           python-version: ${{ matrix.python }}
 
-      # pkg-config and a toolchain: secp256k1 ships no wheel at all and
-      # coincurve none for every cell, so both are built from source here
+      # a toolchain, because three of the wrapper comparands compile a
+      # libsecp256k1 of their own here: secp256k1 ships no wheel at all
+      # and coincurve none for every cell, both wanting pkg-config, and
+      # electrum-ecc ships only an sdist and runs libsecp256k1's
+      # autogen.sh, which is what autoconf and automake are for
       - name: Install the build prerequisites of the wrapper comparands
-        run: sudo apt-get update && sudo apt-get install -y pkg-config libtool
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libtool autoconf automake
 
       - name: Run pytest
         run: uv run --locked --no-default-groups --group test pytest

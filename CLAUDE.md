@@ -29,7 +29,7 @@ Four benchmarks, one question each:
 - `scripts/pure_python.py` — every pure-Python implementation of one
   operation, bindings as the reference line
 - `scripts/libsecp256k1_wrappers.py` — btclib_secp256k1 against the other
-  wrappers of the same C library
+  wrappers of the same C library, and which revision of it each vendors
 
 `scripts/_provenance.py` is the only module the suite covers, and the
 only one that is not a benchmark.
@@ -46,6 +46,9 @@ only one that is not a benchmark.
   cp314 wheel and neither builds without `pkg-config`. 3.11 is the
   floor: `secp256k1lab` declares it and `scripts/pure_python.py` imports
   it unguarded. Raising either means checking a package index first.
+  Those two comparands and no others hold the ceiling: `electrum-ecc`
+  compiles from an sdist on every platform and what it builds is
+  `py3-none`, so it installs on any interpreter.
 - **`btclib` resolves from `main`, not PyPI**, through
   `[tool.uv.sources]`, and that entry is temporary. These scripts reach
   into btclib's *dispatch*, which is private and moves between releases.
@@ -53,11 +56,21 @@ only one that is not a benchmark.
   that release lands is the whole of the change.
 - **Every timing lives behind `main()`.** Importing a script must run
   its fixtures and its cross-comparand assertions and time nothing —
-  that is what makes the suite possible. Two of the scripts also call
-  `python_arithmetic_only()`, which turns btclib's dispatch off
-  process-wide and cannot be undone: it belongs inside `main()`, after
-  every row that is meant to reach the bindings. At module level it
-  would leave every later test in the process measuring Python.
+  that is what makes the suite possible. `btclib_two_paths.py` and
+  `pure_python.py` also call `python_arithmetic_only()`, which turns
+  btclib's dispatch off process-wide and cannot be undone: it belongs
+  inside `main()`, after every row that is meant to reach the bindings.
+  At module level it would leave every later test in the process
+  measuring Python. `libsecp256k1_wrappers.py` does not import btclib at
+  all any more, and that is deliberate — a table of wrappers has no
+  pure-Python row to switch for.
+- **The wrapper rows carry the libsecp256k1 revision each package
+  vendors**, `LIBSECP256K1_PINS` in `libsecp256k1_wrappers.py` holding
+  it: three of the four link the library into a cffi extension, where
+  nothing at run time can say which revision that was. Each pin is keyed
+  by the release it was read from, so an upgraded comparand prints
+  `unrecorded` instead of a pin that has quietly stopped being true. Go
+  read the new release and put the pin back.
 - **Coverage measures `_provenance.py` and the suite, and omits the four
   benchmarks** — covering a timing function means running it, and a
   measurement inside CI is a number that means nothing.

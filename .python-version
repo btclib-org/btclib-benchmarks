@@ -1,10 +1,13 @@
 # 3.13 and not the 3.14 the rest of this org pins, and the reason is a
-# comparand rather than a preference: coincurve and secp256k1, the two
+# comparand rather than a preference: coincurve and secp256k1, two of the
 # wrappers scripts/libsecp256k1_wrappers.py exists to compare, publish
 # wheels up to cp313 and no further, and neither builds from source
 # without pkg-config and a toolchain. A benchmark that cannot install
 # its comparands measures nothing.
-# Raise this the moment both publish a cp314 wheel; requires-python in
-# pyproject.toml stays at the 3.10 floor either way, that being what the
-# scripts themselves need
+# The other two wrappers hold no part of this: btclib_secp256k1 publishes
+# past cp313, and electrum-ecc builds a py3-none wheel, reaching the C
+# through ctypes rather than linking it into an extension.
+# Raise this the moment coincurve and secp256k1 publish a cp314 wheel;
+# requires-python in pyproject.toml stays at its own floor either way,
+# which secp256k1lab sets at 3.11
 3.13

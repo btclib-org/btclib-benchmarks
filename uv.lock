@@ -146,6 +146,7 @@ dependencies = [
     { name = "buidl" },
     { name = "coincurve" },
     { name = "ecdsa" },
+    { name = "electrum-ecc" },
     { name = "embit" },
     { name = "pycoin" },
     { name = "python-bitcoinlib" },
@@ -202,6 +203,7 @@ requires-dist = [
     { name = "buidl", specifier = ">=0.2.36" },
     { name = "coincurve", specifier = ">=21.0.0" },
     { name = "ecdsa", specifier = ">=0.19.2" },
+    { name = "electrum-ecc", specifier = ">=0.0.7" },
     { name = "embit", specifier = ">=0.8.0" },
     { name = "pycoin", specifier = ">=0.92718.20260405" },
     { name = "python-bitcoinlib", specifier = ">=0.12.2" },
@@ -889,6 +891,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/25/ca/8de7744cb3bc966c8
 wheels = [
     { url = "https://files.pythonhosted.org/packages/51/79/119091c98e2bf49e24ed9f3ae69f816d715d2904aefa6a2baa039a2ba0b0/ecdsa-0.19.2-py2.py3-none-any.whl", hash = "sha256:840f5dc5e375c68f36c1a7a5b9caad28f95daa65185c9253c0c08dd952bb7399", size = 150818, upload-time = "2026-03-26T09:58:15.808Z" },
 ]
+
+[[package]]
+name = "electrum-ecc"
+version = "0.0.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/cd/4b7c7113dd949014abe44e235da68c06f21e902c12dc7e969a91262cca61/electrum_ecc-0.0.7.tar.gz", hash = "sha256:ed4134e1dbff0fd83022764c6acc97a02cde3512927d7c41f4d48b9a06e91fb2", size = 2162053, upload-time = "2026-02-25T16:35:46.227Z" }
 
 [[package]]
 name = "embit"
