@@ -3,7 +3,7 @@
 ## This run
 
 ```text
-when    : 2026-08-14 22:59 CEST (20:59 UTC)
+when    : 2026-08-14 23:16 CEST (21:16 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/btclib_two_paths.py
@@ -44,33 +44,39 @@ the two arithmetics under each pair
   libsecp256k1        bundled and compiled into btclib_secp256k1 0.8.0.2, through cffi bindings, _btclib_secp256k1.cpython-313-darwin.so
   pure python         btclib's own curves/curve_group.py, the dispatch off
 
+what a timing contains
+  one call per iteration, its answer discarded: no row checks
+  itself, and no comparison is inside a measured loop
+  the answers are checked in tests/vectors_test.py, and where
+  each script builds its fixtures, which is before any clock
+
                                 μs/call       vs best
-point_parse_libsecp256k1         3.5067          1.0x
-mult_libsecp256k1                8.2101          1.0x
-ellswift_decode_libsecp256k1     8.5816          1.0x
-pubkey_libsecp256k1              10.211          1.0x
-dh_libsecp256k1                  13.672          1.0x
-taproot_tweak_libsecp256k1       17.190          1.0x
-dsa_sign_libsecp256k1            19.585          1.0x
-dsa_verify_libsecp256k1          23.283          1.0x
-ssa_verify_libsecp256k1          23.689          1.0x
-bms_verify_libsecp256k1          23.749          1.0x
-ssa_sign_libsecp256k1            24.820          1.0x
-bms_sign_libsecp256k1            30.089          1.0x
-dsa_recover_libsecp256k1         42.515          1.0x
-dsa_sign_pure_python             174.02          8.9x
-bms_sign_pure_python             344.87         11.5x
-ssa_sign_pure_python             322.21         13.0x
-pubkey_pure_python               148.88         14.6x
-ellswift_decode_pure_python      133.60         15.6x
-mult_pure_python                 138.99         16.9x
-taproot_tweak_pure_python        308.85         18.0x
-point_parse_pure_python          74.799         21.3x
-ssa_verify_pure_python           680.12         28.7x
-dsa_verify_pure_python           670.48         28.8x
-dh_pure_python                   546.77         40.0x
-bms_verify_pure_python           1320.0         55.6x
-dsa_recover_pure_python          3221.8         75.8x
+point_parse_libsecp256k1         3.6229          1.0x
+mult_libsecp256k1                8.3438          1.0x
+ellswift_decode_libsecp256k1     8.6076          1.0x
+pubkey_libsecp256k1              10.388          1.0x
+dh_libsecp256k1                  13.748          1.0x
+taproot_tweak_libsecp256k1       17.453          1.0x
+dsa_sign_libsecp256k1            19.447          1.0x
+dsa_verify_libsecp256k1          23.298          1.0x
+ssa_verify_libsecp256k1          23.888          1.0x
+bms_verify_libsecp256k1          24.138          1.0x
+ssa_sign_libsecp256k1            25.338          1.0x
+bms_sign_libsecp256k1            30.642          1.0x
+dsa_recover_libsecp256k1         43.301          1.0x
+dsa_sign_pure_python             175.65          9.0x
+bms_sign_pure_python             341.97         11.2x
+ssa_sign_pure_python             329.98         13.0x
+pubkey_pure_python               149.54         14.4x
+ellswift_decode_pure_python      137.08         15.9x
+mult_pure_python                 139.77         16.8x
+taproot_tweak_pure_python        312.06         17.9x
+point_parse_pure_python          74.908         20.7x
+ssa_verify_pure_python           688.17         28.8x
+dsa_verify_pure_python           676.55         29.0x
+dh_pure_python                   551.54         40.1x
+bms_verify_pure_python           1329.8         55.1x
+dsa_recover_pure_python          3251.9         75.1x
 ```
 
 ## What it shows
@@ -119,8 +125,8 @@ undone inside a process; the sort happens afterwards.
 Four other questions are published in `results/`, each with its own
 comparands:
 
-- [btclib against the other bitcoin libraries][libs] — python libraries,
-  where bindings, if there are any, are one component of a library
+- [python libraries][libs] — where bindings (if available) are just one
+  component of a python library
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
 - [the libsecp256k1 wrappers][wrappers] — four packages wrapping one C

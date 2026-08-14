@@ -3,7 +3,7 @@
 ## This run
 
 ```text
-when    : 2026-08-14 22:59 CEST (20:59 UTC)
+when    : 2026-08-14 23:16 CEST (21:16 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/key_reuse.py
@@ -37,21 +37,27 @@ btclib              : 2026.9
 btclib-secp256k1    : 0.8.0.2
 ecdsa               : 0.19.2
 
+what a timing contains
+  one call per iteration, its answer discarded: no row checks
+  itself, and no comparison is inside a measured loop
+  the answers are checked in tests/vectors_test.py, and where
+  each script builds its fixtures, which is before any clock
+
 
 ECDSA verify, one key, every signature under it
                                                   vs best
-  btclib, bindings, parsed point      20.31 μs        1.0x
-  btclib, bindings, octets            23.15 μs        1.1x
-  python-ecdsa, precomputed          540.70 μs       26.6x
-  btclib, Python, parsed point       609.03 μs       30.0x
-  btclib, Python, octets             722.34 μs       35.6x
-  python-ecdsa                      1093.12 μs       53.8x
+  btclib, bindings, parsed point      20.30 μs        1.0x
+  btclib, bindings, octets            23.10 μs        1.1x
+  python-ecdsa, precomputed          540.24 μs       26.6x
+  btclib, Python, parsed point       620.12 μs       30.5x
+  btclib, Python, octets             713.02 μs       35.1x
+  python-ecdsa                      1094.08 μs       53.9x
 
 what preparing the key costs, and after how many verifications it pays
                                     prepare  saves/call  break-even
-  btclib, bindings, parse once        3.59 μs      2.85 μs       1.3
-  btclib, Python, parse once         74.29 μs    113.31 μs       0.7
-  python-ecdsa, precompute()       3314.94 μs    552.41 μs       6.0
+  btclib, bindings, parse once        3.59 μs      2.80 μs       1.3
+  btclib, Python, parse once         79.35 μs     92.90 μs       0.9
+  python-ecdsa, precompute()       3355.89 μs    553.85 μs       6.1
 ```
 
 ## What it shows
@@ -124,8 +130,8 @@ comparands:
 
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
   arithmetic against the libsecp256k1 it bundles
-- [btclib against the other bitcoin libraries][libs] — python libraries,
-  where bindings, if there are any, are one component of a library
+- [python libraries][libs] — where bindings (if available) are just one
+  component of a python library
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
 - [the libsecp256k1 wrappers][wrappers] — four packages wrapping one C

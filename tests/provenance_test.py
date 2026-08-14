@@ -238,3 +238,21 @@ def test_the_install_root_test_accepts_both_names_debian_uses(
     for name in ("site-packages", "dist-packages"):
         assert _provenance._under_install_root(str(tmp_path / name / "p" / "m.py"))
     assert not _provenance._under_install_root(str(tmp_path / "src" / "m.py"))
+
+
+def test_report_method_says_a_timing_holds_no_check(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The claim is in the output, not only in the prose about it.
+
+    A reader comparing two rows a percent apart has to be able to rule out
+    that one of them paid for an assertion the other wrote more cheaply, and
+    the place to rule it out is the block above the numbers. This test is the
+    only thing keeping that block and `tests/vectors_test.py` from drifting
+    apart: it names the file the output points at.
+    """
+    _provenance.report_method()
+    out = capsys.readouterr().out
+    assert "tests/vectors_test.py" in out
+    assert Path("tests/vectors_test.py").is_file()
+    assert out.endswith("\n\n")

@@ -74,7 +74,7 @@ from itertools import cycle
 import btclib
 import btclib_secp256k1
 import ecdsa
-from _provenance import report
+from _provenance import report, report_method
 from _vectors import signing
 from btclib.curves import curve, sec_point
 from btclib.ecc import dsa
@@ -306,6 +306,7 @@ def main() -> None:
     runs after.
     """
     report_provenance()
+    report_method()
 
     bindings_octets = benchmark(verify_octets, 20_000)
     bindings_point = benchmark(verify_point, 20_000)

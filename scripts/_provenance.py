@@ -113,6 +113,24 @@ def describe(dist_name: str, module_file: str) -> str:
     return f"{dist_name:<20}: {released:<24} ({origin_of(dist_name)})"
 
 
+def report_method() -> None:
+    """Print what a timing contains, which is one call and no check.
+
+    A reader looking at two rows a percent apart is entitled to know whether
+    part of the difference is an assertion one row could write more cheaply
+    than another. It is not: a timed function calls one API and discards
+    what it comes back with, and where the answers are checked is stated
+    with it, so the answer is in the output rather than in a file the
+    output does not name.
+    """
+    print("what a timing contains")
+    print("  one call per iteration, its answer discarded: no row checks")
+    print("  itself, and no comparison is inside a measured loop")
+    print("  the answers are checked in tests/vectors_test.py, and where")
+    print("  each script builds its fixtures, which is before any clock")
+    print()
+
+
 def report(
     *packages: tuple[str, str], dates: dict[str, tuple[str, str]] | None = None
 ) -> None:

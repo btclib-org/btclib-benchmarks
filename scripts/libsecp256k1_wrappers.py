@@ -107,7 +107,7 @@ import coincurve
 import electrum_ecc
 import electrum_ecc.ecc_fast
 import secp256k1
-from _provenance import from_a_declared_source, origin_of
+from _provenance import from_a_declared_source, origin_of, report_method
 from _vectors import signing, verification
 
 
@@ -600,6 +600,7 @@ def main() -> None:
     which is a property of the run rather than of this file.
     """
     report_provenance()
+    report_method()
 
     table("1. ECDSA sign (32-byte digest)", DSA_SIGN_ROWS)
     print()

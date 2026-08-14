@@ -27,7 +27,7 @@ secp256k1         0.14.0    2021-11-06   9526874d, pre-v0.1.0    cffi      _libs
 ## This run
 
 ```text
-when    : 2026-08-14 22:59 CEST (20:59 UTC)
+when    : 2026-08-14 23:16 CEST (21:16 UTC)
 python  : 3.13.14
 method  : five rounds per row, minimum kept; nothing else repeated
 command : uv run python scripts/libsecp256k1_wrappers.py
@@ -49,40 +49,46 @@ answer rather than four wrappers agreeing among themselves. Table 5's tweak
 takes the next vector's secret key as the scalar.
 
 ```text
+what a timing contains
+  one call per iteration, its answer discarded: no row checks
+  itself, and no comparison is inside a measured loop
+  the answers are checked in tests/vectors_test.py, and where
+  each script builds its fixtures, which is before any clock
+
 1. ECDSA sign (32-byte digest)
                                    μs/call     vs best   spread
-  dsa_sign_secp256k1                 11.36       1.00x    0.6%   (5x20000 calls)
-  dsa_sign_coincurve                 11.67       1.03x    0.2%   (5x20000 calls)
-  dsa_sign_btclib_secp256k1          12.08       1.06x    1.4%   (5x20000 calls)
-  dsa_sign_electrum_ecc              27.56       2.43x    0.8%   (5x20000 calls)
+  dsa_sign_secp256k1                 11.43       1.00x    0.4%   (5x20000 calls)
+  dsa_sign_coincurve                 11.61       1.02x   16.1%   (5x20000 calls)
+  dsa_sign_btclib_secp256k1          12.05       1.05x    0.2%   (5x20000 calls)
+  dsa_sign_electrum_ecc              27.46       2.40x    0.5%   (5x20000 calls)
 
 2. ECDSA verify (32-byte digest, the public key parsed per call)
                                    μs/call     vs best   spread
-  dsa_secp256k1                      11.78       1.00x    1.1%   (5x20000 calls)
-  dsa_btclib_secp256k1               14.11       1.20x    0.5%   (5x20000 calls)
-  dsa_coincurve                      14.16       1.20x    0.4%   (5x20000 calls)
-  dsa_electrum_ecc                   16.06       1.36x    4.6%   (5x20000 calls)
+  dsa_secp256k1                      11.78       1.00x    1.6%   (5x20000 calls)
+  dsa_btclib_secp256k1               14.10       1.20x    0.3%   (5x20000 calls)
+  dsa_coincurve                      14.13       1.20x    0.2%   (5x20000 calls)
+  dsa_electrum_ecc                   16.08       1.36x    0.1%   (5x20000 calls)
 
 3. BIP340 sign (32-byte message)
                                    μs/call     vs best   spread
-  ssa_sign_secp256k1                  7.81       1.00x    0.4%   (5x20000 calls)
-  ssa_sign_btclib_secp256k1          15.93       2.04x    0.8%   (5x20000 calls)
-  ssa_sign_coincurve                 27.44       3.51x    0.5%   (5x20000 calls)
-  ssa_sign_electrum_ecc              31.46       4.03x    9.0%   (5x20000 calls)
+  ssa_sign_secp256k1                  7.81       1.00x    0.2%   (5x20000 calls)
+  ssa_sign_btclib_secp256k1          15.94       2.04x    0.5%   (5x20000 calls)
+  ssa_sign_coincurve                 27.40       3.51x    0.4%   (5x20000 calls)
+  ssa_sign_electrum_ecc              31.44       4.03x    2.2%   (5x20000 calls)
 
 4. BIP340 verify (32-byte message, the public key parsed per call)
                                    μs/call     vs best   spread
-  ssa_btclib_secp256k1               14.63       1.00x    0.8%   (5x20000 calls)
-  ssa_coincurve                      14.64       1.00x    0.2%   (5x20000 calls)
-  ssa_secp256k1                      15.07       1.03x    3.5%   (5x20000 calls)
-  ssa_electrum_ecc                   18.60       1.27x    5.8%   (5x20000 calls)
+  ssa_coincurve                      14.62       1.00x    0.4%   (5x20000 calls)
+  ssa_btclib_secp256k1               14.62       1.00x    0.2%   (5x20000 calls)
+  ssa_secp256k1                      15.07       1.03x    0.3%   (5x20000 calls)
+  ssa_electrum_ecc                   18.56       1.27x    0.5%   (5x20000 calls)
 
 5. public key tweak by a scalar, which is BIP32's step
                                    μs/call     vs best   spread
-  tweak_coincurve                    10.44       1.00x    1.1%   (5x20000 calls)
-  tweak_btclib_secp256k1             10.58       1.01x    0.2%   (5x20000 calls)
-  tweak_secp256k1                    13.91       1.33x    0.8%   (5x20000 calls)
-  tweak_electrum_ecc                 22.48       2.15x    1.2%   (5x20000 calls)
+  tweak_coincurve                    10.40       1.00x    0.3%   (5x20000 calls)
+  tweak_btclib_secp256k1             10.59       1.02x    0.2%   (5x20000 calls)
+  tweak_secp256k1                    13.93       1.34x    0.4%   (5x20000 calls)
+  tweak_electrum_ecc                 22.32       2.15x    1.0%   (5x20000 calls)
 ```
 
 ## What it shows
@@ -112,14 +118,13 @@ does not on aarch64, so its build disagrees about the nonce or about what it
 was handed, which is why what every wrapper is held to is the portable claim:
 that the signature verifies.
 
-The last table is BIP32's step rather than BIP32: none of these four
-packages implements derivation, and all four expose the primitive it is
-built from, a public key tweaked by a scalar. `electrum-ecc` has no
-tweak-add on `ECPubkey`, so the same result is reached as a scalar times
-the generator plus a point addition — two crossings where the other three
-make one, which is the sort of difference this table exists to show. BIP32
-proper is in [the libraries table][libs], where the comparands are
-libraries.
+The last table is BIP32's step rather than BIP32: none of these four packages
+implements derivation, and all four expose the primitive it is built from, a
+public key tweaked by a scalar. Three of them do it in one call.
+`electrum-ecc` has no tweak-add on `ECPubkey`, so its row multiplies the
+generator by the scalar and adds the two points: two calls into the C library
+where the others make one. BIP32 proper is in [the libraries table][libs],
+where the comparands are python libraries rather than secp256k1 bindings.
 
 ## More benchmarks
 
@@ -128,8 +133,8 @@ comparands:
 
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
   arithmetic against the bindings measured here
-- [btclib against the other bitcoin libraries][libs] — python libraries,
-  where bindings, if there are any, are one component of a library
+- [python libraries][libs] — where bindings (if available) are just one
+  component of a python library
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
 - [one key, every signature under it][reuse] — what the second verification

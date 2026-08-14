@@ -83,7 +83,7 @@ from itertools import cycle
 from pathlib import Path
 
 import btclib
-from _provenance import report
+from _provenance import report, report_method
 from _vectors import signing, verification
 from btclib import b58
 from btclib.curves import curve, sec_point
@@ -390,6 +390,7 @@ def main() -> None:
     """
     report_provenance()
     report_setup()
+    report_method()
 
     seconds = {
         f"{name}_libsecp256k1": benchmark(op, calls)

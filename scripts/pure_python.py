@@ -79,7 +79,7 @@ import buidl.pecc
 import ecdsa
 import pycoin.symbols.btc
 import secp256k1lab.bip340
-from _provenance import report
+from _provenance import report, report_method
 from _vectors import signing, verification
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
@@ -534,6 +534,7 @@ def main() -> None:
     """
     report_provenance()
     report_setup()
+    report_method()
     python_arithmetic_only()
 
     table(

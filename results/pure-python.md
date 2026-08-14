@@ -3,7 +3,7 @@
 ## This run
 
 ```text
-when    : 2026-08-14 22:59 CEST (20:59 UTC)
+when    : 2026-08-14 23:16 CEST (21:16 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/pure_python.py
@@ -48,41 +48,47 @@ every row is pure Python arithmetic, held to it by
   ecdsa               having no compiled backend at all
   secp256k1lab        having no compiled backend at all
 
+what a timing contains
+  one call per iteration, its answer discarded: no row checks
+  itself, and no comparison is inside a measured loop
+  the answers are checked in tests/vectors_test.py, and where
+  each script builds its fixtures, which is before any clock
+
 
 public key from a private key: a multiplication of the generator
                                               vs best
-  btclib                         194.95 μs        1.0x
-  python-ecdsa                   221.78 μs        1.1x
-  secp256k1lab                   933.60 μs        4.8x
-  pycoin                        6063.55 μs       31.1x
-  buidl.pecc                   20801.83 μs      106.7x
+  btclib                         190.39 μs        1.0x
+  python-ecdsa                   218.55 μs        1.1x
+  secp256k1lab                   943.65 μs        5.0x
+  pycoin                        6002.56 μs       31.5x
+  buidl.pecc                   21062.46 μs      110.6x
 
 ECDSA sign, over a 32-byte digest
                                               vs best
-  btclib, one signature          186.38 μs        1.0x
-  python-ecdsa                   288.72 μs        1.5x
-  btclib, grinding (default)     691.31 μs        3.7x
-  pycoin                        5960.12 μs       32.0x
-  buidl.pecc                   29688.52 μs      159.3x
+  btclib, one signature          183.02 μs        1.0x
+  python-ecdsa                   287.07 μs        1.6x
+  btclib, grinding (default)     670.71 μs        3.7x
+  pycoin                        5948.69 μs       32.5x
+  buidl.pecc                   30100.42 μs      164.5x
 
 ECDSA verify, over a 32-byte digest
                                               vs best
-  btclib                         827.78 μs        1.0x
-  python-ecdsa                  1135.70 μs        1.4x
-  pycoin                       19086.95 μs       23.1x
-  buidl.pecc                   60971.90 μs       73.7x
+  btclib                         840.55 μs        1.0x
+  python-ecdsa                  1113.32 μs        1.3x
+  pycoin                       19482.80 μs       23.2x
+  buidl.pecc                   61626.06 μs       73.3x
 
 BIP340 sign, over a 32-byte message
                                               vs best
-  btclib                         346.21 μs        1.0x
-  secp256k1lab                  7452.76 μs       21.5x
-  buidl.pecc                  110056.63 μs      317.9x
+  btclib                         336.68 μs        1.0x
+  secp256k1lab                  7494.87 μs       22.3x
+  buidl.pecc                  111591.42 μs      331.5x
 
 BIP340 verify, over a 32-byte message
                                               vs best
-  btclib                         700.20 μs        1.0x
-  secp256k1lab                  5150.31 μs        7.4x
-  buidl.pecc                   67927.10 μs       97.0x
+  btclib                         696.06 μs        1.0x
+  secp256k1lab                  5224.43 μs        7.5x
+  buidl.pecc                   68601.94 μs       98.6x
 ```
 
 ## What it shows
@@ -131,8 +137,8 @@ comparands:
 
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
   arithmetic against the libsecp256k1 it bundles
-- [btclib against the other bitcoin libraries][libs] — python libraries,
-  where bindings, if there are any, are one component of a library
+- [python libraries][libs] — where bindings (if available) are just one
+  component of a python library
 - [the libsecp256k1 wrappers][wrappers] — four packages wrapping one C
   library, and which revision of it each vendors
 - [one key, every signature under it][reuse] — what the second verification

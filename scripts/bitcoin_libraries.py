@@ -126,7 +126,7 @@ import embit.ec
 import embit.util.ctypes_secp256k1
 import pycoin.encoding.b58
 import pycoin.symbols.btc
-from _provenance import report
+from _provenance import report, report_method
 from _vectors import bip32, signing
 from btclib.bip32 import bip32 as btclib_bip32
 from btclib.curves import curve
@@ -1006,6 +1006,8 @@ def main() -> None:
     report_provenance()
 
     report_setup()
+
+    report_method()
 
     table(
         "ECDSA sign (32-byte digest, secp256k1)",
