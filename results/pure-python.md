@@ -13,18 +13,18 @@ with every row Python, a row repeating the word would be a column of it.
 Read [README.md][readme] on what these numbers are: an order of magnitude,
 never a figure to quote.
 
-The input is BIP340's first test vector, so both implementations that sign
-BIP340 here are held to the signature the specification publishes rather
-than to btclib's. ECDSA is not: RFC6979's nonce is btclib's own, and no
-vendored vector publishes a signature over this message, so those rows stay
-checked against each other. btclib signs ECDSA twice, once per row: one
+The inputs are every BIP340 vector the file publishes, cycled: each call takes
+the next, so a row is an average over inputs nobody here chose. Both
+implementations that sign BIP340 are held to the signatures the specification
+publishes; ECDSA is not, RFC6979's nonce being btclib's own, so those rows
+stay checked against each other. btclib signs ECDSA twice, once per row: one
 signature, which is what the other implementations produce, and its own
 default beside it, which grinds until r fits in 32 bytes.
 
 ## What produced it
 
 ```text
-when    : 2026-08-14 18:33 CEST (16:33 UTC)
+when    : 2026-08-14 19:38 CEST (17:38 UTC)
 python  : 3.13.14
 command : uv run python scripts/pure_python.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -51,38 +51,38 @@ every row is pure Python arithmetic, held to it by
 
 public key from a private key: a multiplication of the generator
                                               vs best
-  btclib                         189.67 μs        1.0x
-  python-ecdsa                   285.85 μs        1.5x
-  secp256k1lab                  1324.03 μs        7.0x
-  pycoin                        5960.22 μs       31.4x
-  buidl.pecc                   30027.60 μs      158.3x
+  btclib                         195.38 μs        1.0x
+  python-ecdsa                   223.14 μs        1.1x
+  secp256k1lab                   934.07 μs        4.8x
+  pycoin                        6054.36 μs       31.0x
+  buidl.pecc                   21076.56 μs      107.9x
 
 ECDSA sign, over a 32-byte digest
                                               vs best
-  btclib, one signature          174.29 μs        1.0x
-  python-ecdsa                   298.27 μs        1.7x
-  btclib, grinding (default)    1378.96 μs        7.9x
-  pycoin                        6020.39 μs       34.5x
-  buidl.pecc                   29772.65 μs      170.8x
+  btclib, one signature          187.77 μs        1.0x
+  python-ecdsa                   285.82 μs        1.5x
+  btclib, grinding (default)     696.34 μs        3.7x
+  pycoin                        6014.97 μs       32.0x
+  buidl.pecc                   29784.45 μs      158.6x
 
 ECDSA verify, over a 32-byte digest
                                               vs best
-  btclib                         743.60 μs        1.0x
-  python-ecdsa                  1056.87 μs        1.4x
-  pycoin                       18963.64 μs       25.5x
-  buidl.pecc                   61339.58 μs       82.5x
+  btclib                         839.58 μs        1.0x
+  python-ecdsa                  1128.47 μs        1.3x
+  pycoin                       18972.79 μs       22.6x
+  buidl.pecc                   61094.47 μs       72.8x
 
 BIP340 sign, over a 32-byte message
                                               vs best
-  btclib                         308.68 μs        1.0x
-  secp256k1lab                  7763.62 μs       25.2x
-  buidl.pecc                   91303.77 μs      295.8x
+  btclib                         346.25 μs        1.0x
+  secp256k1lab                  7355.73 μs       21.2x
+  buidl.pecc                  110478.22 μs      319.1x
 
 BIP340 verify, over a 32-byte message
                                               vs best
-  btclib                         704.48 μs        1.0x
-  secp256k1lab                  5148.59 μs        7.3x
-  buidl.pecc                   60796.50 μs       86.3x
+  btclib                         704.51 μs        1.0x
+  secp256k1lab                  5170.71 μs        7.3x
+  buidl.pecc                   68141.55 μs       96.7x
 ```
 
 ## What it shows

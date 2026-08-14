@@ -8,7 +8,8 @@ Python of `curves/curve_group.py`. Not btclib against btclib_secp256k1:
 `pip install btclib` installs both.
 
 Microseconds per call to five significant digits, sorted on the ratio, and
-that ratio against the quicker of the pair. The fastest row of the whole
+that ratio against the quicker of the pair. Every row cycles the published
+vectors, taking the next input per call. The fastest row of the whole
 table would divide a signature by a point parse, and the ratio is what the
 table is read for: what an operation costs is a fact about the operation,
 what its fallback costs is the fact about the two arithmetics.
@@ -26,7 +27,7 @@ here first: an order of magnitude, never a figure to quote.
 ## What produced it
 
 ```text
-when    : 2026-08-14 18:49 CEST (16:49 UTC)
+when    : 2026-08-14 19:38 CEST (17:38 UTC)
 python  : 3.13.14
 command : uv run python scripts/btclib_two_paths.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -44,32 +45,32 @@ the two arithmetics under each pair
   pure python         btclib's own curves/curve_group.py, the dispatch off
 
                                 μs/call       vs best
-point_parse_libsecp256k1         3.6592          1.0x
-ellswift_decode_libsecp256k1     8.1837          1.0x
-mult_libsecp256k1                8.3207          1.0x
-pubkey_libsecp256k1              8.4351          1.0x
-dh_libsecp256k1                  15.825          1.0x
-dsa_sign_libsecp256k1            17.373          1.0x
-taproot_tweak_libsecp256k1       17.399          1.0x
-dsa_verify_libsecp256k1          23.184          1.0x
-ssa_verify_libsecp256k1          23.274          1.0x
-ssa_sign_libsecp256k1            23.763          1.0x
-bms_verify_libsecp256k1          23.991          1.0x
-bms_sign_libsecp256k1            28.589          1.0x
-dsa_recover_libsecp256k1         43.986          1.0x
-dsa_sign_pure_python             175.13         10.1x
-bms_sign_pure_python             344.11         12.0x
-ssa_sign_pure_python             324.19         13.6x
-ellswift_decode_pure_python      123.85         15.1x
-mult_pure_python                 145.02         17.4x
-taproot_tweak_pure_python        315.34         18.1x
-pubkey_pure_python               153.73         18.2x
-point_parse_pure_python          76.568         20.9x
-ssa_verify_pure_python           688.01         29.6x
-dsa_verify_pure_python           700.90         30.2x
-dh_pure_python                   554.09         35.0x
-bms_verify_pure_python           1352.0         56.4x
-dsa_recover_pure_python          2972.1         67.6x
+point_parse_libsecp256k1         3.5759          1.0x
+mult_libsecp256k1                8.2607          1.0x
+ellswift_decode_libsecp256k1     8.6368          1.0x
+pubkey_libsecp256k1              11.086          1.0x
+dh_libsecp256k1                  13.650          1.0x
+taproot_tweak_libsecp256k1       17.247          1.0x
+dsa_sign_libsecp256k1            19.295          1.0x
+dsa_verify_libsecp256k1          22.984          1.0x
+ssa_verify_libsecp256k1          23.781          1.0x
+bms_verify_libsecp256k1          23.837          1.0x
+ssa_sign_libsecp256k1            24.889          1.0x
+bms_sign_libsecp256k1            30.311          1.0x
+dsa_recover_libsecp256k1         42.674          1.0x
+dsa_sign_pure_python             174.93          9.1x
+bms_sign_pure_python             345.40         11.4x
+ssa_sign_pure_python             321.79         12.9x
+pubkey_pure_python               148.34         13.4x
+ellswift_decode_pure_python      129.65         15.0x
+mult_pure_python                 143.03         17.3x
+taproot_tweak_pure_python        309.58         17.9x
+point_parse_pure_python          75.222         21.0x
+ssa_verify_pure_python           684.39         28.8x
+dsa_verify_pure_python           671.28         29.2x
+dh_pure_python                   548.00         40.1x
+bms_verify_pure_python           1351.3         56.7x
+dsa_recover_pure_python          3237.9         75.9x
 ```
 
 ## What it shows
