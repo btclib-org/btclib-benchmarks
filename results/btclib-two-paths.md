@@ -1,4 +1,4 @@
-# btclib against btclib
+# btclib's two arithmetics
 
 ## This run
 
@@ -12,30 +12,25 @@ state   : a working desktop, browser and editor open — not a quiesced
           machine, which is the condition README.md says to distrust
 ```
 
-What `scripts/btclib_two_paths.py` printed on the machine named above.
+## The output
+
 Both rows of every pair are btclib, called the same way; what differs
 underneath is which arithmetic answers — the libsecp256k1 that
-`btclib_secp256k1` bundles and compiles into a cffi extension, or the
-Python of `curves/curve_group.py`. Not btclib against btclib_secp256k1:
+`btclib_secp256k1` bundles and compiles into a cffi extension, or the Python
+of `curves/curve_group.py`. Not btclib against btclib_secp256k1:
 `pip install btclib` installs both.
 
 Microseconds per call to five significant digits, sorted on the ratio, and
-that ratio against the quicker of the pair. Every row cycles the published
-vectors, taking the next input per call. The fastest row of the whole
-table would divide a signature by a point parse, and the ratio is what the
-table is read for: what an operation costs is a fact about the operation,
-what its fallback costs is the fact about the two arithmetics.
+that ratio against the quicker of the pair rather than the quickest row of
+the table, which would divide a signature by a point parse. What an
+operation costs is a fact about the operation; what its fallback costs is
+the fact about the two arithmetics. The numbers are an order of magnitude,
+never a figure to quote.
 
-Thirteen operations, which is not a selection. `_libsecp256k1_serves` is
-the predicate every dispatch site in btclib asks, and these are the
-operations holding one that a caller would call.
-
-One run, kept whole — the header the script printed above its numbers is
-part of it, because a table that does not say which build of btclib it
-timed cannot be checked. Nothing was repeated and no outlier was
-discarded. The numbers are an order of magnitude, never a figure to quote.
-
-## The output
+Every row cycles the published vectors, taking the next input per call. The
+operations are not a selection: `_libsecp256k1_serves` is the predicate
+every dispatch site in btclib asks, and every operation holding one that a
+caller would call has a pair below.
 
 ```text
 btclib              : 2026.9
@@ -83,7 +78,11 @@ dsa_recover_pure_python          3251.9         75.1x
 
 Every libsecp256k1 row is faster than its pure-Python counterpart, and the
 sort puts all of them above all of the others: on this machine the two
-arithmetics do not interleave.
+arithmetics do not interleave. The labels name the two arithmetics rather
+than a package and a language — every row is btclib, and every row is called
+from Python. The libsecp256k1 rows are timed first because
+`python_arithmetic_only()` cannot be undone inside a process; the sort
+happens afterwards.
 
 The spread within that is the part worth reading. Verification separates the
 two further than signing does, in both schemes; public-key recovery, which is
@@ -113,12 +112,7 @@ That a row belongs here is therefore a property to prove.
 `tests/pure_python_path_test.py` replaces every bindings entry point with a
 function that raises, throws the switch, and calls every operation: a row that
 has kept a foot in C raises instead of answering. BIP32 derivation is timed in
-[the bitcoin-libraries table][libs] instead, where being C is the premise.
-
-The labels name the two arithmetics rather than a package and a language:
-every row here is btclib, and every row is invoked from Python. The
-libsecp256k1 rows are timed first because `python_arithmetic_only()` cannot be
-undone inside a process; the sort happens afterwards.
+[the libraries table][libs] instead, where being C is the premise.
 
 ## More benchmarks
 
