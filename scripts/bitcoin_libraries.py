@@ -78,9 +78,12 @@ rather than a footnote.
 
 ## What is measured
 
-Three operations on secp256k1, over published test vectors: BIP340's
-first, whose key and 32-byte message the ECDSA rows take as well, and
-BIP32's first, whose seed the derivation rows take.
+Curve operations on secp256k1, over published test vectors: BIP340's first,
+whose key and 32-byte message the ECDSA rows take as well, and BIP32's
+first, whose seed the derivation rows take. Then the address encodings,
+over BIP173's and BIP350's own vectors, which are not curve work at all and
+are here because every one of these libraries does them and a caller cannot
+avoid them.
 
 - ECDSA sign and verify, over the vector's 32 bytes read as a digest --
   every comparand that exposes ECDSA takes a digest directly rather than a
@@ -113,8 +116,18 @@ BIP32's first, whose seed the derivation rows take.
   the public key BIP32 publishes for that path before any of this was
   timed.
 
-python-ecdsa and python-bitcoinlib carry neither BIP340 nor BIP32, so
-neither has a row in those two tables; pycoin's own `ecdsa.Generator` is
+- base58check, bech32 and bech32m, encoding and decoding, over BIP173's
+  witness-v0 vector and BIP350's witness-v1 one. Pure Python in every
+  library here, so these rows say nothing about bindings and everything
+  about the code: they are where the libraries differ most, and where the
+  only wrong answer in this benchmark lives -- `python-bitcoinlib` encodes a
+  witness-v1 program with bech32's checksum constant where BIP350 requires
+  bech32m's, and rejects the address BIP350 publishes, so it has no
+  bech32m row and the script asserts both halves of why.
+
+python-ecdsa carries none of these operations beyond ECDSA, and
+python-bitcoinlib carries neither BIP340 nor BIP32, so neither has a row in
+those tables; pycoin's own `ecdsa.Generator` is
 a bare elliptic-curve object with no seed-derivation function either,
 which is why its BIP32 row goes through `pycoin.symbols.btc.network`
 instead, the layer above that actually has one. Nothing here compares a
@@ -134,8 +147,12 @@ from importlib.metadata import version
 from importlib.util import find_spec
 from pathlib import Path
 
+import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
+import bitcoin.wallet as bitcoinlib_wallet
 import btclib
+import btclib.b32
+import btclib.b58
 
 # imported for its side effect, which one row of this table turns on:
 # loading the extension puts libsecp256k1's symbols in the process, and
@@ -144,13 +161,18 @@ import btclib
 # Python rows, which the docstring above is about. btclib's own dispatch
 # imports the bindings when it first needs them, too late for that probe
 import btclib_secp256k1  # noqa: F401
+import buidl.bech32
 import buidl.hd
+import buidl.helper
 import buidl.libsec_status
 import buidl.pecc
 import ecdsa
+import embit.base58
+import embit.bech32
 import embit.bip32
 import embit.ec
 import embit.util.ctypes_secp256k1
+import pycoin.encoding.b58
 import pycoin.symbols.btc
 from _provenance import report
 from btclib.bip32 import bip32
@@ -623,6 +645,203 @@ def bip32_derive_buidl() -> None:
     _buidl_child_pubkey(SEED)
 
 
+# --- base58check, bech32 and bech32m, over published addresses ---------
+
+# BIP173's own witness-v0 test vector: a 20-byte program and the address it
+# publishes for it. The same 20 bytes are the hash160 of a P2PKH address,
+# which is what makes one fixture serve the base58 rows too
+WITNESS_V0 = bytes.fromhex("751e76e8199196d454941c45d1b3a323f1433bd6")
+BECH32_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+BASE58_ADDRESS = "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"
+BASE58_PAYLOAD = b"\x00" + WITNESS_V0
+
+# a witness-v1 program and its bech32m address, which is BIP350's business:
+# the same string under bech32's checksum constant is a different address
+# and not a valid one, and one row of five gets that wrong
+WITNESS_V1 = bytes.fromhex(
+    "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+)
+BECH32M_ADDRESS = "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"
+
+
+def base58_encode_btclib() -> None:
+    """Time btclib's base58check encoding of a P2PKH address."""
+    assert btclib.b58.address_from_h160("p2pkh", WITNESS_V0) == BASE58_ADDRESS
+
+
+def base58_encode_pycoin() -> None:
+    """Time pycoin's, which takes the version byte in the payload."""
+    assert pycoin.encoding.b58.b2a_hashed_base58(BASE58_PAYLOAD) == BASE58_ADDRESS
+
+
+def base58_encode_embit() -> None:
+    """Time embit's, which spells the checksum in the function name."""
+    assert embit.base58.encode_check(BASE58_PAYLOAD) == BASE58_ADDRESS
+
+
+def base58_encode_buidl() -> None:
+    """Time buidl's, whose helper module carries it."""
+    assert buidl.helper.encode_base58_checksum(BASE58_PAYLOAD) == BASE58_ADDRESS
+
+
+def base58_encode_bitcoinlib() -> None:
+    """Time python-bitcoinlib's, reached through the address class.
+
+    Its `base58.encode` is base58 without the checksum, which is not the
+    operation the other four perform: `P2PKHBitcoinAddress.from_bytes` is
+    where the checksummed encoding lives.
+    """
+    assert str(bitcoinlib_wallet.P2PKHBitcoinAddress.from_bytes(WITNESS_V0, 0)) == (
+        BASE58_ADDRESS
+    )
+
+
+def base58_decode_btclib() -> None:
+    """Time btclib's base58check decoding, which returns the script type too."""
+    assert btclib.b58.h160_from_address(BASE58_ADDRESS)[1] == WITNESS_V0
+
+
+def base58_decode_pycoin() -> None:
+    """Time pycoin's, which returns the version byte with the payload."""
+    assert pycoin.encoding.b58.a2b_hashed_base58(BASE58_ADDRESS) == BASE58_PAYLOAD
+
+
+def base58_decode_embit() -> None:
+    """Time embit's."""
+    assert embit.base58.decode_check(BASE58_ADDRESS) == BASE58_PAYLOAD
+
+
+def base58_decode_buidl() -> None:
+    """Time buidl's, which drops the version byte and returns the hash160."""
+    assert buidl.helper.decode_base58(BASE58_ADDRESS) == WITNESS_V0
+
+
+def base58_decode_bitcoinlib() -> None:
+    """Time python-bitcoinlib's, through the address class again."""
+    assert bytes(bitcoinlib_wallet.CBitcoinAddress(BASE58_ADDRESS)) == WITNESS_V0
+
+
+def bech32_encode_btclib() -> None:
+    """Time btclib's bech32 encoding of a witness-v0 address."""
+    assert btclib.b32.address_from_witness(0, WITNESS_V0) == BECH32_ADDRESS
+
+
+def bech32_encode_embit() -> None:
+    """Time embit's, which takes the human-readable part per call."""
+    assert embit.bech32.encode("bc", 0, WITNESS_V0) == BECH32_ADDRESS
+
+
+def bech32_encode_buidl() -> None:
+    """Time buidl's, which takes a serialized witness program."""
+    assert (
+        buidl.bech32.encode_bech32_checksum(
+            b"\x00" + bytes([len(WITNESS_V0)]) + WITNESS_V0, network="mainnet"
+        )
+        == BECH32_ADDRESS
+    )
+
+
+def bech32_encode_bitcoinlib() -> None:
+    """Time python-bitcoinlib's, a copy of the reference implementation."""
+    assert bitcoin.bech32.encode("bc", 0, WITNESS_V0) == BECH32_ADDRESS
+
+
+def bech32_decode_btclib() -> None:
+    """Time btclib's bech32 decoding, which returns the witness version too."""
+    assert btclib.b32.witness_from_address(BECH32_ADDRESS)[1] == WITNESS_V0
+
+
+def bech32_decode_embit() -> None:
+    """Time embit's, which returns the program as a list of integers."""
+    assert bytes(embit.bech32.decode("bc", BECH32_ADDRESS)[1]) == WITNESS_V0
+
+
+def bech32_decode_buidl() -> None:
+    """Time buidl's, which returns the network beside the program."""
+    assert buidl.bech32.decode_bech32(BECH32_ADDRESS)[2] == WITNESS_V0
+
+
+def bech32_decode_bitcoinlib() -> None:
+    """Time python-bitcoinlib's."""
+    assert bytes(bitcoin.bech32.decode("bc", BECH32_ADDRESS)[1]) == WITNESS_V0
+
+
+def bech32m_encode_btclib() -> None:
+    """Time btclib's bech32m encoding of a witness-v1 address."""
+    assert btclib.b32.address_from_witness(1, WITNESS_V1) == BECH32M_ADDRESS
+
+
+def bech32m_encode_embit() -> None:
+    """Time embit's, which picks the constant from the witness version."""
+    assert embit.bech32.encode("bc", 1, WITNESS_V1) == BECH32M_ADDRESS
+
+
+def bech32m_encode_buidl() -> None:
+    """Time buidl's, from a serialized witness-v1 program."""
+    assert (
+        buidl.bech32.encode_bech32_checksum(
+            b"\x51" + bytes([len(WITNESS_V1)]) + WITNESS_V1, network="mainnet"
+        )
+        == BECH32M_ADDRESS
+    )
+
+
+def bech32m_decode_btclib() -> None:
+    """Time btclib's bech32m decoding."""
+    assert btclib.b32.witness_from_address(BECH32M_ADDRESS)[1] == WITNESS_V1
+
+
+def bech32m_decode_embit() -> None:
+    """Time embit's."""
+    assert bytes(embit.bech32.decode("bc", BECH32M_ADDRESS)[1]) == WITNESS_V1
+
+
+def bech32m_decode_buidl() -> None:
+    """Time buidl's."""
+    assert buidl.bech32.decode_bech32(BECH32M_ADDRESS)[2] == WITNESS_V1
+
+
+# python-bitcoinlib has no bech32m row in either direction, and the reason
+# is not that its API lacks one: `bitcoin.bech32.encode("bc", 1, program)`
+# answers, with bech32's checksum constant where BIP350 requires bech32m's,
+# so what it returns for a witness-v1 program is a string no consumer should
+# accept -- and `decode` returns (None, None) for the address BIP350
+# publishes. A row cannot be timed against an answer this project would have
+# to assert is wrong
+assert bitcoin.bech32.encode("bc", 1, WITNESS_V1) != BECH32M_ADDRESS
+assert bitcoin.bech32.decode("bc", BECH32M_ADDRESS) == (None, None)
+
+# every encoding row is called once before any of them is timed, its own
+# assert holding it to the published address
+for _encoding_row in (
+    base58_encode_btclib,
+    base58_encode_pycoin,
+    base58_encode_embit,
+    base58_encode_buidl,
+    base58_encode_bitcoinlib,
+    base58_decode_btclib,
+    base58_decode_pycoin,
+    base58_decode_embit,
+    base58_decode_buidl,
+    base58_decode_bitcoinlib,
+    bech32_encode_btclib,
+    bech32_encode_embit,
+    bech32_encode_buidl,
+    bech32_encode_bitcoinlib,
+    bech32_decode_btclib,
+    bech32_decode_embit,
+    bech32_decode_buidl,
+    bech32_decode_bitcoinlib,
+    bech32m_encode_btclib,
+    bech32m_encode_embit,
+    bech32m_encode_buidl,
+    bech32m_decode_btclib,
+    bech32m_decode_embit,
+    bech32m_decode_buidl,
+):
+    _encoding_row()
+
+
 def benchmark(func: Callable[[], None], calls: int) -> float:
     """Call `func` `calls` times and return microseconds per call.
 
@@ -676,9 +895,9 @@ def table(
     us = {func.__name__: (benchmark(func, calls), calls) for func, calls in rows}
     against = min(value for value, _ in us.values())
     print(title)
-    print(f"  {'':<22}{'us/call':>10}{'vs best':>12}")
+    print(f"  {'':<26}{'us/call':>10}{'vs best':>12}")
     for name, (value, calls) in sorted(us.items(), key=lambda row: row[1][0]):
-        print(f"  {name:<22}{value:10.2f}{value / against:11.1f}x   ({calls} calls)")
+        print(f"  {name:<26}{value:10.2f}{value / against:11.1f}x   ({calls} calls)")
 
 
 def main() -> None:
@@ -731,6 +950,72 @@ def main() -> None:
             (ssa_verify_btclib, 50_000),
             (ssa_verify_buidl, 25),
             (ssa_verify_embit, 50_000),
+        ),
+    )
+    print()
+
+    table(
+        "base58check encode, a P2PKH address from a hash160",
+        (
+            (base58_encode_btclib, 200_000),
+            (base58_encode_pycoin, 200_000),
+            (base58_encode_embit, 200_000),
+            (base58_encode_buidl, 200_000),
+            (base58_encode_bitcoinlib, 100_000),
+        ),
+    )
+    print()
+
+    table(
+        "base58check decode, a hash160 from a P2PKH address",
+        (
+            (base58_decode_btclib, 200_000),
+            (base58_decode_pycoin, 200_000),
+            (base58_decode_embit, 200_000),
+            (base58_decode_buidl, 200_000),
+            (base58_decode_bitcoinlib, 100_000),
+        ),
+    )
+    print()
+
+    table(
+        "bech32 encode, a witness-v0 address from a 20-byte program",
+        (
+            (bech32_encode_btclib, 200_000),
+            (bech32_encode_embit, 200_000),
+            (bech32_encode_buidl, 100_000),
+            (bech32_encode_bitcoinlib, 200_000),
+        ),
+    )
+    print()
+
+    table(
+        "bech32 decode, a 20-byte program from a witness-v0 address",
+        (
+            (bech32_decode_btclib, 200_000),
+            (bech32_decode_embit, 200_000),
+            (bech32_decode_buidl, 100_000),
+            (bech32_decode_bitcoinlib, 200_000),
+        ),
+    )
+    print()
+
+    table(
+        "bech32m encode, a witness-v1 address from a 32-byte program",
+        (
+            (bech32m_encode_btclib, 200_000),
+            (bech32m_encode_embit, 200_000),
+            (bech32m_encode_buidl, 100_000),
+        ),
+    )
+    print()
+
+    table(
+        "bech32m decode, a 32-byte program from a witness-v1 address",
+        (
+            (bech32m_decode_btclib, 200_000),
+            (bech32m_decode_embit, 200_000),
+            (bech32m_decode_buidl, 100_000),
         ),
     )
     print()

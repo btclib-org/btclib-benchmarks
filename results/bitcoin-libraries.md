@@ -3,10 +3,11 @@
 What `scripts/bitcoin_libraries.py` printed on the machine named below:
 btclib with its bindings enabled, beside `ecdsa`, `pycoin`, `buidl`,
 `embit` and `python-bitcoinlib`, over ECDSA, BIP340 and one BIP32
-derivation. Microseconds per call, fastest row first, and a ratio against
-whichever row came out quickest — not against btclib's, which would print
-btclib's score where the table's answer belongs; where btclib stands is
-its own place in the order.
+derivation, and then base58check, bech32 and bech32m in both directions.
+Microseconds per call, fastest row first, and a ratio against whichever row
+came out quickest — not against btclib's, which would print btclib's score
+where the table's answer belongs; where btclib stands is its own place in
+the order.
 
 One run, kept whole — including the setup block, which is the half of the
 output that says what each comparand resolved to. Read
@@ -22,7 +23,7 @@ of this was timed, not merely against btclib's answer.
 ## What produced it
 
 ```text
-when    : 2026-08-14 17:44 CEST (15:44 UTC)
+when    : 2026-08-14 17:58 CEST (15:58 UTC)
 python  : 3.13.14
 command : uv run python scripts/bitcoin_libraries.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -49,43 +50,85 @@ arithmetic under each row
   python-bitcoinlib   OpenSSL's libcrypto, through ctypes bindings, no libsecp256k1 of its own to opt into
 
 ECDSA sign (32-byte digest, secp256k1)
-                           us/call     vs best
-  dsa_sign_pycoin            12.30        1.0x   (50000 calls)
-  dsa_sign_embit             14.15        1.2x   (50000 calls)
-  dsa_sign_btclib            17.04        1.4x   (50000 calls)
-  dsa_sign_embit_grind      120.34        9.8x   (20000 calls)
-  dsa_sign_btclib_grind     135.24       11.0x   (20000 calls)
-  dsa_sign_bitcoinlib       193.05       15.7x   (8000 calls)
-  dsa_sign_ecdsa            297.40       24.2x   (5000 calls)
-  dsa_sign_buidl          30069.80     2445.1x   (50 calls)
+                               us/call     vs best
+  dsa_sign_pycoin                12.38        1.0x   (50000 calls)
+  dsa_sign_embit                 14.16        1.1x   (50000 calls)
+  dsa_sign_btclib                17.25        1.4x   (50000 calls)
+  dsa_sign_embit_grind          120.08        9.7x   (20000 calls)
+  dsa_sign_btclib_grind         136.91       11.1x   (20000 calls)
+  dsa_sign_bitcoinlib           193.61       15.6x   (8000 calls)
+  dsa_sign_ecdsa                302.32       24.4x   (5000 calls)
+  dsa_sign_buidl              30228.32     2440.9x   (50 calls)
 
 ECDSA verify (32-byte digest, secp256k1)
-                           us/call     vs best
-  dsa_verify_pycoin          12.94        1.0x   (50000 calls)
-  dsa_verify_btclib          22.72        1.8x   (50000 calls)
-  dsa_verify_embit           24.04        1.9x   (50000 calls)
-  dsa_verify_bitcoinlib     221.85       17.1x   (7000 calls)
-  dsa_verify_ecdsa         1076.48       83.2x   (3000 calls)
-  dsa_verify_buidl        63663.85     4918.6x   (25 calls)
+                               us/call     vs best
+  dsa_verify_pycoin              14.62        1.0x   (50000 calls)
+  dsa_verify_btclib              22.85        1.6x   (50000 calls)
+  dsa_verify_embit               23.06        1.6x   (50000 calls)
+  dsa_verify_bitcoinlib         218.99       15.0x   (7000 calls)
+  dsa_verify_ecdsa             1060.10       72.5x   (3000 calls)
+  dsa_verify_buidl            61375.41     4198.1x   (25 calls)
 
 BIP340 sign (32-byte message)
-                           us/call     vs best
-  ssa_sign_btclib            21.28        1.0x   (50000 calls)
-  ssa_sign_embit             21.71        1.0x   (50000 calls)
-  ssa_sign_buidl          93099.54     4374.9x   (20 calls)
+                               us/call     vs best
+  ssa_sign_btclib                20.13        1.0x   (50000 calls)
+  ssa_sign_embit                 21.24        1.1x   (50000 calls)
+  ssa_sign_buidl              90582.43     4500.3x   (20 calls)
 
 BIP340 verify (32-byte message)
-                           us/call     vs best
-  ssa_verify_embit           23.48        1.0x   (50000 calls)
-  ssa_verify_btclib          23.53        1.0x   (50000 calls)
-  ssa_verify_buidl        61083.50     2601.6x   (25 calls)
+                               us/call     vs best
+  ssa_verify_btclib              23.07        1.0x   (50000 calls)
+  ssa_verify_embit               23.49        1.0x   (50000 calls)
+  ssa_verify_buidl            60599.48     2626.3x   (25 calls)
+
+base58check encode, a P2PKH address from a hash160
+                               us/call     vs best
+  base58_encode_embit             2.16        1.0x   (200000 calls)
+  base58_encode_buidl             2.23        1.0x   (200000 calls)
+  base58_encode_btclib            2.45        1.1x   (200000 calls)
+  base58_encode_bitcoinlib        2.55        1.2x   (100000 calls)
+  base58_encode_pycoin            3.68        1.7x   (200000 calls)
+
+base58check decode, a hash160 from a P2PKH address
+                               us/call     vs best
+  base58_decode_embit             2.26        1.0x   (200000 calls)
+  base58_decode_btclib            2.49        1.1x   (200000 calls)
+  base58_decode_buidl             2.92        1.3x   (200000 calls)
+  base58_decode_pycoin            3.68        1.6x   (200000 calls)
+  base58_decode_bitcoinlib        4.01        1.8x   (100000 calls)
+
+bech32 encode, a witness-v0 address from a 20-byte program
+                               us/call     vs best
+  bech32_encode_btclib            8.18        1.0x   (200000 calls)
+  bech32_encode_buidl            11.48        1.4x   (100000 calls)
+  bech32_encode_bitcoinlib       26.58        3.2x   (200000 calls)
+  bech32_encode_embit            26.91        3.3x   (200000 calls)
+
+bech32 decode, a 20-byte program from a witness-v0 address
+                               us/call     vs best
+  bech32_decode_btclib            7.07        1.0x   (200000 calls)
+  bech32_decode_buidl            10.31        1.5x   (100000 calls)
+  bech32_decode_bitcoinlib       14.46        2.0x   (200000 calls)
+  bech32_decode_embit            14.64        2.1x   (200000 calls)
+
+bech32m encode, a witness-v1 address from a 32-byte program
+                               us/call     vs best
+  bech32m_encode_btclib          13.47        1.0x   (200000 calls)
+  bech32m_encode_buidl           16.86        1.3x   (100000 calls)
+  bech32m_encode_embit           40.04        3.0x   (200000 calls)
+
+bech32m decode, a 32-byte program from a witness-v1 address
+                               us/call     vs best
+  bech32m_decode_btclib          11.53        1.0x   (200000 calls)
+  bech32m_decode_buidl           15.92        1.4x   (100000 calls)
+  bech32m_decode_embit           21.67        1.9x   (200000 calls)
 
 BIP32 derive, seed to m/0h/1 (16-byte seed)
-                           us/call     vs best
-  bip32_derive_pycoin        39.19        1.0x   (30000 calls)
-  bip32_derive_btclib        59.39        1.5x   (30000 calls)
-  bip32_derive_embit         71.07        1.8x   (15000 calls)
-  bip32_derive_buidl      90320.02     2304.9x   (12 calls)
+                               us/call     vs best
+  bip32_derive_pycoin            39.35        1.0x   (30000 calls)
+  bip32_derive_btclib            58.14        1.5x   (30000 calls)
+  bip32_derive_embit             71.57        1.8x   (15000 calls)
+  bip32_derive_buidl          89603.53     2276.9x   (12 calls)
 ```
 
 ## What it shows
@@ -125,6 +168,14 @@ Three things this output says are worth reading twice:
   key here is BIP340's, which has no such table, so the row costs what
   verification costs. It is the sharpest reason in these four files for
   taking the input from a specification rather than choosing one.
+
+The encoding tables are the only ones here that are not curve work, and
+they are where these libraries differ most: pure Python in all five, so what
+separates them is the code and nothing else. They also hold the one wrong
+answer in this benchmark. `python-bitcoinlib` encodes a witness-v1 program
+with bech32's checksum constant where BIP350 requires bech32m's, and rejects
+the address BIP350 publishes, so it has no bech32m row — the script asserts
+both halves of that rather than leaving the absence unexplained.
 
 The loop counts are per row and print beside their rows, because sorting
 puts rows whose counts differ by orders of magnitude next to each other.
