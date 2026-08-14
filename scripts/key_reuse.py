@@ -69,11 +69,13 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from hashlib import sha256
+from itertools import cycle
 
 import btclib
 import btclib_secp256k1
 import ecdsa
 from _provenance import report
+from _vectors import signing
 from btclib.curves import curve, sec_point
 from btclib.ecc import dsa
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
@@ -88,65 +90,94 @@ def report_provenance() -> None:
     )
 
 
-# BIP340 test vector 1's secret key and message, as every other script
-# here takes them: a key nobody chose, so that no row is flattered by one
-PRVKEY = 0xB7E151628AED2A6ABF7158809CF4F3C762E7160F38B4DA56A784D9045190CFEF
-MSG_HASH = bytes.fromhex(
-    "243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89"
-)
-VECTOR_XONLY_PUBKEY = bytes.fromhex(
-    "DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659"
-)
+# every BIP340 signing vector, cycled, as every other script here takes them:
+# keys nobody chose, so that no row is flattered by one, and a row's number is
+# an average over the set rather than a measurement of one input.
+#
+# pycoin's constraint applies to python-ecdsa too by way of the digest: a
+# vector message of zero is not a legal digest for an ECDSA row, so the ECDSA
+# cycles take the vectors whose message reduces to something else
+SIGNING = [v for v in signing() if int.from_bytes(v.msg, "big") % curve.secp256k1.n]
 
-# the two forms of the same key: the octets a verifier is handed, and the
-# point they decompress to. Both are built here, before anything is
-# timed, because which one a row passes is the whole of what it measures
-SEC_OCTETS = pub_keyinfo_from_prv_key(PRVKEY)[0]
-POINT = sec_point.point_from_octets(SEC_OCTETS)
+# the two forms of each key: the octets a verifier is handed, and the point
+# they decompress to. Both are built here, before anything is timed, because
+# which one a row passes is the whole of what it measures
+SEC_OCTETS = [pub_keyinfo_from_prv_key(v.prvkey)[0] for v in SIGNING]
+POINTS = [sec_point.point_from_octets(octets) for octets in SEC_OCTETS]
 
-# grind=False: one signature, and the same one both paths verify
-DSA_SIG = dsa.sign_(MSG_HASH, PRVKEY, grind=False)
+# grind=False: one signature per vector, and the same one both paths verify
+DSA_SIGS = [dsa.sign_(v.msg, v.prvkey, grind=False) for v in SIGNING]
 
-# python-ecdsa's key, built from the secret exponent rather than from the
-# octets: `precompute` raises on a key built from octets, and the
-# docstring above says why that is worth a sentence rather than a
-# workaround nobody sees
-ECDSA_SIGNING_KEY = ecdsa.SigningKey.from_secret_exponent(PRVKEY, curve=ecdsa.SECP256k1)
-ECDSA_KEY = ECDSA_SIGNING_KEY.verifying_key
-ECDSA_SIG = ECDSA_SIGNING_KEY.sign_digest_deterministic(MSG_HASH, hashfunc=sha256)
+# python-ecdsa's keys, built from the secret exponent rather than from the
+# octets: `precompute` raises on a key built from octets, and the docstring
+# above says why that is worth a sentence rather than a workaround nobody sees
+ECDSA_SIGNING_KEYS = [
+    ecdsa.SigningKey.from_secret_exponent(
+        int.from_bytes(v.prvkey, "big"), curve=ecdsa.SECP256k1
+    )
+    for v in SIGNING
+]
+ECDSA_KEYS = [key.verifying_key for key in ECDSA_SIGNING_KEYS]
+ECDSA_SIGS = [
+    key.sign_digest_deterministic(v.msg, hashfunc=sha256)
+    for key, v in zip(ECDSA_SIGNING_KEYS, SIGNING, strict=True)
+]
 
 
-def _precomputed_key() -> ecdsa.VerifyingKey:
-    """Return a python-ecdsa key whose multiplication table is built.
+def _unprepared_key(prvkey: bytes) -> ecdsa.VerifyingKey:
+    """Return a python-ecdsa verifying key with no table built yet.
 
-    A function rather than a constant because the preparation is itself
-    a row: `main` times this call to say what the saving below costs.
+    From the secret exponent, which is the construction `precompute` accepts:
+    on 0.19.2 it raises on a key built from octets, as the docstring above
+    says. A function rather than a constant because `precompute_once` below
+    needs a fresh one per timed call.
     """
-    key = ecdsa.SigningKey.from_secret_exponent(
-        PRVKEY, curve=ecdsa.SECP256k1
+    return ecdsa.SigningKey.from_secret_exponent(
+        int.from_bytes(prvkey, "big"), curve=ecdsa.SECP256k1
     ).verifying_key
-    key.precompute()
-    return key
 
 
-ECDSA_KEY_PREPARED = _precomputed_key()
+def _prepared_keys() -> list[ecdsa.VerifyingKey]:
+    """Return one precomputed key per vector, the tables built once."""
+    keys = [_unprepared_key(v.prvkey) for v in SIGNING]
+    for key in keys:
+        key.precompute()
+    return keys
 
-# the specification's own public key, checked before anything is timed:
-# a table of reuse timings is worth nothing if the key being reused is
-# not the key the vector publishes
-assert SEC_OCTETS[1:] == VECTOR_XONLY_PUBKEY
-assert dsa.verify_(MSG_HASH, SEC_OCTETS, DSA_SIG)
-assert dsa.verify_(MSG_HASH, POINT, DSA_SIG)
-assert ECDSA_KEY.verify_digest(ECDSA_SIG, MSG_HASH)
-assert ECDSA_KEY_PREPARED.verify_digest(ECDSA_SIG, MSG_HASH)
-# the two libraries sign the same digest under the same key to the same
-# pair, RFC6979 over sha256 being both of their nonce derivations and
-# neither grinding here -- so the rows below verify one signature and not
-# two, and this says so more sharply than a mutual verification would
-assert DSA_SIG.r.to_bytes(32, "big") + DSA_SIG.s.to_bytes(32, "big") == ECDSA_SIG, (
-    "python-ecdsa and btclib disagree on RFC6979's signature"
+
+ECDSA_KEYS_PREPARED = _prepared_keys()
+
+# the specification's own public keys, checked before anything is timed
+for _v, _octets, _sig in zip(SIGNING, SEC_OCTETS, DSA_SIGS, strict=True):
+    assert _octets[1:] == _v.xonly_pubkey
+    assert dsa.verify_(_v.msg, _octets, _sig)
+
+VERIFY_OCTETS = cycle(
+    [
+        (v.msg, octets, sig)
+        for v, octets, sig in zip(SIGNING, SEC_OCTETS, DSA_SIGS, strict=True)
+    ]
 )
-assert dsa.verify_(MSG_HASH, SEC_OCTETS, DSA_SIG)
+VERIFY_POINT = cycle(
+    [
+        (v.msg, point, sig)
+        for v, point, sig in zip(SIGNING, POINTS, DSA_SIGS, strict=True)
+    ]
+)
+VERIFY_ECDSA = cycle(
+    [
+        (v.msg, key, sig)
+        for v, key, sig in zip(SIGNING, ECDSA_KEYS, ECDSA_SIGS, strict=True)
+    ]
+)
+VERIFY_ECDSA_PREPARED = cycle(
+    [
+        (v.msg, key, sig)
+        for v, key, sig in zip(SIGNING, ECDSA_KEYS_PREPARED, ECDSA_SIGS, strict=True)
+    ]
+)
+PARSE = cycle(list(zip(SEC_OCTETS, POINTS, strict=True)))
+PREPARE = cycle([v.prvkey for v in SIGNING])
 
 
 def python_arithmetic_only() -> None:
@@ -161,27 +192,32 @@ def python_arithmetic_only() -> None:
 
 def verify_octets() -> None:
     """Time a verification handed the key as sec octets."""
-    dsa.assert_as_valid_(MSG_HASH, SEC_OCTETS, DSA_SIG)
+    msg, octets, sig = next(VERIFY_OCTETS)
+    dsa.assert_as_valid_(msg, octets, sig)
 
 
 def verify_point() -> None:
     """Time a verification handed the key as an already-parsed point."""
-    dsa.assert_as_valid_(MSG_HASH, POINT, DSA_SIG)
+    msg, point, sig = next(VERIFY_POINT)
+    dsa.assert_as_valid_(msg, point, sig)
 
 
 def verify_ecdsa() -> None:
     """Time a python-ecdsa verification, no table prepared."""
-    ECDSA_KEY.verify_digest(ECDSA_SIG, MSG_HASH)
+    msg, key, sig = next(VERIFY_ECDSA)
+    key.verify_digest(sig, msg)
 
 
 def verify_ecdsa_prepared() -> None:
     """Time a python-ecdsa verification against a precomputed table."""
-    ECDSA_KEY_PREPARED.verify_digest(ECDSA_SIG, MSG_HASH)
+    msg, key, sig = next(VERIFY_ECDSA_PREPARED)
+    key.verify_digest(sig, msg)
 
 
 def parse_point() -> None:
     """Time the preparation btclib offers: decompressing the key once."""
-    sec_point.point_from_octets(SEC_OCTETS)
+    octets, expected = next(PARSE)
+    assert sec_point.point_from_octets(octets) == expected
 
 
 def benchmark(func: Callable[[], None], calls: int) -> float:
@@ -209,6 +245,31 @@ def prepare_once(func: Callable[[], object], calls: int) -> float:
     for _ in range(calls):
         func()
     return (time.perf_counter() - start) / calls * 1e6
+
+
+def precompute_once(calls: int) -> float:
+    """Return microseconds for one `precompute()`, keys built off the clock.
+
+    Not `prepare_once(...)` of a function that builds a key and prepares
+    it, which is what this was: building the verifying key is work the
+    caller who does *not* prepare pays too, so a break-even -- a
+    difference between the two -- must not carry it. It is a tenth of what
+    the preparation itself costs and it moved the break-even by a whole
+    verification.
+
+    `precompute` builds the table once and has nothing to do on a second
+    call, so a timed call needs a key of its own. One at a time and not a
+    list of them built up front: a caller holds one prepared key, not
+    twenty, and the clock is started after each is built and stopped
+    before the next -- which is what leaves the construction out.
+    """
+    elapsed = 0.0
+    for _ in range(calls):
+        key = _unprepared_key(next(PREPARE))
+        start = time.perf_counter()
+        key.precompute()
+        elapsed += time.perf_counter() - start
+    return elapsed / calls * 1e6
 
 
 def table(title: str, rows: dict[str, float]) -> None:
@@ -252,7 +313,7 @@ def main() -> None:
 
     ecdsa_plain = benchmark(verify_ecdsa, 500)
     ecdsa_prepared = benchmark(verify_ecdsa_prepared, 500)
-    ecdsa_prepare = prepare_once(_precomputed_key, 20)
+    ecdsa_prepare = precompute_once(20)
 
     python_arithmetic_only()
 
