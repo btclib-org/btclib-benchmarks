@@ -139,13 +139,19 @@ for _v in SIGNING:
         secp256k1.PrivateKey(_v.prvkey, raw=True).schnorr_sign(_v.msg, None, raw=True),
     )
 
-# and ECDSA, where all four produce the same bytes: libsecp256k1's default
-# nonce is RFC6979, so one key and one message give one signature through
-# four APIs
+# and ECDSA, where what is portable is that every signature verifies.
+# libsecp256k1's default nonce is RFC6979, so one key and one message ought to
+# give one signature through four APIs -- and on x86-64 they do. On aarch64
+# secp256k1-py's does not match the other three, so its build disagrees about
+# the nonce or about what it was given, and a benchmark is the wrong place to
+# assert a claim that holds on one architecture
 for _v, _der in zip(SIGNING, DSA_SIGS, strict=True):
+    _pubkey = btclib_secp256k1.keys.pubkey_from_prvkey(_v.prvkey)
     assert coincurve.PrivateKey(_v.prvkey).sign(_v.msg, hasher=None) == _der
     _secp = secp256k1.PrivateKey(_v.prvkey, raw=True)
-    assert _secp.ecdsa_serialize(_secp.ecdsa_sign(_v.msg, raw=True)) == _der
+    assert btclib_secp256k1.dsa.verify(
+        _v.msg, _pubkey, _secp.ecdsa_serialize(_secp.ecdsa_sign(_v.msg, raw=True))
+    )
     assert (
         electrum_ecc.ecdsa_der_sig_from_ecdsa_sig64(
             electrum_ecc.ECPrivkey(_v.prvkey).ecdsa_sign(_v.msg, grind_r_value=False)

@@ -121,12 +121,13 @@ rows — one signature, and its default. Grinding is a loop around a wrapper
 rather than anything the C library does, which is why the tables about
 libraries carry the same distinction for btclib and embit.
 
-The four also agree on one signature exactly: libsecp256k1's default nonce
-is RFC6979, so the same key and message give the same bytes through all
-four APIs, and the script asserts it. BIP340 is checked against the vector
-for three of them; `secp256k1-py`'s `schnorr_sign` takes no aux_rand, so
-its signature is a valid one over another nonce and the only check its API
-leaves is that it verifies.
+Three of the four produce the same ECDSA bytes for a key and a message,
+libsecp256k1's default nonce being RFC6979. `secp256k1-py` does on x86-64 and
+does not on aarch64, so its build disagrees about the nonce or about what it
+was handed, and what the script asserts of every wrapper is the portable
+thing: that the signature verifies. BIP340 is checked against the vector for
+three of them; `secp256k1-py`'s `schnorr_sign` takes no aux_rand, so there
+too the check its API leaves is that its signature verifies.
 
 The last table is BIP32's step rather than BIP32: none of these four
 packages implements derivation, and all four expose the primitive it is
