@@ -10,8 +10,8 @@ include .python-version
 recursive-include scripts *.py
 recursive-include tests *.py
 # the vendored vectors and the file that says where they came from, which
-# the suite reads and checks the digests of
-recursive-include tests/_data *.csv *.json *.md
+# the benchmarks and the suite both read and check the digests of
+recursive-include vectors *.csv *.json *.md
 # the runs the README links to, which are output rather than furniture:
 # a checkout is where a benchmark is run, and these say what running one
 # produced on a machine that is named

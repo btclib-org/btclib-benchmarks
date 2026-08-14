@@ -45,13 +45,13 @@ from __future__ import annotations
 
 import csv
 import hashlib
-import json
 import os
 import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
 
+import _vectors
 import btclib_secp256k1.ssa
 import buidl.hd
 import buidl.pecc
@@ -67,20 +67,13 @@ from btclib.bip32 import bip32
 from btclib.curves import curve
 from btclib.ecc import ssa
 
-DATA = Path(__file__).parent / "_data"
+DATA = _vectors.VECTORS
 
 # the digests README.md publishes for the two copies. Checked on every run:
 # a vendored file is only as good as the statement of where it came from, and
 # a copy that has drifted from the statement should fail a test rather than
 # quietly become the new question
-DIGESTS = {
-    "bip340_test_vectors.csv": (
-        "01c8cabba63b4c9b2f44c975902990086a4fe56eee9d265b187d1e2c1d98ccfb"
-    ),
-    "bip32_test_vectors.json": (
-        "5a0e3411f974989d9c65ee542101f175ce3847300fd5bdafdd2812ce5fb85594"
-    ),
-}
+DIGESTS = _vectors.DIGESTS
 
 # the pure-Python configuration, as `scripts/pure_python.py` measures it: the
 # environment variable pycoin reads at import, and btclib's dispatch off
@@ -90,19 +83,13 @@ if PURE_PYTHON:  # pragma: no cover - the child process is the one that runs it
 
 
 def _bip340_vectors() -> list[dict[str, str]]:
-    """Return BIP340's vectors, as its CSV publishes them."""
-    with (DATA / "bip340_test_vectors.csv").open(encoding="utf-8") as stream:
-        return list(csv.DictReader(stream))
+    """Return BIP340's vectors as the CSV publishes them, strings and all.
 
-
-def _bip32_chains() -> list[tuple[str, str, str, str]]:
-    """Return BIP32's vectors as (seed, path, xpub, xprv), one per step."""
-    payload = json.loads((DATA / "bip32_test_vectors.json").read_text(encoding="utf-8"))
-    return [
-        (seed, path, xpub, xprv)
-        for seed, steps in payload.items()
-        for path, xpub, xprv in steps
-    ]
+    `_vectors` decodes them for the benchmarks; the suite wants the file's own
+    spelling, `verification result` included, so that a case named here is a
+    case a reader can find in the file.
+    """
+    return list(csv.DictReader(_vectors.read("bip340_test_vectors.csv").splitlines()))
 
 
 BIP340 = _bip340_vectors()
@@ -133,7 +120,7 @@ VERIFIES_ANY_SIZE = (
     "buidl.pecc",
     "secp256k1lab",
 )
-BIP32 = _bip32_chains()
+BIP32 = _vectors.bip32()
 
 
 def _ids(vectors: list[dict[str, str]]) -> list[str]:
@@ -303,14 +290,13 @@ BIP32_DERIVERS: dict[str, Callable[[bytes, str], str]] = {
 
 @pytest.mark.parametrize("package", sorted(BIP32_DERIVERS))
 @pytest.mark.parametrize(
-    "vector", BIP32, ids=[f"{seed[:8]}-{path}" for seed, path, _, _ in BIP32]
+    "vector", BIP32, ids=[f"{v.seed.hex()[:8]}-{v.path}" for v in BIP32]
 )
 def test_bip32_derivation_matches_the_vector(
-    package: str, vector: tuple[str, str, str, str]
+    package: str, vector: _vectors.Bip32
 ) -> None:
     """Derive the extended private key BIP32 publishes for that path."""
-    seed, path, _, xprv = vector
-    assert BIP32_DERIVERS[package](bytes.fromhex(seed), path) == xprv
+    assert BIP32_DERIVERS[package](vector.seed, vector.path) == vector.xprv
 
 
 # --- the other configuration -------------------------------------------
