@@ -4,17 +4,21 @@ Timings of [btclib](https://github.com/btclib-org/btclib) and
 [btclib_secp256k1](https://github.com/btclib-org/btclib-secp256k1)
 against the packages they are usefully compared with.
 
-Four benchmarks, each answering a different question:
+Five benchmarks, each answering a different question:
 
-- **`btclib_two_paths.py`** — btclib's bindings path against its own
-  pure-Python arithmetic
-- **`bitcoin_libraries.py`** — btclib, bindings enabled, against other
-  Python bitcoin libraries
+- **`btclib_two_paths.py`** — btclib against btclib: its pure-Python
+  arithmetic against the libsecp256k1 that `btclib_secp256k1` bundles and
+  compiles into a cffi extension
+- **`bitcoin_libraries.py`** — btclib as installed, against other Python
+  bitcoin libraries, over curve operations and the address encodings
 - **`pure_python.py`** — every pure-Python implementation of the same
-  operation, with the bindings as the reference line
+  operation, against each other
 - **`libsecp256k1_wrappers.py`** — btclib_secp256k1 against the other
   wrappers of the same C library: `coincurve` and `secp256k1-py` through
   cffi, `electrum-ecc` through ctypes
+- **`key_reuse.py`** — what the second signature under the same key
+  costs: the other four time one verification with a fresh key, and a
+  verifier never does
 
 ## Why this is its own repository
 
@@ -110,19 +114,18 @@ stale one is not the comparison the table looks like, and where
 
 ## One run of each, published
 
-`results/` carries what the four scripts printed in one sitting on one
+`results/` carries what the five scripts printed in one sitting on one
 machine, each file keeping the header its script printed above the
 numbers — the versions, where each package came from, and the backend
 every comparand resolved to — because that header is what makes a table
 checkable at all. Every table is sorted fastest row first and carries a
-ratio against its fastest row — never against btclib's, which would print
-btclib's score where the table's answer belongs — so where btclib stands
-is its own position in the order:
+ratio against its fastest row, never against btclib's:
 
 - [btclib's two paths][two-paths]
 - [btclib against the other bitcoin libraries][libraries]
 - [every pure-Python implementation][pure]
 - [the libsecp256k1 wrappers][wrappers]
+- [one key, every signature under it][reuse]
 
 The machine is named in each file, and so is what else was running on it.
 They are a record of one run, not a claim about anyone else's hardware:
@@ -133,6 +136,7 @@ command, not that they are authoritative.
 [libraries]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
 [wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
+[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
 
 ## Licence
 

@@ -220,6 +220,7 @@ omit = [
     "*/site-packages/*",
     "scripts/bitcoin_libraries.py",
     "scripts/btclib_two_paths.py",
+    "scripts/key_reuse.py",
     "scripts/libsecp256k1_wrappers.py",
     "scripts/pure_python.py",
 ]

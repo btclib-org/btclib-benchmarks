@@ -34,6 +34,7 @@ BENCHMARKS = [
     "bitcoin_libraries",
     "pure_python",
     "libsecp256k1_wrappers",
+    "key_reuse",
 ]
 
 # an import does fixture work -- key derivation, a signature per comparand,
