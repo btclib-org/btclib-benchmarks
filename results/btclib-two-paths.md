@@ -14,23 +14,19 @@ state   : a working desktop, browser and editor open — not a quiesced
 
 ## The output
 
-Both rows of every pair are btclib, called the same way; what differs
-underneath is which arithmetic answers — the libsecp256k1 that
-`btclib_secp256k1` bundles and compiles into a cffi extension, or the Python
-of `curves/curve_group.py`. Not btclib against btclib_secp256k1:
-`pip install btclib` installs both.
+Not btclib against btclib_secp256k1: `pip install btclib` installs both, and
+both rows of every pair are btclib called the same way. What differs is which
+arithmetic answers, and the block above the numbers names the two.
 
-Microseconds per call to five significant digits, sorted on the ratio, and
-that ratio against the quicker of the pair rather than the quickest row of
-the table, which would divide a signature by a point parse. What an
-operation costs is a fact about the operation; what its fallback costs is
-the fact about the two arithmetics. The numbers are an order of magnitude,
-never a figure to quote.
+Microseconds per call, sorted on the ratio, and that ratio against the quicker
+of the pair rather than the quickest row of the table — that one would divide a
+signature by a point parse. What an operation costs is a fact about the
+operation; what its fallback costs is the fact about the two arithmetics.
 
 Every row cycles the published vectors, taking the next input per call. The
-operations are not a selection: `_libsecp256k1_serves` is the predicate
-every dispatch site in btclib asks, and every operation holding one that a
-caller would call has a pair below.
+operations are not a selection: `_libsecp256k1_serves` is the predicate every
+dispatch site in btclib asks, and every operation holding one that a caller
+would call has a pair below.
 
 ```text
 btclib              : 2026.9
