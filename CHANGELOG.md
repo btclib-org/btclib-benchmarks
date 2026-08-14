@@ -113,17 +113,43 @@ The release notes, which say what a user has to act on, are in
   a credential, and CONTRIBUTING.md now has the command that records one.
 
 - **`btclib_two_paths.py` covers every operation that has two paths**,
-  fourteen of them where it had five. `_libsecp256k1_serves` is the
+  thirteen of them where it had five. `_libsecp256k1_serves` is the
   predicate every dispatch site asks, so which operations qualify is a
   list to read rather than a judgement: public key derivation, point
   parsing, generator multiplication, ECDSA sign/verify/recover, BIP340
   sign/verify, ECDH, bitcoin-message sign/verify, taproot tweaking and
-  ElligatorSwift decoding — plus BIP32 derivation, which asks for no
-  dispatch of its own and gets one anyway through `curves.sec_point`, and
-  is exactly the sort of row that made naming modules by hand untenable.
-  `commit_nonce` and `pedersen` are dispatched too and have no row:
-  anti-exfil signing and Pedersen commitments are protocol machinery
-  rather than operations an application performs.
+  ElligatorSwift decoding. `commit_nonce` and `pedersen` are dispatched
+  too and have no row: anti-exfil signing and Pedersen commitments are
+  protocol machinery rather than operations an application performs.
+
+  Its table is sorted on the ratio now rather than on the seconds, that
+  being the column it is read for: what an operation costs is a fact about
+  the operation, and what its fallback costs is the fact about the two
+  paths. Seconds break the tie, so the bindings rows still read fastest
+  first among themselves. They are seconds per ten thousand calls to five
+  significant digits, where per thousand the quickest row was a run of
+  zeros and two digits.
+
+- **BIP32 derivation was a fourteenth row and is not one**, because
+  btclib's BIP32 has no pure-Python path: `_prv_key_derivation` calls
+  `btclib_secp256k1.keys.prvkey_tweak_add` and `_pub_key_offsets` builds a
+  `PubkeyTweakChain`, neither gated on the dispatch, and btclib gives the
+  reason beside the call — BIP32 is defined for secp256k1 and nothing else,
+  so no other curve needs a fallback. Throwing the switch left the
+  derivation in C and moved only the public key derived for the
+  fingerprint, which is why that row read about five times slower where
+  every other row read ten to sixty. It is still timed in
+  `bitcoin_libraries.py`, where being C is the premise rather than the
+  question.
+
+  Reading a ratio off a published table is a poor way to catch that, so
+  `tests/pure_python_path_test.py` catches it instead: in a subprocess, it
+  replaces every bindings entry point with a function that raises, throws
+  the switch, and calls every operation once. A row that has kept a foot in
+  C raises instead of answering, and the suite says which call it was. The
+  dispatch predicate is deliberately left alone — it is the question rather
+  than an answer, and patching it fails every row while proving nothing
+  about any of them.
 
   The pure-Python rows are labelled `_pure_python` now, not `_python`:
   every row in every one of these tables is invoked from Python, and the

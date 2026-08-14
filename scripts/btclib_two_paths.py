@@ -16,12 +16,35 @@ is the predicate every dispatch site asks, and the modules holding one are
 `ecc/dh.py`, `ecc/bms.py`, `ecc/ellswift.py`, `ecc/commit_nonce.py`,
 `ecc/pedersen.py` and `script/taproot.py`. The rows below cover the ones
 reachable through a public function a caller would call, one row each.
-BIP32 derivation is here for the opposite reason -- it asks for no
-dispatch of its own and gets one anyway, deriving through
-`curves.sec_point`, which is exactly the sort of row that made naming
-modules by hand untenable. `commit_nonce` and `pedersen` have no row:
-anti-exfil signing and Pedersen commitments are protocol machinery rather
-than operations an application performs, and a table has to end somewhere.
+`commit_nonce` and `pedersen` have no row: anti-exfil signing and Pedersen
+commitments are protocol machinery rather than operations an application
+performs, and a table has to end somewhere.
+
+## BIP32 derivation was a row here and cannot be one
+
+It looked like the obvious addition -- an operation an application really
+performs, reaching the bindings through `curves.sec_point` without asking
+for a dispatch of its own. It came out around five times slower in Python
+where everything else came out ten to sixty, which is what a row measuring
+something other than what it claims looks like.
+
+btclib's BIP32 does not have two paths. `_prv_key_derivation` calls
+`btclib_secp256k1.keys.prvkey_tweak_add` and `_pub_key_offsets` builds a
+`PubkeyTweakChain`, neither of them gated on the dispatch, and btclib says
+why beside the call: BIP32 is defined for secp256k1 and for nothing else,
+so there is no other curve for a fallback to serve. Turning the switch off
+therefore leaves the derivation itself in C and moves only the public key
+`to_pub_key` derives for the fingerprint -- one multiplication out of a
+whole derivation, which is the five-fold difference that was showing.
+
+So the row is gone rather than annotated: this table is about operations
+that have two paths, and that is a property to prove rather than assume.
+`tests/pure_python_path_test.py` blocks every bindings entry point and
+asserts that each operation below still answers, which is what catches the
+next `bip32_derive` on the day it is added rather than four runs later.
+BIP32 derivation is still timed in `scripts/bitcoin_libraries.py`, against
+three other libraries, where being C is the premise rather than the
+question.
 
 The point is not a number to quote: the two paths answer the same
 equations, one in C and one in Python, and what this shows is an order of
@@ -39,29 +62,29 @@ operation's name -- `_bindings` and `_pure_python`, spelled out, because
 
 ## The inputs are published test vectors, not values chosen here
 
-The fixtures are BIP340 test vector 1 and BIP32 test vector 1, read from
-btclib's own vendored copies (`tests/ecc/_data/bip340_test_vectors.csv`
-and `tests/bip32/_data/bip32_test_vectors.json`, whose
-`tests/_data/README.md` pins each to a commit of bitcoin/bips and compares
-the bytes). The values are transcribed rather than the files copied: this
-script times one input per row, and vendoring sixty CSV rows to use one of
-them would be a file nobody reads.
+The fixture is BIP340 test vector 1, read from btclib's own vendored copy
+(`tests/ecc/_data/bip340_test_vectors.csv`, whose `tests/_data/README.md`
+pins it to a commit of bitcoin/bips and compares the bytes). The values are
+transcribed rather than the file copied: this script times one input per
+row, and vendoring sixty CSV rows to use one of them would be a file
+nobody reads.
 
 That buys the assertions, not the timings. Timings first: a key is a key,
 and three different valid keys through the bindings measure the same to
 within the noise of the machine -- so no number here would move if the
 fixture went back to being arbitrary. What moves is what a failure can
-catch. The public key, the BIP340 signature and the BIP32 xprv below are
-checked against what the specification publishes, so btclib agreeing with
-itself is no longer the whole of the check; and the one fixture that
-cannot come from a vector, ECDSA's nonce being btclib's own RFC6979, is
-still cross-checked between the paths.
+catch. The public key and the BIP340 signature below are checked against
+what the specification publishes, so btclib agreeing with itself is no
+longer the whole of the check; and the one fixture that cannot come from a
+vector, ECDSA's nonce being btclib's own RFC6979, is still cross-checked
+between the paths.
 
 A key of 1 is what this file used to sign with, and it is the reason to
-prefer a vector even where the timings do not care: deriving a public key
-from 1 costs a pure-Python implementation a single bit of ladder --
-measured at hundreds of times less than a real scalar -- so the one row
-this script would have added next would have been silently wrong.
+prefer a vector even where the timings do not care: the public key of 1 is
+the generator, and a pure-Python implementation handed that key derives it
+in a single ladder step -- measured at hundreds of times less than a real
+scalar. `scripts/bitcoin_libraries.py` published a row that had been
+flattered exactly that way.
 
 Not part of the test suite and not run by CI: nothing here is a
 correctness check of btclib, and `tests/script_engine/python_path_test.py`
@@ -79,7 +102,6 @@ import btclib
 import btclib_secp256k1
 from _provenance import report
 from btclib import b58
-from btclib.bip32 import bip32
 from btclib.curves import curve, sec_point
 from btclib.ecc import bms, dh, dsa, ellswift, ssa
 from btclib.script import taproot
@@ -115,15 +137,6 @@ VECTOR_SSA_SIG = bytes.fromhex(
 # is a second published key, not a second signature
 COUNTERPARTY_PRVKEY = 0xC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B14E5C9
 
-# BIP32 test vector 1: the seed, one hardened step and one normal one, and
-# the extended private key the vector publishes for that path
-SEED = bytes.fromhex("000102030405060708090a0b0c0d0e0f")
-BIP32_PATH = "m/0h/1"
-VECTOR_BIP32_XPRV = (
-    "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw"
-    "1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs"
-)
-
 # the message the bitcoin-message rows sign, which is text rather than a
 # digest: `bms` hashes it itself, and no vector publishes a signature over
 # one, RFC6979's nonce being btclib's own
@@ -151,15 +164,14 @@ TAPROOT_PUBKEY = taproot.output_pubkey(PUBKEY)[0]
 # dispatch is on, is decoding one
 ELL = ellswift.encode_var(PUBKEY)
 
-# what the specification says, checked before anything is timed. Three of
-# the four fixtures above are published values, so this is btclib against
-# BIP340 and BIP32 rather than btclib against itself -- a shared mistake
-# between the two paths could survive the cross-path checks in the rows
+# what the specification says, checked before anything is timed: the
+# public key and the signature below are BIP340's own, so this is btclib
+# against the specification rather than btclib against itself -- a mistake
+# shared by the two paths could survive the cross-path checks in the rows
 # below, and cannot survive these
 assert XONLY_PUBKEY == VECTOR_XONLY_PUBKEY
 assert SSA_SIG.serialize() == VECTOR_SSA_SIG
 assert ssa.verify_(MSG, VECTOR_XONLY_PUBKEY, VECTOR_SSA_SIG)
-assert bip32.derive(bip32.rootxprv_from_seed(SEED), BIP32_PATH) == VECTOR_BIP32_XPRV
 
 
 def python_arithmetic_only() -> None:
@@ -219,16 +231,6 @@ def ssa_verify() -> None:
     assert ssa.verify_(MSG, XONLY_PUBKEY, SSA_SIG)
 
 
-def bip32_derive() -> None:
-    """Time BIP32 derivation, seed to child, one hardened step and one not.
-
-    No dispatch of its own: it reaches the bindings through
-    `curves.sec_point` deriving each child's public key, which is why the
-    row is here.
-    """
-    assert bip32.derive(bip32.rootxprv_from_seed(SEED), BIP32_PATH) == VECTOR_BIP32_XPRV
-
-
 def dh_shared_secret() -> None:
     """Time the ECDH shared secret of the two vector keys."""
     assert dh.diffie_hellman(PRVKEY, COUNTERPARTY_POINT, 32) == DH_SECRET
@@ -266,7 +268,6 @@ for _op in (
     dsa_recover,
     ssa_sign,
     ssa_verify,
-    bip32_derive,
     dh_shared_secret,
     bms_sign,
     bms_verify,
@@ -277,11 +278,18 @@ for _op in (
 
 
 def benchmark(func: Callable[[], None], mult_: int) -> float:
-    """Call `func` 1000 * `mult_` times and return the seconds per 1000.
+    """Call `func` 1000 * `mult_` times and return the seconds per 10000.
 
-    Returned and not printed: the table is sorted on the measurement and
-    each row divides by its own pair, so no line can be written until
-    every number is in hand.
+    Ten thousand and not one thousand because the fastest row of this
+    table is a few microseconds: per thousand it reads as a run of zeros
+    and a couple of digits, where per ten thousand every row has its
+    figures in the same three columns. Five significant digits, which is
+    four more than the machine can be held to and enough that two rows
+    within a percent of each other are still two numbers.
+
+    Returned and not printed: the table is sorted on the ratio and each
+    row divides by its own pair, so no line can be written until every
+    number is in hand.
 
     The count is per operation *and* per path, the two columns below
     holding the two: the pure Python side of a row is one to two orders of
@@ -296,7 +304,7 @@ def benchmark(func: Callable[[], None], mult_: int) -> float:
     for _ in range(1000 * mult_):
         func()
     end = time.perf_counter()
-    return (end - start) / mult_
+    return (end - start) / mult_ * 10
 
 
 # one operation per entry, with the thousands of calls to give it through
@@ -313,7 +321,6 @@ OPERATIONS = (
     ("dsa_recover", dsa_recover, 10, 1),
     ("ssa_sign", ssa_sign, 25, 2),
     ("ssa_verify", ssa_verify, 25, 1),
-    ("bip32_derive", bip32_derive, 10, 2),
     ("dh", dh_shared_secret, 25, 2),
     ("bms_sign", bms_sign, 15, 2),
     ("bms_verify", bms_verify, 15, 1),
@@ -357,9 +364,18 @@ def main() -> None:
         for name, _, _, _ in OPERATIONS
         for path in ("bindings", "pure_python")
     }
-    print(f"{'':<28} {'s/1000':>9}{'vs best':>14}")
-    for name, value in sorted(seconds.items(), key=lambda row: row[1]):
-        print(f"{name:<28} {value:9.6f}{value / against[name]:13.1f}x")
+    # sorted on the ratio and not on the seconds, which is the column this
+    # table is read for: what an operation costs is a fact about the
+    # operation, and what its fallback costs is a fact about the two paths.
+    # The seconds break the tie, so the bindings rows -- 1.0x every one of
+    # them -- still read fastest first among themselves
+    rows = sorted(
+        ((name, value, value / against[name]) for name, value in seconds.items()),
+        key=lambda row: (row[2], row[1]),
+    )
+    print(f"{'':<28} {'s/10000':>10}{'vs best':>14}")
+    for name, value, ratio in rows:
+        print(f"{name:<28} {value:#10.5g}{ratio:13.1f}x")
 
 
 # a guard rather than bare module-level calls: the helpers above are
