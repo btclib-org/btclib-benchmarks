@@ -19,9 +19,12 @@ has the commands.
 
 They are also renamed, one script to one question:
 
-| was | is now |
-| --- | --- |
-| `btclib` `scripts/benchmark.py` | `scripts/btclib_two_paths.py` |
-| `btclib` `scripts/benchmark_libraries.py` | `scripts/bitcoin_libraries.py` |
-| `btclib` `scripts/benchmark_python.py` | `scripts/pure_python.py` |
-| `btclib_secp256k1` `scripts/benchmark.py` | `scripts/libsecp256k1_wrappers.py` |
+From btclib:
+
+- `scripts/benchmark.py` → `scripts/btclib_two_paths.py`
+- `scripts/benchmark_libraries.py` → `scripts/bitcoin_libraries.py`
+- `scripts/benchmark_python.py` → `scripts/pure_python.py`
+
+From btclib_secp256k1:
+
+- `scripts/benchmark.py` → `scripts/libsecp256k1_wrappers.py`

@@ -74,10 +74,3 @@ updates:
   # with, and the cooldown left at the default above: this one tracks a
   # release GitHub has already deployed, so the week is a formality rather
   # than a quarantine
-  - package-ecosystem: bundler
-    directory: /
-    schedule:
-      interval: weekly
-      day: thursday
-    cooldown:
-      default-days: 7

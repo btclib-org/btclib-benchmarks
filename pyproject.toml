@@ -20,7 +20,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE", "COPYRIGHT", "AUTHORS.md"]
 authors = [{ name = "The btclib developers", email = "devs@btclib.org" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 # the comparands are dependencies here, where in btclib and
 # btclib_secp256k1 they were a `bench` dependency group -- and that
 # inversion is the whole reason this repository exists. There they were
@@ -62,11 +62,15 @@ dependencies = [
     "pycoin>=0.92718.20260405",
     "python-bitcoinlib>=0.12.2",
     "secp256k1>=0.14.0",
-    # on no index at all, so [tool.uv.sources] below takes it from its git
-    # tag, and it declares >=3.11 against this project's >=3.10 -- hence
-    # the marker rather than a floor. scripts/pure_python.py imports it
-    # unguarded and says so where its rows would otherwise be
-    "secp256k1lab; python_full_version >= '3.11'",
+    # on no index at all, so [tool.uv.sources] below takes it from its
+    # git tag. It declares >=3.11, and that is where this project's own
+    # floor comes from: scripts/pure_python.py imports it unguarded, so
+    # on 3.10 the module cannot be loaded at all -- which CI found, the
+    # marker this used to carry having made it absent rather than
+    # unresolvable. A benchmark that will not start says more than one
+    # with a row silently missing, so the floor moved instead of the
+    # import growing a guard
+    "secp256k1lab",
 ]
 keywords = [
     "bitcoin",
@@ -84,7 +88,6 @@ keywords = [
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -239,11 +242,11 @@ enable_error_code = [
     "unimported-reveal",
 ]
 warn_unreachable = true
-# the oldest interpreter this project supports, and also the oldest mypy
-# can be aimed at. Aimed at the floor rather than at whatever runs it, a
-# typing construct missing from 3.10 is a type error here instead of a
-# runtime failure on the matrix
-python_version = "3.10"
+# the oldest interpreter this project supports, which `requires-python`
+# above sets from a comparand. Aimed at the floor rather than at whatever
+# runs it, a typing construct missing from it is a type error here
+# instead of a runtime failure on the matrix
+python_version = "3.11"
 exclude = ["build"]
 # the benchmark scripts are modules reached by path, not an installed
 # package: this is the same `sys.path` entry tests/conftest.py makes, said

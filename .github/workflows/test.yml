@@ -30,12 +30,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 3.13 is the ceiling and not an omission: coincurve and
-        # secp256k1 publish no cp314 wheel, and this project installs its
-        # comparands rather than mocking them. .python-version carries
-        # the same fact and the condition for raising it
+        # both ends are set by a comparand rather than chosen. 3.13 is
+        # the ceiling: coincurve and secp256k1 publish no cp314 wheel,
+        # and this project installs its comparands rather than mocking
+        # them. 3.11 is the floor: secp256k1lab declares it, and
+        # scripts/pure_python.py imports that unguarded
         os: [ubuntu-latest, ubuntu-24.04-arm]
-        python: ["3.10", "3.11", "3.12", "3.13"]
+        python: ["3.11", "3.12", "3.13"]
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
