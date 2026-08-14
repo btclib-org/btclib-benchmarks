@@ -10,7 +10,7 @@ The release notes, which say what a user has to act on, are in
 
 ### The benchmarks
 
-- **The four benchmarks of btclib and btclib_secp256k1 live here**, and
+- **The four benchmarks of btclib and btclib-secp256k1 live here**, and
   the comparands with them: `ecdsa`, `pycoin`, `buidl`, `embit`,
   `python-bitcoinlib`, `coincurve`, `secp256k1`, `electrum-ecc`,
   `secp256k1lab`.
@@ -22,13 +22,13 @@ The release notes, which say what a user has to act on, are in
   a dependency. Here the comparands are what the project is for, and an
   alert names the package it is about.
 
-- **btclib_secp256k1's benchmark is `scripts/libsecp256k1_wrappers.py`
+- **btclib-secp256k1's benchmark is `scripts/libsecp256k1_wrappers.py`
   now**, that repository having shipped one up to v0.8.0.1: it is the
   one of the four with a released ancestor, and the one HISTORY.md tells
   a reader what to do about. The other three have none.
 
 - **`scripts/libsecp256k1_wrappers.py` is wrapper against wrapper, and
-  nothing else.** Its released ancestor, btclib_secp256k1's
+  nothing else.** Its released ancestor, btclib-secp256k1's
   `scripts/benchmark.py` up to v0.8.0.1, timed btclib's pure-Python
   arithmetic beside three bindings of libsecp256k1 — two questions in one
   table, and neither of them answered well. The two pure-Python rows are
@@ -39,7 +39,7 @@ The release notes, which say what a user has to act on, are in
   the boundary crossing, every row of it calling the same C.
 
   That takes btclib out of the script altogether: the fixtures come from
-  `btclib_secp256k1` and `hashlib`, so nothing there reaches into
+  `btclib-secp256k1` and `hashlib`, so nothing there reaches into
   btclib's private dispatch, and importing it leaves the bindings on for
   the rest of the process. It also carries the check the other three do,
   in both directions — every row is called at import, and every row is
@@ -48,7 +48,7 @@ The release notes, which say what a user has to act on, are in
   true to whatever it is handed.
 
 - **`electrum-ecc` is a fourth wrapper row**, and the closest comparand
-  `btclib_secp256k1` has: it wraps the same library, and wraps it the
+  `btclib-secp256k1` has: it wraps the same library, and wraps it the
   other way, ctypes where the other three use cffi. That is the whole of
   what separates them once the C underneath is the same, which is why
   the row belongs in this table and not in `bitcoin_libraries.py` —
@@ -70,7 +70,7 @@ The release notes, which say what a user has to act on, are in
   vector file and BIP32's, copied from btclib's vendored copies at a pinned
   commit with the digests published beside them and checked on every run, and
   `tests/vectors_test.py` runs them against every implementation this project
-  times — btclib, btclib_secp256k1, coincurve, secp256k1-py, electrum-ecc,
+  times — btclib, btclib-secp256k1, coincurve, secp256k1-py, electrum-ecc,
   embit, buidl and secp256k1lab, each in the spelling its API offers.
 
   The negative cases are why it is worth having. Eight of BIP340's nineteen
@@ -136,7 +136,7 @@ The release notes, which say what a user has to act on, are in
   thing that came of having it in both.
 
 - **`bitcoin_libraries.py` says which libsecp256k1 btclib's row calls**,
-  where it used to print `btclib_secp256k1`'s own version number and leave
+  where it used to print `btclib-secp256k1`'s own version number and leave
   the library underneath unnamed. The revision is recorded against the
   release it was read from and printed as unrecorded for any other, the
   library being compiled into a cffi extension where nothing at run time can
@@ -144,7 +144,7 @@ The release notes, which say what a user has to act on, are in
   prebuilt library embit loaded, which is a file name because embit's
   bundled libraries carry no version a caller can read.
 
-  Dropping `btclib_secp256k1` from that block turned pycoin's rows back into
+  Dropping `btclib-secp256k1` from that block turned pycoin's rows back into
   Python rows, which is the fragility the docstring describes made concrete:
   the import was load-bearing, its side effect being the symbols pycoin's
   ctypes probe finds. It is back, with the reason written beside it.
@@ -179,7 +179,7 @@ The release notes, which say what a user has to act on, are in
   once: what Python costs, which `btclib_two_paths.py` answers over
   btclib's own two paths, and which Python implementation is quicker, which
   is the one this script is for. So the bindings row is gone, with the
-  `btclib_secp256k1` line beside it, and what is left is one ratio against
+  `btclib-secp256k1` line beside it, and what is left is one ratio against
   whichever row came out fastest. "Pure Python" is said once, in the block
   above the tables, rather than per row -- and the block says what holds
   each row to Python, which is different for each of them and is the part a
@@ -358,7 +358,7 @@ The release notes, which say what a user has to act on, are in
   pycoin's own `except AttributeError` reports it as no library found —
   `bitcoin.core.key`, above it in the same script, imports it — and the
   library name it then asks for resolves to nothing, so the load falls
-  through to the symbols `btclib_secp256k1`'s extension has already put in
+  through to the symbols `btclib-secp256k1`'s extension has already put in
   the process. Both are properties of the import list, and the script's
   docstring now says so.
 

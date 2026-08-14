@@ -44,7 +44,7 @@ python-bitcoinlib   : 0.12.2
 arithmetic under each row
   btclib              bundled libsecp256k1 v0.8.0 cffi bindings, _btclib_secp256k1.cpython-313-darwin.so
   ecdsa               pure Python; no bindings of any kind, bundled or built
-  pycoin              ctypes bindings to a libsecp256k1 it neither bundles nor builds: btclib_secp256k1's, already in this process, which a PyPI install does not give
+  pycoin              ctypes bindings to a libsecp256k1 it neither bundles nor builds: btclib-secp256k1's, already in this process, which a PyPI install does not give
   buidl               pure Python; buidl.cecc cffi bindings need libsec_build.py, unrun
   embit               bundled secp256k1-zkp d9560e0a ctypes bindings, libsecp256k1_darwin_arm64.dylib
   python-bitcoinlib   OpenSSL's libcrypto ctypes bindings, libssl.35.dylib; no libsecp256k1 bundled, built or found
@@ -152,7 +152,7 @@ Three things this output says are worth reading twice:
   btclib's — through two imports that are the script's rather than pycoin's.
   `bitcoin.core.key` imports `ctypes.util`, which pycoin's loader needs and
   does not import; the name it then asks for resolves to nothing, so the load
-  falls through to the symbols `btclib_secp256k1`'s extension has put in the
+  falls through to the symbols `btclib-secp256k1`'s extension has put in the
   process. Its rows therefore call the same build btclib's rows call, through
   ctypes instead of cffi. What the same package costs held to Python is the
   pycoin row of [the pure-Python table][pure].
@@ -194,18 +194,18 @@ measures the clock or takes minutes on the other.
 Four other questions are published in `results/`, each with its own
 comparands:
 
+- [the libsecp256k1 bindings][wrappers] — four packages that wrap one C
+  library, and which revision of it each vendors
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
-  arithmetic against the libsecp256k1 it bundles
+  arithmetic against the bindings measured here
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
-- [the libsecp256k1 wrappers][wrappers] — four packages wrapping one C
-  library, and which revision of it each vendors
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
 
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
 
 <!-- The output above is a script's, whose columns are the script's to

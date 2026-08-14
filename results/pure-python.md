@@ -42,7 +42,7 @@ pycoin              : 0.92718.20260405
 buidl               : 0.2.36
 
 every row is pure Python arithmetic, held to it by
-  btclib              its delegation to btclib_secp256k1's cffi bindings switched off
+  btclib              its delegation to btclib-secp256k1's cffi bindings switched off
   pycoin              PYCOIN_NATIVE=none before its import, resolving to pure Python
   buidl               being imported as buidl.pecc, not buidl.ecc
   ecdsa               having no compiled backend at all
@@ -135,18 +135,18 @@ which is why the pair can be read at all.
 Four other questions are published in `results/`, each with its own
 comparands:
 
+- [the libsecp256k1 bindings][wrappers] — four packages that wrap one C
+  library, and which revision of it each vendors
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
-  arithmetic against the libsecp256k1 it bundles
+  arithmetic against the bindings measured here
 - [python libraries][libs] — where bindings (if available) are just one
   component of a python library
-- [the libsecp256k1 wrappers][wrappers] — four packages wrapping one C
-  library, and which revision of it each vendors
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
 
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
 
 <!-- The output above is a script's, whose columns are the script's to

@@ -4,13 +4,12 @@
 
 """Timings of btclib against btclib: its two arithmetics, side by side.
 
-Not btclib against btclib_secp256k1. Both rows of every pair are btclib,
-called through the same public function; what differs underneath is which
-arithmetic answers -- the libsecp256k1 that btclib_secp256k1 bundles and
-compiles into a cffi extension, or the Python of `curves/curve_group.py`.
-`pip install btclib` installs both, so neither row is a package a reader
-chooses between, and the ratio is what the second costs when the first
-declines.
+Not btclib against btclib-secp256k1. Every row is btclib called through the
+same public function, and its two columns are the two arithmetics that answer
+underneath -- the libsecp256k1 that btclib-secp256k1 bundles and compiles into
+a cffi extension, or the Python of `curves/curve_group.py`. `pip install
+btclib` installs both, so neither column is a package a reader chooses
+between, and the ratio is what the Python costs when the bindings decline.
 
 It declines for every curve that is not secp256k1, for a zero scalar, for the
 point at infinity, and for anything outside what libsecp256k1's entry points
@@ -32,8 +31,8 @@ btclib's BIP32 has one arithmetic. `_prv_key_derivation` calls
 `PubkeyTweakChain`, neither gated on the dispatch, and btclib gives the
 reason beside the call: BIP32 is defined for secp256k1 and nothing else, so
 no other curve needs a fallback. Throwing the switch leaves the derivation in
-C and moves only the public key derived for the fingerprint, so a pair of
-rows would compare C against C with a Python step added. Its pair was far
+C and moves only the public key derived for the fingerprint, so a row for it
+would compare C against C with a Python step added. Its ratio was far
 narrower than every other, which is how that showed.
 
 That a row belongs here is therefore a property to prove.
@@ -78,12 +77,9 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from importlib.metadata import version
-from importlib.util import find_spec
 from itertools import cycle
-from pathlib import Path
 
-import btclib
-from _provenance import report, report_method
+from _provenance import from_a_declared_source, origin_of
 from _vectors import signing, verification
 from btclib import b58
 from btclib.curves import curve, sec_point
@@ -92,35 +88,25 @@ from btclib.script import taproot
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
 
 
-def report_setup() -> None:
-    """Say what the two arithmetics are, once, above the table.
+def report_provenance() -> None:
+    """Say which build of each package these rows are about, in one line.
 
-    The version that belongs here is btclib_secp256k1's, because that is
-    what a caller installs and what the row is: which revision of
-    libsecp256k1 it bundled is recorded in
+    A released wheel and a working tree satisfy the same requirement and
+    resolve in silence, so which one ran is something the output has to
+    state rather than something the reader assumes. Where an install is not
+    the declared one, that is what a reader has to act on, and it prints
+    under the line rather than inside it.
+
+    The bindings' version is btclib-secp256k1's, that being what a caller
+    installs; which revision of libsecp256k1 it bundled is recorded in
     `scripts/libsecp256k1_wrappers.py`, against the release it was read
     from, and one script naming a pin is enough.
     """
-    spec = find_spec("_btclib_secp256k1")
-    artifact = Path(spec.origin).name if spec and spec.origin else "not found"
-    print("the two arithmetics under each pair")
-    print(
-        f"  {'libsecp256k1':<20}bundled and compiled into btclib_secp256k1 "
-        f"{version('btclib_secp256k1')}, through cffi bindings, {artifact}"
-    )
-    print(f"  {'pure python':<20}btclib's own curves/curve_group.py, the dispatch off")
+    print(f"btclib {version('btclib')} (bindings {version('btclib-secp256k1')})")
+    for dist_name in ("btclib", "btclib-secp256k1"):
+        if not from_a_declared_source(dist_name):
+            print(f"  {dist_name}: {origin_of(dist_name)}")
     print()
-
-
-def report_provenance() -> None:
-    """Say which build of each package these rows are about.
-
-    Printed before any number: a released wheel and a working
-    tree satisfy the same requirement and resolve in silence, so
-    which one ran is something the output has to state rather
-    than something the reader assumes.
-    """
-    report(("btclib", btclib.__file__))
 
 
 # every published vector, cycled, rather than one input repeated: a row that
@@ -337,8 +323,8 @@ def benchmark(func: Callable[[], None], mult_: int) -> float:
     more than the machine can be held to and enough that two rows within a
     percent of each other are still two numbers.
 
-    Returned and not printed: the table is sorted on the ratio and each
-    row divides by its own pair, so no line can be written until every
+    Returned and not printed: the table is sorted on the ratio each row
+    divides its own two numbers into, so no line can be written until every
     number is in hand.
 
     The count is per operation *and* per path, the two columns below
@@ -358,10 +344,10 @@ def benchmark(func: Callable[[], None], mult_: int) -> float:
 
 
 # one operation per entry, with the thousands of calls to give it through
-# the bindings and through Python. Each pair was picked from a first timed
-# call to put both of its rows near half a second -- long enough that the
-# loop's own overhead is a rounding error, short enough that fourteen
-# operations through two paths is a run to wait for
+# the bindings and through Python. Each count was picked from a first timed
+# call to put its column near half a second -- long enough that the loop's
+# own overhead is a rounding error, short enough that every operation
+# through both arithmetics is a run somebody will wait for
 OPERATIONS = (
     ("pubkey", pubkey, 25, 2),
     ("point_parse", point_parse, 50, 5),
@@ -389,8 +375,6 @@ def main() -> None:
     which is why the two are no longer the same loop.
     """
     report_provenance()
-    report_setup()
-    report_method()
 
     seconds = {
         f"{name}_libsecp256k1": benchmark(op, calls)
@@ -403,32 +387,31 @@ def main() -> None:
         f"{name}_pure_python": benchmark(op, calls) for name, op, _, calls in OPERATIONS
     }
 
-    # each row divides by the quicker of its own pair, and by nothing
-    # else. The fastest row of the whole table is the reference in the
-    # other three benchmarks; here it would divide a signature by a point
-    # parse, which is two different amounts of work and no comparison at
-    # all. Read off the measurement rather than assumed to be the bindings
-    # row, so a pair where it is not says so instead of printing a
-    # fraction under one and leaving the reader to work out why
-    against = {
-        f"{name}_{path}": min(
-            seconds[f"{name}_libsecp256k1"], seconds[f"{name}_pure_python"]
-        )
-        for name, _, _, _ in OPERATIONS
-        for path in ("libsecp256k1", "pure_python")
-    }
-    # sorted on the ratio and not on the seconds, which is the column this
-    # table is read for: what an operation costs is a fact about the
-    # operation, and what its fallback costs is a fact about the two paths.
-    # The seconds break the tie, so the bindings rows -- 1.0x every one of
-    # them -- still read fastest first among themselves
+    # one row per operation, the two arithmetics beside each other: the
+    # question is what an operation costs each way, and two rows made the
+    # reader find the second half of a pair somewhere else in the sort.
+    #
+    # The ratio divides Python by the bindings rather than the slower by the
+    # quicker, so its direction carries information: under 1.0x is a pair
+    # where the bindings lost, which no absolute value would say. The other
+    # benchmarks divide by the quickest row of the table; here that row
+    # would divide a signature by a point parse, which is two amounts of
+    # work and no comparison at all.
     rows = sorted(
-        ((name, value, value / against[name]) for name, value in seconds.items()),
-        key=lambda row: (row[2], row[1]),
+        (
+            (
+                name,
+                seconds[f"{name}_libsecp256k1"],
+                seconds[f"{name}_pure_python"],
+                seconds[f"{name}_pure_python"] / seconds[f"{name}_libsecp256k1"],
+            )
+            for name, _, _, _ in OPERATIONS
+        ),
+        key=lambda row: row[3],
     )
-    print(f"{'':<28} {'μs/call':>10}{'vs best':>14}")
-    for name, value, ratio in rows:
-        print(f"{name:<28} {value:#10.5g}{ratio:13.1f}x")
+    print(f"{'μs/call':<20}{'libsecp256k1':>14}{'pure python':>14}{'ratio':>10}")
+    for name, quick, slow, ratio in rows:
+        print(f"{name:<20}{quick:>#14.5g}{slow:>#14.5g}{ratio:>9.1f}x")
 
 
 # a guard rather than bare module-level calls: the helpers above are

@@ -1,19 +1,19 @@
-# The libsecp256k1 wrapper benchmarks
+# The libsecp256k1 bindings benchmarks
 
 ## The packages downloaded from PyPI
 
 The `libsecp256k1 pin` column is the premise of the table below: four
-wrappers of one library, not four libraries — four vendored trees of one
-project, at different revisions. `btclib_secp256k1`'s is the newest upstream
+bindings of one library, not four libraries — four vendored trees of one
+project, at different revisions. `btclib-secp256k1`'s is the newest upstream
 tag of the four; `secp256k1-py`'s predates upstream's first tagged release.
 
 None of the four can be asked for its revision at run time: no compiled
 artifact exports a version symbol, and each package's version attribute
-answers for the wrapper rather than for the library. So each pin below is
+answers for the package rather than for the library. So each pin below is
 recorded rather than read, keyed to the release it was read from, and prints
 `unrecorded` for any other — an upgraded comparand says it has outgrown its
-pin rather than repeating one that has quietly stopped being true. A wrapper
-recording its own vendored revision at build time would end the recording
+pin rather than repeating one that has quietly stopped being true. Bindings
+recording their own vendored revision at build time would end the recording
 here.
 
 ```text
@@ -45,7 +45,7 @@ Every call cycles a published input. Tables 1–2 take a key and a message from
 the vector file, but not a signature — none is published for that scheme, so
 the four sign with RFC6979 and are compared with each other. Tables 3–4 take
 the signature too, which is what makes agreement a check against an outside
-answer rather than four wrappers agreeing among themselves. Table 5's tweak
+answer rather than the four agreeing among themselves. Table 5's tweak
 takes the next vector's secret key as the scalar.
 
 ```text
@@ -115,7 +115,7 @@ fixtures, before the clock starts. No number above contains a check.
 Three of the four produce the same signature bytes for a key and a message,
 libsecp256k1's default nonce being RFC6979. `secp256k1-py` does on x86-64 and
 does not on aarch64, so its build disagrees about the nonce or about what it
-was handed, which is why what every wrapper is held to is the portable claim:
+was handed, which is why what all four are held to is the portable claim:
 that the signature verifies.
 
 The last table is BIP32's step rather than BIP32: none of these four packages

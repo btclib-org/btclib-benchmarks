@@ -128,19 +128,19 @@ rather than an omission.
 Four other questions are published in `results/`, each with its own
 comparands:
 
+- [the libsecp256k1 bindings][wrappers] — four packages that wrap one C
+  library, and which revision of it each vendors
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
-  arithmetic against the libsecp256k1 it bundles
+  arithmetic against the bindings measured here
 - [python libraries][libs] — where bindings (if available) are just one
   component of a python library
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
-- [the libsecp256k1 wrappers][wrappers] — four packages wrapping one C
-  library, and which revision of it each vendors
 
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
 
 <!-- The output above is a script's, whose columns are the script's to
      choose; rewrapping it to 80 would make it something else. The
