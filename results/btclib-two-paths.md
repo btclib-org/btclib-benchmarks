@@ -1,9 +1,9 @@
-# btclib's two arithmetics
+# btclib vs btclib
 
 ## This run
 
 ```text
-when    : 2026-08-14 23:29 CEST (21:29 UTC)
+when    : 2026-08-14 23:34 CEST (21:34 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/btclib_two_paths.py
@@ -19,12 +19,6 @@ every row is btclib called the same way. What differs is which arithmetic
 answers — the libsecp256k1 that btclib-secp256k1 compiles into a cffi
 extension, or the Python of `curves/curve_group.py` with the dispatch off.
 
-Microseconds per call, sorted on the ratio, which divides Python by the
-bindings rather than the slower of the two by the quicker: a pair where the
-bindings lost would read under 1.0x instead of hiding behind an absolute
-value. The other benchmarks divide by the quickest row of their table; that
-row here would divide a signature by a point parse.
-
 Every row cycles the published vectors, taking the next input per call, and no
 row checks what it computed: the answers are `tests/vectors_test.py`'s
 subject, and a comparison inside a timed loop would be time charged to an
@@ -33,22 +27,22 @@ arithmetic that did not spend it. The operations are not a selection —
 and every operation holding one that a caller would call is below.
 
 ```text
-btclib 2026.9 (bindings 0.8.0.2)
+btclib 2026.9 (bindings 0.8.0.2), measured as μs/call, sorted on the ratio
 
-μs/call               libsecp256k1   pure python     ratio
-dsa_sign                    21.353        174.13      8.2x
-bms_sign                    30.518        343.57     11.3x
-ssa_sign                    25.065        320.80     12.8x
-pubkey                      10.322        149.06     14.4x
-ellswift_decode             8.1060        123.88     15.3x
-mult                        8.2588        140.39     17.0x
-taproot_tweak               17.418        307.29     17.6x
-point_parse                 3.5945        74.625     20.8x
-ssa_verify                  24.928        676.37     27.1x
-dsa_verify                  22.922        671.34     29.3x
-dh                          13.787        542.79     39.4x
-bms_verify                  24.149        1334.7     55.3x
-dsa_recover                 43.040        3202.2     74.4x
+                      libsecp256k1   pure python     ratio
+dsa_sign                    18.998        173.64      9.1x
+bms_sign                    30.229        339.05     11.2x
+ssa_sign                    24.679        320.98     13.0x
+pubkey                      10.260        148.11     14.4x
+ellswift_decode             9.3432        138.89     14.9x
+mult                        8.1802        138.17     16.9x
+taproot_tweak               17.165        306.25     17.8x
+point_parse                 3.8501        76.411     19.8x
+ssa_verify                  23.439        678.19     28.9x
+dsa_verify                  23.040        667.02     29.0x
+dh                          13.871        544.55     39.3x
+bms_verify                  23.777        1321.7     55.6x
+dsa_recover                 42.763        3210.0     75.1x
 ```
 
 ## What it shows

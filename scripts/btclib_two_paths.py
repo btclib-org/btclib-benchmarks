@@ -102,7 +102,10 @@ def report_provenance() -> None:
     `scripts/libsecp256k1_wrappers.py`, against the release it was read
     from, and one script naming a pin is enough.
     """
-    print(f"btclib {version('btclib')} (bindings {version('btclib-secp256k1')})")
+    print(
+        f"btclib {version('btclib')} (bindings {version('btclib-secp256k1')}), "
+        f"measured as \N{GREEK SMALL LETTER MU}s/call, sorted on the ratio"
+    )
     for dist_name in ("btclib", "btclib-secp256k1"):
         if not from_a_declared_source(dist_name):
             print(f"  {dist_name}: {origin_of(dist_name)}")
@@ -409,7 +412,7 @@ def main() -> None:
         ),
         key=lambda row: row[3],
     )
-    print(f"{'μs/call':<20}{'libsecp256k1':>14}{'pure python':>14}{'ratio':>10}")
+    print(f"{'':<20}{'libsecp256k1':>14}{'pure python':>14}{'ratio':>10}")
     for name, quick, slow, ratio in rows:
         print(f"{name:<20}{quick:>#14.5g}{slow:>#14.5g}{ratio:>9.1f}x")
 
