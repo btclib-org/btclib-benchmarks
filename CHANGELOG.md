@@ -1,8 +1,10 @@
 # Changelog
 
 Every change of a release, in full: what changed, why, and what it cost.
-[HISTORY.md](./HISTORY.md) has the release notes, which say what a user
-has to act on; this file is the record behind them.
+The release notes, which say what a user has to act on, are in
+[HISTORY.md][notes]; this file is the record behind them.
+
+[notes]: https://github.com/btclib-org/btclib-benchmarks/blob/main/HISTORY.md
 
 ## v2026.9 (work in progress, not released yet)
 

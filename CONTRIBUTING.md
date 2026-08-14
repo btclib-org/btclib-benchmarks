@@ -1,0 +1,102 @@
+# Contributing
+
+## The environment
+
+uv is the only thing that has to be installed; it fetches interpreters,
+linters and packaging tools itself.
+
+```shell
+uv sync --locked
+```
+
+That installs the comparands, which is most of the work: `coincurve` and
+`secp256k1` compile a libsecp256k1 of their own, so a C toolchain and
+`pkg-config` have to be present. `secp256k1lab` comes from a git tag,
+having no release on any index.
+
+## Running a benchmark
+
+```shell
+uv run python scripts/bitcoin_libraries.py
+```
+
+Each script prints what it is about to measure — every package's version
+and where it was imported from — before any number. Read that header:
+a table without it cannot be checked.
+
+To measure a working tree instead of the published release:
+
+```shell
+uv run --with-editable /path/to/btclib python scripts/bitcoin_libraries.py
+```
+
+The header then says `editable: /path/to/btclib` where it otherwise says
+`released`, which is the point of printing it.
+
+## The gates
+
+```shell
+uv run pytest                      # the suite, gated at 100% coverage
+uv run pre-commit run --all-files  # every lint hook, which is what CI runs
+```
+
+`.pre-commit-config.yaml` **is** the lint gate: `lint.yml` runs that file
+and nothing else, so a commit and CI enforce the same list. Never add a
+second copy of the same tools to a workflow.
+
+Check exit codes rather than filtered output — `pre-commit run | grep -v
+Passed` hides a failure.
+
+## What the suite can and cannot check
+
+It cannot check a measurement. A timing is a property of the machine, not
+of the code, so no test here asserts one, and **no workflow runs a
+benchmark**: a shared CI runner disagrees with a laptop by more than most
+of the differences being reported.
+
+What it does check is the two things that survive being automated:
+
+- that every script *loads*, which runs the fixtures at its top and the
+  assertions comparing each comparand's answer against btclib's. A table
+  whose rows compute different things is worth nothing, and importing the
+  module is what catches it.
+- that loading one times nothing. Every script keeps its timing behind
+  `main()`; before that guard existed, importing any of them ran every
+  loop in it, which is why none could be tested at all.
+
+## Writing a row
+
+- **assert before you time.** Every comparand's answer is checked against
+  btclib's at import, so a package that is merely fast and wrong cannot
+  win a row.
+- **say which backend actually ran.** `pycoin`, `buidl` and
+  `python-bitcoinlib` each reach for a C library at import if they find
+  one, and quietly fall back to Python if they do not. A row that does
+  not name what it resolved to is not a measurement of anything in
+  particular.
+- **loop counts are per row.** A pure-Python implementation and a C one
+  differ by two orders of magnitude: one shared count either takes
+  minutes or measures the clock's own resolution.
+- **never state a number in prose.** Not in a comment, not in a
+  docstring, not in the README. The tables are produced by running the
+  scripts; a figure written down anywhere else is a claim nothing
+  re-derives, and it will be wrong by the next release of something.
+
+## Documentation and comments
+
+The house style of btclib-org, in one line: a comment says *why*, never
+*how it got here*. Present-tense reasoning, including the negative
+results — what was tried, what it measured, why it was not taken — is
+what makes a file reviewable. History belongs in CHANGELOG.md.
+
+Markdown wraps at 80 columns, tables included; a line holding nothing but
+an unbreakable URL is exempt.
+
+## Pull requests
+
+`main` is the only branch, and everything lands through a pull request.
+Run the two gates locally first: CI runs exactly them, so a red run there
+is a local run that was not done.
+
+CHANGELOG.md gets an entry for anything a reader would notice.
+HISTORY.md moves only for something a user has to *act* on.

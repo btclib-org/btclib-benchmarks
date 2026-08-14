@@ -9,6 +9,10 @@ include pyproject.toml uv.lock
 include .python-version
 recursive-include scripts *.py
 recursive-include tests *.py
+# the documentation sources, which the sphinx gate builds from an
+# unpacked sdist as readily as from a checkout
+recursive-include docs *.md
+recursive-include docs *.py
 exclude .pre-commit-config.yaml .secrets.baseline
 exclude .gitattributes .markdownlint.jsonc .taplo.toml .yamllint.yaml
 exclude .readthedocs.yaml

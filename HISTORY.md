@@ -1,7 +1,9 @@
 # Release notes
 
 What a user has to act on, release by release.
-[CHANGELOG.md](./CHANGELOG.md) is the record behind these notes.
+The record behind these notes is [CHANGELOG.md][record].
+
+[record]: https://github.com/btclib-org/btclib-benchmarks/blob/main/CHANGELOG.md
 
 ## v2026.9 (work in progress, not released yet)
 
