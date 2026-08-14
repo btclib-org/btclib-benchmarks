@@ -10,16 +10,21 @@ The release notes, which say what a user has to act on, are in
 
 ### The benchmarks
 
-- **The four benchmarks of btclib and btclib_secp256k1 move here**, from
-  the `bench` dependency group of each of those two repositories. The
-  comparands — `ecdsa`, `pycoin`, `buidl`, `embit`,
-  `python-bitcoinlib`, `coincurve`, `secp256k1`, `secp256k1lab` — were
-  third-party packages resolved into the lock of a library that never
-  imports them, so an advisory against a comparand was an advisory
-  against btclib: all four of the Dependabot alerts open there were a
-  benchmark row, three of them transitive through `hwi`. Here the
-  comparands are what the project is for, and an alert names the package
-  it is about.
+- **The four benchmarks of btclib and btclib_secp256k1 live here**, and
+  the comparands with them: `ecdsa`, `pycoin`, `buidl`, `embit`,
+  `python-bitcoinlib`, `coincurve`, `secp256k1`, `secp256k1lab`.
+  Measured from inside either library, each of those would be a
+  third-party package resolved into the lock of something that never
+  imports it, and an advisory against a comparand would be an advisory
+  against the library it is compared with — a Dependabot alert whose
+  reader has to work out that the package is a benchmark row rather than
+  a dependency. Here the comparands are what the project is for, and an
+  alert names the package it is about.
+
+- **btclib_secp256k1's benchmark is `scripts/libsecp256k1_wrappers.py`
+  now**, that repository having shipped one up to v0.8.0.1: it is the
+  one of the four with a released ancestor, and the one HISTORY.md tells
+  a reader what to do about. The other three have none.
 
 - **Every benchmark runs behind a `main()` guard.** They were bare
   module-level statements, so importing one ran every timing loop in it
