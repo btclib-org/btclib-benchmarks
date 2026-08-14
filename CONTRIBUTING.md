@@ -113,7 +113,7 @@ What it does check is what survives being automated:
   A made-up key is not merely weaker, it can be actively wrong, and the
   key this project signed with for a while — 1 — was wrong in two ways.
   Deriving a public key from it costs a pure-Python implementation one
-  ladder step instead of 256, hundreds of times less. And its public key
+  ladder step rather than a full-width scalar's worth. And its public key
   *is* the generator: python-ecdsa hands back the generator object itself,
   precomputed table and all, so every row verifying against that key
   verified with a table no real key gets, and measured about half what it
@@ -130,9 +130,8 @@ What it does check is what survives being automated:
   comparable with libraries that sign once, and a row of its default beside
   it. `btclib_two_paths.py` has no grinding row at all, and that is the same
   rule: grinding multiplies both of its paths by the same number of
-  attempts, so the ratio it prints would not move — measured at 10.3x
-  against 10.4x — and two rows saying what one pair already says are two
-  rows to read.
+  attempts, so the ratio it prints does not move, and two rows saying what
+  one pair already says are two rows to read.
 - **loop counts are per row** wherever a table mixes Python with C: the
   two differ by orders of magnitude, and one shared count either takes
   minutes or measures the clock's own resolution. A table whose rows are
@@ -144,16 +143,11 @@ What it does check is what survives being automated:
   `bitcoin_libraries.py`: one written count is either too small to measure
   the C or minutes long against the Python, and which one a machine gets
   is not this project's to choose.
-- **sort on the measurement, and divide by the fastest row.** Every table
-  prints fastest first, and its ratio column is against whichever row came
-  out quickest — not against btclib's. btclib's row is the one thing in
-  these tables that cannot be the reference: a column against it prints
-  fractions under one for everything quicker, which reads as btclib's
-  score rather than as the table's answer, and where btclib stands is its
-  own place in the order. `btclib_two_paths.py` is the one exception and it
-  is not one: it divides each row by the quicker of its own *pair*, its rows
-  being one operation through two paths, where the fastest row of the whole
-  table would divide a signature by a point parse.
+- **sort on the measurement, and divide by the fastest row**, never by
+  btclib's: a column against btclib prints fractions under one for
+  everything quicker, which is btclib's score rather than the table's
+  answer. `btclib_two_paths.py` divides each row by the quicker of its own
+  *pair* instead, its rows being one operation through two arithmetics.
 
   An order written by hand is an opinion about the result, and a reader
   dividing two numbers to get the ratio is doing arithmetic the table

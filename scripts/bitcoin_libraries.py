@@ -38,8 +38,11 @@ what they seem to:
   neither found it falls back to the plain-Python `Generator` class.
   `_pycoin_backend()` below reports which one actually ran, because
   nothing here should claim a Python number without checking that it is
-  one -- and here it reports libsecp256k1, on two conditions that are
-  both properties of the import list above rather than of pycoin.
+  one. It reports libsecp256k1 here, which is *not* what a PyPI install
+  gives: pycoin bundles no library and builds no extension, so a machine
+  with nothing for its ctypes probe to find leaves it pure Python. Two
+  conditions make this row C, and both are properties of the import list
+  above rather than of pycoin.
   pycoin's loader calls `ctypes.util.find_library` having imported only
   `ctypes`, so unless something else imported `ctypes.util` first the
   attribute lookup raises and its own `except AttributeError` reports
@@ -56,18 +59,17 @@ what they seem to:
   this row is OpenSSL's C and not Python either way, and stays that on
   every machine that has OpenSSL, which is to say every machine this
   installs on.
-- embit does not probe the system at all: `embit/util/prebuilt/` ships a
-  compiled libsecp256k1 for six platforms, and `embit.ec` loads the one
-  matching `platform.machine()` through ctypes unconditionally. This row
-  is always C, and always a libsecp256k1 build embit vendors rather than
-  the one `btclib_secp256k1` vendors -- two different builds of the same
-  library, not the same binary measured twice.
-- buidl tries `buidl.cecc`, a compiled extension against Core's
-  secp256k1 that `pip install buidl` does not build (`libsec_build.py`
-  is a separate step this script does not run), and falls back to
-  `buidl.pecc`, pure Python -- deterministically, since nothing here
-  attempts the build. `ecdsa` (the PyPI package) has no native path to
-  fall back from: it is pure Python unconditionally.
+- embit probes nothing: `embit/util/prebuilt/` ships a prebuilt library per
+  platform and `embit.ec` loads the one matching `platform.machine()`
+  through ctypes. This row is always C, and the
+  library is not the one the other rows call -- embit bundles
+  ElementsProject's `secp256k1-zkp`, not `bitcoin-core/secp256k1`, which
+  matters in a table whose other C rows are the latter.
+- buidl reaches C only if somebody built it. `buidl.cecc` is cffi bindings
+  compiled by `libsec_build.py` against a system library, a step
+  `pip install buidl` does not run, so the fallback `buidl.pecc` is what a
+  PyPI install gets. `ecdsa` has nothing to fall back from: no bundled
+  library, no built extension, pure Python unconditionally.
 
 None of this makes a row invalid -- it is what `pip install <package>`
 actually gives a user on this machine, which is the same question this
@@ -95,11 +97,10 @@ avoid them.
   `grind=False` row, which is one signature and is what the other four
   produce, and a row of the default beside it. A grinding row is not a
   per-signature number and does not pretend to be one -- for a fixed key
-  and message it is a fixed multiple of the row above it, four signatures
-  for this pair against the expected two, which is a property of the pair
-  and not of either library: BIP340's vector key wants four where two is
-  the expectation, and a key wanting two makes grinding look like ordinary
-  overhead rather than a second signature.
+  and message it is a fixed multiple of the row above it, and which multiple
+  is a property of the pair rather than of either library. A key whose first
+  attempt lands low makes grinding look like ordinary overhead; this one does
+  not, which is why the default gets a row of its own.
 - BIP340 (Schnorr) sign and verify, over the vector's message and
   aux_rand -- BIP340 does not hash its message internally, so this is the
   value every implementation signs and checks, byte for byte, and it
@@ -248,48 +249,61 @@ VECTOR_BIP32_CHILD_PUBKEY = bytes.fromhex(
 # and then the mechanism, as every other line there does. Which copy of
 # libsecp256k1 is a property of the process rather than of pycoin, and the
 # module docstring is where that is spelled out.
-# Which libsecp256k1 btclib's row calls, keyed to the btclib_secp256k1
-# release it was read from: the library is compiled into a cffi extension,
-# where nothing at run time can say which revision that was. Read from that
-# release's own `secp256k1` submodule pin, 6e2c8bc, which is upstream's
-# v0.8.0 tag exactly -- and printed as unrecorded for any other release,
+# Which library each row's bindings reach, keyed to the release the pin was
+# read from. Neither revision can be recovered at run time: btclib's is
+# compiled into a cffi extension, and embit's is a prebuilt binary carrying
+# no version string. Both are printed as unrecorded for any other release,
 # because a floor is a floor and a comparand upgrades without a word.
-# `scripts/libsecp256k1_wrappers.py` holds the same pin for the same reason
-# and for three packages more; two scripts naming one revision is the price
-# of neither of them naming it silently
-LIBSECP256K1_PIN = ("0.8.0.1", "v0.8.0")
+#
+# - btclib_secp256k1 0.8.0.1: its `secp256k1` submodule pin, 6e2c8bc, which
+#   is upstream's v0.8.0 tag exactly
+# - embit 0.8.0: its `secp256k1/secp256k1-zkp` submodule pin, d9560e0a --
+#   ElementsProject's fork and not bitcoin-core/secp256k1, which is worth
+#   saying in a table that calls four other rows the same library
+PINS = {"btclib-secp256k1": ("0.8.0.1", "v0.8.0"), "embit": ("0.8.0", "d9560e0a")}
 
 
-def _btclib_secp256k1_libsecp256k1() -> str:
-    """Name the revision btclib's row reaches, and the artifact carrying it."""
-    recorded, pin = LIBSECP256K1_PIN
-    installed = version("btclib_secp256k1")
-    revision = pin if installed == recorded else f"an unrecorded revision ({recorded})"
-    spec = find_spec("_btclib_secp256k1")
-    artifact = Path(spec.origin).name if spec and spec.origin else "not found"
-    return (
-        f"libsecp256k1 {revision} compiled into btclib_secp256k1 {installed}, "
-        f"{artifact}"
-    )
+def _pinned(dist_name: str) -> str:
+    """Return the pinned revision, or say the installed release has no pin."""
+    recorded, pin = PINS[dist_name]
+    installed = version(dist_name)
+    return pin if installed == recorded else f"unrecorded for {installed}"
 
 
-def _embit_libsecp256k1() -> str:
-    """Name the shared object embit's ctypes loader opened.
-
-    A file name and not a revision: embit ships one prebuilt library per
-    platform, none of them carrying a version anywhere a caller can read,
-    so what can be said is which of the seven this platform got.
-    """
-    return Path(str(embit.util.ctypes_secp256k1._find_library())).name
+def _artifact(module_name: str) -> str:
+    """Return the file name of the compiled extension a wrapper calls into."""
+    spec = find_spec(module_name)
+    return Path(spec.origin).name if spec and spec.origin else "not found"
 
 
+# pycoin bundles no library and builds no extension: `native/secp256k1.py`
+# and `native/openssl.py` are ctypes loaders, and what they find is a
+# property of the machine. So a PyPI install gets pure Python unless a
+# system library answers to the name `ctypes.util.find_library` is given --
+# and the row below is C only because this process already holds
+# btclib_secp256k1's copy, which is not what pip install produces
 PYCOIN_NATIVE_MIXINS = {
     "pycoin.ecdsa.native.secp256k1": (
-        "the same libsecp256k1 btclib's row calls, which it neither bundles "
-        "nor compiles, through ctypes bindings"
+        "ctypes bindings to a libsecp256k1 it neither bundles nor builds: "
+        "btclib_secp256k1's, already in this process, which a PyPI install "
+        "does not give"
     ),
-    "pycoin.ecdsa.native.openssl": "OpenSSL's libcrypto, through ctypes bindings",
+    "pycoin.ecdsa.native.openssl": "OpenSSL's libcrypto ctypes bindings",
 }
+
+
+def _buidl_backend() -> str:
+    """Say which arithmetic buidl resolved to, and what the other would take.
+
+    `buidl.cecc` is cffi bindings to a libsecp256k1 buidl neither bundles
+    nor builds at install time: `libsec_build.py` compiles them against a
+    system library, on its own, and `pip install buidl` does not run it. So
+    a PyPI install is `buidl.pecc`, pure Python, unless somebody ran that
+    step by hand.
+    """
+    if buidl.libsec_status.is_libsec_enabled():
+        return "built libsecp256k1 cffi bindings, buidl.cecc"
+    return "pure Python; buidl.cecc cffi bindings need libsec_build.py, unrun"
 
 
 def _pycoin_native_module() -> str | None:
@@ -358,27 +372,25 @@ def report_setup() -> None:
     below mean nothing without.
     """
     print("arithmetic under each row")
-    print(f"  {'btclib':<20}{_btclib_secp256k1_libsecp256k1()}, through cffi bindings")
-    print(f"  {'ecdsa':<20}pure Python; it has no bindings of any kind")
-    print(f"  {'pycoin':<20}{_pycoin_backend()}")
-    buidl_arithmetic = (
-        "the libsecp256k1 compiled into buidl.cecc, through cffi bindings"
-        if buidl.libsec_status.is_libsec_enabled()
-        else "pure Python; the cffi bindings of buidl.cecc are not built"
-    )
-    print(f"  {'buidl':<20}{buidl_arithmetic}")
     print(
-        f"  {'embit':<20}the prebuilt libsecp256k1 it bundles, "
-        f"{_embit_libsecp256k1()}, through ctypes bindings"
+        f"  {'btclib':<20}bundled libsecp256k1 {_pinned('btclib-secp256k1')} "
+        f"cffi bindings, {_artifact('_btclib_secp256k1')}"
+    )
+    print(f"  {'ecdsa':<20}pure Python; no bindings of any kind, bundled or built")
+    print(f"  {'pycoin':<20}{_pycoin_backend()}")
+    print(f"  {'buidl':<20}{_buidl_backend()}")
+    print(
+        f"  {'embit':<20}bundled secp256k1-zkp {_pinned('embit')} ctypes bindings, "
+        f"{Path(str(embit.util.ctypes_secp256k1._find_library())).name}"
     )
     optional = (
-        "its own bundled libsecp256k1 available and unused"
+        "a libsecp256k1 it found and does not use"
         if bitcoinlib_key.is_libsec256k1_available()
-        else "no libsecp256k1 of its own to opt into"
+        else "no libsecp256k1 bundled, built or found"
     )
     print(
-        f"  {'python-bitcoinlib':<20}OpenSSL's libcrypto, through ctypes bindings, "
-        f"{optional}"
+        f"  {'python-bitcoinlib':<20}OpenSSL's libcrypto ctypes bindings, "
+        f"{Path(str(bitcoinlib_key._ssl._name)).name}; {optional}"
     )
     print()
 

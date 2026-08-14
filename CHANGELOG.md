@@ -101,8 +101,8 @@ The release notes, which say what a user has to act on, are in
   the three benchmarks that compare packages. `btclib_two_paths.py` has
   none, by the same rule rather than in spite of it: grinding multiplies both
   paths by the same number of attempts, so the ratio the table is read for
-  does not move -- 10.3x against 10.4x, measured, at around eight attempts
-  for this vector -- and the rows would restate the pair above them.
+  does not move, as measuring it confirmed, and the rows would restate the
+  pair above them.
 
 - **The unit is μs, not us.** Four tables printing `us/call` were four
   tables asking a reader to know that `u` was standing in for a character
@@ -210,21 +210,20 @@ The release notes, which say what a user has to act on, are in
 
   The key this project signed with until now was 1, and it flattered a
   published row. Its public key is the generator, and python-ecdsa returns
-  the generator *object* for it — precomputed table and all, 259 entries —
-  so every row verifying against that key verified with a table no real
-  key gets and came out at about half its true cost. python-ecdsa's ECDSA
-  verification row is therefore twice what it was, in this benchmark and in
-  the pure-Python one, and the number that changed is the one that was
-  wrong. The same key would also have made any pure-Python public-key
-  derivation row a single ladder step instead of 256 — hundreds of times
-  less, measured — which is the row nobody had added yet.
+  the generator *object* for it, precomputed table and all, so a row
+  verifying against that key verified with a table no real key gets and came
+  out well under its true cost. python-ecdsa's ECDSA verification row moved
+  when the fixture did, and the new number is the correct one. The same key
+  would also have made any pure-Python public-key derivation row one ladder
+  step rather than a full-width scalar's worth, which is the row nobody had
+  added yet.
 
   `.secrets.baseline` carries the new fixtures as reviewed findings: a
   private key published in a BIP is exactly what a scanner cannot tell from
   a credential, and CONTRIBUTING.md now has the command that records one.
 
 - **`btclib_two_paths.py` covers every operation that has two paths**,
-  thirteen of them where it had five. `_libsecp256k1_serves` is the
+  where it covered five. `_libsecp256k1_serves` is the
   predicate every dispatch site asks, so which operations qualify is a
   list to read rather than a judgement: public key derivation, point
   parsing, generator multiplication, ECDSA sign/verify/recover, BIP340
@@ -248,8 +247,8 @@ The release notes, which say what a user has to act on, are in
   reason beside the call — BIP32 is defined for secp256k1 and nothing else,
   so no other curve needs a fallback. Throwing the switch left the
   derivation in C and moved only the public key derived for the
-  fingerprint, which is why that row read about five times slower where
-  every other row read ten to sixty. It is still timed in
+  fingerprint, which is why that pair read far narrower than every other. It
+  is still timed in
   `bitcoin_libraries.py`, where being C is the premise rather than the
   question.
 

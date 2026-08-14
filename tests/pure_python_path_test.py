@@ -11,9 +11,8 @@ been wrong once: BIP32 derivation was a row until this check was written,
 and it never had a Python path at all -- `bip32._prv_key_derivation` calls
 `btclib_secp256k1.keys.prvkey_tweak_add` whatever the dispatch says, btclib
 saying why beside the call, so the switch moved only the public key derived
-for the fingerprint. The row read about five times slower where every other
-row read ten to sixty, and nothing but arithmetic on the printed table said
-so.
+for the fingerprint. Its pair read far narrower than every other, and nothing
+but arithmetic on the printed table said so.
 
 What is checked here is the thing a timing cannot check: not how long the
 Python path takes, but that it *is* the Python path. Every bindings entry

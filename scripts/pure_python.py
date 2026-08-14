@@ -266,6 +266,14 @@ def dsa_sign_btclib_grind() -> None:
     table grinds, so the two rows say which question is being answered --
     what one signature costs, and what a caller who writes
     `dsa.sign_(msg, key)` waits for.
+
+    The pair is one switch thrown both ways, and the labels say so rather
+    than leaving `btclib` to name the setting btclib does not use. It is
+    worth the two rows because this is the only place in the whole file
+    where another implementation's number comes out smaller than a
+    btclib number, and reading that as btclib being slower would be
+    reading a row against the wrong operation: what is on the other side
+    of it is one signature, not this one made faster.
     """
     dsa.sign_(MSG_HASH, PRVKEY)
 
@@ -376,9 +384,9 @@ def table(title: str, rows: tuple[tuple[str, Callable[[], None], int], ...]) -> 
     us = {label: benchmark(func, calls) for label, func, calls in rows}
     against = min(us.values())
     print(f"\n{title}")
-    print(f"  {'':24s} {'':10s}      {'vs best':>8s}")
+    print(f"  {'':26s} {'':10s}      {'vs best':>8s}")
     for label, value in sorted(us.items(), key=lambda row: row[1]):
-        print(f"  {label:24s} {value:10.2f} μs   {value / against:8.1f}x")
+        print(f"  {label:26s} {value:10.2f} μs   {value / against:8.1f}x")
 
 
 # the fixtures the third-party rows sign and verify, built once and
@@ -461,8 +469,8 @@ def main() -> None:
     table(
         "ECDSA sign, over a 32-byte digest",
         (
-            ("btclib", dsa_sign_btclib, 50),
-            ("btclib, grinding low-r", dsa_sign_btclib_grind, 20),
+            ("btclib, one signature", dsa_sign_btclib, 50),
+            ("btclib, grinding (default)", dsa_sign_btclib_grind, 20),
             ("python-ecdsa", dsa_sign_ecdsa, 100),
             ("pycoin", dsa_sign_pycoin, 20),
             ("buidl.pecc", dsa_sign_buidl, 10),

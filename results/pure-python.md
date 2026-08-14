@@ -24,7 +24,7 @@ default beside it, which grinds until r fits in 32 bytes.
 ## What produced it
 
 ```text
-when    : 2026-08-14 18:24 CEST (16:24 UTC)
+when    : 2026-08-14 18:33 CEST (16:33 UTC)
 python  : 3.13.14
 command : uv run python scripts/pure_python.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -50,39 +50,39 @@ every row is pure Python arithmetic, held to it by
 
 
 public key from a private key: a multiplication of the generator
-                                            vs best
-  btclib                       190.26 μs        1.0x
-  python-ecdsa                 288.08 μs        1.5x
-  secp256k1lab                1335.56 μs        7.0x
-  pycoin                      6021.60 μs       31.6x
-  buidl.pecc                 30309.05 μs      159.3x
+                                              vs best
+  btclib                         189.67 μs        1.0x
+  python-ecdsa                   285.85 μs        1.5x
+  secp256k1lab                  1324.03 μs        7.0x
+  pycoin                        5960.22 μs       31.4x
+  buidl.pecc                   30027.60 μs      158.3x
 
 ECDSA sign, over a 32-byte digest
-                                            vs best
-  btclib                       175.07 μs        1.0x
-  python-ecdsa                 301.72 μs        1.7x
-  btclib, grinding low-r      1405.69 μs        8.0x
-  pycoin                      6234.26 μs       35.6x
-  buidl.pecc                 30230.80 μs      172.7x
+                                              vs best
+  btclib, one signature          174.29 μs        1.0x
+  python-ecdsa                   298.27 μs        1.7x
+  btclib, grinding (default)    1378.96 μs        7.9x
+  pycoin                        6020.39 μs       34.5x
+  buidl.pecc                   29772.65 μs      170.8x
 
 ECDSA verify, over a 32-byte digest
-                                            vs best
-  btclib                       762.87 μs        1.0x
-  python-ecdsa                1077.19 μs        1.4x
-  pycoin                     19419.05 μs       25.5x
-  buidl.pecc                 61476.25 μs       80.6x
+                                              vs best
+  btclib                         743.60 μs        1.0x
+  python-ecdsa                  1056.87 μs        1.4x
+  pycoin                       18963.64 μs       25.5x
+  buidl.pecc                   61339.58 μs       82.5x
 
 BIP340 sign, over a 32-byte message
-                                            vs best
-  btclib                       312.64 μs        1.0x
-  secp256k1lab                7904.38 μs       25.3x
-  buidl.pecc                 91106.36 μs      291.4x
+                                              vs best
+  btclib                         308.68 μs        1.0x
+  secp256k1lab                  7763.62 μs       25.2x
+  buidl.pecc                   91303.77 μs      295.8x
 
 BIP340 verify, over a 32-byte message
-                                            vs best
-  btclib                       708.76 μs        1.0x
-  secp256k1lab                5201.97 μs        7.3x
-  buidl.pecc                 60881.41 μs       85.9x
+                                              vs best
+  btclib                         704.48 μs        1.0x
+  secp256k1lab                  5148.59 μs        7.3x
+  buidl.pecc                   60796.50 μs       86.3x
 ```
 
 ## What it shows
@@ -93,6 +93,19 @@ last in all five by a distance nothing on this machine would reorder. The
 top two are within a small factor of each other in the public key table,
 close enough that a busy machine can put either first — which is the reason
 to read the ratio column and not the order alone.
+
+The one place another implementation's number comes out smaller than a
+btclib number is the signing table, and what is above btclib there is
+btclib's own default. btclib grinds for a low-r signature unless told
+not to — it signs until r fits in 32 bytes — so that row is not one
+signature but as many as this key and this message take, and nothing
+else in this file grinds. The two rows are one switch thrown both ways
+and are labelled as such: the comparable row is the other one, which is
+what every other implementation here produces, and it leads. Read as a
+pair they say what a caller who writes `dsa.sign_(msg, key)` waits for
+and what the signature underneath it costs. Read alone, the grinding row
+would answer a question nobody asked it — it is not this signature made
+slower, it is more than one of them.
 
 `secp256k1lab` is a teaching implementation and reads like one — it is on
 no index at all, and it is here because BIP340 is where btclib has fewer

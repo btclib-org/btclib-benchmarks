@@ -2,13 +2,21 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""Timings of btclib's own two arithmetic paths, side by side.
+"""Timings of btclib against btclib: its two arithmetics, side by side.
 
-btclib delegates secp256k1 work to the btclib_secp256k1 bindings and
-falls back to the pure Python arithmetic of curves/curve_group.py for
-every other curve, a zero scalar, the point at infinity, and everything
-else the bindings decline. This times both paths through every operation
-that has them.
+Not btclib against btclib_secp256k1. Both rows of every pair are btclib,
+called the same way through the same public function, and what differs
+underneath is which arithmetic answers: the libsecp256k1 that
+btclib_secp256k1 bundles and compiles into a cffi extension, or the Python
+of `curves/curve_group.py`. `pip install btclib` installs both, the bindings
+being a dependency btclib cannot be installed without, so neither row is a
+package a reader would choose between -- they are one package's two answers,
+and the ratio is what the second costs when the first declines.
+
+It declines for every curve that is not secp256k1, for a zero scalar, for
+the point at infinity, and for everything else outside what libsecp256k1's
+entry points take. This times both answers through every operation that has
+them.
 
 Which operations those are is not a judgement call: `_libsecp256k1_serves`
 is the predicate every dispatch site asks, and the modules holding one are
@@ -23,10 +31,9 @@ performs, and a table has to end somewhere.
 ## BIP32 derivation was a row here and cannot be one
 
 It looked like the obvious addition -- an operation an application really
-performs, reaching the bindings through `curves.sec_point` without asking
-for a dispatch of its own. It came out around five times slower in Python
-where everything else came out ten to sixty, which is what a row measuring
-something other than what it claims looks like.
+performs, reaching libsecp256k1 through `curves.sec_point` without asking for
+a dispatch of its own. Its pair came out far narrower than every other, which
+is what a row measuring something other than what it claims looks like.
 
 btclib's BIP32 does not have two paths. `_prv_key_derivation` calls
 `btclib_secp256k1.keys.prvkey_tweak_add` and `_pub_key_offsets` builds a
@@ -52,13 +59,14 @@ magnitude. Nothing here repeats a measurement or discards an outlier.
 
 ## Both halves of every pair are one function, timed twice
 
-There is no `mult_bindings` beside a `mult_python` with the same body any
-more. `python_arithmetic_only` is process-wide, so which path a call takes
+There is no `mult_libsecp256k1` beside a `mult_python` with the same body
+any more. `python_arithmetic_only` is process-wide, so which path a call takes
 is a property of *when* it runs, not of which function was called: one
 function per operation, timed before the switch and again after, is what
 that actually is. The two labels the table prints are made from the
-operation's name -- `_bindings` and `_pure_python`, spelled out, because
-"python" alone was the row of a table whose every row is Python-invoked.
+operation's name -- `_libsecp256k1` and `_pure_python`, which name the two
+arithmetics rather than a package and a language: every row here is
+Python-invoked, and every row here is btclib.
 
 ## The inputs are published test vectors, not values chosen here
 
@@ -81,10 +89,10 @@ between the paths.
 
 A vector is worth insisting on even where the timings do not care, and the
 private key 1 is why. Its public key is the generator: a pure-Python
-implementation handed that key derives it in a single ladder step, measured
-at hundreds of times less than a real scalar, and python-ecdsa hands back
-the generator object itself, precomputed table and all. A key nobody chose
-cannot flatter a row that way.
+implementation handed that key derives it in one ladder step rather than a
+full-width scalar's worth, and python-ecdsa hands back the generator object
+itself, precomputed table and all. A key nobody chose cannot flatter a row
+that way.
 
 Not part of the test suite and not run by CI: nothing here is a
 correctness check of btclib, and `tests/script_engine/python_path_test.py`
@@ -97,15 +105,37 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from importlib.metadata import version
+from importlib.util import find_spec
+from pathlib import Path
 
 import btclib
-import btclib_secp256k1
 from _provenance import report
 from btclib import b58
 from btclib.curves import curve, sec_point
 from btclib.ecc import bms, dh, dsa, ellswift, ssa
 from btclib.script import taproot
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
+
+
+def report_setup() -> None:
+    """Say what the two arithmetics are, once, above the table.
+
+    The version that belongs here is btclib_secp256k1's, because that is
+    what a caller installs and what the row is: which revision of
+    libsecp256k1 it bundled is recorded in
+    `scripts/libsecp256k1_wrappers.py`, against the release it was read
+    from, and one script naming a pin is enough.
+    """
+    spec = find_spec("_btclib_secp256k1")
+    artifact = Path(spec.origin).name if spec and spec.origin else "not found"
+    print("the two arithmetics under each pair")
+    print(
+        f"  {'libsecp256k1':<20}bundled and compiled into btclib_secp256k1 "
+        f"{version('btclib_secp256k1')}, through cffi bindings, {artifact}"
+    )
+    print(f"  {'pure python':<20}btclib's own curves/curve_group.py, the dispatch off")
+    print()
 
 
 def report_provenance() -> None:
@@ -116,7 +146,7 @@ def report_provenance() -> None:
     which one ran is something the output has to state rather
     than something the reader assumes.
     """
-    report(("btclib", btclib.__file__), ("btclib-secp256k1", btclib_secp256k1.__file__))
+    report(("btclib", btclib.__file__))
 
 
 # BIP340 test vector 1: secret key, aux_rand and message, with the public
@@ -209,15 +239,14 @@ def mult() -> None:
 def dsa_sign() -> None:
     """Time one ECDSA signature: RFC6979's nonce, and no low-r grinding.
 
-    `grind=False`, and no second row for the default, where the three
-    benchmarks that compare packages carry one. Grinding signs repeatedly
-    until r fits in 32 bytes, and the number of attempts is a property of
-    the key and message rather than of the arithmetic: both paths make the
-    same number, so both rows would be multiplied by it and the ratio --
-    which is what this table is read for -- would not move. Measured at
-    around eight attempts for this vector, and 10.3x against 10.4x for the
-    pair. In a table of packages the multiple matters, not everybody
-    grinding; here it is a restatement.
+    `grind=False`, and no second row for the default, where the benchmarks
+    that compare packages carry one. Grinding signs repeatedly until r fits
+    in 32 bytes, and the number of attempts is a property of the key and
+    message rather than of the arithmetic: both paths make the same number,
+    so both rows would be multiplied by it and the ratio -- which is what
+    this table is read for -- would not move, as measuring it confirms. In a
+    table of packages the multiple matters, not everybody grinding; here it
+    is a restatement.
     """
     assert dsa.sign_(MSG, PRVKEY, grind=False) == DSA_SIG
 
@@ -349,9 +378,11 @@ def main() -> None:
     which is why the two are no longer the same loop.
     """
     report_provenance()
+    report_setup()
 
     seconds = {
-        f"{name}_bindings": benchmark(op, calls) for name, op, calls, _ in OPERATIONS
+        f"{name}_libsecp256k1": benchmark(op, calls)
+        for name, op, calls, _ in OPERATIONS
     }
 
     python_arithmetic_only()
@@ -369,10 +400,10 @@ def main() -> None:
     # fraction under one and leaving the reader to work out why
     against = {
         f"{name}_{path}": min(
-            seconds[f"{name}_bindings"], seconds[f"{name}_pure_python"]
+            seconds[f"{name}_libsecp256k1"], seconds[f"{name}_pure_python"]
         )
         for name, _, _, _ in OPERATIONS
-        for path in ("bindings", "pure_python")
+        for path in ("libsecp256k1", "pure_python")
     }
     # sorted on the ratio and not on the seconds, which is the column this
     # table is read for: what an operation costs is a fact about the

@@ -36,16 +36,15 @@ that stops matching this file fails a test rather than passing quietly:
 ## What is in them, and what that catches
 
 `bip340_test_vectors.csv` is BIP340's own, and its value is the half that is
-not a signature to reproduce: of its nineteen rows, eight carry a secret key
-and are signing cases, and the rest are verification cases that must be
-*rejected* — a public key not on the curve, an s past the order, an r that
-is not a field element, a signature over the wrong message. An
-implementation that answers true to all of them passes a naive round-trip
-test and fails these.
+not a signature to reproduce. Rows carrying a secret key are signing cases;
+the rest are verifications, and the ones expecting FALSE are a public key not
+on the curve, an s past the order, an r that is not a field element, a
+signature over the wrong message. An implementation that answers true to all
+of them passes a naive round-trip test and fails these.
 
-`bip32_test_vectors.json` is BIP32's, four seeds and seventeen chains, each
-step publishing the extended private and public key it derives to. It is
-keyed by seed, with a list of `[path, xpub, xprv]` per seed.
+`bip32_test_vectors.json` is BIP32's, keyed by seed, with a list of
+`[path, xpub, xprv]` per seed: every step publishes the extended private and
+public key it derives to.
 
 ## What is not here yet
 
