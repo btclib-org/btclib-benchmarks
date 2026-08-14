@@ -62,6 +62,7 @@ from collections.abc import Callable
 from hashlib import sha256
 from importlib.metadata import version
 from importlib.util import find_spec
+from itertools import cycle
 from pathlib import Path
 
 import btclib_secp256k1
@@ -73,6 +74,7 @@ import electrum_ecc
 import electrum_ecc.ecc_fast
 import secp256k1
 from _provenance import report
+from _vectors import signing, verification
 
 
 def report_provenance() -> None:
@@ -91,17 +93,143 @@ def report_provenance() -> None:
     )
 
 
-prvkey = 1
-pubkey = btclib_secp256k1.keys.pubkey_from_prvkey(prvkey)
-xonly_pubkey = pubkey[1:]
-msg = sha256(b"Satoshi Nakamoto").digest()
-dsa_sig = btclib_secp256k1.dsa.sign(msg, prvkey)
-ssa_sig = btclib_secp256k1.ssa.sign(msg, prvkey)
-# electrum-ecc's ECDSA verify takes the 64-byte encoding and no other,
-# where coincurve and btclib_secp256k1 take DER. Converted once here
-# rather than inside the row: a re-encoding no consumer of that API
-# would repeat is not part of what verifying costs
-dsa_sig64 = electrum_ecc.ecdsa_sig64_from_der_sig(dsa_sig)
+# every published vector, cycled, rather than one input repeated: a row that
+# calls one input a hundred thousand times measures that input. `_vectors`
+# reads BIP340's file and checks its digest; each row below takes the next of
+# what it publishes per call.
+#
+# Every row of this table is a wrapper of one library, so "they agree with
+# each other" is the check that proves least here, and agreeing with BIP340
+# is one with an outside answer.
+SIGNING = signing()
+VERIFYING = verification()
+
+PUBKEYS = [btclib_secp256k1.keys.pubkey_from_prvkey(v.prvkey) for v in SIGNING]
+
+# ECDSA has no published signature to cycle: RFC6979's nonce is what
+# libsecp256k1 signs with, and no vendored file publishes signatures over it.
+# The keys and messages are the vector file's all the same, and the four
+# wrappers are held to producing the same bytes below
+DSA_SIGS = [btclib_secp256k1.dsa.sign(v.msg, v.prvkey) for v in SIGNING]
+
+# a public key tweaked by a scalar, which is BIP32's step. The scalar is the
+# next vector's secret key: a message would serve arithmetically, but one of
+# BIP340's is not below the order and a tweak has to be, where a secret key is
+# by construction
+TWEAKS = [v.prvkey for v in SIGNING[1:]] + [SIGNING[0].prvkey]
+TWEAKED = [
+    btclib_secp256k1.keys.pubkey_tweak_add(pubkey, tweak)
+    for pubkey, tweak in zip(PUBKEYS, TWEAKS, strict=True)
+]
+
+# what the four have to agree on before any of them is timed. BIP340 first,
+# where a published signature exists: three reproduce it byte for byte, and
+# secp256k1-py's `schnorr_sign` takes no aux_rand, so what its API leaves
+# checkable is that its signature verifies
+for _v in SIGNING:
+    assert btclib_secp256k1.ssa.sign(_v.msg, _v.prvkey, _v.aux) == _v.sig
+    assert coincurve.PrivateKey(_v.prvkey).sign_schnorr(_v.msg, _v.aux) == _v.sig
+    assert (
+        electrum_ecc.ECPrivkey(_v.prvkey).schnorr_sign(_v.msg, aux_rand32=_v.aux)
+        == _v.sig
+    )
+    assert btclib_secp256k1.ssa.verify(
+        _v.msg,
+        _v.xonly_pubkey,
+        secp256k1.PrivateKey(_v.prvkey, raw=True).schnorr_sign(_v.msg, None, raw=True),
+    )
+
+# and ECDSA, where what is portable is that every signature verifies.
+# libsecp256k1's default nonce is RFC6979, so one key and one message ought to
+# give one signature through four APIs -- and on x86-64 they do. On aarch64
+# secp256k1-py's does not match the other three, so its build disagrees about
+# the nonce or about what it was given, and a benchmark is the wrong place to
+# assert a claim that holds on one architecture
+for _v, _der in zip(SIGNING, DSA_SIGS, strict=True):
+    _pubkey = btclib_secp256k1.keys.pubkey_from_prvkey(_v.prvkey)
+    assert coincurve.PrivateKey(_v.prvkey).sign(_v.msg, hasher=None) == _der
+    _secp = secp256k1.PrivateKey(_v.prvkey, raw=True)
+    assert btclib_secp256k1.dsa.verify(
+        _v.msg, _pubkey, _secp.ecdsa_serialize(_secp.ecdsa_sign(_v.msg, raw=True))
+    )
+    assert (
+        electrum_ecc.ecdsa_der_sig_from_ecdsa_sig64(
+            electrum_ecc.ECPrivkey(_v.prvkey).ecdsa_sign(_v.msg, grind_r_value=False)
+        )
+        == _der
+    )
+
+# and the tweak, which electrum-ecc reaches in two calls where the others
+# take one: two routes to the same point, which is the comparison
+for _pubkey, _tweak, _expected in zip(PUBKEYS, TWEAKS, TWEAKED, strict=True):
+    assert coincurve.PublicKey(_pubkey).add(_tweak).format(compressed=True) == _expected
+    assert (
+        secp256k1.PublicKey(_pubkey, raw=True)
+        .tweak_add(_tweak)
+        .serialize(compressed=True)
+        == _expected
+    )
+    assert (
+        electrum_ecc.ECPubkey(_pubkey)
+        + int.from_bytes(_tweak, "big") * electrum_ecc.GENERATOR
+    ).get_public_key_bytes(compressed=True) == _expected
+
+# and none of them accepts a signature against a message it was not made for,
+# which a positive check cannot tell from a row answering true to anything
+for _v, _pubkey, _der in zip(SIGNING, PUBKEYS, DSA_SIGS, strict=True):
+    _wrong = sha256(_v.msg).digest()
+    _sig64 = electrum_ecc.ecdsa_sig64_from_der_sig(_der)
+    _secp_pubkey = secp256k1.PublicKey(_pubkey, raw=True)
+    assert not coincurve.PublicKey(_pubkey).verify(_der, _wrong, None)
+    assert not _secp_pubkey.ecdsa_verify(
+        _wrong, _secp_pubkey.ecdsa_deserialize(_der), raw=True
+    )
+    assert not electrum_ecc.ECPubkey(_pubkey).ecdsa_verify(_sig64, _wrong)
+    assert not btclib_secp256k1.dsa.verify(_wrong, _pubkey, _der)
+    assert not coincurve.PublicKeyXOnly(_v.xonly_pubkey).verify(_v.sig, _wrong)
+    assert not _secp_pubkey.schnorr_verify(_wrong, _v.sig, None, raw=True)
+    assert not electrum_ecc.ECPubkey(_pubkey).schnorr_verify(_v.sig, _wrong)
+    assert not btclib_secp256k1.ssa.verify(_wrong, _v.xonly_pubkey, _v.sig)
+
+# one cycle per row, carrying whatever that API wants prepared: a key object
+# built per call would time the constructor of whichever API has the slowest
+DSA_VERIFY = cycle(
+    [
+        (pubkey, v.msg, sig)
+        for pubkey, v, sig in zip(PUBKEYS, SIGNING, DSA_SIGS, strict=True)
+    ]
+)
+DSA_VERIFY_64 = cycle(
+    [
+        (pubkey, v.msg, electrum_ecc.ecdsa_sig64_from_der_sig(sig))
+        for pubkey, v, sig in zip(PUBKEYS, SIGNING, DSA_SIGS, strict=True)
+    ]
+)
+DSA_VERIFY_SECP = cycle(
+    [
+        (secp256k1.PublicKey(pubkey, raw=True), v.msg, sig)
+        for pubkey, v, sig in zip(PUBKEYS, SIGNING, DSA_SIGS, strict=True)
+    ]
+)
+SSA_VERIFY = cycle([(v.xonly_pubkey, v.msg, v.sig) for v in VERIFYING])
+SSA_VERIFY_FULL = cycle([(b"\x02" + v.xonly_pubkey, v.msg, v.sig) for v in VERIFYING])
+DSA_SIGN = cycle([(v.prvkey, v.msg) for v in SIGNING])
+DSA_SIGN_COINCURVE = cycle([(coincurve.PrivateKey(v.prvkey), v.msg) for v in SIGNING])
+DSA_SIGN_SECP = cycle(
+    [(secp256k1.PrivateKey(v.prvkey, raw=True), v.msg) for v in SIGNING]
+)
+DSA_SIGN_ELECTRUM = cycle([(electrum_ecc.ECPrivkey(v.prvkey), v.msg) for v in SIGNING])
+SSA_SIGN = cycle([(v.prvkey, v.msg, v.aux) for v in SIGNING])
+SSA_SIGN_COINCURVE = cycle(
+    [(coincurve.PrivateKey(v.prvkey), v.msg, v.aux) for v in SIGNING]
+)
+SSA_SIGN_SECP = cycle(
+    [(secp256k1.PrivateKey(v.prvkey, raw=True), v.msg) for v in SIGNING]
+)
+SSA_SIGN_ELECTRUM = cycle(
+    [(electrum_ecc.ECPrivkey(v.prvkey), v.msg, v.aux) for v in SIGNING]
+)
+TWEAK = cycle(list(zip(PUBKEYS, TWEAKS, strict=True)))
 
 
 def _artifact(module_name: str) -> str:
@@ -157,10 +285,10 @@ LIBSECP256K1_PINS = {
 # script is about: three link it into a cffi extension at build time,
 # one opens the shared object beside the package through ctypes
 WRAPPERS = (
-    ("btclib-secp256k1", f"cffi, {_artifact('_btclib_secp256k1')}"),
-    ("coincurve", f"cffi, {_artifact('coincurve._libsecp256k1')}"),
-    ("secp256k1", f"cffi, {_artifact('secp256k1._libsecp256k1')}"),
-    ("electrum-ecc", f"ctypes, {_electrum_ecc_library()}"),
+    ("btclib-secp256k1", f"cffi bindings, {_artifact('_btclib_secp256k1')}"),
+    ("coincurve", f"cffi bindings, {_artifact('coincurve._libsecp256k1')}"),
+    ("secp256k1", f"cffi bindings, {_artifact('secp256k1._libsecp256k1')}"),
+    ("electrum-ecc", f"ctypes bindings, {_electrum_ecc_library()}"),
 )
 
 
@@ -182,76 +310,182 @@ def report_libsecp256k1() -> None:
 
 def dsa_coincurve() -> None:
     """Time coincurve's ECDSA verification, which takes a DER signature."""
-    assert coincurve.PublicKey(pubkey).verify(dsa_sig, msg, None)
+    pubkey, msg, sig = next(DSA_VERIFY)
+    assert coincurve.PublicKey(pubkey).verify(sig, msg, None)
 
 
 def dsa_secp256k1() -> None:
     """Time secp256k1-py's ECDSA verification, over its own parsed signature."""
-    pubkey_secp = secp256k1.PublicKey(pubkey, raw=True)
-    assert pubkey_secp.ecdsa_verify(
-        msg, pubkey_secp.ecdsa_deserialize(dsa_sig), raw=True
-    )
+    pubkey, msg, sig = next(DSA_VERIFY_SECP)
+    assert pubkey.ecdsa_verify(msg, pubkey.ecdsa_deserialize(sig), raw=True)
 
 
 def dsa_electrum_ecc() -> None:
     """Time electrum-ecc's ECDSA verification, over a 64-byte signature."""
-    assert electrum_ecc.ECPubkey(pubkey).ecdsa_verify(dsa_sig64, msg)
+    pubkey, msg, sig = next(DSA_VERIFY_64)
+    assert electrum_ecc.ECPubkey(pubkey).ecdsa_verify(sig, msg)
 
 
 def dsa_btclib_secp256k1() -> None:
     """Time btclib_secp256k1's ECDSA verification, bytes in every argument."""
-    assert btclib_secp256k1.dsa.verify(msg, pubkey, dsa_sig)
+    pubkey, msg, sig = next(DSA_VERIFY)
+    assert btclib_secp256k1.dsa.verify(msg, pubkey, sig)
 
 
 def ssa_coincurve() -> None:
     """Time coincurve's BIP340 verification, over an x-only public key."""
-    assert coincurve.PublicKeyXOnly(xonly_pubkey).verify(ssa_sig, msg)
+    xonly, msg, sig = next(SSA_VERIFY)
+    assert coincurve.PublicKeyXOnly(xonly).verify(sig, msg)
 
 
 def ssa_secp256k1() -> None:
     """Time secp256k1-py's BIP340 verification, over a full public key."""
+    pubkey, msg, sig = next(SSA_VERIFY_FULL)
     assert secp256k1.PublicKey(pubkey, raw=True).schnorr_verify(
-        msg, ssa_sig, None, raw=True
+        msg, sig, None, raw=True
     )
 
 
 def ssa_electrum_ecc() -> None:
     """Time electrum-ecc's BIP340 verification, x-only derived per call."""
-    assert electrum_ecc.ECPubkey(pubkey).schnorr_verify(ssa_sig, msg)
+    pubkey, msg, sig = next(SSA_VERIFY_FULL)
+    assert electrum_ecc.ECPubkey(pubkey).schnorr_verify(sig, msg)
 
 
 def ssa_btclib_secp256k1() -> None:
     """Time btclib_secp256k1's BIP340 verification, over an x-only key."""
-    assert btclib_secp256k1.ssa.verify(msg, xonly_pubkey, ssa_sig)
+    xonly, msg, sig = next(SSA_VERIFY)
+    assert btclib_secp256k1.ssa.verify(msg, xonly, sig)
+
+
+def dsa_sign_coincurve() -> None:
+    """Time coincurve's ECDSA signing, over a digest it is told not to hash."""
+    prvkey, msg = next(DSA_SIGN_COINCURVE)
+    prvkey.sign(msg, hasher=None)
+
+
+def dsa_sign_secp256k1() -> None:
+    """Time secp256k1-py's ECDSA signing, which returns a parsed signature."""
+    prvkey, msg = next(DSA_SIGN_SECP)
+    prvkey.ecdsa_sign(msg, raw=True)
+
+
+def dsa_sign_electrum_ecc() -> None:
+    """Time electrum-ecc's ECDSA signing, one signature.
+
+    `grind_r_value=False`, which is not its default: it is the only wrapper
+    of the four offering low-r grinding at all, and one signature is what
+    the other three produce. The row below times the default.
+    """
+    prvkey, msg = next(DSA_SIGN_ELECTRUM)
+    prvkey.ecdsa_sign(msg, grind_r_value=False)
+
+
+def dsa_sign_electrum_ecc_grind() -> None:
+    """Time electrum-ecc's ECDSA signing as it signs unless told otherwise.
+
+    Its `ENABLE_ECDSA_R_VALUE_GRINDING` is true, so a caller writing
+    `ecdsa_sign(msg32)` signs repeatedly until r fits in 32 bytes. Grinding
+    is a loop around a wrapper rather than anything libsecp256k1 does, which
+    is why it is one row of four here and a pair of rows in the tables about
+    libraries.
+    """
+    prvkey, msg = next(DSA_SIGN_ELECTRUM)
+    prvkey.ecdsa_sign(msg)
+
+
+def dsa_sign_btclib_secp256k1() -> None:
+    """Time btclib_secp256k1's ECDSA signing, bytes in and DER out."""
+    prvkey, msg = next(DSA_SIGN)
+    btclib_secp256k1.dsa.sign(msg, prvkey)
+
+
+def ssa_sign_coincurve() -> None:
+    """Time coincurve's BIP340 signing, over each vector's aux_rand."""
+    prvkey, msg, aux = next(SSA_SIGN_COINCURVE)
+    prvkey.sign_schnorr(msg, aux)
+
+
+def ssa_sign_secp256k1() -> None:
+    """Time secp256k1-py's BIP340 signing, which takes no aux_rand.
+
+    Its signature is therefore not the vector's. Timed all the same: the work
+    is the same, and the fixtures above check the one thing this API leaves
+    checkable, that the signature verifies.
+    """
+    prvkey, msg = next(SSA_SIGN_SECP)
+    prvkey.schnorr_sign(msg, None, raw=True)
+
+
+def ssa_sign_electrum_ecc() -> None:
+    """Time electrum-ecc's BIP340 signing, over each vector's aux_rand."""
+    prvkey, msg, aux = next(SSA_SIGN_ELECTRUM)
+    prvkey.schnorr_sign(msg, aux_rand32=aux)
+
+
+def ssa_sign_btclib_secp256k1() -> None:
+    """Time btclib_secp256k1's BIP340 signing, over each vector's aux_rand."""
+    prvkey, msg, aux = next(SSA_SIGN)
+    btclib_secp256k1.ssa.sign(msg, prvkey, aux)
+
+
+def tweak_coincurve() -> None:
+    """Time coincurve's public key tweak, which returns a new PublicKey."""
+    pubkey, tweak = next(TWEAK)
+    coincurve.PublicKey(pubkey).add(tweak)
+
+
+def tweak_secp256k1() -> None:
+    """Time secp256k1-py's public key tweak, in place on a parsed key."""
+    pubkey, tweak = next(TWEAK)
+    secp256k1.PublicKey(pubkey, raw=True).tweak_add(tweak)
+
+
+def tweak_electrum_ecc() -> None:
+    """Time electrum-ecc's public key tweak, which its API spells in two calls.
+
+    There is no tweak-add on `ECPubkey`: a scalar times the generator and a
+    point addition is how the same tweak is reached, both libsecp256k1 calls.
+    Two crossings where the others make one is the difference this table
+    exists to show.
+    """
+    pubkey, tweak = next(TWEAK)
+    (
+        electrum_ecc.ECPubkey(pubkey)
+        + int.from_bytes(tweak, "big") * electrum_ecc.GENERATOR
+    )
+
+
+def tweak_btclib_secp256k1() -> None:
+    """Time btclib_secp256k1's public key tweak, bytes in and bytes out."""
+    pubkey, tweak = next(TWEAK)
+    btclib_secp256k1.keys.pubkey_tweak_add(pubkey, tweak)
 
 
 DSA_ROWS = (dsa_coincurve, dsa_secp256k1, dsa_electrum_ecc, dsa_btclib_secp256k1)
 SSA_ROWS = (ssa_coincurve, ssa_secp256k1, ssa_electrum_ecc, ssa_btclib_secp256k1)
-
-# every row is called once before any of them is timed, which is what
-# each row's own assert is for: four wrappers of one library have to
-# agree that this signature is valid, or the table is comparing answers
-# rather than implementations
-for _row in DSA_ROWS + SSA_ROWS:
-    _row()
-
-# and none of them accepts the same signature against a message it was
-# not made for. Written out per row rather than looped, each API taking
-# the message in its own place -- and the point of the block is the one
-# thing a positive check cannot show, that a row is not answering true
-# to whatever it is handed
-wrong_msg = sha256(b"not Satoshi Nakamoto").digest()
-_secp256k1_pubkey = secp256k1.PublicKey(pubkey, raw=True)
-assert not coincurve.PublicKey(pubkey).verify(dsa_sig, wrong_msg, None)
-assert not _secp256k1_pubkey.ecdsa_verify(
-    wrong_msg, _secp256k1_pubkey.ecdsa_deserialize(dsa_sig), raw=True
+DSA_SIGN_ROWS = (
+    dsa_sign_coincurve,
+    dsa_sign_secp256k1,
+    dsa_sign_electrum_ecc,
+    dsa_sign_electrum_ecc_grind,
+    dsa_sign_btclib_secp256k1,
 )
-assert not electrum_ecc.ECPubkey(pubkey).ecdsa_verify(dsa_sig64, wrong_msg)
-assert not btclib_secp256k1.dsa.verify(wrong_msg, pubkey, dsa_sig)
-assert not coincurve.PublicKeyXOnly(xonly_pubkey).verify(ssa_sig, wrong_msg)
-assert not _secp256k1_pubkey.schnorr_verify(wrong_msg, ssa_sig, None, raw=True)
-assert not electrum_ecc.ECPubkey(pubkey).schnorr_verify(ssa_sig, wrong_msg)
-assert not btclib_secp256k1.ssa.verify(wrong_msg, xonly_pubkey, ssa_sig)
+SSA_SIGN_ROWS = (
+    ssa_sign_coincurve,
+    ssa_sign_secp256k1,
+    ssa_sign_electrum_ecc,
+    ssa_sign_btclib_secp256k1,
+)
+TWEAK_ROWS = (
+    tweak_coincurve,
+    tweak_secp256k1,
+    tweak_electrum_ecc,
+    tweak_btclib_secp256k1,
+)
+
+for _row in DSA_ROWS + SSA_ROWS + DSA_SIGN_ROWS + SSA_SIGN_ROWS + TWEAK_ROWS:
+    _row()
 
 # one count for all eight rows, where the scripts that mix Python in
 # need one per function: every row here is a call into C, and they land
@@ -262,8 +496,13 @@ assert not btclib_secp256k1.ssa.verify(wrong_msg, xonly_pubkey, ssa_sig)
 CALLS = 100_000
 
 
-def benchmark(func: Callable[[], None], calls: int) -> None:
-    """Call `func` `calls` times and print microseconds per call."""
+def benchmark(func: Callable[[], None], calls: int) -> float:
+    """Call `func` `calls` times and return microseconds per call.
+
+    Returned and not printed: a table sorted fastest to slowest, each row
+    divided by one of the others, cannot be written a line at a time --
+    every number has to be in hand before the first line is.
+    """
     # perf_counter and not time(): the wall clock can step backwards
     # under an NTP correction, and a benchmark is the one place that
     # shows up as a negative duration
@@ -271,28 +510,52 @@ def benchmark(func: Callable[[], None], calls: int) -> None:
     for _ in range(calls):
         func()
     end = time.perf_counter()
-    us_per_call = (end - start) / calls * 1e6
-    print(f"{func.__name__:<22}: {us_per_call:10.2f} us/call ({calls} calls)")
+    return (end - start) / calls * 1e6
+
+
+def table(title: str, rows: tuple[Callable[[], None], ...]) -> None:
+    """Time every row of one operation, then print them fastest first.
+
+    The ratio is against the fastest row, whichever it turns out to be,
+    so the top row reads 1.0x and every other says what it costs to use
+    that one instead. Against a named row -- btclib_secp256k1's, the
+    obvious candidate here -- the column would answer a question the
+    reader did not ask on the runs where that row is not the quickest,
+    and half the column would sit under one, which reads as a defect
+    rather than as a result.
+    """
+    us = {func.__name__: benchmark(func, CALLS) for func in rows}
+    against = min(us.values())
+    print(title)
+    print(f"  {'':<30}{'μs/call':>10}{'vs best':>12}")
+    for name, value in sorted(us.items(), key=lambda row: row[1]):
+        # two decimals on the ratio where the other scripts print one:
+        # every row here calls the same C and they land within a few
+        # percent of each other, so one decimal prints 1.0x for the whole
+        # column and says nothing at all
+        print(f"  {name:<30}{value:10.2f}{value / against:11.2f}x   ({CALLS} calls)")
 
 
 def main() -> None:
     """Print the two tables, one operation each.
 
-    No order is forced on the rows any more: with the pure-Python rows
-    gone, nothing here changes state a later row would read, so the
-    order below is the reading order and nothing else.
+    No order is forced on the timing any more: with the pure-Python rows
+    gone, nothing here changes state a later row would read. The order
+    the rows are *printed* in is the measurement's own, fastest first,
+    which is a property of the run rather than of this file.
     """
     report_provenance()
     report_libsecp256k1()
 
-    print("ECDSA verify (32-byte digest, the public key parsed per call)")
-    for func in DSA_ROWS:
-        benchmark(func, CALLS)
+    table("ECDSA verify (32-byte digest, the public key parsed per call)", DSA_ROWS)
     print()
-
-    print("BIP340 verify (32-byte message, the public key parsed per call)")
-    for func in SSA_ROWS:
-        benchmark(func, CALLS)
+    table("BIP340 verify (32-byte message, the public key parsed per call)", SSA_ROWS)
+    print()
+    table("ECDSA sign (32-byte digest)", DSA_SIGN_ROWS)
+    print()
+    table("BIP340 sign (32-byte message)", SSA_SIGN_ROWS)
+    print()
+    table("public key tweak by a scalar, which is BIP32's step", TWEAK_ROWS)
 
 
 # a guard rather than bare module-level calls: the helpers above are

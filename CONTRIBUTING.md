@@ -42,6 +42,17 @@ uv run pytest                      # the suite, gated at 100% coverage
 uv run pre-commit run --all-files  # every lint hook, which is what CI runs
 ```
 
+A fixture that is a key or a signature trips detect-secrets, correctly: it
+cannot tell a private key published in a BIP from a credential. Record the
+finding as reviewed rather than excluding the file, which would make it
+blind for good, and stage the result — the hook refuses an unstaged
+baseline:
+
+```shell
+uvx detect-secrets@1.5.0 scan --baseline .secrets.baseline
+git add .secrets.baseline
+```
+
 `.pre-commit-config.yaml` **is** the lint gate: `lint.yml` runs that file
 and nothing else, so a commit and CI enforce the same list. Never add a
 second copy of the same tools to a workflow.
@@ -56,8 +67,21 @@ of the code, so no test here asserts one, and **no workflow runs a
 benchmark**: a shared CI runner disagrees with a laptop by more than most
 of the differences being reported.
 
-What it does check is the two things that survive being automated:
+What it does check is what survives being automated:
 
+- that every measured package answers the vendored vectors, in the
+  configuration it is measured in. `tests/vectors_test.py` runs BIP340's
+  own vectors and BIP32's against every implementation this project times,
+  btclib included — redundant with btclib's own suite, deliberately, it
+  being the one package these tables exist to publish. The negative cases
+  are the point: an implementation that accepts a public key off the curve
+  or an s past the order passes a round-trip check and fails this one. The
+  pure-Python configuration is a subprocess, `PYCOIN_NATIVE` being read at
+  import and btclib's dispatch flag being unrestorable.
+- that each row of `btclib_two_paths.py` has a second path at all.
+  `tests/pure_python_path_test.py` blocks every bindings entry point and
+  calls every operation: a row that has kept a foot in C raises instead of
+  answering. BIP32 derivation was such a row.
 - that every script *loads*, which runs the fixtures at its top and the
   assertions comparing each comparand's answer against btclib's. A table
   whose rows compute different things is worth nothing, and importing the
@@ -75,15 +99,61 @@ What it does check is the two things that survive being automated:
   half: that every row *rejects* a signature made for another message,
   which a positive check alone cannot tell from a row that answers true
   to anything.
+- **take the input from a published test vector.** The fixtures are
+  BIP340's first vector and BIP32's first, transcribed from btclib's
+  vendored copies — the values, not the files, each row timing one input.
+  The timings do not turn on it: a valid key measures like any other valid
+  key, which was checked. The assertions do. Checked against btclib, a
+  comparand can only disagree with btclib; checked against what the
+  specification publishes, both can be wrong and still fail, which is the
+  failure worth being able to have. Where no vector fixes the answer —
+  ECDSA's nonce is btclib's own RFC6979 — the cross-comparand check is
+  what there is, and that is worth writing down beside the row.
+
+  A made-up key is not merely weaker, it can be actively wrong, and the
+  key this project signed with for a while — 1 — was wrong in two ways.
+  Deriving a public key from it costs a pure-Python implementation one
+  ladder step rather than a full-width scalar's worth. And its public key
+  *is* the generator: python-ecdsa hands back the generator object itself,
+  precomputed table and all, so every row verifying against that key
+  verified with a table no real key gets, and measured about half what it
+  should. That row was published before anybody noticed. A key nobody chose
+  cannot flatter a row on purpose, which is the whole argument.
 - **say which backend actually ran.** `pycoin`, `buidl` and
   `python-bitcoinlib` each reach for a C library at import if they find
   one, and quietly fall back to Python if they do not. A row that does
   not name what it resolved to is not a measurement of anything in
   particular.
+- **two rows where a library grinds, and none where grinding says
+  nothing.** btclib and embit grind for a low-r signature by default, and
+  `electrum-ecc` offers it; each gets a `grind=False` row, which is the one
+  comparable with libraries that sign once, and a row of its default beside
+  it. `btclib_two_paths.py` has no grinding row at all, and that is the same
+  rule: grinding multiplies both of its paths by the same number of
+  attempts, so the ratio it prints does not move, and two rows saying what
+  one pair already says are two rows to read.
 - **loop counts are per row** wherever a table mixes Python with C: the
   two differ by orders of magnitude, and one shared count either takes
   minutes or measures the clock's own resolution. A table whose rows are
-  all C can share one count, and `libsecp256k1_wrappers.py` does.
+  all C can share one count, and `libsecp256k1_wrappers.py` does. Where
+  the counts differ they print beside their rows, sorting putting rows
+  three orders of magnitude apart next to each other. A row whose backend
+  the script does not decide carries a count *per backend* and picks
+  between them at run time, as `pycoin_calls` does in
+  `bitcoin_libraries.py`: one written count is either too small to measure
+  the C or minutes long against the Python, and which one a machine gets
+  is not this project's to choose.
+- **sort on the measurement, and divide by the fastest row**, never by
+  btclib's: a column against btclib prints fractions under one for
+  everything quicker, which is btclib's score rather than the table's
+  answer. `btclib_two_paths.py` divides each row by the quicker of its own
+  *pair* instead, its rows being one operation through two arithmetics.
+
+  An order written by hand is an opinion about the result, and a reader
+  dividing two numbers to get the ratio is doing arithmetic the table
+  should have done. It follows that a row cannot print as it is timed:
+  every number has to be in hand before the first line, which is why each
+  script's `benchmark` returns rather than prints.
 - **never state a number in prose.** Not in a comment, not in a
   docstring, not in the README. The tables are produced by running the
   scripts; a figure written down anywhere else is a claim nothing

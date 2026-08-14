@@ -133,17 +133,51 @@ def test_a_module_outside_an_install_root_is_reported_as_shadowing(
     assert "sys.path: /home/dev/btclib/btclib/__init__.py" in line
 
 
-def test_an_installed_module_is_described_with_version_and_origin(
+INSTALLED = "/env/lib/python3.13/site-packages/pkg/__init__.py"
+
+
+def test_a_declared_install_is_described_by_its_version_alone(
     monkeypatch: pytest.MonkeyPatch, fake_dist: InstallFake
 ) -> None:
-    """The ordinary case, under which every table row is printed."""
+    """The ordinary case, under which every table row is printed.
+
+    No parenthesis: an index install and a pinned revision are what the
+    declaration asks for, and a note saying so on every line of every run
+    is noise a reader learns to skip -- which is the worst thing to teach
+    them about this block, the one line that matters being the odd one.
+    """
     fake_dist(None)
     monkeypatch.setattr(_provenance, "version", lambda _: "0.8.0.1")
-    line = _provenance.describe(
-        "btclib-secp256k1", "/env/lib/python3.13/site-packages/pkg/__init__.py"
+    line = _provenance.describe("btclib-secp256k1", INSTALLED)
+    assert line == "btclib-secp256k1    : 0.8.0.1"
+
+
+def test_a_pinned_revision_is_also_described_by_its_version_alone(
+    monkeypatch: pytest.MonkeyPatch, fake_dist: InstallFake
+) -> None:
+    """`[tool.uv.sources]` is a declaration too, and the version dates it."""
+    fake_dist(
+        {
+            "url": "https://github.com/btclib-org/btclib",
+            "vcs_info": {"vcs": "git", "commit_id": "0123456789abcdef"},
+        }
     )
-    assert line.startswith("btclib-secp256k1    : 0.8.0.1")
-    assert line.endswith("(released)")
+    monkeypatch.setattr(_provenance, "version", lambda _: "2026.9")
+    assert _provenance.describe("btclib", INSTALLED) == "btclib              : 2026.9"
+
+
+def test_a_path_install_is_named_in_the_line(
+    monkeypatch: pytest.MonkeyPatch, fake_dist: InstallFake
+) -> None:
+    """The case the annotation exists for: something installed over the top.
+
+    `--with-editable` is the documented way to measure a working tree, and
+    the whole of what makes it safe is that the report says so.
+    """
+    fake_dist({"url": "file:///home/dev/btclib", "dir_info": {"editable": True}})
+    monkeypatch.setattr(_provenance, "version", lambda _: "2026.9")
+    line = _provenance.describe("btclib", INSTALLED)
+    assert line.endswith("(editable: /home/dev/btclib)")
 
 
 def test_a_distribution_with_no_metadata_at_all_is_named_not_installed(
@@ -160,14 +194,20 @@ def test_a_distribution_with_no_metadata_at_all_is_named_not_installed(
     )
 
 
-def test_report_prints_one_line_per_package_and_the_interpreter(
+def test_report_prints_one_line_per_package_and_nothing_else(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The report is stdout, so that a paste carries it and the numbers."""
+    """The report is stdout, so that a paste carries it and the numbers.
+
+    One line per package and a blank one: the interpreter, the machine and
+    the time belong to the run rather than to the packages, and the block
+    above a published table is where all three are stated together.
+    """
     _provenance.report(("pytest", pytest.__file__))
     out = capsys.readouterr().out
     assert out.splitlines()[0].startswith("pytest")
-    assert "python              :" in out
+    assert out.splitlines()[1] == ""
+    assert "python" not in out
 
 
 def test_the_install_root_test_accepts_both_names_debian_uses(

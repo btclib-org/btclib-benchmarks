@@ -7,25 +7,22 @@
 btclib, with the `btclib_secp256k1` bindings it depends on and cannot be
 installed without, is what `pip install btclib` gives an end user -- so
 this times exactly that path, never the pure-Python fallback of
-`curves/curve_group.py`, which issue #816's benchmark covers instead.
+`curves/curve_group.py`, which `scripts/pure_python.py` covers instead.
 
 Every comparand is timed at its own latest PyPI release, on operations it
 actually offers: signing a message is compared against a package that
 signs, deriving a BIP32 child against one that has BIP32, and nothing
 is compared against a package that lacks the feature.
 
-## The candidates, and one that is not here
+## One library that is not a row
 
-The issue that asked for this script named six candidates: python-ecdsa,
-pycoin, bit, embit, python-bitcoinlib and buidl. `bit` is not among the
-rows below: its latest release, 0.8.0 from 2021-12-04, depends on
-`coincurve`, whose latest wheel set (21.0.0) stops at cp313 -- no cp314
-build exists yet -- and the sdist fails to build on 3.14 with
-"RuntimeError: Expected exactly one LICENSE file in cffi distribution",
-a coincurve/hatchling packaging defect this repository does not control.
-`uv sync --group bench` on `.python-version`'s 3.14 cannot install it, so
-it is left out rather than pinned around silently; revisit if a newer
-coincurve gains a 3.14 wheel.
+`bit` installs on this interpreter and is still not here. Its declared
+dependency is `coincurve`, so its ECDSA is coincurve's libsecp256k1, and
+that build already has a row of its own in
+`scripts/libsecp256k1_wrappers.py`. What a `bit` row would add over that
+row is its wallet layer, not arithmetic, and a table comparing arithmetic
+would be reporting the layer as though it were the curve. It belongs here
+the day this benchmark grows a question about wallet APIs.
 
 ## What each comparand is actually running, and how that was checked
 
@@ -41,63 +38,105 @@ what they seem to:
   neither found it falls back to the plain-Python `Generator` class.
   `_pycoin_backend()` below reports which one actually ran, because
   nothing here should claim a Python number without checking that it is
-  one.
+  one. It reports libsecp256k1 here, which is *not* what a PyPI install
+  gives: pycoin bundles no library and builds no extension, so a machine
+  with nothing for its ctypes probe to find leaves it pure Python. Two
+  conditions make this row C, and both are properties of the import list
+  above rather than of pycoin.
+  pycoin's loader calls `ctypes.util.find_library` having imported only
+  `ctypes`, so unless something else imported `ctypes.util` first the
+  attribute lookup raises and its own `except AttributeError` reports
+  that as no library found; `bitcoin.core.key` imports it. And the name
+  it then asks for, `libsecp256k1`, resolves to nothing, so the load
+  falls through to the process's own symbols -- which
+  `btclib_secp256k1`'s extension has already put there. So this row is
+  C, and the build it calls is the one btclib's row calls: drop either
+  import and the same row is Python again. Its loop count follows that
+  answer rather than being written once, `pycoin_calls` below saying why.
 - python-bitcoinlib's `CECKey` defaults to OpenSSL's `EC_KEY` (loaded the
   same way, `ctypes.util.find_library`) and only calls libsecp256k1 if a
   caller opts in with `use_libsecp256k1_for_signing` -- not done here, so
   this row is OpenSSL's C and not Python either way, and stays that on
   every machine that has OpenSSL, which is to say every machine this
   installs on.
-- embit does not probe the system at all: `embit/util/prebuilt/` ships a
-  compiled libsecp256k1 for six platforms, and `embit.ec` loads the one
-  matching `platform.machine()` through ctypes unconditionally. This row
-  is always C, and always a libsecp256k1 build embit vendors rather than
-  the one `btclib_secp256k1` vendors -- two different builds of the same
-  library, not the same binary measured twice.
-- buidl tries `buidl.cecc`, a compiled extension against Core's
-  secp256k1 that `pip install buidl` does not build (`libsec_build.py`
-  is a separate step this script does not run), and falls back to
-  `buidl.pecc`, pure Python -- deterministically, since nothing here
-  attempts the build. `ecdsa` (the PyPI package) has no native path to
-  fall back from: it is pure Python unconditionally.
+- embit probes nothing: `embit/util/prebuilt/` ships a prebuilt library per
+  platform and `embit.ec` loads the one matching `platform.machine()`
+  through ctypes. This row is always C, and the
+  library is not the one the other rows call -- embit bundles
+  ElementsProject's `secp256k1-zkp`, not `bitcoin-core/secp256k1`, which
+  matters in a table whose other C rows are the latter.
+- buidl reaches C only if somebody built it. `buidl.cecc` is cffi bindings
+  compiled by `libsec_build.py` against a system library, a step
+  `pip install buidl` does not run, so the fallback `buidl.pecc` is what a
+  PyPI install gets. `ecdsa` has nothing to fall back from: no bundled
+  library, no built extension, pure Python unconditionally.
 
 None of this makes a row invalid -- it is what `pip install <package>`
 actually gives a user on this machine, which is the same question this
 whole script asks of btclib. It does mean a pycoin row is not always
-comparable across two runs of this script on two machines, which is why
-the backend it picked is part of the output rather than a footnote.
+comparable across two runs of this script -- on two machines, or on two
+import lists -- which is why the backend it picked is part of the output
+rather than a footnote.
 
 ## What is measured
 
-Three operations, on secp256k1, sha256 where a digest is needed:
+Curve operations on secp256k1, over published test vectors: BIP340's first,
+whose key and 32-byte message the ECDSA rows take as well, and BIP32's
+first, whose seed the derivation rows take. Then the address encodings,
+over BIP173's and BIP350's own vectors, which are not curve work at all and
+are here because every one of these libraries does them and a caller cannot
+avoid them.
 
-- ECDSA sign and verify, over a fixed 32-byte digest -- every comparand
-  that exposes ECDSA takes a digest directly rather than a message, so
-  none of them hash it a second time on top of the `hashlib.sha256` call
-  below.
-- BIP340 (Schnorr) sign and verify, over a fixed 32-byte message --
-  BIP340 does not hash its message internally, so this is the value
-  every implementation signs and checks, byte for byte, and it doubles
-  as libsecp256k1's own fixed-size entry point, which is what keeps
-  btclib's row on the bindings path (`ecc.ssa.sign_`'s dispatch is
+- ECDSA sign and verify, over the vector's 32 bytes read as a digest --
+  every comparand that exposes ECDSA takes a digest directly rather than a
+  message, so none of them hash it a second time.
+
+  Two of the six grind for a low-r signature by default, btclib and embit,
+  which means their default is not one signature but as many as it takes
+  to find one whose r fits in 32 bytes. Both therefore have two rows: a
+  `grind=False` row, which is one signature and is what the other four
+  produce, and a row of the default beside it. A grinding row is not a
+  per-signature number and does not pretend to be one -- for a fixed key
+  and message it is a fixed multiple of the row above it, and which multiple
+  is a property of the pair rather than of either library. A key whose first
+  attempt lands low makes grinding look like ordinary overhead; this one does
+  not, which is why the default gets a row of its own.
+- BIP340 (Schnorr) sign and verify, over the vector's message and
+  aux_rand -- BIP340 does not hash its message internally, so this is the
+  value every implementation signs and checks, byte for byte, and it
+  doubles as libsecp256k1's own fixed-size entry point, which is what
+  keeps btclib's row on the bindings path (`ecc.ssa.sign_`'s dispatch is
   exactly this size or the arbitrary-size Python fallback, and this
-  script wants the former).
-- one BIP32 derivation, `m/0h/1` from a fixed 32-byte seed -- a hardened
-  step and a normal one, which is what every comparand's own derivation
+  script wants the former). Signing over the vector's aux_rand rather than
+  a random one is what makes both signing rows reproducible, and therefore
+  checkable against BIP340 itself.
+- one BIP32 derivation, `m/0h/1` from the vector's seed -- a hardened step
+  and a normal one, which is what every comparand's own derivation
   function takes a path string or a chain of `child`/`subkey` calls for.
-  All four implementations below were checked to agree on the resulting
-  public key before any of this was timed.
+  All four implementations were checked against each other *and* against
+  the public key BIP32 publishes for that path before any of this was
+  timed.
 
-python-ecdsa and python-bitcoinlib carry neither BIP340 nor BIP32, so
-neither has a row in those two tables; pycoin's own `ecdsa.Generator` is
+- base58check, bech32 and bech32m, encoding and decoding, over BIP173's
+  witness-v0 vector and BIP350's witness-v1 one. Pure Python in every
+  library here, so these rows say nothing about bindings and everything
+  about the code: they are where the libraries differ most, and where the
+  only wrong answer in this benchmark lives -- `python-bitcoinlib` encodes a
+  witness-v1 program with bech32's checksum constant where BIP350 requires
+  bech32m's, and rejects the address BIP350 publishes, so it has no
+  bech32m row and the script asserts both halves of why.
+
+python-ecdsa carries none of these operations beyond ECDSA, and
+python-bitcoinlib carries neither BIP340 nor BIP32, so neither has a row in
+those tables; pycoin's own `ecdsa.Generator` is
 a bare elliptic-curve object with no seed-derivation function either,
 which is why its BIP32 row goes through `pycoin.symbols.btc.network`
 instead, the layer above that actually has one. Nothing here compares a
 feature against a library that lacks it.
 
-Not part of the test suite and not run by CI: it needs five third-party
-packages this project does not depend on, declared in the `bench`
-dependency group and nowhere else.
+Not part of the test suite and not run by CI: measuring is done by a
+person on a machine whose state they know, and a shared runner disagrees
+with a laptop by more than most of the differences here.
 """
 
 from __future__ import annotations
@@ -106,16 +145,35 @@ import hashlib
 import time
 from collections.abc import Callable
 from importlib.metadata import version
+from importlib.util import find_spec
+from pathlib import Path
 
+import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
+import bitcoin.wallet as bitcoinlib_wallet
 import btclib
-import btclib_secp256k1
+import btclib.b32
+import btclib.b58
+
+# imported for its side effect, which one row of this table turns on:
+# loading the extension puts libsecp256k1's symbols in the process, and
+# pycoin's ctypes probe -- run when pycoin is imported, below -- finds them
+# there or falls back to Python. Drop this line and pycoin's rows become
+# Python rows, which the docstring above is about. btclib's own dispatch
+# imports the bindings when it first needs them, too late for that probe
+import btclib_secp256k1  # noqa: F401
+import buidl.bech32
 import buidl.hd
+import buidl.helper
 import buidl.libsec_status
 import buidl.pecc
 import ecdsa
+import embit.base58
+import embit.bech32
 import embit.bip32
 import embit.ec
+import embit.util.ctypes_secp256k1
+import pycoin.encoding.b58
 import pycoin.symbols.btc
 from _provenance import report
 from btclib.bip32 import bip32
@@ -124,65 +182,215 @@ from btclib.to_pub_key import pub_keyinfo_from_prv_key
 
 
 def report_provenance() -> None:
-    """Say which build of each package these rows are about.
+    """Say which build of every package in the table these rows are about.
 
-    Printed before any number: a released wheel and a working
-    tree satisfy the same requirement and resolve in silence, so
-    which one ran is something the output has to state rather
-    than something the reader assumes.
+    Printed before any number: a released wheel and a working tree satisfy
+    the same requirement and resolve in silence, so which one ran is
+    something the output has to state rather than something the reader
+    assumes.
+
+    Every package, comparands included, so that a version number appears
+    once in this output and `report_setup` below is left with the one thing
+    a version cannot say: which arithmetic the row reached.
     """
-    report(("btclib", btclib.__file__), ("btclib-secp256k1", btclib_secp256k1.__file__))
+    report(
+        ("btclib", btclib.__file__),
+        ("ecdsa", ecdsa.__file__),
+        ("pycoin", pycoin.symbols.btc.__file__),
+        ("buidl", buidl.pecc.__file__),
+        ("embit", embit.ec.__file__),
+        ("python-bitcoinlib", bitcoinlib_key.__file__),
+    )
 
 
-PRVKEY = 1
-MSG_HASH = hashlib.sha256(b"Satoshi Nakamoto").digest()
-SEED = bytes(range(32))
+# BIP340 test vector 1 and BIP32 test vector 1, transcribed from btclib's
+# vendored copies (`tests/ecc/_data/bip340_test_vectors.csv` and
+# `tests/bip32/_data/bip32_test_vectors.json`, whose
+# `tests/_data/README.md` pins each to a commit of bitcoin/bips and
+# compares the bytes). Published inputs rather than inputs chosen here, and
+# what each vector publishes is asserted below: the cross-comparand checks
+# hold every row against btclib's answer, which cannot catch a mistake
+# btclib and a comparand share, and a specification can.
+#
+# A published key matters to one row more than to the rest. python-ecdsa
+# returns the generator *object* for the public key of the private key 1 --
+# precomputed table and all -- so a row verifying against that key verifies
+# with a table no real key gets, at about half the cost of verification.
+# Every other row measures the same through any valid key, three of them
+# having been timed to check it: the vector is here for what it forbids
+# rather than for what it changes.
+PRVKEY = 0xB7E151628AED2A6ABF7158809CF4F3C762E7160F38B4DA56A784D9045190CFEF
+MSG_HASH = bytes.fromhex(
+    "243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89"
+)
+AUX = bytes.fromhex("0000000000000000000000000000000000000000000000000000000000000001")
+VECTOR_XONLY_PUBKEY = bytes.fromhex(
+    "DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659"
+)
+VECTOR_SSA_SIG = bytes.fromhex(
+    "6896BD60EEAE296DB48A229FF71DFE071BDE413E6D43F917DC8DCF8C78DE3341"
+    "8906D11AC976ABCCB20B091292BFF4EA897EFCB639EA871CFA95F6DE339E4B0A"
+)
+SEED = bytes.fromhex("000102030405060708090a0b0c0d0e0f")
 BIP32_PATH = "m/0h/1"
+VECTOR_BIP32_CHILD_PUBKEY = bytes.fromhex(
+    "03501E454BF00751F24B1B489AA925215D66AF2234E3891C3B21A52BEDB3CD711C"
+)
 
 
-def _pycoin_backend() -> str:
-    """Name the arithmetic pycoin's Generator actually runs, this machine.
+# the two modules a native mixin can come from, and what each one means.
+# Keyed by module rather than by class name because the name cannot tell
+# them apart: both call their real mixin `Optimizations` and both call
+# their fallback `noop`. `LibSECP256K1Optimizations` is an alias pycoin
+# binds to that same `Optimizations` class, so a probe looking for that
+# spelling among the base names could not fire at all -- which is how
+# this table came to print "pure Python" beside timings that were C.
+# The strings are a line of `report_setup`'s block, so they name the code
+# and then the mechanism, as every other line there does. Which copy of
+# libsecp256k1 is a property of the process rather than of pycoin, and the
+# module docstring is where that is spelled out.
+# Which library each row's bindings reach, keyed to the release the pin was
+# read from. Neither revision can be recovered at run time: btclib's is
+# compiled into a cffi extension, and embit's is a prebuilt binary carrying
+# no version string. Both are printed as unrecorded for any other release,
+# because a floor is a floor and a comparand upgrades without a word.
+#
+# - btclib_secp256k1 0.8.0.1: its `secp256k1` submodule pin, 6e2c8bc, which
+#   is upstream's v0.8.0 tag exactly
+# - embit 0.8.0: its `secp256k1/secp256k1-zkp` submodule pin, d9560e0a --
+#   ElementsProject's fork and not bitcoin-core/secp256k1, which is worth
+#   saying in a table that calls four other rows the same library
+PINS = {"btclib-secp256k1": ("0.8.0.1", "v0.8.0"), "embit": ("0.8.0", "d9560e0a")}
+
+
+def _pinned(dist_name: str) -> str:
+    """Return the pinned revision, or say the installed release has no pin."""
+    recorded, pin = PINS[dist_name]
+    installed = version(dist_name)
+    return pin if installed == recorded else f"unrecorded for {installed}"
+
+
+def _artifact(module_name: str) -> str:
+    """Return the file name of the compiled extension a wrapper calls into."""
+    spec = find_spec(module_name)
+    return Path(spec.origin).name if spec and spec.origin else "not found"
+
+
+# pycoin bundles no library and builds no extension: `native/secp256k1.py`
+# and `native/openssl.py` are ctypes loaders, and what they find is a
+# property of the machine. So a PyPI install gets pure Python unless a
+# system library answers to the name `ctypes.util.find_library` is given --
+# and the row below is C only because this process already holds
+# btclib_secp256k1's copy, which is not what pip install produces
+PYCOIN_NATIVE_MIXINS = {
+    "pycoin.ecdsa.native.secp256k1": (
+        "ctypes bindings to a libsecp256k1 it neither bundles nor builds: "
+        "btclib_secp256k1's, already in this process, which a PyPI install "
+        "does not give"
+    ),
+    "pycoin.ecdsa.native.openssl": "OpenSSL's libcrypto ctypes bindings",
+}
+
+
+def _buidl_backend() -> str:
+    """Say which arithmetic buidl resolved to, and what the other would take.
+
+    `buidl.cecc` is cffi bindings to a libsecp256k1 buidl neither bundles
+    nor builds at install time: `libsec_build.py` compiles them against a
+    system library, on its own, and `pip install buidl` does not run it. So
+    a PyPI install is `buidl.pecc`, pure Python, unless somebody ran that
+    step by hand.
+    """
+    if buidl.libsec_status.is_libsec_enabled():
+        return "built libsecp256k1 cffi bindings, buidl.cecc"
+    return "pure Python; buidl.cecc cffi bindings need libsec_build.py, unrun"
+
+
+def _pycoin_native_module() -> str | None:
+    """Return the module of the native mixin pycoin's generator got, if any.
 
     `create_LibSECP256K1Optimizations`/`create_OpenSSLOptimizations` (in
     `pycoin.ecdsa.native.*`) each resolve to a `noop` mixin class when
     the shared library they probe for is not importable -- there is no
     public flag to read instead, so this reads the MRO the generator
-    ended up with.
+    ended up with, and reads each base's module for the reason above.
+
+    What it answers is not a property of pycoin alone, which is the whole
+    reason it is read at run time rather than written down: the module
+    docstring has the two imports this script happens to make that turn
+    pycoin's row into C, and neither of them is pycoin's doing. Two
+    things need the answer -- the line `report_setup` prints, and the
+    loop count `pycoin_calls` picks -- so it is one function and not a
+    string parsed twice.
     """
-    bases = type(pycoin.symbols.btc.network.generator).__mro__
-    names = [base.__name__ for base in bases]
-    if any("noop" not in name and "LibSECP256K1" in name for name in names):
-        return "libsecp256k1 (via ctypes)"
-    if any("noop" not in name and "OpenSSL" in name for name in names):
-        return "OpenSSL (via ctypes)"
-    return "pure Python"
+    for base in type(pycoin.symbols.btc.network.generator).__mro__:
+        if "noop" in base.__qualname__:
+            continue
+        if base.__module__ in PYCOIN_NATIVE_MIXINS:
+            return base.__module__
+    return None
+
+
+def _pycoin_backend() -> str:
+    """Name the arithmetic pycoin's Generator actually runs, this machine."""
+    module = _pycoin_native_module()
+    return PYCOIN_NATIVE_MIXINS[module] if module else "pure Python"
+
+
+# read once, at import, because that is when pycoin decided it: the mixin
+# is chosen while `pycoin.ecdsa.native.*` is being imported and never
+# revisited
+PYCOIN_REACHES_C = _pycoin_native_module() is not None
+
+
+def pycoin_calls(c: int, python: int) -> int:
+    """Pick a pycoin row's loop count from the backend it resolved to.
+
+    A count written once is wrong on one machine or the other. The same
+    call is a few microseconds through libsecp256k1 and several
+    milliseconds in Python -- three orders of magnitude -- and which one
+    runs is decided by the imports above rather than by anything here, so
+    a count sized for Python measures almost nothing when the row turns
+    out to be C, and a count sized for C sits for minutes when it does
+    not. Both numbers are written at each call site, and the row prints
+    the one it used.
+    """
+    return c if PYCOIN_REACHES_C else python
 
 
 def report_setup() -> None:
-    """Print what is about to be timed, and on what.
+    """Print which arithmetic each row reached, and how it reached it.
 
-    A version number and a backend name, not a benchmark result, because
-    the numbers below mean something only next to what produced them.
+    Not a version number: `report_provenance` above prints those, for every
+    package here, and this block answers the question a version cannot.
+    Every line names the same two things in the same order -- the code that
+    does the arithmetic, and the mechanism the row calls it through -- so
+    that two rows can be read against each other without translating
+    between one line's vocabulary and the next.
+
+    A benchmark result is not among them. What is here is what the numbers
+    below mean nothing without.
     """
-    print(f"btclib               : {version('btclib')} (bindings enabled)")
-    print(f"btclib_secp256k1     : {version('btclib_secp256k1')}")
-    print(f"ecdsa                : {version('ecdsa')} (pure Python, no native path)")
-    print(f"pycoin               : {version('pycoin')} ({_pycoin_backend()})")
-    buidl_backend = (
-        "libsecp256k1 (via cffi)"
-        if buidl.libsec_status.is_libsec_enabled()
-        else "pure Python"
-    )
-    print(f"buidl                : {version('buidl')} ({buidl_backend})")
+    print("arithmetic under each row")
     print(
-        f"embit                : {version('embit')} "
-        "(bundled libsecp256k1, via ctypes, always)"
+        f"  {'btclib':<20}bundled libsecp256k1 {_pinned('btclib-secp256k1')} "
+        f"cffi bindings, {_artifact('_btclib_secp256k1')}"
     )
-    libsecp256k1_for_signing = bitcoinlib_key.is_libsec256k1_available()
+    print(f"  {'ecdsa':<20}pure Python; no bindings of any kind, bundled or built")
+    print(f"  {'pycoin':<20}{_pycoin_backend()}")
+    print(f"  {'buidl':<20}{_buidl_backend()}")
     print(
-        f"python-bitcoinlib    : {version('python-bitcoinlib')} "
-        f"(OpenSSL, via ctypes; libsecp256k1 available but unused: "
-        f"{libsecp256k1_for_signing})"
+        f"  {'embit':<20}bundled secp256k1-zkp {_pinned('embit')} ctypes bindings, "
+        f"{Path(str(embit.util.ctypes_secp256k1._find_library())).name}"
+    )
+    optional = (
+        "a libsecp256k1 it found and does not use"
+        if bitcoinlib_key.is_libsec256k1_available()
+        else "no libsecp256k1 bundled, built or found"
+    )
+    print(
+        f"  {'python-bitcoinlib':<20}OpenSSL's libcrypto ctypes bindings, "
+        f"{Path(str(bitcoinlib_key._ssl._name)).name}; {optional}"
     )
     print()
 
@@ -190,7 +398,10 @@ def report_setup() -> None:
 # --- ECDSA sign and verify, over MSG_HASH -----------------------------
 
 btclib_pubkey = pub_keyinfo_from_prv_key(PRVKEY)[0]
-btclib_dsa_sig = dsa.sign_(MSG_HASH, PRVKEY)
+# grind=False here too, so that the signature the verify rows check is
+# the one the sign rows above produce, and so that every comparand is
+# handed a signature none of them would have refused
+btclib_dsa_sig = dsa.sign_(MSG_HASH, PRVKEY, grind=False)
 
 ecdsa_signing_key = ecdsa.SigningKey.from_secret_exponent(PRVKEY, curve=ecdsa.SECP256k1)
 ecdsa_verifying_key = ecdsa_signing_key.verifying_key
@@ -216,7 +427,10 @@ bitcoinlib_sig = bitcoinlib_key_.sign(MSG_HASH)
 
 embit_prvkey = embit.ec.PrivateKey(PRVKEY.to_bytes(32, "big"))
 embit_pubkey = embit_prvkey.get_public_key()
-embit_dsa_sig = embit_prvkey.sign(MSG_HASH)
+# grind=False, as btclib's fixture above: embit grinds for a low-r
+# signature by default too, and a fixture that is one signature is what
+# lets every verify row below check comparable work
+embit_dsa_sig = embit_prvkey.sign(MSG_HASH, grind=False)
 
 assert dsa.verify_(MSG_HASH, btclib_pubkey, btclib_dsa_sig)
 assert ecdsa_verifying_key.verify_digest(
@@ -229,7 +443,27 @@ assert embit_pubkey.verify(embit_dsa_sig, MSG_HASH)
 
 
 def dsa_sign_btclib() -> None:
-    """Time ECDSA signing through btclib, bindings enabled."""
+    """Time one ECDSA signature through btclib, bindings enabled.
+
+    `grind=False`, which is not btclib's default and is what makes this
+    row comparable: every other row in the table produces one signature,
+    and btclib's default produces as many as it takes to find one whose r
+    fits in 32 bytes. `dsa_sign_btclib_grind` below times the default.
+    """
+    dsa.sign_(MSG_HASH, PRVKEY, grind=False)
+
+
+def dsa_sign_btclib_grind() -> None:
+    """Time ECDSA signing as `pip install btclib` performs it.
+
+    btclib grinds for a low-r signature unless told not to, so this row
+    signs repeatedly until r fits in 32 bytes -- an expectation of two
+    signatures, and for any one fixed key and message a fixed number of
+    them, this pair costing four times that. It is here because it is what
+    a caller who writes `dsa.sign_(msg, key)` gets, and it is a row of its
+    own rather than *the* btclib row because no comparand in this table
+    grinds, so per-signature it compares with nothing.
+    """
     dsa.sign_(MSG_HASH, PRVKEY)
 
 
@@ -283,7 +517,23 @@ def dsa_verify_bitcoinlib() -> None:
 
 
 def dsa_sign_embit() -> None:
-    """Time ECDSA signing through embit's bundled libsecp256k1."""
+    """Time one ECDSA signature through embit's bundled libsecp256k1.
+
+    `grind=False`, for the reason btclib's row passes it: embit is the
+    other library here that grinds by default, and one signature is what
+    the rest of the table produces.
+    """
+    embit_prvkey.sign(MSG_HASH, grind=False)
+
+
+def dsa_sign_embit_grind() -> None:
+    """Time ECDSA signing as embit performs it by default.
+
+    embit grinds for a low-r signature with a counter in the extra
+    entropy, where btclib grinds by re-deriving its nonce; the two are the
+    same expectation of two signatures reached differently, and for one
+    fixed key and message each lands on its own fixed number of them.
+    """
     embit_prvkey.sign(MSG_HASH)
 
 
@@ -295,13 +545,18 @@ def dsa_verify_embit() -> None:
 # --- BIP340 (Schnorr) sign and verify, over MSG_HASH -------------------
 
 btclib_xonly_pubkey = btclib_pubkey[1:]
-btclib_ssa_sig = ssa.sign_(MSG_HASH, PRVKEY)
-
-buidl_aux = bytes(32)
-buidl_ssa_sig = buidl_prvkey.sign_schnorr(MSG_HASH, buidl_aux)
-
+# the vector's aux_rand rather than the random default, which makes both
+# signatures below reproducible and therefore checkable against BIP340
+# itself; embit's API exposes no aux, so its own signature cannot be
+# pinned and it is held to the vector the other way, by verifying it
+btclib_ssa_sig = ssa.sign_(MSG_HASH, PRVKEY, aux=AUX)
+buidl_ssa_sig = buidl_prvkey.sign_schnorr(MSG_HASH, AUX)
 embit_ssa_sig = embit_prvkey.schnorr_sign(MSG_HASH)
 
+assert btclib_xonly_pubkey == VECTOR_XONLY_PUBKEY
+assert btclib_ssa_sig.serialize() == VECTOR_SSA_SIG
+assert buidl_ssa_sig.serialize() == VECTOR_SSA_SIG
+assert embit_pubkey.schnorr_verify(embit.ec.SchnorrSig.parse(VECTOR_SSA_SIG), MSG_HASH)
 assert ssa.verify_(MSG_HASH, btclib_xonly_pubkey, btclib_ssa_sig)
 assert buidl_prvkey.point.verify_schnorr(MSG_HASH, buidl_ssa_sig)
 assert embit_pubkey.schnorr_verify(embit_ssa_sig, MSG_HASH)
@@ -309,7 +564,7 @@ assert embit_pubkey.schnorr_verify(embit_ssa_sig, MSG_HASH)
 
 def ssa_sign_btclib() -> None:
     """Time BIP340 signing through btclib, bindings enabled."""
-    ssa.sign_(MSG_HASH, PRVKEY)
+    ssa.sign_(MSG_HASH, PRVKEY, aux=AUX)
 
 
 def ssa_verify_btclib() -> None:
@@ -319,7 +574,7 @@ def ssa_verify_btclib() -> None:
 
 def ssa_sign_buidl() -> None:
     """Time BIP340 signing through buidl's pure-Python PrivateKey."""
-    buidl_prvkey.sign_schnorr(MSG_HASH, buidl_aux)
+    buidl_prvkey.sign_schnorr(MSG_HASH, AUX)
 
 
 def ssa_verify_buidl() -> None:
@@ -370,11 +625,15 @@ def _buidl_child_pubkey(seed: bytes) -> bytes:
     return bytes(root.traverse(BIP32_PATH).pub.point.sec())
 
 
+# the four against each other, and all four against what BIP32 publishes
+# for this seed and this path: agreeing with one another is what four
+# implementations of the same mistake also do
 assert (
     _btclib_child_pubkey(SEED)
     == _pycoin_child_pubkey(SEED)
     == _embit_child_pubkey(SEED)
     == _buidl_child_pubkey(SEED)
+    == VECTOR_BIP32_CHILD_PUBKEY
 )
 
 
@@ -398,18 +657,221 @@ def bip32_derive_buidl() -> None:
     _buidl_child_pubkey(SEED)
 
 
-def benchmark(func: Callable[[], None], calls: int) -> None:
-    """Call `func` `calls` times and print microseconds per call.
+# --- base58check, bech32 and bech32m, over published addresses ---------
 
-    `calls` is chosen per function rather than shared: pycoin's and
-    buidl's pure-Python rows are three to four orders of magnitude
-    slower than the C-backed ones, so one loop count for all of them
-    would either sit for minutes on the slowest or measure the fastest
-    against the resolution of the clock. Each count below was picked
-    from a first timed call to land near 1.5 seconds -- long enough that
-    Python's own call overhead is a rounding error next to it, short
-    enough that the whole script is a run to wait for, not start and
-    leave.
+# BIP173's own witness-v0 test vector: a 20-byte program and the address it
+# publishes for it. The same 20 bytes are the hash160 of a P2PKH address,
+# which is what makes one fixture serve the base58 rows too
+WITNESS_V0 = bytes.fromhex("751e76e8199196d454941c45d1b3a323f1433bd6")
+BECH32_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+BASE58_ADDRESS = "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"
+BASE58_PAYLOAD = b"\x00" + WITNESS_V0
+
+# a witness-v1 program and its bech32m address, which is BIP350's business:
+# the same string under bech32's checksum constant is a different address
+# and not a valid one, and one row of five gets that wrong
+WITNESS_V1 = bytes.fromhex(
+    "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+)
+BECH32M_ADDRESS = "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"
+
+
+def base58_encode_btclib() -> None:
+    """Time btclib's base58check encoding of a P2PKH address."""
+    assert btclib.b58.address_from_h160("p2pkh", WITNESS_V0) == BASE58_ADDRESS
+
+
+def base58_encode_pycoin() -> None:
+    """Time pycoin's, which takes the version byte in the payload."""
+    assert pycoin.encoding.b58.b2a_hashed_base58(BASE58_PAYLOAD) == BASE58_ADDRESS
+
+
+def base58_encode_embit() -> None:
+    """Time embit's, which spells the checksum in the function name."""
+    assert embit.base58.encode_check(BASE58_PAYLOAD) == BASE58_ADDRESS
+
+
+def base58_encode_buidl() -> None:
+    """Time buidl's, whose helper module carries it."""
+    assert buidl.helper.encode_base58_checksum(BASE58_PAYLOAD) == BASE58_ADDRESS
+
+
+def base58_encode_bitcoinlib() -> None:
+    """Time python-bitcoinlib's, reached through the address class.
+
+    Its `base58.encode` is base58 without the checksum, which is not the
+    operation the other four perform: `P2PKHBitcoinAddress.from_bytes` is
+    where the checksummed encoding lives.
+    """
+    assert str(bitcoinlib_wallet.P2PKHBitcoinAddress.from_bytes(WITNESS_V0, 0)) == (
+        BASE58_ADDRESS
+    )
+
+
+def base58_decode_btclib() -> None:
+    """Time btclib's base58check decoding, which returns the script type too."""
+    assert btclib.b58.h160_from_address(BASE58_ADDRESS)[1] == WITNESS_V0
+
+
+def base58_decode_pycoin() -> None:
+    """Time pycoin's, which returns the version byte with the payload."""
+    assert pycoin.encoding.b58.a2b_hashed_base58(BASE58_ADDRESS) == BASE58_PAYLOAD
+
+
+def base58_decode_embit() -> None:
+    """Time embit's."""
+    assert embit.base58.decode_check(BASE58_ADDRESS) == BASE58_PAYLOAD
+
+
+def base58_decode_buidl() -> None:
+    """Time buidl's, which drops the version byte and returns the hash160."""
+    assert buidl.helper.decode_base58(BASE58_ADDRESS) == WITNESS_V0
+
+
+def base58_decode_bitcoinlib() -> None:
+    """Time python-bitcoinlib's, through the address class again."""
+    assert bytes(bitcoinlib_wallet.CBitcoinAddress(BASE58_ADDRESS)) == WITNESS_V0
+
+
+def bech32_encode_btclib() -> None:
+    """Time btclib's bech32 encoding of a witness-v0 address."""
+    assert btclib.b32.address_from_witness(0, WITNESS_V0) == BECH32_ADDRESS
+
+
+def bech32_encode_embit() -> None:
+    """Time embit's, which takes the human-readable part per call."""
+    assert embit.bech32.encode("bc", 0, WITNESS_V0) == BECH32_ADDRESS
+
+
+def bech32_encode_buidl() -> None:
+    """Time buidl's, which takes a serialized witness program."""
+    assert (
+        buidl.bech32.encode_bech32_checksum(
+            b"\x00" + bytes([len(WITNESS_V0)]) + WITNESS_V0, network="mainnet"
+        )
+        == BECH32_ADDRESS
+    )
+
+
+def bech32_encode_bitcoinlib() -> None:
+    """Time python-bitcoinlib's, a copy of the reference implementation."""
+    assert bitcoin.bech32.encode("bc", 0, WITNESS_V0) == BECH32_ADDRESS
+
+
+def bech32_decode_btclib() -> None:
+    """Time btclib's bech32 decoding, which returns the witness version too."""
+    assert btclib.b32.witness_from_address(BECH32_ADDRESS)[1] == WITNESS_V0
+
+
+def bech32_decode_embit() -> None:
+    """Time embit's, which returns the program as a list of integers."""
+    assert bytes(embit.bech32.decode("bc", BECH32_ADDRESS)[1]) == WITNESS_V0
+
+
+def bech32_decode_buidl() -> None:
+    """Time buidl's, which returns the network beside the program."""
+    assert buidl.bech32.decode_bech32(BECH32_ADDRESS)[2] == WITNESS_V0
+
+
+def bech32_decode_bitcoinlib() -> None:
+    """Time python-bitcoinlib's."""
+    assert bytes(bitcoin.bech32.decode("bc", BECH32_ADDRESS)[1]) == WITNESS_V0
+
+
+def bech32m_encode_btclib() -> None:
+    """Time btclib's bech32m encoding of a witness-v1 address."""
+    assert btclib.b32.address_from_witness(1, WITNESS_V1) == BECH32M_ADDRESS
+
+
+def bech32m_encode_embit() -> None:
+    """Time embit's, which picks the constant from the witness version."""
+    assert embit.bech32.encode("bc", 1, WITNESS_V1) == BECH32M_ADDRESS
+
+
+def bech32m_encode_buidl() -> None:
+    """Time buidl's, from a serialized witness-v1 program."""
+    assert (
+        buidl.bech32.encode_bech32_checksum(
+            b"\x51" + bytes([len(WITNESS_V1)]) + WITNESS_V1, network="mainnet"
+        )
+        == BECH32M_ADDRESS
+    )
+
+
+def bech32m_decode_btclib() -> None:
+    """Time btclib's bech32m decoding."""
+    assert btclib.b32.witness_from_address(BECH32M_ADDRESS)[1] == WITNESS_V1
+
+
+def bech32m_decode_embit() -> None:
+    """Time embit's."""
+    assert bytes(embit.bech32.decode("bc", BECH32M_ADDRESS)[1]) == WITNESS_V1
+
+
+def bech32m_decode_buidl() -> None:
+    """Time buidl's."""
+    assert buidl.bech32.decode_bech32(BECH32M_ADDRESS)[2] == WITNESS_V1
+
+
+# python-bitcoinlib has no bech32m row in either direction, and the reason
+# is not that its API lacks one: `bitcoin.bech32.encode("bc", 1, program)`
+# answers, with bech32's checksum constant where BIP350 requires bech32m's,
+# so what it returns for a witness-v1 program is a string no consumer should
+# accept -- and `decode` returns (None, None) for the address BIP350
+# publishes. A row cannot be timed against an answer this project would have
+# to assert is wrong
+assert bitcoin.bech32.encode("bc", 1, WITNESS_V1) != BECH32M_ADDRESS
+assert bitcoin.bech32.decode("bc", BECH32M_ADDRESS) == (None, None)
+
+# every encoding row is called once before any of them is timed, its own
+# assert holding it to the published address
+for _encoding_row in (
+    base58_encode_btclib,
+    base58_encode_pycoin,
+    base58_encode_embit,
+    base58_encode_buidl,
+    base58_encode_bitcoinlib,
+    base58_decode_btclib,
+    base58_decode_pycoin,
+    base58_decode_embit,
+    base58_decode_buidl,
+    base58_decode_bitcoinlib,
+    bech32_encode_btclib,
+    bech32_encode_embit,
+    bech32_encode_buidl,
+    bech32_encode_bitcoinlib,
+    bech32_decode_btclib,
+    bech32_decode_embit,
+    bech32_decode_buidl,
+    bech32_decode_bitcoinlib,
+    bech32m_encode_btclib,
+    bech32m_encode_embit,
+    bech32m_encode_buidl,
+    bech32m_decode_btclib,
+    bech32m_decode_embit,
+    bech32m_decode_buidl,
+):
+    _encoding_row()
+
+
+def benchmark(func: Callable[[], None], calls: int) -> float:
+    """Call `func` `calls` times and return microseconds per call.
+
+    Returned and not printed: the tables below are sorted fastest to
+    slowest and each row divides by btclib's, neither of which can be
+    done a line at a time -- every number has to be in hand before the
+    first line is.
+
+    `calls` is chosen per function rather than shared: buidl's
+    pure-Python rows are three to four orders of magnitude slower than
+    the C-backed ones, so one loop count for all of them would either sit
+    for minutes on the slowest or measure the fastest against the
+    resolution of the clock. Each count below was picked from a first
+    timed call to land near 1.5 seconds -- long enough that Python's own
+    call overhead is a rounding error next to it, short enough that the
+    whole script is a run to wait for, not start and leave. pycoin's rows
+    are the exception and carry two counts each, being the only rows whose
+    backend this script does not decide: `pycoin_calls` above.
     """
     # perf_counter and not time(): the wall clock can step backwards
     # under an NTP correction, and a benchmark is the one place that
@@ -418,8 +880,36 @@ def benchmark(func: Callable[[], None], calls: int) -> None:
     for _ in range(calls):
         func()
     end = time.perf_counter()
-    us_per_call = (end - start) / calls * 1e6
-    print(f"{func.__name__:<22}: {us_per_call:10.2f} us/call ({calls} calls)")
+    return (end - start) / calls * 1e6
+
+
+def table(
+    title: str,
+    rows: tuple[tuple[Callable[[], None], int], ...],
+) -> None:
+    """Time one operation's rows, then print them fastest first.
+
+    The ratio is against the fastest row, whichever package that turns out
+    to be, so the top row reads 1.0x and each row below says what
+    choosing it instead would cost. Against btclib's row -- the obvious
+    candidate, this being btclib's benchmark -- the column would print
+    fractions under one for anything quicker, which reads as btclib's
+    score rather than as the table's answer; where btclib stands is the
+    row's own position in the order, and that is now visible without a
+    column claiming it.
+
+    Sorted on the measurement rather than written in an order, so the
+    order carries the run's answer instead of an editor's opinion of it.
+    The loop counts stay per row and print beside their rows: they are
+    part of what a row is, and sorting mixes rows whose counts differ by
+    orders of magnitude.
+    """
+    us = {func.__name__: (benchmark(func, calls), calls) for func, calls in rows}
+    against = min(value for value, _ in us.values())
+    print(title)
+    print(f"  {'':<26}{'μs/call':>10}{'vs best':>12}")
+    for name, (value, calls) in sorted(us.items(), key=lambda row: row[1][0]):
+        print(f"  {name:<26}{value:10.2f}{value / against:11.1f}x   ({calls} calls)")
 
 
 def main() -> None:
@@ -428,41 +918,129 @@ def main() -> None:
 
     report_setup()
 
-    print("ECDSA sign (32-byte digest, secp256k1)")
-    benchmark(dsa_sign_btclib, 50_000)
-    benchmark(dsa_sign_ecdsa, 5_000)
-    benchmark(dsa_sign_pycoin, 200)
-    benchmark(dsa_sign_buidl, 50)
-    benchmark(dsa_sign_bitcoinlib, 8_000)
-    benchmark(dsa_sign_embit, 50_000)
+    table(
+        "ECDSA sign (32-byte digest, secp256k1)",
+        (
+            (dsa_sign_btclib, 50_000),
+            (dsa_sign_btclib_grind, 20_000),
+            (dsa_sign_ecdsa, 5_000),
+            (dsa_sign_pycoin, pycoin_calls(50_000, 200)),
+            (dsa_sign_buidl, 50),
+            (dsa_sign_bitcoinlib, 8_000),
+            (dsa_sign_embit, 50_000),
+            (dsa_sign_embit_grind, 20_000),
+        ),
+    )
     print()
 
-    print("ECDSA verify (32-byte digest, secp256k1)")
-    benchmark(dsa_verify_btclib, 50_000)
-    benchmark(dsa_verify_ecdsa, 3_000)
-    benchmark(dsa_verify_pycoin, 80)
-    benchmark(dsa_verify_buidl, 25)
-    benchmark(dsa_verify_bitcoinlib, 7_000)
-    benchmark(dsa_verify_embit, 50_000)
+    table(
+        "ECDSA verify (32-byte digest, secp256k1)",
+        (
+            (dsa_verify_btclib, 50_000),
+            (dsa_verify_ecdsa, 3_000),
+            (dsa_verify_pycoin, pycoin_calls(50_000, 80)),
+            (dsa_verify_buidl, 25),
+            (dsa_verify_bitcoinlib, 7_000),
+            (dsa_verify_embit, 50_000),
+        ),
+    )
     print()
 
-    print("BIP340 sign (32-byte message)")
-    benchmark(ssa_sign_btclib, 50_000)
-    benchmark(ssa_sign_buidl, 20)
-    benchmark(ssa_sign_embit, 50_000)
+    table(
+        "BIP340 sign (32-byte message)",
+        (
+            (ssa_sign_btclib, 50_000),
+            (ssa_sign_buidl, 20),
+            (ssa_sign_embit, 50_000),
+        ),
+    )
     print()
 
-    print("BIP340 verify (32-byte message)")
-    benchmark(ssa_verify_btclib, 50_000)
-    benchmark(ssa_verify_buidl, 25)
-    benchmark(ssa_verify_embit, 50_000)
+    table(
+        "BIP340 verify (32-byte message)",
+        (
+            (ssa_verify_btclib, 50_000),
+            (ssa_verify_buidl, 25),
+            (ssa_verify_embit, 50_000),
+        ),
+    )
     print()
 
-    print(f"BIP32 derive, seed to {BIP32_PATH} (32-byte seed)")
-    benchmark(bip32_derive_btclib, 30_000)
-    benchmark(bip32_derive_pycoin, 75)
-    benchmark(bip32_derive_embit, 15_000)
-    benchmark(bip32_derive_buidl, 12)
+    table(
+        "base58check encode, a P2PKH address from a hash160",
+        (
+            (base58_encode_btclib, 200_000),
+            (base58_encode_pycoin, 200_000),
+            (base58_encode_embit, 200_000),
+            (base58_encode_buidl, 200_000),
+            (base58_encode_bitcoinlib, 100_000),
+        ),
+    )
+    print()
+
+    table(
+        "base58check decode, a hash160 from a P2PKH address",
+        (
+            (base58_decode_btclib, 200_000),
+            (base58_decode_pycoin, 200_000),
+            (base58_decode_embit, 200_000),
+            (base58_decode_buidl, 200_000),
+            (base58_decode_bitcoinlib, 100_000),
+        ),
+    )
+    print()
+
+    table(
+        "bech32 encode, a witness-v0 address from a 20-byte program",
+        (
+            (bech32_encode_btclib, 200_000),
+            (bech32_encode_embit, 200_000),
+            (bech32_encode_buidl, 100_000),
+            (bech32_encode_bitcoinlib, 200_000),
+        ),
+    )
+    print()
+
+    table(
+        "bech32 decode, a 20-byte program from a witness-v0 address",
+        (
+            (bech32_decode_btclib, 200_000),
+            (bech32_decode_embit, 200_000),
+            (bech32_decode_buidl, 100_000),
+            (bech32_decode_bitcoinlib, 200_000),
+        ),
+    )
+    print()
+
+    table(
+        "bech32m encode, a witness-v1 address from a 32-byte program",
+        (
+            (bech32m_encode_btclib, 200_000),
+            (bech32m_encode_embit, 200_000),
+            (bech32m_encode_buidl, 100_000),
+        ),
+    )
+    print()
+
+    table(
+        "bech32m decode, a 32-byte program from a witness-v1 address",
+        (
+            (bech32m_decode_btclib, 200_000),
+            (bech32m_decode_embit, 200_000),
+            (bech32m_decode_buidl, 100_000),
+        ),
+    )
+    print()
+
+    table(
+        f"BIP32 derive, seed to {BIP32_PATH} ({len(SEED)}-byte seed)",
+        (
+            (bip32_derive_btclib, 30_000),
+            (bip32_derive_pycoin, pycoin_calls(30_000, 75)),
+            (bip32_derive_embit, 15_000),
+            (bip32_derive_buidl, 12),
+        ),
+    )
 
 
 # a guard rather than bare module-level calls: the helpers above are

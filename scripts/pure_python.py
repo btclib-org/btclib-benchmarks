@@ -2,33 +2,16 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""Timings of the pure-Python implementations against the bindings.
+"""Timings of every pure-Python implementation of the same operation.
 
-The bindings are the reference line here and not a competitor. `pip
-install btclib` installs `btclib_secp256k1`, so a consumer who wants C
-already has it, and the question worth a table is what staying in Python
-costs against what is there for free: one reference column, and a row for
-every pure-Python implementation of the same operation.
-
-Each row carries a second ratio beside it, against `btclib, Python`.
-The first column answers what Python costs; the second answers how the
-implementations compare with each other, which is the question the first
-one leaves a reader dividing out by hand. The bindings row carries
-nothing in it, being the reference of the first column.
-
-This is the third of the benchmarks and the only one that forces Python
-everywhere:
-
-- `scripts/btclib_two_paths.py` times btclib's own two arithmetic paths
-  against each other, and needs no dependency to do it
-- `scripts/bitcoin_libraries.py` times btclib, bindings enabled,
-  against other Python bitcoin libraries **as installed** -- which for
-  embit, python-bitcoinlib and often pycoin is C, as its own rows say
-- this one times them **as Python**, every backend turned off that can be
-
-The rows overlap by name with that second script and not by meaning:
-pycoin is C there and Python here, and the difference between the two
-numbers is the whole reason both exist.
+Every row here is Python arithmetic, and the question is which of them is
+quicker at it. Nothing in this table is C, so no row is a reference line
+and the ratio column is against whichever row came out fastest, as it is
+in the other three benchmarks. What Python costs against C is the question
+`scripts/btclib_two_paths.py` answers, over btclib's own two paths, and
+what `pip install <package>` gives is what `scripts/bitcoin_libraries.py`
+answers -- where the same package names appear and mean something else,
+pycoin being C there and Python here.
 
 ## How each row is held to Python, and how that was checked
 
@@ -47,31 +30,47 @@ numbers is the whole reason both exist.
   ships or loads a native backend at all.
 
 `report_setup` prints what each row resolved to, because nothing here
-should claim a Python number without checking that it is one.
+should claim a Python number without checking that it is one. It says it
+once, in a block above the tables: with every row Python, a row saying so
+is a column of the same word.
 
 ## secp256k1lab's marker
 
-It is on no index at all: `[tool.uv.sources]` takes it from its git tag,
-and it wants >=3.11 where this project supports >=3.10, so the `bench`
-group carries the marker that says so and this script imports it
-unguarded.
+It is on no index at all: `[tool.uv.sources]` takes it from its git tag.
+It declares >=3.11, which is this project's floor as well -- that is why
+the floor is what it is -- so this script imports it unguarded.
 
 ## The row that is not here
 
 **hwilib** would be one: `hwilib.key.point_mul` is a double-and-add over
-Python integers, with nothing to turn off, and it would have been the
-slowest public key in the table. `hwi` is not in the `bench` group
-because of what it drags in -- its latest release caps `cbor2` at <5.8
-and `protobuf` at <5.0.0, where the advisories against those two are
-fixed in 5.9.0 and 5.29.6. No floor or constraint written in this project
-reaches a patched version while those ceilings hold, so the row would
-have cost three standing security alerts, two of them high. It is also a
-row nobody here would see: `hwi` declares `requires_python <3.13` against
-a `.python-version` of 3.14.
+Python integers, with nothing to turn off, and it would be the slowest
+public key in the table. `hwi` is not a dependency here because of what it
+drags in: it caps `cbor2` at <5.8 and `protobuf` at <5.0.0, where the
+advisories against those two are fixed in 5.9.0 and 5.29.6, so the row
+costs three standing security alerts, two of them high, for as long as
+those ceilings hold. It is also a row nobody here would see: `hwi`
+declares `requires_python <3.13`, and `.python-version` is 3.13.
+
+## The inputs are a published test vector
+
+The fixtures are BIP340 test vector 1, transcribed from btclib's vendored
+copy. What it buys is mostly the checks: with the vector's aux_rand, BIP340
+signing is deterministic, so both implementations that do it are held to
+the signature the specification publishes rather than to btclib's answer.
+ECDSA has no such line here, RFC6979's nonce being btclib's own, and stays
+cross-checked between implementations.
+
+A published key matters to one comparand more than to the rest, which is
+why it is worth insisting on even where the timings do not care:
+python-ecdsa returns the generator *object* for the public key of the
+private key 1, precomputed table and all, so a row verifying against that
+key verifies with a table no real key gets, at about half the cost of
+verification. A vector's key cannot do that to a row by accident.
 
 Not part of the test suite and not run by CI, as the other two are not:
-nothing here is a correctness check, though every row is checked against
-btclib's answer before it is timed.
+nothing here is a correctness check, though every row is checked before it
+is timed -- against btclib's answer, and against BIP340's where there is
+one.
 """
 
 from __future__ import annotations
@@ -85,18 +84,17 @@ os.environ["PYCOIN_NATIVE"] = "none"
 import time
 from collections.abc import Callable
 from hashlib import sha256
-from importlib.metadata import version
+from itertools import cycle
 
 import btclib
-import btclib_secp256k1
 import buidl.pecc
 import ecdsa
 import pycoin.symbols.btc
 import secp256k1lab.bip340
 from _provenance import report
+from _vectors import signing, verification
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
-from btclib.hashes import reduce_to_hlen
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
 from secp256k1lab.secp256k1 import G as LAB_G
 
@@ -109,26 +107,77 @@ def report_provenance() -> None:
     which one ran is something the output has to state rather
     than something the reader assumes.
     """
-    report(("btclib", btclib.__file__), ("btclib-secp256k1", btclib_secp256k1.__file__))
+    report(
+        ("btclib", btclib.__file__),
+        ("secp256k1lab", secp256k1lab.bip340.__file__),
+        ("ecdsa", ecdsa.__file__),
+        ("pycoin", pycoin.symbols.btc.__file__),
+        ("buidl", buidl.pecc.__file__),
+    )
 
 
 PYCOIN_GENERATOR = pycoin.symbols.btc.network.generator
 
-PRVKEY = 0xC28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D
-PRVKEY_BYTES = PRVKEY.to_bytes(32, "big")
-MSG_HASH = reduce_to_hlen(b"Satoshi Nakamoto")
-AUX = bytes(32)
+# every published vector, cycled, rather than one input repeated: a row that
+# calls one input a thousand times measures that input. `_vectors` reads
+# BIP340's file and checks its digest, and each row below takes the next of
+# what it publishes per call
+SIGNING = signing()
+VERIFYING = verification()
 
-# signed while the bindings are still the default and deterministically,
-# so that every row below verifies the same signature rather than one of
-# its own: grind=False takes dsa.sign_'s plain RFC6979 nonce with no
-# low-r search, and a fixed aux replaces ssa.sign_'s random default
-DSA_SIG = dsa.sign_(MSG_HASH, PRVKEY, grind=False)
-DSA_SIG_BYTES = DSA_SIG.serialize()
-SSA_SIG = ssa.sign_(MSG_HASH, PRVKEY, aux=AUX)
-SSA_SIG_BYTES = SSA_SIG.serialize()
-PUBKEY = pub_keyinfo_from_prv_key(PRVKEY)[0]
-XONLY_PUBKEY = PUBKEY[1:]
+SCALARS = [int.from_bytes(v.prvkey, "big") for v in SIGNING]
+PUBKEYS = [pub_keyinfo_from_prv_key(scalar)[0] for scalar in SCALARS]
+
+# signed here, deterministically, so that every row verifies the same
+# signature rather than one of its own: grind=False takes dsa.sign_'s plain
+# RFC6979 nonce, and each vector's own aux_rand replaces ssa.sign_'s random
+# default -- which is also what makes the BIP340 rows checkable against the
+# specification
+# pycoin and buidl take an ECDSA digest as an integer rather than as bytes,
+# and pycoin refuses two values BIP340's messages happen to include: one at or
+# above the group order, and zero. Reducing modulo the order is what every
+# implementation does with a digest internally, so that keeps all of them on
+# one value; the zero leaves the ECDSA cycles, the BIP340 rows keeping it
+ORDER = curve.secp256k1.n
+DSA_VECTORS = [v for v in SIGNING if int.from_bytes(v.msg, "big") % ORDER]
+DSA_SCALARS = [int.from_bytes(v.prvkey, "big") for v in DSA_VECTORS]
+DSA_SIGS = [dsa.sign_(v.msg, v.prvkey, grind=False) for v in DSA_VECTORS]
+DSA_SIG_BYTES = [sig.serialize() for sig in DSA_SIGS]
+
+# against BIP340 before anything is timed. ECDSA has no such line: RFC6979's
+# nonce is btclib's own and no vendored file publishes a signature over these
+# messages, so those rows stay cross-checked between implementations
+for _v, _pubkey in zip(SIGNING, PUBKEYS, strict=True):
+    assert _pubkey[1:] == _v.xonly_pubkey
+    assert ssa.sign_(_v.msg, _v.prvkey, aux=_v.aux).serialize() == _v.sig
+
+
+def python_arithmetic_only() -> None:
+    """Turn btclib's libsecp256k1 dispatch off, everywhere at once.
+
+    `_libsecp256k1_serves` reads `_libsecp256k1_available` on every call, so
+    this one assignment reaches the nine modules that imported the predicate
+    by name. Patching those modules one at a time is what leaves a row meant
+    to measure Python measuring C, and it does so silently: a public key
+    derived through `to_pub_key` asks `curves.sec_point`, which is the module
+    such a list forgets. No row added below can reintroduce that.
+
+    Called before anything is timed, and after every fixture above is built:
+    those want the bindings, and there is no reason to slow them down.
+    """
+    curve._libsecp256k1_available = False
+
+
+# which module a native mixin came from, and therefore which library
+# `PYCOIN_NATIVE` failed to keep out. The module and not the class name,
+# because the name is `Optimizations` in both of them and the fallback is
+# `noop` in both of them: a probe reading names sees nothing to report
+# however loudly a shared object is being called, which is what
+# `bitcoin_libraries.py` was doing before it read modules instead.
+PYCOIN_NATIVE_MIXINS = {
+    "pycoin.ecdsa.native.secp256k1": "libsecp256k1",
+    "pycoin.ecdsa.native.openssl": "OpenSSL",
+}
 
 
 def _pycoin_backend() -> str:
@@ -140,22 +189,36 @@ def _pycoin_backend() -> str:
     benchmark. There is no public flag to read, so this reads the MRO the
     generator ended up with, as `bitcoin_libraries.py` does.
     """
-    names = [base.__name__ for base in type(PYCOIN_GENERATOR).__mro__]
-    if any("noop" not in name and "LibSECP256K1" in name for name in names):
-        return "libsecp256k1 -- PYCOIN_NATIVE did not take"
-    if any("noop" not in name and "OpenSSL" in name for name in names):
-        return "OpenSSL -- PYCOIN_NATIVE did not take"
+    for base in type(PYCOIN_GENERATOR).__mro__:
+        if "noop" in base.__qualname__:
+            continue
+        library = PYCOIN_NATIVE_MIXINS.get(base.__module__)
+        if library is not None:
+            return f"{library} -- PYCOIN_NATIVE did not take"
     return "pure Python"
 
 
 def report_setup() -> None:
-    """Print the versions and what each row actually resolved to."""
-    print(f"btclib                {version('btclib')}, bindings the reference")
-    print(f"btclib_secp256k1      {version('btclib_secp256k1')}")
-    print(f"secp256k1lab          {version('secp256k1lab')}, pure Python")
-    print(f"buidl                 {version('buidl')}, through buidl.pecc")
-    print(f"ecdsa                 {version('ecdsa')}, pure Python")
-    print(f"pycoin                {version('pycoin')}, backend: {_pycoin_backend()}")
+    """Print what holds each row to Python, having said once that all are.
+
+    Not a version number: `report_provenance` above prints those. Not "pure
+    Python" per row either -- every row in this table is, so the word
+    belongs in the heading and what belongs beside each name is the thing
+    that made it true, which is different for each of them and is the only
+    part a reader could doubt.
+    """
+    print("every row is pure Python arithmetic, held to it by")
+    print(
+        f"  {'btclib':<20}its delegation to btclib_secp256k1's cffi bindings "
+        "switched off"
+    )
+    print(
+        f"  {'pycoin':<20}PYCOIN_NATIVE=none before its import, resolving to "
+        f"{_pycoin_backend()}"
+    )
+    print(f"  {'buidl':<20}being imported as buidl.pecc, not buidl.ecc")
+    print(f"  {'ecdsa':<20}having no compiled backend at all")
+    print(f"  {'secp256k1lab':<20}having no compiled backend at all")
     print()
 
 
@@ -164,105 +227,148 @@ def report_setup() -> None:
 
 def pubkey_btclib() -> None:
     """Time the generator multiplication btclib answers a public key with."""
-    pub_keyinfo_from_prv_key(PRVKEY)
+    scalar, expected = next(PUBKEY_BTCLIB)
+    assert pub_keyinfo_from_prv_key(scalar)[0] == expected
 
 
 def pubkey_lab() -> None:
     """Time secp256k1lab's, which multiplies G through a table of its own."""
-    (PRVKEY * LAB_G).to_bytes_compressed()
+    scalar, expected = next(PUBKEY_LAB)
+    assert (scalar * LAB_G).to_bytes_compressed() == expected
 
 
 def pubkey_buidl() -> None:
     """Time buidl's pure-Python S256Point."""
-    buidl.pecc.PrivateKey(PRVKEY).point.sec()
+    scalar, expected = next(PUBKEY_BUIDL)
+    assert buidl.pecc.PrivateKey(scalar).point.sec() == expected
 
 
 def pubkey_ecdsa() -> None:
     """Time python-ecdsa's."""
-    ecdsa.SigningKey.from_secret_exponent(
-        PRVKEY, curve=ecdsa.SECP256k1
-    ).verifying_key.to_string("compressed")
+    scalar, expected = next(PUBKEY_ECDSA)
+    assert (
+        ecdsa.SigningKey.from_secret_exponent(
+            scalar, curve=ecdsa.SECP256k1
+        ).verifying_key.to_string("compressed")
+        == expected
+    )
 
 
 def pubkey_pycoin() -> None:
     """Time pycoin's, its native backends turned off."""
-    pycoin.symbols.btc.network.keys.private(secret_exponent=PRVKEY).sec()
+    scalar, expected = next(PUBKEY_PYCOIN)
+    assert (
+        pycoin.symbols.btc.network.keys.private(secret_exponent=scalar).sec()
+        == expected
+    )
 
 
 # ----------------------------------------------------------------- ECDSA
 
 
 def dsa_sign_btclib() -> None:
-    """Time an ECDSA signature through btclib."""
-    dsa.sign_(MSG_HASH, PRVKEY, grind=False)
+    """Time one ECDSA signature through btclib.
+
+    `grind=False`, which is not btclib's default: one signature is what every
+    other row in the table produces, and the default is the row below.
+    """
+    msg, prvkey, expected = next(DSA_SIGN_BTCLIB)
+    assert dsa.sign_(msg, prvkey, grind=False) == expected
+
+
+def dsa_sign_btclib_grind() -> None:
+    """Time ECDSA signing as btclib performs it unless told otherwise.
+
+    btclib grinds for a low-r signature by default: it signs until r fits in
+    32 bytes, an expectation of two signatures and, for one fixed key and
+    message, a fixed number of them. No other implementation in this table
+    grinds, so the two rows say which question is being answered -- what one
+    signature costs, and what a caller who writes `dsa.sign_(msg, key)` waits
+    for.
+    """
+    msg, prvkey, _ = next(DSA_SIGN_BTCLIB)
+    dsa.sign_(msg, prvkey)
 
 
 def dsa_verify_btclib() -> None:
     """Time an ECDSA verification through btclib."""
-    dsa.assert_as_valid_(MSG_HASH, PUBKEY, DSA_SIG)
+    msg, pubkey, sig = next(DSA_VERIFY_BTCLIB)
+    dsa.assert_as_valid_(msg, pubkey, sig)
 
 
 def dsa_sign_ecdsa() -> None:
     """Time an ECDSA signature through python-ecdsa."""
-    ECDSA_SIGNING_KEY.sign_digest_deterministic(MSG_HASH, hashfunc=sha256)
+    msg, key, _ = next(DSA_ECDSA)
+    key.sign_digest_deterministic(msg, hashfunc=sha256)
 
 
 def dsa_verify_ecdsa() -> None:
     """Time an ECDSA verification through python-ecdsa."""
-    ECDSA_VERIFYING_KEY.verify_digest(ECDSA_SIG, MSG_HASH)
+    msg, key, sig = next(DSA_ECDSA)
+    assert key.verifying_key.verify_digest(sig, msg)
 
 
 def dsa_sign_pycoin() -> None:
     """Time an ECDSA signature through pycoin's Generator."""
-    PYCOIN_GENERATOR.sign(PRVKEY, PYCOIN_DIGEST)
+    scalar, digest, _, _ = next(DSA_PYCOIN)
+    PYCOIN_GENERATOR.sign(scalar, digest)
 
 
 def dsa_verify_pycoin() -> None:
     """Time an ECDSA verification through pycoin's Generator."""
-    PYCOIN_GENERATOR.verify(PYCOIN_PUBLIC_PAIR, PYCOIN_DIGEST, PYCOIN_SIG)
+    _, digest, pair, sig = next(DSA_PYCOIN)
+    assert PYCOIN_GENERATOR.verify(pair, digest, sig)
 
 
 def dsa_sign_buidl() -> None:
     """Time an ECDSA signature through buidl's pure-Python module."""
-    BUIDL_KEY.sign(BUIDL_DIGEST)
+    key, digest, _ = next(DSA_BUIDL)
+    key.sign(digest)
 
 
 def dsa_verify_buidl() -> None:
     """Time an ECDSA verification through buidl's pure-Python module."""
-    BUIDL_KEY.point.verify(BUIDL_DIGEST, BUIDL_SIG)
+    key, digest, sig = next(DSA_BUIDL)
+    assert key.point.verify(digest, sig)
 
 
 # ---------------------------------------------------------------- BIP340
 
 
 def ssa_sign_btclib() -> None:
-    """Time a BIP340 signature through btclib."""
-    ssa.sign_(MSG_HASH, PRVKEY, aux=AUX)
+    """Time a BIP340 signature through btclib, over the vector's aux_rand."""
+    msg, prvkey, aux, expected = next(SSA_BTCLIB_SIGN)
+    assert ssa.sign_(msg, prvkey, aux=aux).serialize() == expected
 
 
 def ssa_verify_btclib() -> None:
     """Time a BIP340 verification through btclib."""
-    ssa.assert_as_valid_(MSG_HASH, XONLY_PUBKEY, SSA_SIG)
+    msg, xonly_pubkey, sig = next(SSA_BTCLIB_VERIFY)
+    ssa.assert_as_valid_(msg, xonly_pubkey, sig)
 
 
 def ssa_sign_lab() -> None:
     """Time a BIP340 signature through secp256k1lab."""
-    secp256k1lab.bip340.schnorr_sign(MSG_HASH, PRVKEY_BYTES, AUX)
+    msg, prvkey, aux, expected = next(SSA_LAB_SIGN)
+    assert secp256k1lab.bip340.schnorr_sign(msg, prvkey, aux) == expected
 
 
 def ssa_verify_lab() -> None:
     """Time a BIP340 verification through secp256k1lab."""
-    secp256k1lab.bip340.schnorr_verify(MSG_HASH, XONLY_PUBKEY, SSA_SIG_BYTES)
+    msg, xonly_pubkey, sig = next(SSA_LAB_VERIFY)
+    assert secp256k1lab.bip340.schnorr_verify(msg, xonly_pubkey, sig)
 
 
 def ssa_sign_buidl() -> None:
     """Time a BIP340 signature through buidl's pure-Python module."""
-    BUIDL_KEY.sign_schnorr(MSG_HASH, AUX)
+    key, msg, aux = next(SSA_BUIDL_SIGN)
+    key.sign_schnorr(msg, aux)
 
 
 def ssa_verify_buidl() -> None:
     """Time a BIP340 verification through buidl's pure-Python module."""
-    BUIDL_KEY.point.verify_schnorr(MSG_HASH, BUIDL_SSA_SIG)
+    key, msg, sig = next(SSA_BUIDL_VERIFY)
+    assert key.point.verify_schnorr(msg, sig)
 
 
 # ------------------------------------------------------------- the timing
@@ -287,151 +393,216 @@ def benchmark(func: Callable[[], None], calls: int) -> float:
     return (time.perf_counter() - start) / calls * 1e6
 
 
-def row(
-    label: str,
-    func: Callable[[], None],
-    calls: int,
-    bindings: float,
-    python: float | None = None,
-) -> float:
-    """Print one row, and return its microseconds so a later row can divide.
+def table(title: str, rows: tuple[tuple[str, Callable[[], None], int], ...]) -> None:
+    """Time one operation's rows, then print them fastest first.
 
-    Two ratios, because the table is read for two questions. Against the
-    bindings is what staying in Python costs, which is what this script
-    is for; against btclib's own Python path is how the implementations
-    compare with each other, which is the number a reader of this project
-    would otherwise divide out by hand.
+    One ratio, against whichever row came out quickest, as the other three
+    benchmarks print: with every row a Python implementation of the same
+    operation, the fastest of them is the only reference that is not a
+    choice. Naming a row instead -- btclib's, this being btclib's benchmark
+    -- would print fractions under one on the runs where another row won,
+    and where btclib stands is its own place in the order.
 
-    `btclib, Python` is the reference of the second column and reads
-    1.0x there, as the bindings row reads 1.0x in the first: its caller
-    passes no `python`, having none to divide by yet.
+    The order is the measurement's, which is what makes the table an answer
+    rather than a list.
     """
-    us = benchmark(func, calls)
-    against_python = f"{us / python:8.1f}x" if python else f"{'1.0x':>9s}"
-    print(f"  {label:24s} {us:10.2f} us   {us / bindings:8.1f}x   {against_python}")
-    return us
-
-
-def section(title: str) -> None:
-    """Print the heading of one operation's table."""
+    us = {label: benchmark(func, calls) for label, func, calls in rows}
+    against = min(us.values())
     print(f"\n{title}")
-
-
-def head(label: str, us: float) -> None:
-    """Print the column headings and the bindings row under them.
-
-    Nothing in the second column on this row: it is the reference of the
-    first, and the fraction under one it would carry says nothing the
-    first has not said already.
-    """
-    print(f"  {'':24s} {'':10s}      {'vs C':>8s}   {'vs btclib':>9s}")
-    print(f"  {label:24s} {us:10.2f} us   {'1.0x':>9s}   {'--':>9s}")
+    print(f"  {'':26s} {'':10s}      {'vs best':>8s}")
+    for label, value in sorted(us.items(), key=lambda row: row[1]):
+        print(f"  {label:26s} {value:10.2f} μs   {value / against:8.1f}x")
 
 
 # the fixtures the third-party rows sign and verify, built once and
 # checked against btclib's own answers below
-ECDSA_SIGNING_KEY = ecdsa.SigningKey.from_secret_exponent(PRVKEY, curve=ecdsa.SECP256k1)
-ECDSA_VERIFYING_KEY = ECDSA_SIGNING_KEY.verifying_key
-ECDSA_SIG = ECDSA_SIGNING_KEY.sign_digest_deterministic(MSG_HASH, hashfunc=sha256)
-PYCOIN_DIGEST = int.from_bytes(MSG_HASH, "big")
-PYCOIN_POINT = PYCOIN_GENERATOR * PRVKEY
-PYCOIN_PUBLIC_PAIR = (PYCOIN_POINT[0], PYCOIN_POINT[1])
-PYCOIN_SIG = PYCOIN_GENERATOR.sign(PRVKEY, PYCOIN_DIGEST)
-BUIDL_KEY = buidl.pecc.PrivateKey(PRVKEY)
-BUIDL_DIGEST = int.from_bytes(MSG_HASH, "big")
-BUIDL_SIG = BUIDL_KEY.sign(BUIDL_DIGEST)
-BUIDL_SSA_SIG = BUIDL_KEY.sign_schnorr(MSG_HASH, AUX)
+# the fixtures each comparand signs and verifies, one per vector, built once
+# and checked against btclib's answers and BIP340's below
+ECDSA_KEYS = [
+    ecdsa.SigningKey.from_secret_exponent(scalar, curve=ecdsa.SECP256k1)
+    for scalar in DSA_SCALARS
+]
+ECDSA_SIGS = [
+    key.sign_digest_deterministic(v.msg, hashfunc=sha256)
+    for key, v in zip(ECDSA_KEYS, DSA_VECTORS, strict=True)
+]
+PYCOIN_DIGESTS = [int.from_bytes(v.msg, "big") % ORDER for v in DSA_VECTORS]
+PYCOIN_POINTS = [PYCOIN_GENERATOR * scalar for scalar in DSA_SCALARS]
+PYCOIN_PAIRS = [(point[0], point[1]) for point in PYCOIN_POINTS]
+PYCOIN_SIGS = [
+    PYCOIN_GENERATOR.sign(scalar, digest)
+    for scalar, digest in zip(DSA_SCALARS, PYCOIN_DIGESTS, strict=True)
+]
+BUIDL_KEYS = [buidl.pecc.PrivateKey(scalar) for scalar in DSA_SCALARS]
+BUIDL_SIGS = [
+    key.sign(digest) for key, digest in zip(BUIDL_KEYS, PYCOIN_DIGESTS, strict=True)
+]
+BUIDL_SSA_KEYS = [buidl.pecc.PrivateKey(scalar) for scalar in SCALARS]
+BUIDL_SSA_SIGS = [
+    key.sign_schnorr(v.msg, v.aux)
+    for key, v in zip(BUIDL_SSA_KEYS, SIGNING, strict=True)
+]
 
-# every row answers what btclib answers, before any of them is timed: a
-# table of numbers is worth nothing if one of the implementations in it
-# is computing something else
-assert (PRVKEY * LAB_G).to_bytes_compressed() == PUBKEY
-assert buidl.pecc.PrivateKey(PRVKEY).point.sec() == PUBKEY
-assert ECDSA_VERIFYING_KEY.to_string("compressed") == PUBKEY
-assert pycoin.symbols.btc.network.keys.private(secret_exponent=PRVKEY).sec() == PUBKEY
-assert secp256k1lab.bip340.schnorr_sign(MSG_HASH, PRVKEY_BYTES, AUX) == SSA_SIG_BYTES
-assert secp256k1lab.bip340.schnorr_verify(MSG_HASH, XONLY_PUBKEY, SSA_SIG_BYTES)
-assert BUIDL_KEY.point.verify_schnorr(MSG_HASH, BUIDL_SSA_SIG)
-assert ECDSA_VERIFYING_KEY.verify_digest(ECDSA_SIG, MSG_HASH)
-assert PYCOIN_GENERATOR.verify(PYCOIN_PUBLIC_PAIR, PYCOIN_DIGEST, PYCOIN_SIG)
-assert BUIDL_KEY.point.verify(BUIDL_DIGEST, BUIDL_SIG)
+# every row answers what btclib answers, and where BIP340 publishes an answer
+# every row answers that: a table of numbers is worth nothing if one of the
+# implementations in it is computing something else
+for _v, _pubkey, _scalar in zip(SIGNING, PUBKEYS, SCALARS, strict=True):
+    assert (_scalar * LAB_G).to_bytes_compressed() == _pubkey
+    assert buidl.pecc.PrivateKey(_scalar).point.sec() == _pubkey
+    assert (
+        ecdsa.SigningKey.from_secret_exponent(
+            _scalar, curve=ecdsa.SECP256k1
+        ).verifying_key.to_string("compressed")
+        == _pubkey
+    )
+    assert (
+        pycoin.symbols.btc.network.keys.private(secret_exponent=_scalar).sec()
+        == _pubkey
+    )
+    assert secp256k1lab.bip340.schnorr_sign(_v.msg, _v.prvkey, _v.aux) == _v.sig
+    assert secp256k1lab.bip340.schnorr_verify(_v.msg, _v.xonly_pubkey, _v.sig)
 
-# the reference column, every one of it taken before the dispatch goes
-# off: these are the numbers a consumer gets from `pip install btclib`
+for _key, _v, _ssa_sig in zip(BUIDL_SSA_KEYS, SIGNING, BUIDL_SSA_SIGS, strict=True):
+    assert _ssa_sig.serialize() == _v.sig
+    assert _key.point.verify_schnorr(_v.msg, _ssa_sig)
 
+for (
+    _v,
+    _dsa_sig,
+    _ecdsa_key,
+    _ecdsa_sig,
+    _pair,
+    _digest,
+    _pycoin_sig,
+    _buidl_key,
+    _buidl_sig,
+) in zip(
+    DSA_VECTORS,
+    DSA_SIG_BYTES,
+    ECDSA_KEYS,
+    ECDSA_SIGS,
+    PYCOIN_PAIRS,
+    PYCOIN_DIGESTS,
+    PYCOIN_SIGS,
+    BUIDL_KEYS,
+    BUIDL_SIGS,
+    strict=True,
+):
+    assert dsa.verify_(_v.msg, pub_keyinfo_from_prv_key(_v.prvkey)[0], _dsa_sig)
+    assert _ecdsa_key.verifying_key.verify_digest(_ecdsa_sig, _v.msg)
+    assert PYCOIN_GENERATOR.verify(_pair, _digest, _pycoin_sig)
+    assert _buidl_key.point.verify(_digest, _buidl_sig)
 
-def python_arithmetic_only() -> None:
-    """Turn btclib's libsecp256k1 dispatch off, everywhere at once.
-
-    `_libsecp256k1_serves` reads `_libsecp256k1_available` on every call,
-    so this one assignment reaches the nine modules that imported the
-    predicate by name. Patching those modules one at a time is what
-    leaves a row meant to measure Python measuring C, and it does so
-    silently: a public key derived through `to_pub_key` asks
-    `curves.sec_point`, which is the module such a list forgets, and the
-    row comes back at the reference's own microseconds. No row added
-    below can reintroduce that.
-
-    Called after the reference above and after every fixture is signed,
-    both of which want the bindings.
-    """
-    curve._libsecp256k1_available = False
+# one cycle per row
+PUBKEY_BTCLIB = cycle(list(zip(SCALARS, PUBKEYS, strict=True)))
+PUBKEY_LAB = cycle(list(zip(SCALARS, PUBKEYS, strict=True)))
+PUBKEY_ECDSA = cycle(list(zip(SCALARS, PUBKEYS, strict=True)))
+PUBKEY_PYCOIN = cycle(list(zip(SCALARS, PUBKEYS, strict=True)))
+PUBKEY_BUIDL = cycle(list(zip(SCALARS, PUBKEYS, strict=True)))
+DSA_SIGN_BTCLIB = cycle(
+    [(v.msg, v.prvkey, sig) for v, sig in zip(DSA_VECTORS, DSA_SIGS, strict=True)]
+)
+DSA_VERIFY_BTCLIB = cycle(
+    [
+        (v.msg, pub_keyinfo_from_prv_key(v.prvkey)[0], sig)
+        for v, sig in zip(DSA_VECTORS, DSA_SIG_BYTES, strict=True)
+    ]
+)
+DSA_ECDSA = cycle(
+    [
+        (v.msg, key, sig)
+        for v, key, sig in zip(DSA_VECTORS, ECDSA_KEYS, ECDSA_SIGS, strict=True)
+    ]
+)
+DSA_PYCOIN = cycle(
+    [
+        (scalar, digest, pair, sig)
+        for scalar, digest, pair, sig in zip(
+            DSA_SCALARS, PYCOIN_DIGESTS, PYCOIN_PAIRS, PYCOIN_SIGS, strict=True
+        )
+    ]
+)
+DSA_BUIDL = cycle(
+    [
+        (key, digest, sig)
+        for key, digest, sig in zip(BUIDL_KEYS, PYCOIN_DIGESTS, BUIDL_SIGS, strict=True)
+    ]
+)
+SSA_BTCLIB_SIGN = cycle([(v.msg, v.prvkey, v.aux, v.sig) for v in SIGNING])
+SSA_BTCLIB_VERIFY = cycle([(v.msg, v.xonly_pubkey, v.sig) for v in VERIFYING])
+SSA_LAB_SIGN = cycle([(v.msg, v.prvkey, v.aux, v.sig) for v in SIGNING])
+SSA_LAB_VERIFY = cycle([(v.msg, v.xonly_pubkey, v.sig) for v in VERIFYING])
+SSA_BUIDL_SIGN = cycle(
+    [(key, v.msg, v.aux) for key, v in zip(BUIDL_SSA_KEYS, SIGNING, strict=True)]
+)
+SSA_BUIDL_VERIFY = cycle(
+    [
+        (key, v.msg, sig)
+        for key, v, sig in zip(BUIDL_SSA_KEYS, SIGNING, BUIDL_SSA_SIGS, strict=True)
+    ]
+)
 
 
 def main() -> None:
-    """Print the tables, the reference column first.
+    """Throw the switch, then print a table per operation.
 
-    The order is what the measurement requires rather than a
-    presentation choice: `python_arithmetic_only` cannot be undone
-    within a process, so every row meant to reach the bindings --
-    the whole reference column -- is timed before it runs.
+    `python_arithmetic_only` comes first and nothing here is timed before
+    it: with no reference row left to measure through the bindings, the one
+    ordering this script needs is that the switch precede every timing.
     """
     report_provenance()
     report_setup()
-
-    REFERENCE = {
-        "pubkey": benchmark(pubkey_btclib, 2000),
-        "dsa sign": benchmark(dsa_sign_btclib, 2000),
-        "dsa verify": benchmark(dsa_verify_btclib, 2000),
-        "ssa sign": benchmark(ssa_sign_btclib, 2000),
-        "ssa verify": benchmark(ssa_verify_btclib, 2000),
-    }
-
     python_arithmetic_only()
 
-    section("public key from a private key: a multiplication of the generator")
-    head("btclib, the bindings", REFERENCE["pubkey"])
-    PYTHON = row("btclib, Python", pubkey_btclib, 200, REFERENCE["pubkey"])
-    row("secp256k1lab", pubkey_lab, 100, REFERENCE["pubkey"], PYTHON)
-    row("python-ecdsa", pubkey_ecdsa, 200, REFERENCE["pubkey"], PYTHON)
-    row("pycoin", pubkey_pycoin, 20, REFERENCE["pubkey"], PYTHON)
-    row("buidl.pecc", pubkey_buidl, 10, REFERENCE["pubkey"], PYTHON)
+    table(
+        "public key from a private key: a multiplication of the generator",
+        (
+            ("btclib", pubkey_btclib, 200),
+            ("secp256k1lab", pubkey_lab, 100),
+            ("python-ecdsa", pubkey_ecdsa, 200),
+            ("pycoin", pubkey_pycoin, 20),
+            ("buidl.pecc", pubkey_buidl, 10),
+        ),
+    )
 
-    section("ECDSA sign, over a 32-byte digest")
-    head("btclib, the bindings", REFERENCE["dsa sign"])
-    PYTHON = row("btclib, Python", dsa_sign_btclib, 50, REFERENCE["dsa sign"])
-    row("python-ecdsa", dsa_sign_ecdsa, 100, REFERENCE["dsa sign"], PYTHON)
-    row("pycoin", dsa_sign_pycoin, 20, REFERENCE["dsa sign"], PYTHON)
-    row("buidl.pecc", dsa_sign_buidl, 10, REFERENCE["dsa sign"], PYTHON)
+    table(
+        "ECDSA sign, over a 32-byte digest",
+        (
+            ("btclib, one signature", dsa_sign_btclib, 50),
+            ("btclib, grinding (default)", dsa_sign_btclib_grind, 20),
+            ("python-ecdsa", dsa_sign_ecdsa, 100),
+            ("pycoin", dsa_sign_pycoin, 20),
+            ("buidl.pecc", dsa_sign_buidl, 10),
+        ),
+    )
 
-    section("ECDSA verify, over a 32-byte digest")
-    head("btclib, the bindings", REFERENCE["dsa verify"])
-    PYTHON = row("btclib, Python", dsa_verify_btclib, 50, REFERENCE["dsa verify"])
-    row("python-ecdsa", dsa_verify_ecdsa, 50, REFERENCE["dsa verify"], PYTHON)
-    row("pycoin", dsa_verify_pycoin, 10, REFERENCE["dsa verify"], PYTHON)
-    row("buidl.pecc", dsa_verify_buidl, 10, REFERENCE["dsa verify"], PYTHON)
+    table(
+        "ECDSA verify, over a 32-byte digest",
+        (
+            ("btclib", dsa_verify_btclib, 50),
+            ("python-ecdsa", dsa_verify_ecdsa, 50),
+            ("pycoin", dsa_verify_pycoin, 10),
+            ("buidl.pecc", dsa_verify_buidl, 10),
+        ),
+    )
 
-    section("BIP340 sign, over a 32-byte message")
-    head("btclib, the bindings", REFERENCE["ssa sign"])
-    PYTHON = row("btclib, Python", ssa_sign_btclib, 50, REFERENCE["ssa sign"])
-    row("secp256k1lab", ssa_sign_lab, 50, REFERENCE["ssa sign"], PYTHON)
-    row("buidl.pecc", ssa_sign_buidl, 5, REFERENCE["ssa sign"], PYTHON)
+    table(
+        "BIP340 sign, over a 32-byte message",
+        (
+            ("btclib", ssa_sign_btclib, 50),
+            ("secp256k1lab", ssa_sign_lab, 50),
+            ("buidl.pecc", ssa_sign_buidl, 5),
+        ),
+    )
 
-    section("BIP340 verify, over a 32-byte message")
-    head("btclib, the bindings", REFERENCE["ssa verify"])
-    PYTHON = row("btclib, Python", ssa_verify_btclib, 50, REFERENCE["ssa verify"])
-    row("secp256k1lab", ssa_verify_lab, 50, REFERENCE["ssa verify"], PYTHON)
-    row("buidl.pecc", ssa_verify_buidl, 10, REFERENCE["ssa verify"], PYTHON)
+    table(
+        "BIP340 verify, over a 32-byte message",
+        (
+            ("btclib", ssa_verify_btclib, 50),
+            ("secp256k1lab", ssa_verify_lab, 50),
+            ("buidl.pecc", ssa_verify_buidl, 10),
+        ),
+    )
 
 
 # a guard rather than bare module-level calls: the helpers above are

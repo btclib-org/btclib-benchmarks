@@ -20,7 +20,7 @@ uv run python scripts/bitcoin_libraries.py  # a benchmark, by hand
 
 ## What this repository is
 
-Four benchmarks, one question each:
+Five benchmarks, one question each:
 
 - `scripts/btclib_two_paths.py` — btclib's bindings path against its own
   pure-Python arithmetic
@@ -30,6 +30,9 @@ Four benchmarks, one question each:
   operation, bindings as the reference line
 - `scripts/libsecp256k1_wrappers.py` — btclib_secp256k1 against the other
   wrappers of the same C library, and which revision of it each vendors
+- `scripts/key_reuse.py` — what a verifier pays per signature under a key
+  it already has, raw against prepared, on both paths and against
+  python-ecdsa's `precompute()`
 
 `scripts/_provenance.py` is the only module the suite covers, and the
 only one that is not a benchmark.
@@ -71,7 +74,7 @@ only one that is not a benchmark.
   by the release it was read from, so an upgraded comparand prints
   `unrecorded` instead of a pin that has quietly stopped being true. Go
   read the new release and put the pin back.
-- **Coverage measures `_provenance.py` and the suite, and omits the four
+- **Coverage measures `_provenance.py` and the suite, and omits the five
   benchmarks** — covering a timing function means running it, and a
   measurement inside CI is a number that means nothing.
 

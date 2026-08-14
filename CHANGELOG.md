@@ -65,6 +65,283 @@ The release notes, which say what a user has to act on, are in
   unrecorded for any other — a pin outliving its release would be the
   one figure in that output nothing re-derives.
 
+- **Every measured package answers the vendored vectors, in the
+  configuration it is measured in.** `tests/_data/` carries BIP340's own
+  vector file and BIP32's, copied from btclib's vendored copies at a pinned
+  commit with the digests published beside them and checked on every run, and
+  `tests/vectors_test.py` runs them against every implementation this project
+  times — btclib, btclib_secp256k1, coincurve, secp256k1-py, electrum-ecc,
+  embit, buidl and secp256k1lab, each in the spelling its API offers.
+
+  The negative cases are why it is worth having. Eight of BIP340's nineteen
+  rows are signatures to reproduce and the rest are verifications, the ones
+  expecting FALSE being a public key off the curve, an s past the order, an r
+  that is not a field element: an implementation that answers true to all of
+  them passes a round-trip check and fails this one. A raise counts as a
+  rejection, refusing to parse an unusable key being a correct answer
+  differently spelled.
+
+  btclib is held to them too, which duplicates its own suite on purpose: it
+  is the one package these tables exist to publish, and a benchmark that
+  checked every comparand but not its subject would be an odd thing to have
+  built. The pure-Python configuration is a subprocess -- `PYCOIN_NATIVE` is
+  read when pycoin is imported and btclib's dispatch flag cannot be restored
+  -- so the same file runs twice, once per arithmetic. BIP340's four
+  variable-length vectors from 2022 divide the packages by API rather than by
+  correctness, and which ones can be asked is written down: none of the
+  wrappers exposes `schnorrsig_sign_custom`, three of them pass a length
+  through to verification.
+
+  Nothing failed. The one wrong answer this project has found stays the one
+  the benchmark itself asserts: `python-bitcoinlib`'s bech32m.
+
+- **Grinding is represented the same way everywhere, including where that
+  means no row.** btclib and embit grind by default and `electrum-ecc`
+  offers it, so each has a `grind=False` row beside a row of its default in
+  the three benchmarks that compare packages. `btclib_two_paths.py` has
+  none, by the same rule rather than in spite of it: grinding multiplies both
+  paths by the same number of attempts, so the ratio the table is read for
+  does not move, as measuring it confirmed, and the rows would restate the
+  pair above them.
+
+- **The unit is μs, not us.** Four tables printing `us/call` were four
+  tables asking a reader to know that `u` was standing in for a character
+  the terminal has had for decades. U+03BC and not U+00B5, which is the
+  micro sign and would be the obvious pick: ruff calls it ambiguous against
+  the Greek letter, NFKC maps one to the other, and this project holds ruff
+  to zero findings.
+
+- **The interpreter is not in a script's output.** It belongs to the run
+  rather than to the packages, as the machine and the time do, and no script
+  can state those either -- so `results/` names all three in the block above
+  the output, and printing one of them twice per published file was the only
+  thing that came of having it in both.
+
+- **`bitcoin_libraries.py` says which libsecp256k1 btclib's row calls**,
+  where it used to print `btclib_secp256k1`'s own version number and leave
+  the library underneath unnamed. The revision is recorded against the
+  release it was read from and printed as unrecorded for any other, the
+  library being compiled into a cffi extension where nothing at run time can
+  recover it; the extension's file name goes beside it, and so does the
+  prebuilt library embit loaded, which is a file name because embit's
+  bundled libraries carry no version a caller can read.
+
+  Dropping `btclib_secp256k1` from that block turned pycoin's rows back into
+  Python rows, which is the fragility the docstring describes made concrete:
+  the import was load-bearing, its side effect being the symbols pycoin's
+  ctypes probe finds. It is back, with the reason written beside it.
+
+- **The wrapper table signs as well as verifying, and tweaks a public
+  key.** Verification was the whole of it, which left out the operation the
+  four APIs differ over most: signing separates them further, and
+  `electrum-ecc` is the only one of them offering low-r grinding, so it has
+  two rows where the others have one. The four also agree on one ECDSA
+  signature exactly -- libsecp256k1's default nonce is RFC6979, so one key
+  and one message give one signature through four APIs, and the script now
+  asserts that. BIP340 is checked against the vector for three of them;
+  `secp256k1-py`'s `schnorr_sign` takes no aux_rand, so what its API leaves
+  checkable is that its signature verifies.
+
+  The last table is BIP32's step and not BIP32: none of the four implements
+  derivation, and all four expose the primitive it is built from, a public
+  key tweaked by a scalar. `electrum-ecc` has no tweak-add on `ECPubkey`, so
+  it reaches the same point as a scalar times the generator plus an
+  addition -- two crossings where the others make one.
+
+- **Every table prints microseconds per call.** `btclib_two_paths.py` had
+  been printing seconds per thousand: a unit that changes between
+  benchmarks is a unit a reader converts before comparing two of them. Five
+  significant digits there, where the quickest row is a few microseconds
+  and the slowest four orders above it.
+
+- **`pure_python.py` has no reference line and no second ratio.** It was a
+  table of Python rows against the bindings, which asked two questions at
+  once: what Python costs, which `btclib_two_paths.py` answers over
+  btclib's own two paths, and which Python implementation is quicker, which
+  is the one this script is for. So the bindings row is gone, with the
+  `btclib_secp256k1` line beside it, and what is left is one ratio against
+  whichever row came out fastest. "Pure Python" is said once, in the block
+  above the tables, rather than per row -- and the block says what holds
+  each row to Python, which is different for each of them and is the part a
+  reader could doubt. btclib signs ECDSA in two rows there too, one
+  signature and its grinding default.
+
+- **Version numbers appear once per run.** `report_provenance` prints every
+  package in the table, comparands included, and the setup block beneath it
+  is left with the one thing a version cannot say: which arithmetic the row
+  reached, in one vocabulary across every line -- the code that does the
+  arithmetic, then the mechanism the row calls it through. A provenance
+  line is the version alone unless the origin is one a reader has to act
+  on: an index install and the revision `[tool.uv.sources]` pins are what
+  the declaration asks for, where `editable:`, `local:` and `sys.path:` say
+  the run is measuring something else.
+
+- **`bitcoin_libraries.py` no longer times four signatures against one.**
+  btclib and embit both grind for a low-r signature by default — sign
+  repeatedly until r fits in 32 bytes — where python-ecdsa, pycoin, buidl
+  and python-bitcoinlib sign once. Each of the two now has a `grind=False`
+  row, which is the comparable one, and a row of its default beside it.
+
+  The fixture change is what surfaced it. Grinding costs a fixed number of
+  signatures for a fixed key and message, and the key this project used to
+  carry wanted two, the expected value; BIP340's vector key wants four, so
+  the row that had looked like ordinary overhead turned into a row timing
+  four signatures against rows timing one. Both numbers were right and only
+  one of them was a comparison.
+
+- **Every fixture is a published test vector**, BIP340's first and BIP32's
+  first, transcribed from btclib's vendored copies (`tests/**/_data/`,
+  whose own README pins each file to a commit of bitcoin/bips and compares
+  the bytes) — the values rather than the files, each script timing one
+  input per row.
+
+  The timings do not move for it, which was measured before the change:
+  three different valid keys through the bindings land within the noise of
+  the machine. The assertions move. Every row used to be checked against
+  btclib's answer, so a comparand could only ever disagree with btclib;
+  now the public key, the BIP340 signature and the BIP32 child key are
+  checked against what the specification publishes, and btclib and a
+  comparand being wrong together is a failure instead of a table. Signing
+  BIP340 over the vector's aux_rand rather than a random one is what makes
+  that possible, and `buidl` and `secp256k1lab` are held to the same
+  signature byte for byte. ECDSA keeps only the cross-comparand check:
+  RFC6979's nonce is btclib's own and no vendored vector publishes a
+  signature over this message.
+
+  The key this project signed with until now was 1, and it flattered a
+  published row. Its public key is the generator, and python-ecdsa returns
+  the generator *object* for it, precomputed table and all, so a row
+  verifying against that key verified with a table no real key gets and came
+  out well under its true cost. python-ecdsa's ECDSA verification row moved
+  when the fixture did, and the new number is the correct one. The same key
+  would also have made any pure-Python public-key derivation row one ladder
+  step rather than a full-width scalar's worth, which is the row nobody had
+  added yet.
+
+  `.secrets.baseline` carries the new fixtures as reviewed findings: a
+  private key published in a BIP is exactly what a scanner cannot tell from
+  a credential, and CONTRIBUTING.md now has the command that records one.
+
+- **`btclib_two_paths.py` covers every operation that has two paths**,
+  where it covered five. `_libsecp256k1_serves` is the
+  predicate every dispatch site asks, so which operations qualify is a
+  list to read rather than a judgement: public key derivation, point
+  parsing, generator multiplication, ECDSA sign/verify/recover, BIP340
+  sign/verify, ECDH, bitcoin-message sign/verify, taproot tweaking and
+  ElligatorSwift decoding. `commit_nonce` and `pedersen` are dispatched
+  too and have no row: anti-exfil signing and Pedersen commitments are
+  protocol machinery rather than operations an application performs.
+
+  Its table is sorted on the ratio now rather than on the seconds, that
+  being the column it is read for: what an operation costs is a fact about
+  the operation, and what its fallback costs is the fact about the two
+  paths. Seconds break the tie, so the bindings rows still read fastest
+  first among themselves. They are seconds per ten thousand calls to five
+  significant digits, where per thousand the quickest row was a run of
+  zeros and two digits.
+
+- **BIP32 derivation was a fourteenth row and is not one**, because
+  btclib's BIP32 has no pure-Python path: `_prv_key_derivation` calls
+  `btclib_secp256k1.keys.prvkey_tweak_add` and `_pub_key_offsets` builds a
+  `PubkeyTweakChain`, neither gated on the dispatch, and btclib gives the
+  reason beside the call — BIP32 is defined for secp256k1 and nothing else,
+  so no other curve needs a fallback. Throwing the switch left the
+  derivation in C and moved only the public key derived for the
+  fingerprint, which is why that pair read far narrower than every other. It
+  is still timed in
+  `bitcoin_libraries.py`, where being C is the premise rather than the
+  question.
+
+  Reading a ratio off a published table is a poor way to catch that, so
+  `tests/pure_python_path_test.py` catches it instead: in a subprocess, it
+  replaces every bindings entry point with a function that raises, throws
+  the switch, and calls every operation once. A row that has kept a foot in
+  C raises instead of answering, and the suite says which call it was. The
+  dispatch predicate is deliberately left alone — it is the question rather
+  than an answer, and patching it fails every row while proving nothing
+  about any of them.
+
+  The pure-Python rows are labelled `_pure_python` now, not `_python`:
+  every row in every one of these tables is invoked from Python, and the
+  distinction the label is drawing is about the arithmetic underneath.
+
+  Each operation is also one function rather than two with the same body.
+  `python_arithmetic_only` is process-wide, so which path a call takes is
+  a property of when it runs and not of which function was called; the
+  table's two labels are made from the operation's name, and a pair can no
+  longer drift apart in the edit that adds a row.
+
+- **pycoin's rows in `bitcoin_libraries.py` are sized by the backend they
+  resolved to.** Their counts were picked when that script's pycoin was
+  pure Python, and nobody re-picked them when it turned out to be C: three
+  rows ran a couple of hundred calls or fewer beside neighbours running
+  tens of thousands, which is a row measuring the clock rather than the
+  library. `pycoin_calls` now carries both counts and takes the one the
+  probe's answer calls for. One written count cannot be right for both:
+  the same call is a few microseconds through libsecp256k1 and several
+  milliseconds in Python, and which of the two a machine gets is decided
+  by the imports rather than by this project. buidl's counts are small for
+  the ordinary reason and stay written — it is pure Python on every machine
+  that has not run its separate build step.
+
+- **Every table is sorted fastest row first, with a ratio against its
+  fastest row.** Both were previously the reader's job: rows printed in
+  the order they were written, and only `pure_python.py` divided anything,
+  so a table of six packages left the comparison it exists for to be done
+  by hand — and an order written by hand is an opinion about a result
+  rather than the result.
+
+  The reference is the quickest row of the run and not btclib's, which is
+  the one row in these tables that cannot be it: a column against btclib
+  prints fractions under one for everything faster, which reads as
+  btclib's score rather than as the table's answer, and where btclib
+  stands is its own place in the order. So `pure_python.py`'s two columns
+  are against the fastest row and the fastest *Python* row, and
+  `btclib_two_paths.py` divides each row by the quicker of its own pair,
+  its rows being one operation through two paths — the fastest row of that
+  whole table would divide a signature by a multiplication.
+  `libsecp256k1_wrappers.py` prints two decimals where the others print
+  one, its rows all calling the same C and landing within a few percent
+  where one decimal would read 1.0x down the whole column.
+
+  It costs the thing that made a row printable as it was timed: each
+  `benchmark` returns microseconds now, and the printing happens once the
+  table's numbers are all in hand. In the two scripts that throw
+  btclib's dispatch off mid-run that separates two orders that used to be
+  one — the bindings rows are still timed before the switch, and the sort
+  happens after it.
+
+- **`results/` publishes one run of each benchmark**, linked from
+  README.md, each file carrying the header its script printed above the
+  numbers and naming the machine and what else was running on it. A
+  benchmark whose output lives only in a terminal is one nobody can
+  compare against, and the alternative — numbers quoted in prose — is the
+  thing this project forbids everywhere else. They are a record of one
+  run, not a claim about anyone's hardware: nothing there was repeated and
+  no outlier was discarded, exactly as the scripts do not.
+
+- **`bitcoin_libraries.py` was calling pycoin's row pure Python while it
+  ran C.** `_pycoin_backend()` looked for `LibSECP256K1` among the base
+  class names of the generator pycoin built, and that name is an alias
+  pycoin binds to a class called `Optimizations` — as its OpenSSL module
+  also calls its own. So both positive branches were unreachable and every
+  run reported the fallback. It reads each base's module now, which is
+  what distinguishes them, and the same blind check is repaired in
+  `pure_python.py`, where `PYCOIN_NATIVE` made the answer right by
+  construction and the safety net that was to catch it failing was dead
+  code.
+
+  What the fixed probe reports on this machine is C, for two reasons that
+  are neither pycoin's nor deliberate: pycoin calls
+  `ctypes.util.find_library` having imported only `ctypes`, so unless
+  another package imported `ctypes.util` first the lookup raises and
+  pycoin's own `except AttributeError` reports it as no library found —
+  `bitcoin.core.key`, above it in the same script, imports it — and the
+  library name it then asks for resolves to nothing, so the load falls
+  through to the symbols `btclib_secp256k1`'s extension has already put in
+  the process. Both are properties of the import list, and the script's
+  docstring now says so.
+
 - **Each benchmark prints where its packages came from** before any
   number, `scripts/_provenance.py` being what answers it. A released
   wheel, a git checkout and an editable install satisfy the same
