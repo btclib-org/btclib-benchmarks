@@ -69,9 +69,27 @@ have cost three standing security alerts, two of them high. It is also a
 row nobody here would see: `hwi` declares `requires_python <3.13` against
 a `.python-version` of 3.14.
 
+## The inputs are a published test vector
+
+The fixtures are BIP340 test vector 1, transcribed from btclib's vendored
+copy. What it buys is mostly the checks: with the vector's aux_rand, BIP340
+signing is deterministic, so both implementations that do it are held to
+the signature the specification publishes rather than to btclib's answer.
+ECDSA has no such line here, RFC6979's nonce being btclib's own, and stays
+cross-checked between implementations.
+
+One row is different, and it is what makes the change more than hygiene.
+`bitcoin_libraries.py` used to sign with the private key 1, whose public
+key is the generator, and python-ecdsa returns the generator *object* for
+it -- precomputed table and all. A row verifying against that key verified
+with a table no real key gets. This script never used that key, its own
+fixture having always been a published one, so its python-ecdsa row is
+unchanged; the other script's is twice what it was.
+
 Not part of the test suite and not run by CI, as the other two are not:
-nothing here is a correctness check, though every row is checked against
-btclib's answer before it is timed.
+nothing here is a correctness check, though every row is checked before it
+is timed -- against btclib's answer, and against BIP340's where there is
+one.
 """
 
 from __future__ import annotations
@@ -96,7 +114,6 @@ import secp256k1lab.bip340
 from _provenance import report
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
-from btclib.hashes import reduce_to_hlen
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
 from secp256k1lab.secp256k1 import G as LAB_G
 
@@ -114,21 +131,60 @@ def report_provenance() -> None:
 
 PYCOIN_GENERATOR = pycoin.symbols.btc.network.generator
 
-PRVKEY = 0xC28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D
+# BIP340 test vector 1, transcribed from btclib's vendored copy of it,
+# `tests/ecc/_data/bip340_test_vectors.csv`, whose own
+# `tests/_data/README.md` pins that file to a commit of bitcoin/bips and
+# compares the bytes. The key this file used to carry was a published one
+# too -- RFC6979's secp256k1 example, paired with "Satoshi Nakamoto" -- and
+# the reason for the change is the aux_rand: BIP340 signing is
+# deterministic given it, so with the vector's aux every implementation
+# below can be held to the signature the specification publishes instead of
+# to btclib's answer, and a mistake btclib shares with a comparand stops
+# being invisible.
+PRVKEY = 0xB7E151628AED2A6ABF7158809CF4F3C762E7160F38B4DA56A784D9045190CFEF
 PRVKEY_BYTES = PRVKEY.to_bytes(32, "big")
-MSG_HASH = reduce_to_hlen(b"Satoshi Nakamoto")
-AUX = bytes(32)
+MSG_HASH = bytes.fromhex(
+    "243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89"
+)
+AUX = bytes.fromhex("0000000000000000000000000000000000000000000000000000000000000001")
+VECTOR_XONLY_PUBKEY = bytes.fromhex(
+    "DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659"
+)
+VECTOR_SSA_SIG = bytes.fromhex(
+    "6896BD60EEAE296DB48A229FF71DFE071BDE413E6D43F917DC8DCF8C78DE3341"
+    "8906D11AC976ABCCB20B091292BFF4EA897EFCB639EA871CFA95F6DE339E4B0A"
+)
 
 # signed while the bindings are still the default and deterministically,
 # so that every row below verifies the same signature rather than one of
 # its own: grind=False takes dsa.sign_'s plain RFC6979 nonce with no
-# low-r search, and a fixed aux replaces ssa.sign_'s random default
+# low-r search, and the vector's aux replaces ssa.sign_'s random default
 DSA_SIG = dsa.sign_(MSG_HASH, PRVKEY, grind=False)
 DSA_SIG_BYTES = DSA_SIG.serialize()
 SSA_SIG = ssa.sign_(MSG_HASH, PRVKEY, aux=AUX)
 SSA_SIG_BYTES = SSA_SIG.serialize()
 PUBKEY = pub_keyinfo_from_prv_key(PRVKEY)[0]
 XONLY_PUBKEY = PUBKEY[1:]
+
+# against BIP340 before anything is timed, where the block further down
+# checks the comparands against btclib. The ECDSA fixtures have no such
+# line: RFC6979's nonce is btclib's own and no vector here publishes a
+# signature over this message, so those stay cross-checked between
+# implementations
+assert XONLY_PUBKEY == VECTOR_XONLY_PUBKEY
+assert SSA_SIG_BYTES == VECTOR_SSA_SIG
+
+
+# which module a native mixin came from, and therefore which library
+# `PYCOIN_NATIVE` failed to keep out. The module and not the class name,
+# because the name is `Optimizations` in both of them and the fallback is
+# `noop` in both of them: a probe reading names sees nothing to report
+# however loudly a shared object is being called, which is what
+# `bitcoin_libraries.py` was doing before it read modules instead.
+PYCOIN_NATIVE_MIXINS = {
+    "pycoin.ecdsa.native.secp256k1": "libsecp256k1",
+    "pycoin.ecdsa.native.openssl": "OpenSSL",
+}
 
 
 def _pycoin_backend() -> str:
@@ -140,11 +196,12 @@ def _pycoin_backend() -> str:
     benchmark. There is no public flag to read, so this reads the MRO the
     generator ended up with, as `bitcoin_libraries.py` does.
     """
-    names = [base.__name__ for base in type(PYCOIN_GENERATOR).__mro__]
-    if any("noop" not in name and "LibSECP256K1" in name for name in names):
-        return "libsecp256k1 -- PYCOIN_NATIVE did not take"
-    if any("noop" not in name and "OpenSSL" in name for name in names):
-        return "OpenSSL -- PYCOIN_NATIVE did not take"
+    for base in type(PYCOIN_GENERATOR).__mro__:
+        if "noop" in base.__qualname__:
+            continue
+        library = PYCOIN_NATIVE_MIXINS.get(base.__module__)
+        if library is not None:
+            return f"{library} -- PYCOIN_NATIVE did not take"
     return "pure Python"
 
 
@@ -287,45 +344,57 @@ def benchmark(func: Callable[[], None], calls: int) -> float:
     return (time.perf_counter() - start) / calls * 1e6
 
 
-def row(
-    label: str,
-    func: Callable[[], None],
-    calls: int,
+# the two rows every table has, named once. The bindings label is what
+# `table` finds its own added row by -- by label and not by position, the
+# rows being sorted by then -- and neither name is a reference any more:
+# both ratio columns divide by whatever the run made fastest
+BINDINGS_LABEL = "btclib, the bindings"
+PYTHON_LABEL = "btclib, Python"
+
+
+def table(
+    title: str,
     bindings: float,
-    python: float | None = None,
-) -> float:
-    """Print one row, and return its microseconds so a later row can divide.
+    rows: tuple[tuple[str, Callable[[], None], int], ...],
+) -> None:
+    """Time one operation's Python rows, then print them fastest first.
 
-    Two ratios, because the table is read for two questions. Against the
-    bindings is what staying in Python costs, which is what this script
-    is for; against btclib's own Python path is how the implementations
-    compare with each other, which is the number a reader of this project
-    would otherwise divide out by hand.
+    Two ratios, because the table is read for two questions, and each is
+    against the fastest row that answers its own question rather than
+    against a row named in advance. The first is against the quickest row
+    of the table, which is the bindings on every machine this has run on:
+    that is what staying in Python costs, and it is what this script is
+    for. The second is against the quickest *Python* row, which is how the
+    implementations compare with each other -- btclib's own Python path
+    usually, python-ecdsa on a run where it wins the public key, and
+    naming either of them in the code would print a fraction under one on
+    the runs where it lost.
 
-    `btclib, Python` is the reference of the second column and reads
-    1.0x there, as the bindings row reads 1.0x in the first: its caller
-    passes no `python`, having none to divide by yet.
+    `bindings` arrives already measured rather than as a row to time,
+    because it cannot be timed here: every call in this function happens
+    after `python_arithmetic_only`, and the reference is the one row that
+    has to be taken before it.
+
+    The order is the measurement's, fastest first, which is what makes the
+    table an answer rather than a list. The bindings row carries nothing in
+    the second column, not being a Python implementation and so not a
+    candidate for the fastest of them.
     """
-    us = benchmark(func, calls)
-    against_python = f"{us / python:8.1f}x" if python else f"{'1.0x':>9s}"
-    print(f"  {label:24s} {us:10.2f} us   {us / bindings:8.1f}x   {against_python}")
-    return us
-
-
-def section(title: str) -> None:
-    """Print the heading of one operation's table."""
+    us = {label: benchmark(func, calls) for label, func, calls in rows}
+    best_python = min(us.values())
+    us[BINDINGS_LABEL] = bindings
+    best = min(us.values())
     print(f"\n{title}")
-
-
-def head(label: str, us: float) -> None:
-    """Print the column headings and the bindings row under them.
-
-    Nothing in the second column on this row: it is the reference of the
-    first, and the fraction under one it would carry says nothing the
-    first has not said already.
-    """
-    print(f"  {'':24s} {'':10s}      {'vs C':>8s}   {'vs btclib':>9s}")
-    print(f"  {label:24s} {us:10.2f} us   {'1.0x':>9s}   {'--':>9s}")
+    print(f"  {'':24s} {'':10s}      {'vs best':>8s}   {'vs best Python':>14s}")
+    for label, value in sorted(us.items(), key=lambda row: row[1]):
+        against_python = (
+            f"{'--':>14s}"
+            if label == BINDINGS_LABEL
+            else f"{value / best_python:13.1f}x"
+        )
+        print(
+            f"  {label:24s} {value:10.2f} us   {value / best:8.1f}x   {against_python}"
+        )
 
 
 # the fixtures the third-party rows sign and verify, built once and
@@ -349,8 +418,13 @@ assert (PRVKEY * LAB_G).to_bytes_compressed() == PUBKEY
 assert buidl.pecc.PrivateKey(PRVKEY).point.sec() == PUBKEY
 assert ECDSA_VERIFYING_KEY.to_string("compressed") == PUBKEY
 assert pycoin.symbols.btc.network.keys.private(secret_exponent=PRVKEY).sec() == PUBKEY
-assert secp256k1lab.bip340.schnorr_sign(MSG_HASH, PRVKEY_BYTES, AUX) == SSA_SIG_BYTES
-assert secp256k1lab.bip340.schnorr_verify(MSG_HASH, XONLY_PUBKEY, SSA_SIG_BYTES)
+# both BIP340 implementations against the vector's signature, which is
+# also btclib's: with the vector's aux_rand these are the same assertion
+# made twice, and it is worth making twice, one half of it being the
+# comparand and the other the specification
+assert secp256k1lab.bip340.schnorr_sign(MSG_HASH, PRVKEY_BYTES, AUX) == VECTOR_SSA_SIG
+assert secp256k1lab.bip340.schnorr_verify(MSG_HASH, XONLY_PUBKEY, VECTOR_SSA_SIG)
+assert BUIDL_SSA_SIG.serialize() == VECTOR_SSA_SIG
 assert BUIDL_KEY.point.verify_schnorr(MSG_HASH, BUIDL_SSA_SIG)
 assert ECDSA_VERIFYING_KEY.verify_digest(ECDSA_SIG, MSG_HASH)
 assert PYCOIN_GENERATOR.verify(PYCOIN_PUBLIC_PAIR, PYCOIN_DIGEST, PYCOIN_SIG)
@@ -399,39 +473,59 @@ def main() -> None:
 
     python_arithmetic_only()
 
-    section("public key from a private key: a multiplication of the generator")
-    head("btclib, the bindings", REFERENCE["pubkey"])
-    PYTHON = row("btclib, Python", pubkey_btclib, 200, REFERENCE["pubkey"])
-    row("secp256k1lab", pubkey_lab, 100, REFERENCE["pubkey"], PYTHON)
-    row("python-ecdsa", pubkey_ecdsa, 200, REFERENCE["pubkey"], PYTHON)
-    row("pycoin", pubkey_pycoin, 20, REFERENCE["pubkey"], PYTHON)
-    row("buidl.pecc", pubkey_buidl, 10, REFERENCE["pubkey"], PYTHON)
+    table(
+        "public key from a private key: a multiplication of the generator",
+        REFERENCE["pubkey"],
+        (
+            (PYTHON_LABEL, pubkey_btclib, 200),
+            ("secp256k1lab", pubkey_lab, 100),
+            ("python-ecdsa", pubkey_ecdsa, 200),
+            ("pycoin", pubkey_pycoin, 20),
+            ("buidl.pecc", pubkey_buidl, 10),
+        ),
+    )
 
-    section("ECDSA sign, over a 32-byte digest")
-    head("btclib, the bindings", REFERENCE["dsa sign"])
-    PYTHON = row("btclib, Python", dsa_sign_btclib, 50, REFERENCE["dsa sign"])
-    row("python-ecdsa", dsa_sign_ecdsa, 100, REFERENCE["dsa sign"], PYTHON)
-    row("pycoin", dsa_sign_pycoin, 20, REFERENCE["dsa sign"], PYTHON)
-    row("buidl.pecc", dsa_sign_buidl, 10, REFERENCE["dsa sign"], PYTHON)
+    table(
+        "ECDSA sign, over a 32-byte digest",
+        REFERENCE["dsa sign"],
+        (
+            (PYTHON_LABEL, dsa_sign_btclib, 50),
+            ("python-ecdsa", dsa_sign_ecdsa, 100),
+            ("pycoin", dsa_sign_pycoin, 20),
+            ("buidl.pecc", dsa_sign_buidl, 10),
+        ),
+    )
 
-    section("ECDSA verify, over a 32-byte digest")
-    head("btclib, the bindings", REFERENCE["dsa verify"])
-    PYTHON = row("btclib, Python", dsa_verify_btclib, 50, REFERENCE["dsa verify"])
-    row("python-ecdsa", dsa_verify_ecdsa, 50, REFERENCE["dsa verify"], PYTHON)
-    row("pycoin", dsa_verify_pycoin, 10, REFERENCE["dsa verify"], PYTHON)
-    row("buidl.pecc", dsa_verify_buidl, 10, REFERENCE["dsa verify"], PYTHON)
+    table(
+        "ECDSA verify, over a 32-byte digest",
+        REFERENCE["dsa verify"],
+        (
+            (PYTHON_LABEL, dsa_verify_btclib, 50),
+            ("python-ecdsa", dsa_verify_ecdsa, 50),
+            ("pycoin", dsa_verify_pycoin, 10),
+            ("buidl.pecc", dsa_verify_buidl, 10),
+        ),
+    )
 
-    section("BIP340 sign, over a 32-byte message")
-    head("btclib, the bindings", REFERENCE["ssa sign"])
-    PYTHON = row("btclib, Python", ssa_sign_btclib, 50, REFERENCE["ssa sign"])
-    row("secp256k1lab", ssa_sign_lab, 50, REFERENCE["ssa sign"], PYTHON)
-    row("buidl.pecc", ssa_sign_buidl, 5, REFERENCE["ssa sign"], PYTHON)
+    table(
+        "BIP340 sign, over a 32-byte message",
+        REFERENCE["ssa sign"],
+        (
+            (PYTHON_LABEL, ssa_sign_btclib, 50),
+            ("secp256k1lab", ssa_sign_lab, 50),
+            ("buidl.pecc", ssa_sign_buidl, 5),
+        ),
+    )
 
-    section("BIP340 verify, over a 32-byte message")
-    head("btclib, the bindings", REFERENCE["ssa verify"])
-    PYTHON = row("btclib, Python", ssa_verify_btclib, 50, REFERENCE["ssa verify"])
-    row("secp256k1lab", ssa_verify_lab, 50, REFERENCE["ssa verify"], PYTHON)
-    row("buidl.pecc", ssa_verify_buidl, 10, REFERENCE["ssa verify"], PYTHON)
+    table(
+        "BIP340 verify, over a 32-byte message",
+        REFERENCE["ssa verify"],
+        (
+            (PYTHON_LABEL, ssa_verify_btclib, 50),
+            ("secp256k1lab", ssa_verify_lab, 50),
+            ("buidl.pecc", ssa_verify_buidl, 10),
+        ),
+    )
 
 
 # a guard rather than bare module-level calls: the helpers above are

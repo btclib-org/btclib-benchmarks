@@ -108,6 +108,32 @@ how the row reaches it. Read that beside the timings — a build against a
 stale one is not the comparison the table looks like, and where
 `btclib_secp256k1` is the one lagging, the output is where it says so.
 
+## One run of each, published
+
+`results/` carries what the four scripts printed in one sitting on one
+machine, each file keeping the header its script printed above the
+numbers — the versions, where each package came from, and the backend
+every comparand resolved to — because that header is what makes a table
+checkable at all. Every table is sorted fastest row first and carries a
+ratio against its fastest row — never against btclib's, which would print
+btclib's score where the table's answer belongs — so where btclib stands
+is its own position in the order:
+
+- [btclib's two paths][two-paths]
+- [btclib against the other bitcoin libraries][libraries]
+- [every pure-Python implementation][pure]
+- [the libsecp256k1 wrappers][wrappers]
+
+The machine is named in each file, and so is what else was running on it.
+They are a record of one run, not a claim about anyone else's hardware:
+what makes them worth publishing is that they are reproducible by one
+command, not that they are authoritative.
+
+[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
+[libraries]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
+[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
+
 ## Licence
 
 MIT, as every btclib-org repository is.

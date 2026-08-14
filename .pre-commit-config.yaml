@@ -151,11 +151,13 @@ repos:
       - id: detect-secrets
         name: detect-secrets (credentials of other systems)
         # a benchmark of signing needs a key to sign with, and every
-        # script here uses the same one: the private key 1, in the clear,
-        # because the number being timed must not depend on which key was
-        # drawn and a reader has to be able to reproduce the row. That is
-        # a published constant and not a credential, which is exactly the
-        # distinction a scanner cannot make on its own.
+        # script here uses the same one, in the clear: BIP340 test vector
+        # 1's, because the number being timed must not depend on which key
+        # was drawn and a reader has to be able to reproduce the row. A key
+        # published in a specification is the strongest possible case of
+        # what a scanner cannot tell apart from a credential -- it is high
+        # entropy, it is a real private key, and it is in a document
+        # anybody can read.
         # Recorded in .secrets.baseline as already reviewed rather than
         # excluded from the scan: an exclusion makes a file blind for
         # good, where a baseline leaves the file scanned and the next

@@ -91,12 +91,39 @@ def report_provenance() -> None:
     )
 
 
-prvkey = 1
+# BIP340 test vector 1, transcribed from btclib's vendored copy of it,
+# `tests/ecc/_data/bip340_test_vectors.csv`, whose own
+# `tests/_data/README.md` pins that file to a commit of bitcoin/bips and
+# compares the bytes. A published key rather than one chosen here, and the
+# public key and signature it publishes are asserted below rather than
+# taken on trust: every row of this table is a wrapper of the same library,
+# so "they agree with each other" is the one check that proves least, and
+# agreeing with BIP340 is a check that has an outside answer.
+#
+# The timings do not move for it -- three different valid keys through
+# these bindings measure the same to within the noise of the machine, which
+# was checked before this file was changed. What it buys is that the
+# signature being verified is the specification's rather than one made by
+# the package whose row is being compared against the others.
+prvkey = 0xB7E151628AED2A6ABF7158809CF4F3C762E7160F38B4DA56A784D9045190CFEF
+msg = bytes.fromhex("243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89")
+aux = bytes.fromhex("0000000000000000000000000000000000000000000000000000000000000001")
+vector_xonly_pubkey = bytes.fromhex(
+    "DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659"
+)
+vector_ssa_sig = bytes.fromhex(
+    "6896BD60EEAE296DB48A229FF71DFE071BDE413E6D43F917DC8DCF8C78DE3341"
+    "8906D11AC976ABCCB20B091292BFF4EA897EFCB639EA871CFA95F6DE339E4B0A"
+)
 pubkey = btclib_secp256k1.keys.pubkey_from_prvkey(prvkey)
 xonly_pubkey = pubkey[1:]
-msg = sha256(b"Satoshi Nakamoto").digest()
 dsa_sig = btclib_secp256k1.dsa.sign(msg, prvkey)
-ssa_sig = btclib_secp256k1.ssa.sign(msg, prvkey)
+# the vector's aux_rand, not the default: BIP340 signing is deterministic
+# given it, so what the rows below verify is the signature the
+# specification publishes and not one of this package's making
+ssa_sig = btclib_secp256k1.ssa.sign(msg, prvkey, aux)
+assert xonly_pubkey == vector_xonly_pubkey
+assert ssa_sig == vector_ssa_sig
 # electrum-ecc's ECDSA verify takes the 64-byte encoding and no other,
 # where coincurve and btclib_secp256k1 take DER. Converted once here
 # rather than inside the row: a re-encoding no consumer of that API
@@ -262,8 +289,13 @@ assert not btclib_secp256k1.ssa.verify(wrong_msg, xonly_pubkey, ssa_sig)
 CALLS = 100_000
 
 
-def benchmark(func: Callable[[], None], calls: int) -> None:
-    """Call `func` `calls` times and print microseconds per call."""
+def benchmark(func: Callable[[], None], calls: int) -> float:
+    """Call `func` `calls` times and return microseconds per call.
+
+    Returned and not printed: a table sorted fastest to slowest, each row
+    divided by one of the others, cannot be written a line at a time --
+    every number has to be in hand before the first line is.
+    """
     # perf_counter and not time(): the wall clock can step backwards
     # under an NTP correction, and a benchmark is the one place that
     # shows up as a negative duration
@@ -271,28 +303,46 @@ def benchmark(func: Callable[[], None], calls: int) -> None:
     for _ in range(calls):
         func()
     end = time.perf_counter()
-    us_per_call = (end - start) / calls * 1e6
-    print(f"{func.__name__:<22}: {us_per_call:10.2f} us/call ({calls} calls)")
+    return (end - start) / calls * 1e6
+
+
+def table(title: str, rows: tuple[Callable[[], None], ...]) -> None:
+    """Time every row of one operation, then print them fastest first.
+
+    The ratio is against the fastest row, whichever it turns out to be,
+    so the top row reads 1.0x and every other says what it costs to use
+    that one instead. Against a named row -- btclib_secp256k1's, the
+    obvious candidate here -- the column would answer a question the
+    reader did not ask on the runs where that row is not the quickest,
+    and half the column would sit under one, which reads as a defect
+    rather than as a result.
+    """
+    us = {func.__name__: benchmark(func, CALLS) for func in rows}
+    against = min(us.values())
+    print(title)
+    print(f"  {'':<22}{'us/call':>10}{'vs best':>12}")
+    for name, value in sorted(us.items(), key=lambda row: row[1]):
+        # two decimals on the ratio where the other scripts print one:
+        # every row here calls the same C and they land within a few
+        # percent of each other, so one decimal prints 1.0x for the whole
+        # column and says nothing at all
+        print(f"  {name:<22}{value:10.2f}{value / against:11.2f}x   ({CALLS} calls)")
 
 
 def main() -> None:
     """Print the two tables, one operation each.
 
-    No order is forced on the rows any more: with the pure-Python rows
-    gone, nothing here changes state a later row would read, so the
-    order below is the reading order and nothing else.
+    No order is forced on the timing any more: with the pure-Python rows
+    gone, nothing here changes state a later row would read. The order
+    the rows are *printed* in is the measurement's own, fastest first,
+    which is a property of the run rather than of this file.
     """
     report_provenance()
     report_libsecp256k1()
 
-    print("ECDSA verify (32-byte digest, the public key parsed per call)")
-    for func in DSA_ROWS:
-        benchmark(func, CALLS)
+    table("ECDSA verify (32-byte digest, the public key parsed per call)", DSA_ROWS)
     print()
-
-    print("BIP340 verify (32-byte message, the public key parsed per call)")
-    for func in SSA_ROWS:
-        benchmark(func, CALLS)
+    table("BIP340 verify (32-byte message, the public key parsed per call)", SSA_ROWS)
 
 
 # a guard rather than bare module-level calls: the helpers above are

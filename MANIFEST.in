@@ -9,6 +9,10 @@ include pyproject.toml uv.lock
 include .python-version
 recursive-include scripts *.py
 recursive-include tests *.py
+# the runs the README links to, which are output rather than furniture:
+# a checkout is where a benchmark is run, and these say what running one
+# produced on a machine that is named
+recursive-include results *.md
 # the documentation sources, which the sphinx gate builds from an
 # unpacked sdist as readily as from a checkout
 recursive-include docs *.md
