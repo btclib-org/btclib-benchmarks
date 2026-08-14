@@ -7,25 +7,22 @@
 btclib, with the `btclib_secp256k1` bindings it depends on and cannot be
 installed without, is what `pip install btclib` gives an end user -- so
 this times exactly that path, never the pure-Python fallback of
-`curves/curve_group.py`, which issue #816's benchmark covers instead.
+`curves/curve_group.py`, which `scripts/pure_python.py` covers instead.
 
 Every comparand is timed at its own latest PyPI release, on operations it
 actually offers: signing a message is compared against a package that
 signs, deriving a BIP32 child against one that has BIP32, and nothing
 is compared against a package that lacks the feature.
 
-## The candidates, and one that is not here
+## One library that is not a row
 
-The issue that asked for this script named six candidates: python-ecdsa,
-pycoin, bit, embit, python-bitcoinlib and buidl. `bit` is not among the
-rows below: its latest release, 0.8.0 from 2021-12-04, depends on
-`coincurve`, whose latest wheel set (21.0.0) stops at cp313 -- no cp314
-build exists yet -- and the sdist fails to build on 3.14 with
-"RuntimeError: Expected exactly one LICENSE file in cffi distribution",
-a coincurve/hatchling packaging defect this repository does not control.
-`uv sync --group bench` on `.python-version`'s 3.14 cannot install it, so
-it is left out rather than pinned around silently; revisit if a newer
-coincurve gains a 3.14 wheel.
+`bit` installs on this interpreter and is still not here. Its declared
+dependency is `coincurve`, so its ECDSA is coincurve's libsecp256k1, and
+that build already has a row of its own in
+`scripts/libsecp256k1_wrappers.py`. What a `bit` row would add over that
+row is its wallet layer, not arithmetic, and a table comparing arithmetic
+would be reporting the layer as though it were the curve. It belongs here
+the day this benchmark grows a question about wallet APIs.
 
 ## What each comparand is actually running, and how that was checked
 
@@ -97,10 +94,9 @@ BIP32's first, whose seed the derivation rows take.
   per-signature number and does not pretend to be one -- for a fixed key
   and message it is a fixed multiple of the row above it, four signatures
   for this pair against the expected two, which is a property of the pair
-  and not of either library. Before the fixture became a published vector
-  this went unnoticed: the key it replaced happened to want two, so
-  grinding and not grinding differed by little enough to look like nothing
-  in particular.
+  and not of either library: BIP340's vector key wants four where two is
+  the expectation, and a key wanting two makes grinding look like ordinary
+  overhead rather than a second signature.
 - BIP340 (Schnorr) sign and verify, over the vector's message and
   aux_rand -- BIP340 does not hash its message internally, so this is the
   value every implementation signs and checks, byte for byte, and it
@@ -124,9 +120,9 @@ which is why its BIP32 row goes through `pycoin.symbols.btc.network`
 instead, the layer above that actually has one. Nothing here compares a
 feature against a library that lacks it.
 
-Not part of the test suite and not run by CI: it needs five third-party
-packages this project does not depend on, declared in the `bench`
-dependency group and nowhere else.
+Not part of the test suite and not run by CI: measuring is done by a
+person on a machine whose state they know, and a shared runner disagrees
+with a laptop by more than most of the differences here.
 """
 
 from __future__ import annotations
@@ -134,7 +130,6 @@ from __future__ import annotations
 import hashlib
 import time
 from collections.abc import Callable
-from importlib.metadata import version
 
 import bitcoin.core.key as bitcoinlib_key
 import btclib
@@ -153,14 +148,26 @@ from btclib.to_pub_key import pub_keyinfo_from_prv_key
 
 
 def report_provenance() -> None:
-    """Say which build of each package these rows are about.
+    """Say which build of every package in the table these rows are about.
 
-    Printed before any number: a released wheel and a working
-    tree satisfy the same requirement and resolve in silence, so
-    which one ran is something the output has to state rather
-    than something the reader assumes.
+    Printed before any number: a released wheel and a working tree satisfy
+    the same requirement and resolve in silence, so which one ran is
+    something the output has to state rather than something the reader
+    assumes.
+
+    Every package, comparands included, so that a version number appears
+    once in this output and `report_setup` below is left with the one thing
+    a version cannot say: which arithmetic the row reached.
     """
-    report(("btclib", btclib.__file__), ("btclib-secp256k1", btclib_secp256k1.__file__))
+    report(
+        ("btclib", btclib.__file__),
+        ("btclib-secp256k1", btclib_secp256k1.__file__),
+        ("ecdsa", ecdsa.__file__),
+        ("pycoin", pycoin.symbols.btc.__file__),
+        ("buidl", buidl.pecc.__file__),
+        ("embit", embit.ec.__file__),
+        ("python-bitcoinlib", bitcoinlib_key.__file__),
+    )
 
 
 # BIP340 test vector 1 and BIP32 test vector 1, transcribed from btclib's
@@ -172,14 +179,13 @@ def report_provenance() -> None:
 # hold every row against btclib's answer, which cannot catch a mistake
 # btclib and a comparand share, and a specification can.
 #
-# One row did move for it, and it is the argument for the whole change.
-# The key this file used to carry was 1, whose public key *is* the
-# generator -- and python-ecdsa hands back the generator object itself for
-# it, precomputed table and all, so `dsa_verify_ecdsa` verified with a
-# table no real key gets and read about half its true cost. Every other
-# row measures the same to within the noise of the machine, three
-# different valid keys having been timed to check it, so the number that
-# changed is the number that was wrong.
+# A published key matters to one row more than to the rest. python-ecdsa
+# returns the generator *object* for the public key of the private key 1 --
+# precomputed table and all -- so a row verifying against that key verifies
+# with a table no real key gets, at about half the cost of verification.
+# Every other row measures the same through any valid key, three of them
+# having been timed to check it: the vector is here for what it forbids
+# rather than for what it changes.
 PRVKEY = 0xB7E151628AED2A6ABF7158809CF4F3C762E7160F38B4DA56A784D9045190CFEF
 MSG_HASH = bytes.fromhex(
     "243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89"
@@ -206,11 +212,15 @@ VECTOR_BIP32_CHILD_PUBKEY = bytes.fromhex(
 # binds to that same `Optimizations` class, so a probe looking for that
 # spelling among the base names could not fire at all -- which is how
 # this table came to print "pure Python" beside timings that were C.
-# The strings go inside `report_setup`'s parentheses, so they carry no
-# parentheses of their own, and read as embit's line beside them does.
+# The strings are a line of `report_setup`'s block, so they name the code
+# and then the mechanism, as every other line there does. Which copy of
+# libsecp256k1 is a property of the process rather than of pycoin, and the
+# module docstring is where that is spelled out.
 PYCOIN_NATIVE_MIXINS = {
-    "pycoin.ecdsa.native.secp256k1": "libsecp256k1, via ctypes",
-    "pycoin.ecdsa.native.openssl": "OpenSSL, via ctypes",
+    "pycoin.ecdsa.native.secp256k1": (
+        "libsecp256k1 already loaded in this process, through ctypes bindings"
+    ),
+    "pycoin.ecdsa.native.openssl": ("OpenSSL's libcrypto, through ctypes bindings"),
 }
 
 
@@ -267,30 +277,37 @@ def pycoin_calls(c: int, python: int) -> int:
 
 
 def report_setup() -> None:
-    """Print what is about to be timed, and on what.
+    """Print which arithmetic each row reached, and how it reached it.
 
-    A version number and a backend name, not a benchmark result, because
-    the numbers below mean something only next to what produced them.
+    Not a version number: `report_provenance` above prints those, for every
+    package here, and this block answers the question a version cannot.
+    Every line names the same two things in the same order -- the code that
+    does the arithmetic, and the mechanism the row calls it through -- so
+    that two rows can be read against each other without translating
+    between one line's vocabulary and the next.
+
+    A benchmark result is not among them. What is here is what the numbers
+    below mean nothing without.
     """
-    print(f"btclib               : {version('btclib')} (bindings enabled)")
-    print(f"btclib_secp256k1     : {version('btclib_secp256k1')}")
-    print(f"ecdsa                : {version('ecdsa')} (pure Python, no native path)")
-    print(f"pycoin               : {version('pycoin')} ({_pycoin_backend()})")
-    buidl_backend = (
-        "libsecp256k1 (via cffi)"
+    print("arithmetic under each row")
+    print(f"  {'btclib':<20}libsecp256k1, through btclib_secp256k1's cffi bindings")
+    print(f"  {'ecdsa':<20}pure Python; it has no compiled backend at all")
+    print(f"  {'pycoin':<20}{_pycoin_backend()}")
+    buidl_arithmetic = (
+        "libsecp256k1, through its cecc cffi extension"
         if buidl.libsec_status.is_libsec_enabled()
-        else "pure Python"
+        else "pure Python; its cecc cffi extension is not built"
     )
-    print(f"buidl                : {version('buidl')} ({buidl_backend})")
-    print(
-        f"embit                : {version('embit')} "
-        "(bundled libsecp256k1, via ctypes, always)"
+    print(f"  {'buidl':<20}{buidl_arithmetic}")
+    print(f"  {'embit':<20}libsecp256k1 it bundles itself, through ctypes bindings")
+    optional = (
+        "and its optional libsecp256k1 is available and unused"
+        if bitcoinlib_key.is_libsec256k1_available()
+        else "no libsecp256k1 of its own being available to opt into"
     )
-    libsecp256k1_for_signing = bitcoinlib_key.is_libsec256k1_available()
     print(
-        f"python-bitcoinlib    : {version('python-bitcoinlib')} "
-        f"(OpenSSL, via ctypes; libsecp256k1 available but unused: "
-        f"{libsecp256k1_for_signing})"
+        f"  {'python-bitcoinlib':<20}OpenSSL's libcrypto, through ctypes bindings, "
+        f"{optional}"
     )
     print()
 

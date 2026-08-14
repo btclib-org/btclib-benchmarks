@@ -79,12 +79,12 @@ longer the whole of the check; and the one fixture that cannot come from a
 vector, ECDSA's nonce being btclib's own RFC6979, is still cross-checked
 between the paths.
 
-A key of 1 is what this file used to sign with, and it is the reason to
-prefer a vector even where the timings do not care: the public key of 1 is
-the generator, and a pure-Python implementation handed that key derives it
-in a single ladder step -- measured at hundreds of times less than a real
-scalar. `scripts/bitcoin_libraries.py` published a row that had been
-flattered exactly that way.
+A vector is worth insisting on even where the timings do not care, and the
+private key 1 is why. Its public key is the generator: a pure-Python
+implementation handed that key derives it in a single ladder step, measured
+at hundreds of times less than a real scalar, and python-ecdsa hands back
+the generator object itself, precomputed table and all. A key nobody chose
+cannot flatter a row that way.
 
 Not part of the test suite and not run by CI: nothing here is a
 correctness check of btclib, and `tests/script_engine/python_path_test.py`
@@ -278,14 +278,13 @@ for _op in (
 
 
 def benchmark(func: Callable[[], None], mult_: int) -> float:
-    """Call `func` 1000 * `mult_` times and return the seconds per 10000.
+    """Call `func` 1000 * `mult_` times and return the microseconds per call.
 
-    Ten thousand and not one thousand because the fastest row of this
-    table is a few microseconds: per thousand it reads as a run of zeros
-    and a couple of digits, where per ten thousand every row has its
-    figures in the same three columns. Five significant digits, which is
-    four more than the machine can be held to and enough that two rows
-    within a percent of each other are still two numbers.
+    Microseconds per call, as every table in this project prints: a unit
+    that changes between benchmarks is a unit a reader has to convert
+    before comparing two of them. Five significant digits, which is four
+    more than the machine can be held to and enough that two rows within a
+    percent of each other are still two numbers.
 
     Returned and not printed: the table is sorted on the ratio and each
     row divides by its own pair, so no line can be written until every
@@ -304,7 +303,7 @@ def benchmark(func: Callable[[], None], mult_: int) -> float:
     for _ in range(1000 * mult_):
         func()
     end = time.perf_counter()
-    return (end - start) / mult_ * 10
+    return (end - start) / (1000 * mult_) * 1e6
 
 
 # one operation per entry, with the thousands of calls to give it through
@@ -373,7 +372,7 @@ def main() -> None:
         ((name, value, value / against[name]) for name, value in seconds.items()),
         key=lambda row: (row[2], row[1]),
     )
-    print(f"{'':<28} {'s/10000':>10}{'vs best':>14}")
+    print(f"{'':<28} {'us/call':>10}{'vs best':>14}")
     for name, value, ratio in rows:
         print(f"{name:<28} {value:#10.5g}{ratio:13.1f}x")
 

@@ -68,8 +68,26 @@ def _under_install_root(module_file: str) -> bool:
     )
 
 
+def _from_a_declared_source(dist_name: str) -> bool:
+    """Say whether an install came from an index or from a pinned revision.
+
+    Those are the two origins that need no saying, being what a declared
+    source gives: pyproject.toml names an index requirement or
+    `[tool.uv.sources]` names a revision, and either way the version number
+    beside the name carries it -- btclib's own says which, a release being
+    dated to the day where a build off `main` is not. Printing them is a
+    parenthesis that never varies.
+
+    What is not declared is a path installed over the top, and that is
+    worth a line of its own. No `PackageNotFoundError` to catch here: this
+    is asked only after `version` has already answered for the same name.
+    """
+    raw = _distribution(dist_name).read_text("direct_url.json")
+    return raw is None or "vcs_info" in json.loads(raw)
+
+
 def describe(dist_name: str, module_file: str) -> str:
-    """Return a line naming a package's version and where it came from.
+    """Return a line naming a package's version, and its origin if it is odd.
 
     `dist_name` is the name on the index and `module_file` the imported
     module's `__file__`. Both are asked for because they answer different
@@ -77,6 +95,13 @@ def describe(dist_name: str, module_file: str) -> str:
     file says whether what got imported is the installed copy at all --
     a directory on `sys.path` shadows an install silently, and no
     metadata can see it.
+
+    The version alone is the line for an ordinary run. An origin appears
+    only when it is one a reader has to act on, which is the point of
+    reporting it at all: `editable:` and `local:` say a path was installed
+    over the top, `sys.path:` says the import never reached the install,
+    and a run showing any of the three is measuring something other than
+    what a `uv sync` produces.
     """
     try:
         released = version(dist_name)
@@ -84,6 +109,8 @@ def describe(dist_name: str, module_file: str) -> str:
         return f"{dist_name:<20}: not installed"
     if not _under_install_root(module_file):
         return f"{dist_name:<20}: {released:<24} (sys.path: {module_file})"
+    if _from_a_declared_source(dist_name):
+        return f"{dist_name:<20}: {released}"
     return f"{dist_name:<20}: {released:<24} ({origin_of(dist_name)})"
 
 

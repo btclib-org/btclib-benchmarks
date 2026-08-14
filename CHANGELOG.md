@@ -65,6 +65,51 @@ The release notes, which say what a user has to act on, are in
   unrecorded for any other — a pin outliving its release would be the
   one figure in that output nothing re-derives.
 
+- **The wrapper table signs as well as verifying, and tweaks a public
+  key.** Verification was the whole of it, which left out the operation the
+  four APIs differ over most: signing separates them further, and
+  `electrum-ecc` is the only one of them offering low-r grinding, so it has
+  two rows where the others have one. The four also agree on one ECDSA
+  signature exactly -- libsecp256k1's default nonce is RFC6979, so one key
+  and one message give one signature through four APIs, and the script now
+  asserts that. BIP340 is checked against the vector for three of them;
+  `secp256k1-py`'s `schnorr_sign` takes no aux_rand, so what its API leaves
+  checkable is that its signature verifies.
+
+  The last table is BIP32's step and not BIP32: none of the four implements
+  derivation, and all four expose the primitive it is built from, a public
+  key tweaked by a scalar. `electrum-ecc` has no tweak-add on `ECPubkey`, so
+  it reaches the same point as a scalar times the generator plus an
+  addition -- two crossings where the others make one.
+
+- **Every table prints microseconds per call.** `btclib_two_paths.py` had
+  been printing seconds per thousand: a unit that changes between
+  benchmarks is a unit a reader converts before comparing two of them. Five
+  significant digits there, where the quickest row is a few microseconds
+  and the slowest four orders above it.
+
+- **`pure_python.py` has no reference line and no second ratio.** It was a
+  table of Python rows against the bindings, which asked two questions at
+  once: what Python costs, which `btclib_two_paths.py` answers over
+  btclib's own two paths, and which Python implementation is quicker, which
+  is the one this script is for. So the bindings row is gone, with the
+  `btclib_secp256k1` line beside it, and what is left is one ratio against
+  whichever row came out fastest. "Pure Python" is said once, in the block
+  above the tables, rather than per row -- and the block says what holds
+  each row to Python, which is different for each of them and is the part a
+  reader could doubt. btclib signs ECDSA in two rows there too, one
+  signature and its grinding default.
+
+- **Version numbers appear once per run.** `report_provenance` prints every
+  package in the table, comparands included, and the setup block beneath it
+  is left with the one thing a version cannot say: which arithmetic the row
+  reached, in one vocabulary across every line -- the code that does the
+  arithmetic, then the mechanism the row calls it through. A provenance
+  line is the version alone unless the origin is one a reader has to act
+  on: an index install and the revision `[tool.uv.sources]` pins are what
+  the declaration asks for, where `editable:`, `local:` and `sys.path:` say
+  the run is measuring something else.
+
 - **`bitcoin_libraries.py` no longer times four signatures against one.**
   btclib and embit both grind for a low-r signature by default — sign
   repeatedly until r fits in 32 bytes — where python-ecdsa, pycoin, buidl

@@ -2,33 +2,16 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""Timings of the pure-Python implementations against the bindings.
+"""Timings of every pure-Python implementation of the same operation.
 
-The bindings are the reference line here and not a competitor. `pip
-install btclib` installs `btclib_secp256k1`, so a consumer who wants C
-already has it, and the question worth a table is what staying in Python
-costs against what is there for free: one reference column, and a row for
-every pure-Python implementation of the same operation.
-
-Each row carries a second ratio beside it, against `btclib, Python`.
-The first column answers what Python costs; the second answers how the
-implementations compare with each other, which is the question the first
-one leaves a reader dividing out by hand. The bindings row carries
-nothing in it, being the reference of the first column.
-
-This is the third of the benchmarks and the only one that forces Python
-everywhere:
-
-- `scripts/btclib_two_paths.py` times btclib's own two arithmetic paths
-  against each other, and needs no dependency to do it
-- `scripts/bitcoin_libraries.py` times btclib, bindings enabled,
-  against other Python bitcoin libraries **as installed** -- which for
-  embit, python-bitcoinlib and often pycoin is C, as its own rows say
-- this one times them **as Python**, every backend turned off that can be
-
-The rows overlap by name with that second script and not by meaning:
-pycoin is C there and Python here, and the difference between the two
-numbers is the whole reason both exist.
+Every row here is Python arithmetic, and the question is which of them is
+quicker at it. Nothing in this table is C, so no row is a reference line
+and the ratio column is against whichever row came out fastest, as it is
+in the other three benchmarks. What Python costs against C is the question
+`scripts/btclib_two_paths.py` answers, over btclib's own two paths, and
+what `pip install <package>` gives is what `scripts/bitcoin_libraries.py`
+answers -- where the same package names appear and mean something else,
+pycoin being C there and Python here.
 
 ## How each row is held to Python, and how that was checked
 
@@ -47,27 +30,26 @@ numbers is the whole reason both exist.
   ships or loads a native backend at all.
 
 `report_setup` prints what each row resolved to, because nothing here
-should claim a Python number without checking that it is one.
+should claim a Python number without checking that it is one. It says it
+once, in a block above the tables: with every row Python, a row saying so
+is a column of the same word.
 
 ## secp256k1lab's marker
 
-It is on no index at all: `[tool.uv.sources]` takes it from its git tag,
-and it wants >=3.11 where this project supports >=3.10, so the `bench`
-group carries the marker that says so and this script imports it
-unguarded.
+It is on no index at all: `[tool.uv.sources]` takes it from its git tag.
+It declares >=3.11, which is this project's floor as well -- that is why
+the floor is what it is -- so this script imports it unguarded.
 
 ## The row that is not here
 
 **hwilib** would be one: `hwilib.key.point_mul` is a double-and-add over
-Python integers, with nothing to turn off, and it would have been the
-slowest public key in the table. `hwi` is not in the `bench` group
-because of what it drags in -- its latest release caps `cbor2` at <5.8
-and `protobuf` at <5.0.0, where the advisories against those two are
-fixed in 5.9.0 and 5.29.6. No floor or constraint written in this project
-reaches a patched version while those ceilings hold, so the row would
-have cost three standing security alerts, two of them high. It is also a
-row nobody here would see: `hwi` declares `requires_python <3.13` against
-a `.python-version` of 3.14.
+Python integers, with nothing to turn off, and it would be the slowest
+public key in the table. `hwi` is not a dependency here because of what it
+drags in: it caps `cbor2` at <5.8 and `protobuf` at <5.0.0, where the
+advisories against those two are fixed in 5.9.0 and 5.29.6, so the row
+costs three standing security alerts, two of them high, for as long as
+those ceilings hold. It is also a row nobody here would see: `hwi`
+declares `requires_python <3.13`, and `.python-version` is 3.13.
 
 ## The inputs are a published test vector
 
@@ -78,13 +60,12 @@ the signature the specification publishes rather than to btclib's answer.
 ECDSA has no such line here, RFC6979's nonce being btclib's own, and stays
 cross-checked between implementations.
 
-One row is different, and it is what makes the change more than hygiene.
-`bitcoin_libraries.py` used to sign with the private key 1, whose public
-key is the generator, and python-ecdsa returns the generator *object* for
-it -- precomputed table and all. A row verifying against that key verified
-with a table no real key gets. This script never used that key, its own
-fixture having always been a published one, so its python-ecdsa row is
-unchanged; the other script's is twice what it was.
+A published key matters to one comparand more than to the rest, which is
+why it is worth insisting on even where the timings do not care:
+python-ecdsa returns the generator *object* for the public key of the
+private key 1, precomputed table and all, so a row verifying against that
+key verifies with a table no real key gets, at about half the cost of
+verification. A vector's key cannot do that to a row by accident.
 
 Not part of the test suite and not run by CI, as the other two are not:
 nothing here is a correctness check, though every row is checked before it
@@ -103,10 +84,8 @@ os.environ["PYCOIN_NATIVE"] = "none"
 import time
 from collections.abc import Callable
 from hashlib import sha256
-from importlib.metadata import version
 
 import btclib
-import btclib_secp256k1
 import buidl.pecc
 import ecdsa
 import pycoin.symbols.btc
@@ -126,7 +105,13 @@ def report_provenance() -> None:
     which one ran is something the output has to state rather
     than something the reader assumes.
     """
-    report(("btclib", btclib.__file__), ("btclib-secp256k1", btclib_secp256k1.__file__))
+    report(
+        ("btclib", btclib.__file__),
+        ("secp256k1lab", secp256k1lab.bip340.__file__),
+        ("ecdsa", ecdsa.__file__),
+        ("pycoin", pycoin.symbols.btc.__file__),
+        ("buidl", buidl.pecc.__file__),
+    )
 
 
 PYCOIN_GENERATOR = pycoin.symbols.btc.network.generator
@@ -206,13 +191,23 @@ def _pycoin_backend() -> str:
 
 
 def report_setup() -> None:
-    """Print the versions and what each row actually resolved to."""
-    print(f"btclib                {version('btclib')}, bindings the reference")
-    print(f"btclib_secp256k1      {version('btclib_secp256k1')}")
-    print(f"secp256k1lab          {version('secp256k1lab')}, pure Python")
-    print(f"buidl                 {version('buidl')}, through buidl.pecc")
-    print(f"ecdsa                 {version('ecdsa')}, pure Python")
-    print(f"pycoin                {version('pycoin')}, backend: {_pycoin_backend()}")
+    """Print what holds each row to Python, having said once that all are.
+
+    Not a version number: `report_provenance` above prints those. Not "pure
+    Python" per row either -- every row in this table is, so the word
+    belongs in the heading and what belongs beside each name is the thing
+    that made it true, which is different for each of them and is the only
+    part a reader could doubt.
+    """
+    print("every row is pure Python arithmetic, held to it by")
+    print(f"  {'btclib':<20}its libsecp256k1 dispatch switched off")
+    print(
+        f"  {'pycoin':<20}PYCOIN_NATIVE=none before its import, resolving to "
+        f"{_pycoin_backend()}"
+    )
+    print(f"  {'buidl':<20}being imported as buidl.pecc, not buidl.ecc")
+    print(f"  {'ecdsa':<20}having no compiled backend at all")
+    print(f"  {'secp256k1lab':<20}having no compiled backend at all")
     print()
 
 
@@ -250,8 +245,26 @@ def pubkey_pycoin() -> None:
 
 
 def dsa_sign_btclib() -> None:
-    """Time an ECDSA signature through btclib."""
+    """Time one ECDSA signature through btclib.
+
+    `grind=False`, which is not btclib's default: one signature is what
+    every other row in the table produces, and the default is the row
+    below.
+    """
     dsa.sign_(MSG_HASH, PRVKEY, grind=False)
+
+
+def dsa_sign_btclib_grind() -> None:
+    """Time ECDSA signing as btclib performs it unless told otherwise.
+
+    btclib grinds for a low-r signature by default: it signs until r fits
+    in 32 bytes, an expectation of two signatures and, for one fixed key
+    and message, a fixed number of them. No other implementation in this
+    table grinds, so the two rows say which question is being answered --
+    what one signature costs, and what a caller who writes
+    `dsa.sign_(msg, key)` waits for.
+    """
+    dsa.sign_(MSG_HASH, PRVKEY)
 
 
 def dsa_verify_btclib() -> None:
@@ -344,57 +357,25 @@ def benchmark(func: Callable[[], None], calls: int) -> float:
     return (time.perf_counter() - start) / calls * 1e6
 
 
-# the two rows every table has, named once. The bindings label is what
-# `table` finds its own added row by -- by label and not by position, the
-# rows being sorted by then -- and neither name is a reference any more:
-# both ratio columns divide by whatever the run made fastest
-BINDINGS_LABEL = "btclib, the bindings"
-PYTHON_LABEL = "btclib, Python"
+def table(title: str, rows: tuple[tuple[str, Callable[[], None], int], ...]) -> None:
+    """Time one operation's rows, then print them fastest first.
 
+    One ratio, against whichever row came out quickest, as the other three
+    benchmarks print: with every row a Python implementation of the same
+    operation, the fastest of them is the only reference that is not a
+    choice. Naming a row instead -- btclib's, this being btclib's benchmark
+    -- would print fractions under one on the runs where another row won,
+    and where btclib stands is its own place in the order.
 
-def table(
-    title: str,
-    bindings: float,
-    rows: tuple[tuple[str, Callable[[], None], int], ...],
-) -> None:
-    """Time one operation's Python rows, then print them fastest first.
-
-    Two ratios, because the table is read for two questions, and each is
-    against the fastest row that answers its own question rather than
-    against a row named in advance. The first is against the quickest row
-    of the table, which is the bindings on every machine this has run on:
-    that is what staying in Python costs, and it is what this script is
-    for. The second is against the quickest *Python* row, which is how the
-    implementations compare with each other -- btclib's own Python path
-    usually, python-ecdsa on a run where it wins the public key, and
-    naming either of them in the code would print a fraction under one on
-    the runs where it lost.
-
-    `bindings` arrives already measured rather than as a row to time,
-    because it cannot be timed here: every call in this function happens
-    after `python_arithmetic_only`, and the reference is the one row that
-    has to be taken before it.
-
-    The order is the measurement's, fastest first, which is what makes the
-    table an answer rather than a list. The bindings row carries nothing in
-    the second column, not being a Python implementation and so not a
-    candidate for the fastest of them.
+    The order is the measurement's, which is what makes the table an answer
+    rather than a list.
     """
     us = {label: benchmark(func, calls) for label, func, calls in rows}
-    best_python = min(us.values())
-    us[BINDINGS_LABEL] = bindings
-    best = min(us.values())
+    against = min(us.values())
     print(f"\n{title}")
-    print(f"  {'':24s} {'':10s}      {'vs best':>8s}   {'vs best Python':>14s}")
+    print(f"  {'':24s} {'':10s}      {'vs best':>8s}")
     for label, value in sorted(us.items(), key=lambda row: row[1]):
-        against_python = (
-            f"{'--':>14s}"
-            if label == BINDINGS_LABEL
-            else f"{value / best_python:13.1f}x"
-        )
-        print(
-            f"  {label:24s} {value:10.2f} us   {value / best:8.1f}x   {against_python}"
-        )
+        print(f"  {label:24s} {value:10.2f} us   {value / against:8.1f}x")
 
 
 # the fixtures the third-party rows sign and verify, built once and
@@ -453,31 +434,20 @@ def python_arithmetic_only() -> None:
 
 
 def main() -> None:
-    """Print the tables, the reference column first.
+    """Throw the switch, then print a table per operation.
 
-    The order is what the measurement requires rather than a
-    presentation choice: `python_arithmetic_only` cannot be undone
-    within a process, so every row meant to reach the bindings --
-    the whole reference column -- is timed before it runs.
+    `python_arithmetic_only` comes first and nothing here is timed before
+    it: with no reference row left to measure through the bindings, the one
+    ordering this script needs is that the switch precede every timing.
     """
     report_provenance()
     report_setup()
-
-    REFERENCE = {
-        "pubkey": benchmark(pubkey_btclib, 2000),
-        "dsa sign": benchmark(dsa_sign_btclib, 2000),
-        "dsa verify": benchmark(dsa_verify_btclib, 2000),
-        "ssa sign": benchmark(ssa_sign_btclib, 2000),
-        "ssa verify": benchmark(ssa_verify_btclib, 2000),
-    }
-
     python_arithmetic_only()
 
     table(
         "public key from a private key: a multiplication of the generator",
-        REFERENCE["pubkey"],
         (
-            (PYTHON_LABEL, pubkey_btclib, 200),
+            ("btclib", pubkey_btclib, 200),
             ("secp256k1lab", pubkey_lab, 100),
             ("python-ecdsa", pubkey_ecdsa, 200),
             ("pycoin", pubkey_pycoin, 20),
@@ -487,9 +457,9 @@ def main() -> None:
 
     table(
         "ECDSA sign, over a 32-byte digest",
-        REFERENCE["dsa sign"],
         (
-            (PYTHON_LABEL, dsa_sign_btclib, 50),
+            ("btclib", dsa_sign_btclib, 50),
+            ("btclib, grinding low-r", dsa_sign_btclib_grind, 20),
             ("python-ecdsa", dsa_sign_ecdsa, 100),
             ("pycoin", dsa_sign_pycoin, 20),
             ("buidl.pecc", dsa_sign_buidl, 10),
@@ -498,9 +468,8 @@ def main() -> None:
 
     table(
         "ECDSA verify, over a 32-byte digest",
-        REFERENCE["dsa verify"],
         (
-            (PYTHON_LABEL, dsa_verify_btclib, 50),
+            ("btclib", dsa_verify_btclib, 50),
             ("python-ecdsa", dsa_verify_ecdsa, 50),
             ("pycoin", dsa_verify_pycoin, 10),
             ("buidl.pecc", dsa_verify_buidl, 10),
@@ -509,9 +478,8 @@ def main() -> None:
 
     table(
         "BIP340 sign, over a 32-byte message",
-        REFERENCE["ssa sign"],
         (
-            (PYTHON_LABEL, ssa_sign_btclib, 50),
+            ("btclib", ssa_sign_btclib, 50),
             ("secp256k1lab", ssa_sign_lab, 50),
             ("buidl.pecc", ssa_sign_buidl, 5),
         ),
@@ -519,9 +487,8 @@ def main() -> None:
 
     table(
         "BIP340 verify, over a 32-byte message",
-        REFERENCE["ssa verify"],
         (
-            (PYTHON_LABEL, ssa_verify_btclib, 50),
+            ("btclib", ssa_verify_btclib, 50),
             ("secp256k1lab", ssa_verify_lab, 50),
             ("buidl.pecc", ssa_verify_buidl, 10),
         ),

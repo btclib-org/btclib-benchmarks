@@ -22,9 +22,10 @@ of this was timed, not merely against btclib's answer.
 ## What produced it
 
 ```text
-machine : Apple M5, macOS 26.6 (build 25G72), arm64
-when    : 2026-08-14 16:47 CEST (14:47 UTC)
+when    : 2026-08-14 17:33 CEST (15:33 UTC)
+python  : 3.13.14
 command : uv run python scripts/bitcoin_libraries.py
+machine : Apple M5, macOS 26.6 (build 25G72), arm64
 state   : a working desktop, browser and editor open — not a quiesced
           machine, which is the condition README.md says to distrust
 ```
@@ -32,56 +33,61 @@ state   : a working desktop, browser and editor open — not a quiesced
 ## The output
 
 ```text
-btclib              : 2026.9                   (btclib-org/btclib main@30ed0263b116)
-btclib-secp256k1    : 0.8.0.1                  (released)
+btclib              : 2026.9
+btclib-secp256k1    : 0.8.0.1
+ecdsa               : 0.19.2
+pycoin              : 0.92718.20260405
+buidl               : 0.2.36
+embit               : 0.8.0
+python-bitcoinlib   : 0.12.2
 python              : 3.13.14
 
-btclib               : 2026.9 (bindings enabled)
-btclib_secp256k1     : 0.8.0.1
-ecdsa                : 0.19.2 (pure Python, no native path)
-pycoin               : 0.92718.20260405 (libsecp256k1, via ctypes)
-buidl                : 0.2.36 (pure Python)
-embit                : 0.8.0 (bundled libsecp256k1, via ctypes, always)
-python-bitcoinlib    : 0.12.2 (OpenSSL, via ctypes; libsecp256k1 available but unused: False)
+arithmetic under each row
+  btclib              libsecp256k1, through btclib_secp256k1's cffi bindings
+  ecdsa               pure Python; it has no compiled backend at all
+  pycoin              libsecp256k1 already loaded in this process, through ctypes bindings
+  buidl               pure Python; its cecc cffi extension is not built
+  embit               libsecp256k1 it bundles itself, through ctypes bindings
+  python-bitcoinlib   OpenSSL's libcrypto, through ctypes bindings, no libsecp256k1 of its own being available to opt into
 
 ECDSA sign (32-byte digest, secp256k1)
                            us/call     vs best
-  dsa_sign_pycoin            13.58        1.0x   (50000 calls)
-  dsa_sign_embit             15.64        1.2x   (50000 calls)
-  dsa_sign_btclib            17.98        1.3x   (50000 calls)
-  dsa_sign_embit_grind      123.68        9.1x   (20000 calls)
-  dsa_sign_btclib_grind     147.19       10.8x   (20000 calls)
-  dsa_sign_bitcoinlib       222.43       16.4x   (8000 calls)
-  dsa_sign_ecdsa            331.64       24.4x   (5000 calls)
-  dsa_sign_buidl          33784.65     2487.7x   (50 calls)
+  dsa_sign_pycoin            12.28        1.0x   (50000 calls)
+  dsa_sign_embit             14.14        1.2x   (50000 calls)
+  dsa_sign_btclib            17.27        1.4x   (50000 calls)
+  dsa_sign_embit_grind      120.67        9.8x   (20000 calls)
+  dsa_sign_btclib_grind     142.04       11.6x   (20000 calls)
+  dsa_sign_bitcoinlib       192.73       15.7x   (8000 calls)
+  dsa_sign_ecdsa            308.81       25.1x   (5000 calls)
+  dsa_sign_buidl          30503.70     2483.4x   (50 calls)
 
 ECDSA verify (32-byte digest, secp256k1)
                            us/call     vs best
-  dsa_verify_pycoin          12.82        1.0x   (50000 calls)
-  dsa_verify_embit           22.85        1.8x   (50000 calls)
-  dsa_verify_btclib          22.88        1.8x   (50000 calls)
-  dsa_verify_bitcoinlib     214.27       16.7x   (7000 calls)
-  dsa_verify_ecdsa         1060.34       82.7x   (3000 calls)
-  dsa_verify_buidl        61376.90     4787.9x   (25 calls)
+  dsa_verify_pycoin          12.79        1.0x   (50000 calls)
+  dsa_verify_embit           23.03        1.8x   (50000 calls)
+  dsa_verify_btclib          23.10        1.8x   (50000 calls)
+  dsa_verify_bitcoinlib     226.61       17.7x   (7000 calls)
+  dsa_verify_ecdsa         1106.51       86.5x   (3000 calls)
+  dsa_verify_buidl        62109.14     4855.1x   (25 calls)
 
 BIP340 sign (32-byte message)
                            us/call     vs best
-  ssa_sign_btclib            20.44        1.0x   (50000 calls)
-  ssa_sign_embit             21.34        1.0x   (50000 calls)
-  ssa_sign_buidl          91804.81     4492.3x   (20 calls)
+  ssa_sign_embit             21.36        1.0x   (50000 calls)
+  ssa_sign_btclib            23.19        1.1x   (50000 calls)
+  ssa_sign_buidl          92185.78     4314.8x   (20 calls)
 
 BIP340 verify (32-byte message)
                            us/call     vs best
-  ssa_verify_btclib          23.20        1.0x   (50000 calls)
-  ssa_verify_embit           23.57        1.0x   (50000 calls)
-  ssa_verify_buidl        60736.88     2618.4x   (25 calls)
+  ssa_verify_btclib          23.28        1.0x   (50000 calls)
+  ssa_verify_embit           24.25        1.0x   (50000 calls)
+  ssa_verify_buidl        61471.84     2640.1x   (25 calls)
 
 BIP32 derive, seed to m/0h/1 (16-byte seed)
                            us/call     vs best
-  bip32_derive_pycoin        39.69        1.0x   (30000 calls)
-  bip32_derive_btclib        58.99        1.5x   (30000 calls)
-  bip32_derive_embit         71.70        1.8x   (15000 calls)
-  bip32_derive_buidl      90626.36     2283.5x   (12 calls)
+  bip32_derive_pycoin        40.01        1.0x   (30000 calls)
+  bip32_derive_btclib        59.92        1.5x   (30000 calls)
+  bip32_derive_embit         71.98        1.8x   (15000 calls)
+  bip32_derive_buidl      89465.10     2236.1x   (12 calls)
 ```
 
 ## What it shows
@@ -111,21 +117,16 @@ Three things this output says are worth reading twice:
   four rows that sign once. Each therefore has two rows: one signature,
   which is the comparable one, and the default beside it, which for this
   key and message costs four signatures where two is the expectation. That
-  multiple is a property of the pair, not of either library, and it is why
-  the grinding rows sit where they do in the order rather than beside their
-  own one-signature rows.
-
-  This was invisible until the fixture became a published vector: the key
-  it replaced happened to want two signatures, so grinding cost about what
-  a reader would have read as ordinary overhead.
-- **python-ecdsa's verification row is twice what it used to be, and the
-  new number is the right one.** This table used to sign with the private
-  key 1, whose public key is the generator — and python-ecdsa hands back
-  the generator *object* for it, precomputed table and all. Every row
-  verifying against that key verified with a table no real key gets. The
-  published vector's key has no such table, so the row now costs what
-  verification costs. Nothing about python-ecdsa changed; what changed is
-  that the input is no longer one that flattered it.
+  multiple is a property of the pair rather than of either library, and it
+  is why the grinding rows sit where they do in the order rather than
+  beside their own one-signature rows.
+- **python-ecdsa's verification row is worth reading against its key.**
+  Handed the private key 1, python-ecdsa returns the generator *object* as
+  the public key — precomputed table and all — and a row verifying against
+  it verifies with a table no real key gets, at about half the cost. The
+  key here is BIP340's, which has no such table, so the row costs what
+  verification costs. It is the sharpest reason in these four files for
+  taking the input from a specification rather than choosing one.
 
 The loop counts are per row and print beside their rows, because sorting
 puts rows whose counts differ by orders of magnitude next to each other.
