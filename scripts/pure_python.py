@@ -19,9 +19,9 @@ nothing in it, being the reference of the first column.
 This is the third of the benchmarks and the only one that forces Python
 everywhere:
 
-- `scripts/benchmark.py` times btclib's own two arithmetic paths against
-  each other, and needs no dependency to do it
-- `scripts/benchmark_libraries.py` times btclib, bindings enabled,
+- `scripts/btclib_two_paths.py` times btclib's own two arithmetic paths
+  against each other, and needs no dependency to do it
+- `scripts/bitcoin_libraries.py` times btclib, bindings enabled,
   against other Python bitcoin libraries **as installed** -- which for
   embit, python-bitcoinlib and often pycoin is C, as its own rows say
 - this one times them **as Python**, every backend turned off that can be
@@ -34,8 +34,8 @@ numbers is the whole reason both exist.
 
 - **btclib**: `curves.curve._libsecp256k1_available` is the switch every
   dispatch reads, so clearing it turns the delegation off for every
-  module at once, as `benchmark.py` does. `python_arithmetic_only` below
-  says which row caught the partial patching that preceded it.
+  module at once, which is what `python_arithmetic_only` below does and
+  says why nothing less than the switch will do.
 - **pycoin** decides at import: `pycoin.ecdsa.native.secp256k1` and
   `.openssl` each read `PYCOIN_NATIVE` and return their no-op unless it
   names them. `os.environ` is set at the top of this file, before the
@@ -138,7 +138,7 @@ def _pycoin_backend() -> str:
     Python; it is read back rather than assumed, a benchmark that says
     "Python" on a row that loaded a shared object being worse than no
     benchmark. There is no public flag to read, so this reads the MRO the
-    generator ended up with, as `benchmark_libraries.py` does.
+    generator ended up with, as `bitcoin_libraries.py` does.
     """
     names = [base.__name__ for base in type(PYCOIN_GENERATOR).__mro__]
     if any("noop" not in name and "LibSECP256K1" in name for name in names):
@@ -365,11 +365,12 @@ def python_arithmetic_only() -> None:
 
     `_libsecp256k1_serves` reads `_libsecp256k1_available` on every call,
     so this one assignment reaches the nine modules that imported the
-    predicate by name -- where naming modules one at a time left a row
-    meant to measure Python measuring C, `curves.sec_point` being the
-    one omitted: a public key derived through `to_pub_key` came back at
-    8.47 us against the 8.39 of the reference, which is how the omission
-    was found rather than reasoned about. No row can reintroduce it.
+    predicate by name. Patching those modules one at a time is what
+    leaves a row meant to measure Python measuring C, and it does so
+    silently: a public key derived through `to_pub_key` asks
+    `curves.sec_point`, which is the module such a list forgets, and the
+    row comes back at the reference's own microseconds. No row added
+    below can reintroduce that.
 
     Called after the reference above and after every fixture is signed,
     both of which want the bindings.
@@ -434,7 +435,7 @@ def main() -> None:
 
 
 # a guard rather than bare module-level calls: the helpers above are
-# imported by the suite, and importing this module used to run every
-# timing in it. A measurement is the one thing a test must not do
+# imported by the suite, and a bare call would time every one of them on
+# the import. A measurement is the one thing a test must not do
 if __name__ == "__main__":
     main()

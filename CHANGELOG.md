@@ -26,18 +26,6 @@ The release notes, which say what a user has to act on, are in
   one of the four with a released ancestor, and the one HISTORY.md tells
   a reader what to do about. The other three have none.
 
-- **Every benchmark runs behind a `main()` guard.** They were bare
-  module-level statements, so importing one ran every timing loop in it
-  — which is why nothing could test them. The guard is what lets
-  `tests/scripts_import_test.py` import all four and check the thing a
-  test can actually check: that they load, and that the assertions
-  comparing every comparand against btclib still hold.
-
-  `scripts/libsecp256k1_wrappers.py` needed one more move for the same
-  reason: it called `python_arithmetic_only()` at import, which turns
-  btclib's dispatch off process-wide. Importing it in a suite would have
-  left every later test measuring the Python path.
-
 - **Each benchmark prints where its packages came from** before any
   number, `scripts/_provenance.py` being what answers it. A released
   wheel, a git checkout and an editable install satisfy the same

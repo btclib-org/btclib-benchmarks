@@ -76,11 +76,11 @@ def python_arithmetic_only() -> None:
 
     `_libsecp256k1_serves` reads `_libsecp256k1_available` on every call,
     so this one assignment reaches the nine modules that imported the
-    predicate by name. Naming modules instead is what left a row meant to
-    measure Python measuring C: `benchmark_python.py` patched three and
-    its pure-Python public key came back at bindings speed, `to_pub_key`
-    asking `curves.sec_point`, which was not among them. A row added
-    below cannot reintroduce that.
+    predicate by name. Naming modules instead is what leaves a row meant
+    to measure Python measuring C, and it does so silently: a pure-Python
+    public key comes back at bindings speed, `to_pub_key` asking
+    `curves.sec_point`, which is the module such a list forgets. A row
+    added below cannot reintroduce that.
 
     Called once, after the fixtures above are signed: they go through
     the bindings too, and there is no reason to slow those down.
@@ -182,7 +182,7 @@ def main() -> None:
 
 
 # a guard rather than bare module-level calls: the helpers above are
-# imported by the suite, and importing this module used to run every
-# timing in it. A measurement is the one thing a test must not do
+# imported by the suite, and a bare call would time every one of them on
+# the import. A measurement is the one thing a test must not do
 if __name__ == "__main__":
     main()
