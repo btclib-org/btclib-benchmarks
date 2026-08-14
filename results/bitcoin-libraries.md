@@ -1,6 +1,18 @@
-# btclib against the other bitcoin libraries, one run
+# btclib against the other bitcoin libraries
 
-What `scripts/bitcoin_libraries.py` printed on the machine named below:
+## What produced it
+
+```text
+when    : 2026-08-14 22:10 CEST (20:10 UTC)
+python  : 3.13.14
+method  : one run, kept whole — nothing repeated, no outlier discarded
+command : uv run python scripts/bitcoin_libraries.py
+machine : Apple M5, macOS 26.6 (build 25G72), arm64
+state   : a working desktop, browser and editor open — not a quiesced
+          machine, which is the condition README.md says to distrust
+```
+
+What `scripts/bitcoin_libraries.py` printed on the machine named above:
 btclib with its bindings enabled, beside `ecdsa`, `pycoin`, `buidl`,
 `embit` and `python-bitcoinlib`, over ECDSA, BIP340 and one BIP32
 derivation, and then base58check, bech32 and bech32m in both directions.
@@ -18,17 +30,6 @@ signature and BIP32 child key is checked against what those specifications
 publish before anything is timed. The address rows are the exception: one
 witness-v0 and one witness-v1 address are what is vendored here, so those call
 one input.
-
-## What produced it
-
-```text
-when    : 2026-08-14 22:10 CEST (20:10 UTC)
-python  : 3.13.14
-command : uv run python scripts/bitcoin_libraries.py
-machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
-```
 
 ## The output
 

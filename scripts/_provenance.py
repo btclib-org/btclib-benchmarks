@@ -113,8 +113,18 @@ def describe(dist_name: str, module_file: str) -> str:
     return f"{dist_name:<20}: {released:<24} ({origin_of(dist_name)})"
 
 
-def report(*packages: tuple[str, str]) -> None:
+def report(
+    *packages: tuple[str, str], dates: dict[str, tuple[str, str]] | None = None
+) -> None:
     """Print a line per package, then a blank line.
+
+    `dates` maps a distribution to the release it was recorded at and the day
+    that release was published. Recorded, because no installed metadata
+    carries it: a wheel's METADATA has a Version and no date, and the
+    dist-info directory's mtime is when the package was installed here. A date
+    prints only for the release it was read at, and the version prints alone
+    for any other -- the same rule the libsecp256k1 pins follow, and for the
+    same reason.
 
     Written to stdout with the numbers rather than to stderr, because it
     is part of the result rather than commentary on it: pasting the whole
@@ -127,5 +137,9 @@ def report(*packages: tuple[str, str]) -> None:
     the output. Printing it here put it twice in every published file.
     """
     for dist_name, module_file in packages:
-        print(describe(dist_name, module_file))
+        line = describe(dist_name, module_file)
+        recorded = (dates or {}).get(dist_name)
+        if recorded and version(dist_name) == recorded[0]:
+            line = f"{line}, released {recorded[1]}"
+        print(line)
     print()

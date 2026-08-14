@@ -103,6 +103,7 @@ def report_provenance() -> None:
         ("coincurve", coincurve.__file__),
         ("secp256k1", secp256k1.__file__),
         ("electrum-ecc", electrum_ecc.__file__),
+        dates=RELEASE_DATES,
     )
 
 
@@ -268,6 +269,20 @@ def _electrum_ecc_library() -> str:
     loader having asked for the newest one it knows by file name.
     """
     return Path(str(electrum_ecc.ecc_fast.version_info()["libsecp256k1.path"])).name
+
+
+# When each of these releases was published, read from the index and
+# recorded against the release it was read for. Not available at run time:
+# a wheel's METADATA carries a Version and no date, and the dist-info
+# directory's mtime is when the package was installed on this machine. A
+# comparand's age is worth a column here -- one of these four is years older
+# than the others, and the revision it vendors follows from that
+RELEASE_DATES = {
+    "btclib-secp256k1": ("0.8.0.2", "2026-08-14"),
+    "coincurve": ("21.0.0", "2025-03-08"),
+    "secp256k1": ("0.14.0", "2021-11-06"),
+    "electrum-ecc": ("0.0.7", "2026-02-25"),
+}
 
 
 # Where each row's libsecp256k1 came from, read from the release named

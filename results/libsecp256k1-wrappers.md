@@ -1,17 +1,28 @@
-# the libsecp256k1 wrappers, one run
+# The libsecp256k1 wrappers
+
+## What produced it
+
+```text
+when    : 2026-08-14 22:21 CEST (20:21 UTC)
+python  : 3.13.14
+method  : one run, kept whole — nothing repeated, no outlier discarded
+command : uv run python scripts/libsecp256k1_wrappers.py
+machine : Apple M5, macOS 26.6 (build 25G72), arm64
+state   : a working desktop, browser and editor open — not a quiesced
+          machine, which is the condition README.md says to distrust
+```
 
 What `scripts/libsecp256k1_wrappers.py` printed on the machine named
-below: `btclib_secp256k1`, `coincurve`, `secp256k1-py` and `electrum-ecc`
+above: `btclib_secp256k1`, `coincurve`, `secp256k1-py` and `electrum-ecc`
 signing and verifying the same ECDSA and BIP340 signatures and tweaking the
 same public key, every row calling `bitcoin-core/secp256k1`. Microseconds
 per call, fastest row first, a ratio against whichever row came out
 quickest, and one loop count for every row — a table whose rows are all C
 needs no count of its own per row.
 
-One run, kept whole — the block naming which revision of libsecp256k1 sits
-under each row is not decoration here, it is the premise of the table.
-Read [README.md][readme] on what these numbers are: an order of magnitude,
-never a figure to quote.
+The block naming which revision of libsecp256k1 sits under each row is not
+decoration: it is the premise of the table. Read [README.md][readme] on what
+these numbers are — an order of magnitude, never a figure to quote.
 
 The signatures being verified are BIP340's own, every vector the file
 publishes, cycled one per call: where every row wraps the same library, "they
@@ -23,24 +34,13 @@ worth saying what is not: `ecdsa`, the PyPI package, wraps nothing. It has
 no compiled backend at all, so it belongs to [the pure-Python
 table][pure] and to [the libraries table][libs], never to this one.
 
-## What produced it
-
-```text
-when    : 2026-08-14 22:11 CEST (20:11 UTC)
-python  : 3.13.14
-command : uv run python scripts/libsecp256k1_wrappers.py
-machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
-```
-
 ## The output
 
 ```text
-btclib-secp256k1    : 0.8.0.2
-coincurve           : 21.0.0
-secp256k1           : 0.14.0
-electrum-ecc        : 0.0.7
+btclib-secp256k1    : 0.8.0.2, released 2026-08-14
+coincurve           : 21.0.0, released 2025-03-08
+secp256k1           : 0.14.0, released 2021-11-06
+electrum-ecc        : 0.0.7, released 2026-02-25
 
 libsecp256k1 under each row
   btclib-secp256k1  0.8.0.2   v0.8.0                  cffi bindings, _btclib_secp256k1.cpython-313-darwin.so
@@ -51,38 +51,38 @@ libsecp256k1 under each row
 ECDSA verify (32-byte digest, the public key parsed per call)
                                    μs/call     vs best
   dsa_secp256k1                      11.82       1.00x   (100000 calls)
-  dsa_btclib_secp256k1               14.13       1.20x   (100000 calls)
-  dsa_coincurve                      14.23       1.20x   (100000 calls)
-  dsa_electrum_ecc                   16.08       1.36x   (100000 calls)
+  dsa_btclib_secp256k1               14.11       1.19x   (100000 calls)
+  dsa_coincurve                      14.12       1.19x   (100000 calls)
+  dsa_electrum_ecc                   16.19       1.37x   (100000 calls)
 
 BIP340 verify (32-byte message, the public key parsed per call)
                                    μs/call     vs best
-  ssa_coincurve                      14.67       1.00x   (100000 calls)
-  ssa_btclib_secp256k1               14.85       1.01x   (100000 calls)
+  ssa_coincurve                      14.63       1.00x   (100000 calls)
+  ssa_btclib_secp256k1               14.66       1.00x   (100000 calls)
   ssa_secp256k1                      15.12       1.03x   (100000 calls)
-  ssa_electrum_ecc                   18.68       1.27x   (100000 calls)
+  ssa_electrum_ecc                   18.62       1.27x   (100000 calls)
 
 ECDSA sign (32-byte digest)
                                    μs/call     vs best
-  dsa_sign_secp256k1                 11.43       1.00x   (100000 calls)
-  dsa_sign_coincurve                 11.71       1.03x   (100000 calls)
-  dsa_sign_btclib_secp256k1          12.69       1.11x   (100000 calls)
-  dsa_sign_electrum_ecc              27.46       2.40x   (100000 calls)
-  dsa_sign_electrum_ecc_grind        61.61       5.39x   (100000 calls)
+  dsa_sign_secp256k1                 11.36       1.00x   (100000 calls)
+  dsa_sign_coincurve                 11.65       1.03x   (100000 calls)
+  dsa_sign_btclib_secp256k1          12.08       1.06x   (100000 calls)
+  dsa_sign_electrum_ecc              27.46       2.42x   (100000 calls)
+  dsa_sign_electrum_ecc_grind        59.61       5.25x   (100000 calls)
 
 BIP340 sign (32-byte message)
                                    μs/call     vs best
-  ssa_sign_secp256k1                  7.81       1.00x   (100000 calls)
-  ssa_sign_btclib_secp256k1          16.05       2.05x   (100000 calls)
-  ssa_sign_coincurve                 27.42       3.51x   (100000 calls)
-  ssa_sign_electrum_ecc              31.50       4.03x   (100000 calls)
+  ssa_sign_secp256k1                  7.89       1.00x   (100000 calls)
+  ssa_sign_btclib_secp256k1          15.94       2.02x   (100000 calls)
+  ssa_sign_coincurve                 27.51       3.49x   (100000 calls)
+  ssa_sign_electrum_ecc              31.46       3.99x   (100000 calls)
 
 public key tweak by a scalar, which is BIP32's step
                                    μs/call     vs best
-  tweak_coincurve                    10.45       1.00x   (100000 calls)
-  tweak_btclib_secp256k1             10.62       1.02x   (100000 calls)
-  tweak_secp256k1                    13.89       1.33x   (100000 calls)
-  tweak_electrum_ecc                 22.47       2.15x   (100000 calls)
+  tweak_coincurve                    10.42       1.00x   (100000 calls)
+  tweak_btclib_secp256k1             10.61       1.02x   (100000 calls)
+  tweak_secp256k1                    13.88       1.33x   (100000 calls)
+  tweak_electrum_ecc                 22.47       2.16x   (100000 calls)
 ```
 
 ## What it shows

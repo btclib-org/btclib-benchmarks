@@ -1,6 +1,18 @@
-# btclib against btclib, one run
+# btclib against btclib
 
-What `scripts/btclib_two_paths.py` printed on the machine named below.
+## What produced it
+
+```text
+when    : 2026-08-14 22:09 CEST (20:09 UTC)
+python  : 3.13.14
+method  : one run, kept whole — nothing repeated, no outlier discarded
+command : uv run python scripts/btclib_two_paths.py
+machine : Apple M5, macOS 26.6 (build 25G72), arm64
+state   : a working desktop, browser and editor open — not a quiesced
+          machine, which is the condition README.md says to distrust
+```
+
+What `scripts/btclib_two_paths.py` printed on the machine named above.
 Both rows of every pair are btclib, called the same way; what differs
 underneath is which arithmetic answers — the libsecp256k1 that
 `btclib_secp256k1` bundles and compiles into a cffi extension, or the
@@ -23,17 +35,6 @@ part of it, because a table that does not say which build of btclib it
 timed cannot be checked. Nothing was repeated and no outlier was
 discarded, so what [README.md][readme] says about reading these applies
 here first: an order of magnitude, never a figure to quote.
-
-## What produced it
-
-```text
-when    : 2026-08-14 22:09 CEST (20:09 UTC)
-python  : 3.13.14
-command : uv run python scripts/btclib_two_paths.py
-machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
-```
 
 ## The output
 

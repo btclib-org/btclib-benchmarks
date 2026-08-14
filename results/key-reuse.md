@@ -1,6 +1,18 @@
-# one key, every signature under it, one run
+# One key, every signature under it
 
-What `scripts/key_reuse.py` printed on the machine named below: the same
+## What produced it
+
+```text
+when    : 2026-08-14 22:11 CEST (20:11 UTC)
+python  : 3.13.14
+method  : one run, kept whole — nothing repeated, no outlier discarded
+command : uv run python scripts/key_reuse.py
+machine : Apple M5, macOS 26.6 (build 25G72), arm64
+state   : a working desktop, browser and editor open — not a quiesced
+          machine, which is the condition README.md says to distrust
+```
+
+What `scripts/key_reuse.py` printed on the machine named above: the same
 ECDSA verification, with the public key handed in raw and with it
 prepared, on both of btclib's paths and against `python-ecdsa`. The other
 four benchmarks time one verification with a fresh key; a verifier never
@@ -17,17 +29,6 @@ prepare pays as well, so a column of differences must not carry it.
 
 One run, kept whole. Read [README.md][readme] on what these are: an order
 of magnitude, never a figure to quote.
-
-## What produced it
-
-```text
-when    : 2026-08-14 22:11 CEST (20:11 UTC)
-python  : 3.13.14
-command : uv run python scripts/key_reuse.py
-machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
-```
 
 ## The output
 

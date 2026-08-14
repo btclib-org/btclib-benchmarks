@@ -194,6 +194,27 @@ def test_a_distribution_with_no_metadata_at_all_is_named_not_installed(
     )
 
 
+def test_a_recorded_release_date_prints_beside_the_version_it_was_read_at(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No installed metadata carries a release date, so one is recorded.
+
+    Recorded against a release: the date prints for that one and the version
+    prints alone for any other, which is what keeps a date from outliving the
+    release it describes.
+    """
+    monkeypatch.setattr(_provenance, "version", lambda _: "1.2.3")
+    _provenance.report(
+        ("pytest", pytest.__file__), dates={"pytest": ("1.2.3", "2026-01-01")}
+    )
+    assert "released 2026-01-01" in capsys.readouterr().out
+
+    _provenance.report(
+        ("pytest", pytest.__file__), dates={"pytest": ("9.9.9", "2026-01-01")}
+    )
+    assert "released" not in capsys.readouterr().out
+
+
 def test_report_prints_one_line_per_package_and_nothing_else(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

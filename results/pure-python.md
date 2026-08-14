@@ -1,6 +1,18 @@
-# every pure-Python implementation, one run
+# Every pure-Python implementation
 
-What `scripts/pure_python.py` printed on the machine named below: btclib's
+## What produced it
+
+```text
+when    : 2026-08-14 22:10 CEST (20:10 UTC)
+python  : 3.13.14
+method  : one run, kept whole — nothing repeated, no outlier discarded
+command : uv run python scripts/pure_python.py
+machine : Apple M5, macOS 26.6 (build 25G72), arm64
+state   : a working desktop, browser and editor open — not a quiesced
+          machine, which is the condition README.md says to distrust
+```
+
+What `scripts/pure_python.py` printed on the machine named above: btclib's
 Python arithmetic, `secp256k1lab`, `python-ecdsa`, `pycoin` and
 `buidl.pecc`, each doing the same operation. Microseconds per call, fastest
 row first, and a ratio against whichever row came out quickest — no row
@@ -20,17 +32,6 @@ publishes; ECDSA is not, RFC6979's nonce being btclib's own, so those rows
 stay checked against each other. btclib signs ECDSA twice, once per row: one
 signature, which is what the other implementations produce, and its own
 default beside it, which grinds until r fits in 32 bytes.
-
-## What produced it
-
-```text
-when    : 2026-08-14 22:10 CEST (20:10 UTC)
-python  : 3.13.14
-command : uv run python scripts/pure_python.py
-machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
-```
 
 ## The output
 
