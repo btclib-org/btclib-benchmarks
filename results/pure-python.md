@@ -107,10 +107,9 @@ and what the signature underneath it costs. Read alone, the grinding row
 would answer a question nobody asked it — it is not this signature made
 slower, it is more than one of them.
 
-`secp256k1lab` is a teaching implementation and reads like one — it is on
-no index at all, and it is here because BIP340 is where btclib has fewer
-pure-Python comparands than it has for ECDSA, not because anybody would
-choose it for speed.
+`secp256k1lab` is a teaching implementation, on no index at all, and it is
+here because BIP340 is where btclib has fewer pure-Python comparands than for
+ECDSA.
 
 What all of this costs against C is not in this table: that is
 [the two-paths table][two], over btclib's own arithmetic, and [the

@@ -4,73 +4,56 @@
 
 """Timings of every pure-Python implementation of the same operation.
 
-Every row here is Python arithmetic, and the question is which of them is
-quicker at it. Nothing in this table is C, so no row is a reference line
-and the ratio column is against whichever row came out fastest, as it is
-in the other three benchmarks. What Python costs against C is the question
-`scripts/btclib_two_paths.py` answers, over btclib's own two paths, and
-what `pip install <package>` gives is what `scripts/bitcoin_libraries.py`
-answers -- where the same package names appear and mean something else,
-pycoin being C there and Python here.
+Every row is Python arithmetic and the question is which is quicker at it, so
+no row is a reference line and the ratio is against whichever came out
+fastest. What Python costs against C is `scripts/btclib_two_paths.py`'s
+question; what `pip install <package>` gives is
+`scripts/bitcoin_libraries.py`'s, where the same package names mean something
+else -- pycoin is C there and Python here.
 
-## How each row is held to Python, and how that was checked
+## How each row is held to Python
+
+`report_setup` prints this per row, once, above the tables.
 
 - **btclib**: `curves.curve._libsecp256k1_available` is the switch every
-  dispatch reads, so clearing it turns the delegation off for every
-  module at once, which is what `python_arithmetic_only` below does and
-  says why nothing less than the switch will do.
-- **pycoin** decides at import: `pycoin.ecdsa.native.secp256k1` and
-  `.openssl` each read `PYCOIN_NATIVE` and return their no-op unless it
-  names them. `os.environ` is set at the top of this file, before the
-  import, because after it the decision is already made.
-- **buidl** is imported as `buidl.pecc`, its pure-Python module, rather
-  than through `buidl.ecc`, which prefers the compiled `buidl.cecc`
-  when a separate build step has produced one.
-- **python-ecdsa** and **secp256k1lab** have nothing to turn off: neither
-  ships or loads a native backend at all.
+  dispatch reads, so clearing it turns the delegation off everywhere at once.
+  `python_arithmetic_only` below says why nothing less will do.
+- **pycoin** decides at import, `pycoin.ecdsa.native.secp256k1` and
+  `.openssl` reading `PYCOIN_NATIVE`. This file sets it before the import,
+  after which the decision is made.
+- **buidl** is imported as `buidl.pecc` rather than through `buidl.ecc`,
+  which prefers the compiled `buidl.cecc` where a separate build step has
+  produced one.
+- **python-ecdsa** and **secp256k1lab** have nothing to turn off.
 
-`report_setup` prints what each row resolved to, because nothing here
-should claim a Python number without checking that it is one. It says it
-once, in a block above the tables: with every row Python, a row saying so
-is a column of the same word.
+## Two packages worth a note
 
-## secp256k1lab's marker
+`secp256k1lab` is on no index: `[tool.uv.sources]` takes it from its git tag.
+It declares >=3.11, which is why this project's floor is 3.11.
 
-It is on no index at all: `[tool.uv.sources]` takes it from its git tag.
-It declares >=3.11, which is this project's floor as well -- that is why
-the floor is what it is -- so this script imports it unguarded.
+**hwilib** would be a row -- `hwilib.key.point_mul` is a double-and-add over
+Python integers -- and `hwi` is not a dependency because of what it drags in:
+it caps `cbor2` at <5.8 and `protobuf` at <5.0.0, where the advisories
+against those are fixed in 5.9.0 and 5.29.6, so the row would cost standing
+security alerts for as long as those ceilings hold. It also declares
+`requires_python <3.13`, and `.python-version` is 3.13.
 
-## The row that is not here
+## The inputs
 
-**hwilib** would be one: `hwilib.key.point_mul` is a double-and-add over
-Python integers, with nothing to turn off, and it would be the slowest
-public key in the table. `hwi` is not a dependency here because of what it
-drags in: it caps `cbor2` at <5.8 and `protobuf` at <5.0.0, where the
-advisories against those two are fixed in 5.9.0 and 5.29.6, so the row
-costs three standing security alerts, two of them high, for as long as
-those ceilings hold. It is also a row nobody here would see: `hwi`
-declares `requires_python <3.13`, and `.python-version` is 3.13.
+Every BIP340 signing vector, cycled, `_vectors` reading the file and checking
+its digest. With each vector's aux_rand, BIP340 signing is deterministic, so
+both implementations that do it are held to the signatures the specification
+publishes. ECDSA has no such line -- RFC6979's nonce is btclib's own -- and
+stays cross-checked between implementations.
 
-## The inputs are a published test vector
+A published key is worth insisting on even where the timings do not turn on
+it: python-ecdsa returns the generator *object* as the public key of the
+private key 1, precomputed table and all, so a row verifying against that key
+verifies with a table no real key gets.
 
-The fixtures are BIP340 test vector 1, transcribed from btclib's vendored
-copy. What it buys is mostly the checks: with the vector's aux_rand, BIP340
-signing is deterministic, so both implementations that do it are held to
-the signature the specification publishes rather than to btclib's answer.
-ECDSA has no such line here, RFC6979's nonce being btclib's own, and stays
-cross-checked between implementations.
-
-A published key matters to one comparand more than to the rest, which is
-why it is worth insisting on even where the timings do not care:
-python-ecdsa returns the generator *object* for the public key of the
-private key 1, precomputed table and all, so a row verifying against that
-key verifies with a table no real key gets, at about half the cost of
-verification. A vector's key cannot do that to a row by accident.
-
-Not part of the test suite and not run by CI, as the other two are not:
-nothing here is a correctness check, though every row is checked before it
-is timed -- against btclib's answer, and against BIP340's where there is
-one.
+Not part of the test suite and not run by CI, as the others are not: nothing
+here is a correctness check, though every row is checked before it is timed --
+against btclib's answer, and against BIP340's where there is one.
 """
 
 from __future__ import annotations

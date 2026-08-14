@@ -2,141 +2,84 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""Timings of btclib, bindings enabled, against other Python bitcoin libraries.
+"""Timings of btclib as installed, against other Python bitcoin libraries.
 
-btclib, with the `btclib_secp256k1` bindings it depends on and cannot be
-installed without, is what `pip install btclib` gives an end user -- so
-this times exactly that path, never the pure-Python fallback of
-`curves/curve_group.py`, which `scripts/pure_python.py` covers instead.
+`pip install btclib` installs the `btclib_secp256k1` bindings with it, so
+this times that path and never the pure-Python fallback, which
+`scripts/pure_python.py` covers. Every comparand is timed at its own latest
+PyPI release, on operations it offers: nothing here is compared against a
+library that lacks the feature.
 
-Every comparand is timed at its own latest PyPI release, on operations it
-actually offers: signing a message is compared against a package that
-signs, deriving a BIP32 child against one that has BIP32, and nothing
-is compared against a package that lacks the feature.
+## What each row's arithmetic is
 
-## One library that is not a row
+`report_setup` prints it per row, because for two of them it is not a
+property of the package:
 
-`bit` installs on this interpreter and is still not here. Its declared
-dependency is `coincurve`, so its ECDSA is coincurve's libsecp256k1, and
-that build already has a row of its own in
-`scripts/libsecp256k1_wrappers.py`. What a `bit` row would add over that
-row is its wallet layer, not arithmetic, and a table comparing arithmetic
-would be reporting the layer as though it were the curve. It belongs here
-the day this benchmark grows a question about wallet APIs.
+- pycoin bundles no library and builds no extension. Its `native/secp256k1`
+  and `native/openssl` modules are ctypes loaders, so a PyPI install is pure
+  Python unless the machine has a library answering the name they probe for.
+  This row is C for two reasons that belong to the import list above:
+  `bitcoin.core.key` imports `ctypes.util`, which pycoin's loader needs and
+  does not import, and the name it then asks for resolves to nothing, so the
+  load falls through to the symbols `btclib_secp256k1`'s extension has put
+  in the process. Drop either import and the row is Python. Its loop count
+  follows the answer rather than being written once: `pycoin_calls` below.
+- buidl reaches C only if `libsec_build.py` was run against a system
+  library, which `pip install buidl` does not do, so `buidl.pecc` is what an
+  install gets.
+- embit bundles ElementsProject's `secp256k1-zkp`, prebuilt per platform,
+  not `bitcoin-core/secp256k1`. Its row is always C and never the same C as
+  the others.
+- python-bitcoinlib's `CECKey` uses OpenSSL's `EC_KEY`, and calls
+  libsecp256k1 only if a caller opts in, which nothing here does.
+- `ecdsa` has no compiled backend to fall back from.
 
-## What each comparand is actually running, and how that was checked
+None of this invalidates a row: it is what `pip install <package>` gives on
+this machine. It does mean pycoin's row is not comparable across import
+lists, which is why the backend it resolved to is in the output.
 
-A raw ctypes.util.find_library lookup answers "is a shared object
-findable on this machine", and that answer moves with what happens to be
-installed system-wide -- so two of the rows below are not always timing
-what they seem to:
+## `bit` is not a row
 
-- pycoin optimizes its pure-Python arithmetic with libsecp256k1 or
-  OpenSSL through ctypes *if* either is importable at runtime
-  (`pycoin.ecdsa.native.secp256k1.libsecp256k1`,
-  `pycoin.ecdsa.native.openssl` through the same mechanism); with
-  neither found it falls back to the plain-Python `Generator` class.
-  `_pycoin_backend()` below reports which one actually ran, because
-  nothing here should claim a Python number without checking that it is
-  one. It reports libsecp256k1 here, which is *not* what a PyPI install
-  gives: pycoin bundles no library and builds no extension, so a machine
-  with nothing for its ctypes probe to find leaves it pure Python. Two
-  conditions make this row C, and both are properties of the import list
-  above rather than of pycoin.
-  pycoin's loader calls `ctypes.util.find_library` having imported only
-  `ctypes`, so unless something else imported `ctypes.util` first the
-  attribute lookup raises and its own `except AttributeError` reports
-  that as no library found; `bitcoin.core.key` imports it. And the name
-  it then asks for, `libsecp256k1`, resolves to nothing, so the load
-  falls through to the process's own symbols -- which
-  `btclib_secp256k1`'s extension has already put there. So this row is
-  C, and the build it calls is the one btclib's row calls: drop either
-  import and the same row is Python again. Its loop count follows that
-  answer rather than being written once, `pycoin_calls` below saying why.
-- python-bitcoinlib's `CECKey` defaults to OpenSSL's `EC_KEY` (loaded the
-  same way, `ctypes.util.find_library`) and only calls libsecp256k1 if a
-  caller opts in with `use_libsecp256k1_for_signing` -- not done here, so
-  this row is OpenSSL's C and not Python either way, and stays that on
-  every machine that has OpenSSL, which is to say every machine this
-  installs on.
-- embit probes nothing: `embit/util/prebuilt/` ships a prebuilt library per
-  platform and `embit.ec` loads the one matching `platform.machine()`
-  through ctypes. This row is always C, and the
-  library is not the one the other rows call -- embit bundles
-  ElementsProject's `secp256k1-zkp`, not `bitcoin-core/secp256k1`, which
-  matters in a table whose other C rows are the latter.
-- buidl reaches C only if somebody built it. `buidl.cecc` is cffi bindings
-  compiled by `libsec_build.py` against a system library, a step
-  `pip install buidl` does not run, so the fallback `buidl.pecc` is what a
-  PyPI install gets. `ecdsa` has nothing to fall back from: no bundled
-  library, no built extension, pure Python unconditionally.
-
-None of this makes a row invalid -- it is what `pip install <package>`
-actually gives a user on this machine, which is the same question this
-whole script asks of btclib. It does mean a pycoin row is not always
-comparable across two runs of this script -- on two machines, or on two
-import lists -- which is why the backend it picked is part of the output
-rather than a footnote.
+It installs, and its ECDSA is coincurve's libsecp256k1, which has a row of
+its own in `scripts/libsecp256k1_wrappers.py`. A `bit` row would add its
+wallet layer, not arithmetic.
 
 ## What is measured
 
-Curve operations on secp256k1, over published test vectors: BIP340's first,
-whose key and 32-byte message the ECDSA rows take as well, and BIP32's
-first, whose seed the derivation rows take. Then the address encodings,
-over BIP173's and BIP350's own vectors, which are not curve work at all and
-are here because every one of these libraries does them and a caller cannot
-avoid them.
+Every input is a published vector, cycled: `_vectors` reads BIP340's file
+and BIP32's, and each row takes the next per call. The address rows are the
+exception and say so where they are defined.
 
-- ECDSA sign and verify, over the vector's 32 bytes read as a digest --
-  every comparand that exposes ECDSA takes a digest directly rather than a
-  message, so none of them hash it a second time.
+- ECDSA sign and verify, over each vector's 32 bytes read as a digest. Every
+  comparand takes a digest directly, so none of them hashes it again.
 
-  Two of the six grind for a low-r signature by default, btclib and embit,
-  which means their default is not one signature but as many as it takes
-  to find one whose r fits in 32 bytes. Both therefore have two rows: a
-  `grind=False` row, which is one signature and is what the other four
-  produce, and a row of the default beside it. A grinding row is not a
-  per-signature number and does not pretend to be one -- for a fixed key
-  and message it is a fixed multiple of the row above it, and which multiple
-  is a property of the pair rather than of either library. A key whose first
-  attempt lands low makes grinding look like ordinary overhead; this one does
-  not, which is why the default gets a row of its own.
-- BIP340 (Schnorr) sign and verify, over the vector's message and
-  aux_rand -- BIP340 does not hash its message internally, so this is the
-  value every implementation signs and checks, byte for byte, and it
-  doubles as libsecp256k1's own fixed-size entry point, which is what
-  keeps btclib's row on the bindings path (`ecc.ssa.sign_`'s dispatch is
-  exactly this size or the arbitrary-size Python fallback, and this
-  script wants the former). Signing over the vector's aux_rand rather than
-  a random one is what makes both signing rows reproducible, and therefore
-  checkable against BIP340 itself.
-- one BIP32 derivation, `m/0h/1` from the vector's seed -- a hardened step
-  and a normal one, which is what every comparand's own derivation
-  function takes a path string or a chain of `child`/`subkey` calls for.
-  All four implementations were checked against each other *and* against
-  the public key BIP32 publishes for that path before any of this was
-  timed.
+  btclib and embit grind for a low-r signature by default -- they sign until
+  r fits in 32 bytes -- so each has two rows: a `grind=False` row, which is
+  the one signature the other four produce, and its default beside it. A
+  grinding row is a multiple of the row above it, and the multiple is a
+  property of the key and message rather than of the library.
+- BIP340 sign and verify, over each vector's message and aux_rand. BIP340
+  does not hash its message, so this is the value every implementation signs
+  byte for byte, and it is libsecp256k1's fixed-size entry point, which is
+  what keeps btclib's row on the bindings path. The vector's aux_rand makes
+  both signing rows reproducible, and therefore checkable against BIP340.
+- BIP32 derivation, every chain the vector file publishes, checked against
+  the public key it publishes for that path.
+- base58check, bech32 and bech32m, encoding and decoding. Pure Python in
+  every library here, so these rows say nothing about bindings and
+  everything about the code -- and they hold the one wrong answer in this
+  benchmark: `python-bitcoinlib` encodes a witness-v1 program with bech32's
+  checksum constant where BIP350 requires bech32m's, and rejects the address
+  BIP350 publishes. It has no bech32m row, and the script asserts both
+  halves of why.
 
-- base58check, bech32 and bech32m, encoding and decoding, over BIP173's
-  witness-v0 vector and BIP350's witness-v1 one. Pure Python in every
-  library here, so these rows say nothing about bindings and everything
-  about the code: they are where the libraries differ most, and where the
-  only wrong answer in this benchmark lives -- `python-bitcoinlib` encodes a
-  witness-v1 program with bech32's checksum constant where BIP350 requires
-  bech32m's, and rejects the address BIP350 publishes, so it has no
-  bech32m row and the script asserts both halves of why.
+python-ecdsa carries only ECDSA and python-bitcoinlib carries neither BIP340
+nor BIP32, so neither has a row in those tables. pycoin's `ecdsa.Generator`
+has no derivation function either, which is why its BIP32 row goes through
+`pycoin.symbols.btc.network`.
 
-python-ecdsa carries none of these operations beyond ECDSA, and
-python-bitcoinlib carries neither BIP340 nor BIP32, so neither has a row in
-those tables; pycoin's own `ecdsa.Generator` is
-a bare elliptic-curve object with no seed-derivation function either,
-which is why its BIP32 row goes through `pycoin.symbols.btc.network`
-instead, the layer above that actually has one. Nothing here compares a
-feature against a library that lacks it.
-
-Not part of the test suite and not run by CI: measuring is done by a
-person on a machine whose state they know, and a shared runner disagrees
-with a laptop by more than most of the differences here.
+Not part of the test suite and not run by CI: a shared runner disagrees with
+a laptop by more than most of the differences here.
 """
 
 from __future__ import annotations

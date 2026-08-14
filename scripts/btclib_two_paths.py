@@ -5,100 +5,66 @@
 """Timings of btclib against btclib: its two arithmetics, side by side.
 
 Not btclib against btclib_secp256k1. Both rows of every pair are btclib,
-called the same way through the same public function, and what differs
-underneath is which arithmetic answers: the libsecp256k1 that
-btclib_secp256k1 bundles and compiles into a cffi extension, or the Python
-of `curves/curve_group.py`. `pip install btclib` installs both, the bindings
-being a dependency btclib cannot be installed without, so neither row is a
-package a reader would choose between -- they are one package's two answers,
-and the ratio is what the second costs when the first declines.
+called through the same public function; what differs underneath is which
+arithmetic answers -- the libsecp256k1 that btclib_secp256k1 bundles and
+compiles into a cffi extension, or the Python of `curves/curve_group.py`.
+`pip install btclib` installs both, so neither row is a package a reader
+chooses between, and the ratio is what the second costs when the first
+declines.
 
-It declines for every curve that is not secp256k1, for a zero scalar, for
-the point at infinity, and for everything else outside what libsecp256k1's
-entry points take. This times both answers through every operation that has
-them.
+It declines for every curve that is not secp256k1, for a zero scalar, for the
+point at infinity, and for anything outside what libsecp256k1's entry points
+take.
 
-Which operations those are is not a judgement call: `_libsecp256k1_serves`
-is the predicate every dispatch site asks, and the modules holding one are
-`curves/sec_point.py`, `curves/curve.py`, `ecc/dsa.py`, `ecc/ssa.py`,
-`ecc/dh.py`, `ecc/bms.py`, `ecc/ellswift.py`, `ecc/commit_nonce.py`,
-`ecc/pedersen.py` and `script/taproot.py`. The rows below cover the ones
-reachable through a public function a caller would call, one row each.
-`commit_nonce` and `pedersen` have no row: anti-exfil signing and Pedersen
-commitments are protocol machinery rather than operations an application
-performs, and a table has to end somewhere.
+Which operations have two arithmetics is not a judgement call:
+`_libsecp256k1_serves` is the predicate every dispatch site asks, and the
+modules holding one are `curves/sec_point.py`, `curves/curve.py`,
+`ecc/dsa.py`, `ecc/ssa.py`, `ecc/dh.py`, `ecc/bms.py`, `ecc/ellswift.py`,
+`ecc/commit_nonce.py`, `ecc/pedersen.py` and `script/taproot.py`. The rows
+below are the ones reachable through a public function. `commit_nonce` and
+`pedersen` have none: anti-exfil signing and Pedersen commitments are
+protocol machinery rather than operations an application performs.
 
-## BIP32 derivation was a row here and cannot be one
+## Why BIP32 derivation is not a row
 
-It looked like the obvious addition -- an operation an application really
-performs, reaching libsecp256k1 through `curves.sec_point` without asking for
-a dispatch of its own. Its pair came out far narrower than every other, which
-is what a row measuring something other than what it claims looks like.
-
-btclib's BIP32 does not have two paths. `_prv_key_derivation` calls
+btclib's BIP32 has one arithmetic. `_prv_key_derivation` calls
 `btclib_secp256k1.keys.prvkey_tweak_add` and `_pub_key_offsets` builds a
-`PubkeyTweakChain`, neither of them gated on the dispatch, and btclib says
-why beside the call: BIP32 is defined for secp256k1 and for nothing else,
-so there is no other curve for a fallback to serve. Turning the switch off
-therefore leaves the derivation itself in C and moves only the public key
-`to_pub_key` derives for the fingerprint -- one multiplication out of a
-whole derivation, which is the five-fold difference that was showing.
+`PubkeyTweakChain`, neither gated on the dispatch, and btclib gives the
+reason beside the call: BIP32 is defined for secp256k1 and nothing else, so
+no other curve needs a fallback. Throwing the switch leaves the derivation in
+C and moves only the public key derived for the fingerprint, so a pair of
+rows would compare C against C with a Python step added. Its pair was far
+narrower than every other, which is how that showed.
 
-So the row is gone rather than annotated: this table is about operations
-that have two paths, and that is a property to prove rather than assume.
+That a row belongs here is therefore a property to prove.
 `tests/pure_python_path_test.py` blocks every bindings entry point and
-asserts that each operation below still answers, which is what catches the
-next `bip32_derive` on the day it is added rather than four runs later.
-BIP32 derivation is still timed in `scripts/bitcoin_libraries.py`, against
-three other libraries, where being C is the premise rather than the
-question.
+asserts each operation still answers. BIP32 derivation is timed in
+`scripts/bitcoin_libraries.py`, where being C is the premise.
 
-The point is not a number to quote: the two paths answer the same
-equations, one in C and one in Python, and what this shows is an order of
-magnitude. Nothing here repeats a measurement or discards an outlier.
+## One function per operation, timed twice
 
-## Both halves of every pair are one function, timed twice
+`python_arithmetic_only` is process-wide, so which arithmetic a call reaches
+is a property of when it runs rather than of which function was called. The
+table's two labels are made from the operation's name, `_libsecp256k1` and
+`_pure_python`: every row here is btclib, and every row here is invoked from
+Python.
 
-There is no `mult_libsecp256k1` beside a `mult_python` with the same body
-any more. `python_arithmetic_only` is process-wide, so which path a call takes
-is a property of *when* it runs, not of which function was called: one
-function per operation, timed before the switch and again after, is what
-that actually is. The two labels the table prints are made from the
-operation's name -- `_libsecp256k1` and `_pure_python`, which name the two
-arithmetics rather than a package and a language: every row here is
-Python-invoked, and every row here is btclib.
+## The inputs
 
-## The inputs are published test vectors, not values chosen here
+Every BIP340 signing vector, cycled, `_vectors` reading the file and checking
+its digest. The public keys and BIP340 signatures are checked against what
+the specification publishes; ECDSA's nonce is btclib's own RFC6979, so those
+fixtures are cross-checked between the arithmetics instead.
 
-The fixture is BIP340 test vector 1, read from btclib's own vendored copy
-(`tests/ecc/_data/bip340_test_vectors.csv`, whose `tests/_data/README.md`
-pins it to a commit of bitcoin/bips and compares the bytes). The values are
-transcribed rather than the file copied: this script times one input per
-row, and vendoring sixty CSV rows to use one of them would be a file
-nobody reads.
+The timings would not move for an arbitrary key -- three valid keys measure
+the same to within the noise of the machine -- but the assertions would, and
+one key would have flattered a row: the public key of 1 is the generator, and
+a pure-Python implementation handed it derives one ladder step rather than a
+full-width scalar's worth.
 
-That buys the assertions, not the timings. Timings first: a key is a key,
-and three different valid keys through the bindings measure the same to
-within the noise of the machine -- so no number here would move if the
-fixture went back to being arbitrary. What moves is what a failure can
-catch. The public key and the BIP340 signature below are checked against
-what the specification publishes, so btclib agreeing with itself is no
-longer the whole of the check; and the one fixture that cannot come from a
-vector, ECDSA's nonce being btclib's own RFC6979, is still cross-checked
-between the paths.
-
-A vector is worth insisting on even where the timings do not care, and the
-private key 1 is why. Its public key is the generator: a pure-Python
-implementation handed that key derives it in one ladder step rather than a
-full-width scalar's worth, and python-ecdsa hands back the generator object
-itself, precomputed table and all. A key nobody chose cannot flatter a row
-that way.
-
-Not part of the test suite and not run by CI: nothing here is a
-correctness check of btclib, and `tests/script_engine/python_path_test.py`
-in btclib already is one, over the vendored consensus vectors. No
-third-party dependency either -- btclib_secp256k1 is already a dependency
-of btclib itself.
+Not part of the test suite and not run by CI: nothing here is a correctness
+check of btclib, and `tests/script_engine/python_path_test.py` in btclib
+already is one. No third-party dependency either.
 """
 
 from __future__ import annotations
