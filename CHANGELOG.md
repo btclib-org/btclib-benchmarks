@@ -104,6 +104,13 @@ The release notes, which say what a user has to act on, are in
   does not move -- 10.3x against 10.4x, measured, at around eight attempts
   for this vector -- and the rows would restate the pair above them.
 
+- **The unit is μs, not us.** Four tables printing `us/call` were four
+  tables asking a reader to know that `u` was standing in for a character
+  the terminal has had for decades. U+03BC and not U+00B5, which is the
+  micro sign and would be the obvious pick: ruff calls it ambiguous against
+  the Greek letter, NFKC maps one to the other, and this project holds ruff
+  to zero findings.
+
 - **The interpreter is not in a script's output.** It belongs to the run
   rather than to the packages, as the machine and the time do, and no script
   can state those either -- so `results/` names all three in the block above

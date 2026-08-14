@@ -378,7 +378,7 @@ def table(title: str, rows: tuple[tuple[str, Callable[[], None], int], ...]) -> 
     print(f"\n{title}")
     print(f"  {'':24s} {'':10s}      {'vs best':>8s}")
     for label, value in sorted(us.items(), key=lambda row: row[1]):
-        print(f"  {label:24s} {value:10.2f} us   {value / against:8.1f}x")
+        print(f"  {label:24s} {value:10.2f} μs   {value / against:8.1f}x")
 
 
 # the fixtures the third-party rows sign and verify, built once and

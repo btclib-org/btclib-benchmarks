@@ -895,7 +895,7 @@ def table(
     us = {func.__name__: (benchmark(func, calls), calls) for func, calls in rows}
     against = min(value for value, _ in us.values())
     print(title)
-    print(f"  {'':<26}{'us/call':>10}{'vs best':>12}")
+    print(f"  {'':<26}{'μs/call':>10}{'vs best':>12}")
     for name, (value, calls) in sorted(us.items(), key=lambda row: row[1][0]):
         print(f"  {name:<26}{value:10.2f}{value / against:11.1f}x   ({calls} calls)")
 

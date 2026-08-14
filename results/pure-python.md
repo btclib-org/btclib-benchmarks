@@ -24,7 +24,7 @@ default beside it, which grinds until r fits in 32 bytes.
 ## What produced it
 
 ```text
-when    : 2026-08-14 17:44 CEST (15:44 UTC)
+when    : 2026-08-14 18:24 CEST (16:24 UTC)
 python  : 3.13.14
 command : uv run python scripts/pure_python.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -51,38 +51,38 @@ every row is pure Python arithmetic, held to it by
 
 public key from a private key: a multiplication of the generator
                                             vs best
-  btclib                       190.41 us        1.0x
-  python-ecdsa                 287.66 us        1.5x
-  secp256k1lab                1331.85 us        7.0x
-  pycoin                      5904.86 us       31.0x
-  buidl.pecc                 30085.90 us      158.0x
+  btclib                       190.26 μs        1.0x
+  python-ecdsa                 288.08 μs        1.5x
+  secp256k1lab                1335.56 μs        7.0x
+  pycoin                      6021.60 μs       31.6x
+  buidl.pecc                 30309.05 μs      159.3x
 
 ECDSA sign, over a 32-byte digest
                                             vs best
-  btclib                       181.13 us        1.0x
-  python-ecdsa                 301.43 us        1.7x
-  btclib, grinding low-r      1417.93 us        7.8x
-  pycoin                      5939.10 us       32.8x
-  buidl.pecc                 30020.24 us      165.7x
+  btclib                       175.07 μs        1.0x
+  python-ecdsa                 301.72 μs        1.7x
+  btclib, grinding low-r      1405.69 μs        8.0x
+  pycoin                      6234.26 μs       35.6x
+  buidl.pecc                 30230.80 μs      172.7x
 
 ECDSA verify, over a 32-byte digest
                                             vs best
-  btclib                       756.48 us        1.0x
-  python-ecdsa                1065.46 us        1.4x
-  pycoin                     18834.65 us       24.9x
-  buidl.pecc                 61615.40 us       81.4x
+  btclib                       762.87 μs        1.0x
+  python-ecdsa                1077.19 μs        1.4x
+  pycoin                     19419.05 μs       25.5x
+  buidl.pecc                 61476.25 μs       80.6x
 
 BIP340 sign, over a 32-byte message
                                             vs best
-  btclib                       314.76 us        1.0x
-  secp256k1lab                7824.44 us       24.9x
-  buidl.pecc                 90763.83 us      288.4x
+  btclib                       312.64 μs        1.0x
+  secp256k1lab                7904.38 μs       25.3x
+  buidl.pecc                 91106.36 μs      291.4x
 
 BIP340 verify, over a 32-byte message
                                             vs best
-  btclib                       703.40 us        1.0x
-  secp256k1lab                5146.17 us        7.3x
-  buidl.pecc                 60693.27 us       86.3x
+  btclib                       708.76 μs        1.0x
+  secp256k1lab                5201.97 μs        7.3x
+  buidl.pecc                 60881.41 μs       85.9x
 ```
 
 ## What it shows

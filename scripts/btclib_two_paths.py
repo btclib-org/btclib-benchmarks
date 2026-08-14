@@ -383,7 +383,7 @@ def main() -> None:
         ((name, value, value / against[name]) for name, value in seconds.items()),
         key=lambda row: (row[2], row[1]),
     )
-    print(f"{'':<28} {'us/call':>10}{'vs best':>14}")
+    print(f"{'':<28} {'μs/call':>10}{'vs best':>14}")
     for name, value, ratio in rows:
         print(f"{name:<28} {value:#10.5g}{ratio:13.1f}x")
 

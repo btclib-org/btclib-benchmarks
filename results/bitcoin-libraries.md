@@ -23,7 +23,7 @@ of this was timed, not merely against btclib's answer.
 ## What produced it
 
 ```text
-when    : 2026-08-14 17:58 CEST (15:58 UTC)
+when    : 2026-08-14 18:24 CEST (16:24 UTC)
 python  : 3.13.14
 command : uv run python scripts/bitcoin_libraries.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -50,85 +50,85 @@ arithmetic under each row
   python-bitcoinlib   OpenSSL's libcrypto, through ctypes bindings, no libsecp256k1 of its own to opt into
 
 ECDSA sign (32-byte digest, secp256k1)
-                               us/call     vs best
-  dsa_sign_pycoin                12.38        1.0x   (50000 calls)
-  dsa_sign_embit                 14.16        1.1x   (50000 calls)
-  dsa_sign_btclib                17.25        1.4x   (50000 calls)
-  dsa_sign_embit_grind          120.08        9.7x   (20000 calls)
-  dsa_sign_btclib_grind         136.91       11.1x   (20000 calls)
-  dsa_sign_bitcoinlib           193.61       15.6x   (8000 calls)
-  dsa_sign_ecdsa                302.32       24.4x   (5000 calls)
-  dsa_sign_buidl              30228.32     2440.9x   (50 calls)
+                               μs/call     vs best
+  dsa_sign_pycoin                12.40        1.0x   (50000 calls)
+  dsa_sign_embit                 14.59        1.2x   (50000 calls)
+  dsa_sign_btclib                17.64        1.4x   (50000 calls)
+  dsa_sign_embit_grind          123.34        9.9x   (20000 calls)
+  dsa_sign_btclib_grind         135.84       11.0x   (20000 calls)
+  dsa_sign_bitcoinlib           199.89       16.1x   (8000 calls)
+  dsa_sign_ecdsa                300.45       24.2x   (5000 calls)
+  dsa_sign_buidl              30659.31     2472.1x   (50 calls)
 
 ECDSA verify (32-byte digest, secp256k1)
-                               us/call     vs best
-  dsa_verify_pycoin              14.62        1.0x   (50000 calls)
-  dsa_verify_btclib              22.85        1.6x   (50000 calls)
-  dsa_verify_embit               23.06        1.6x   (50000 calls)
-  dsa_verify_bitcoinlib         218.99       15.0x   (7000 calls)
-  dsa_verify_ecdsa             1060.10       72.5x   (3000 calls)
-  dsa_verify_buidl            61375.41     4198.1x   (25 calls)
+                               μs/call     vs best
+  dsa_verify_pycoin              13.03        1.0x   (50000 calls)
+  dsa_verify_embit               22.80        1.7x   (50000 calls)
+  dsa_verify_btclib              23.36        1.8x   (50000 calls)
+  dsa_verify_bitcoinlib         217.45       16.7x   (7000 calls)
+  dsa_verify_ecdsa             1073.84       82.4x   (3000 calls)
+  dsa_verify_buidl            61727.06     4735.5x   (25 calls)
 
 BIP340 sign (32-byte message)
-                               us/call     vs best
-  ssa_sign_btclib                20.13        1.0x   (50000 calls)
-  ssa_sign_embit                 21.24        1.1x   (50000 calls)
-  ssa_sign_buidl              90582.43     4500.3x   (20 calls)
+                               μs/call     vs best
+  ssa_sign_btclib                20.10        1.0x   (50000 calls)
+  ssa_sign_embit                 21.32        1.1x   (50000 calls)
+  ssa_sign_buidl              91447.69     4549.1x   (20 calls)
 
 BIP340 verify (32-byte message)
-                               us/call     vs best
-  ssa_verify_btclib              23.07        1.0x   (50000 calls)
-  ssa_verify_embit               23.49        1.0x   (50000 calls)
-  ssa_verify_buidl            60599.48     2626.3x   (25 calls)
+                               μs/call     vs best
+  ssa_verify_btclib              23.22        1.0x   (50000 calls)
+  ssa_verify_embit               23.79        1.0x   (50000 calls)
+  ssa_verify_buidl            61237.90     2637.1x   (25 calls)
 
 base58check encode, a P2PKH address from a hash160
-                               us/call     vs best
-  base58_encode_embit             2.16        1.0x   (200000 calls)
-  base58_encode_buidl             2.23        1.0x   (200000 calls)
-  base58_encode_btclib            2.45        1.1x   (200000 calls)
-  base58_encode_bitcoinlib        2.55        1.2x   (100000 calls)
-  base58_encode_pycoin            3.68        1.7x   (200000 calls)
+                               μs/call     vs best
+  base58_encode_embit             2.18        1.0x   (200000 calls)
+  base58_encode_buidl             2.30        1.1x   (200000 calls)
+  base58_encode_btclib            2.43        1.1x   (200000 calls)
+  base58_encode_bitcoinlib        2.56        1.2x   (100000 calls)
+  base58_encode_pycoin            3.65        1.7x   (200000 calls)
 
 base58check decode, a hash160 from a P2PKH address
-                               us/call     vs best
-  base58_decode_embit             2.26        1.0x   (200000 calls)
-  base58_decode_btclib            2.49        1.1x   (200000 calls)
-  base58_decode_buidl             2.92        1.3x   (200000 calls)
-  base58_decode_pycoin            3.68        1.6x   (200000 calls)
-  base58_decode_bitcoinlib        4.01        1.8x   (100000 calls)
+                               μs/call     vs best
+  base58_decode_btclib            2.53        1.0x   (200000 calls)
+  base58_decode_embit             2.71        1.1x   (200000 calls)
+  base58_decode_buidl             3.13        1.2x   (200000 calls)
+  base58_decode_pycoin            3.83        1.5x   (200000 calls)
+  base58_decode_bitcoinlib        4.43        1.8x   (100000 calls)
 
 bech32 encode, a witness-v0 address from a 20-byte program
-                               us/call     vs best
-  bech32_encode_btclib            8.18        1.0x   (200000 calls)
-  bech32_encode_buidl            11.48        1.4x   (100000 calls)
-  bech32_encode_bitcoinlib       26.58        3.2x   (200000 calls)
-  bech32_encode_embit            26.91        3.3x   (200000 calls)
+                               μs/call     vs best
+  bech32_encode_btclib            8.05        1.0x   (200000 calls)
+  bech32_encode_buidl            11.42        1.4x   (100000 calls)
+  bech32_encode_bitcoinlib       27.06        3.4x   (200000 calls)
+  bech32_encode_embit            27.10        3.4x   (200000 calls)
 
 bech32 decode, a 20-byte program from a witness-v0 address
-                               us/call     vs best
-  bech32_decode_btclib            7.07        1.0x   (200000 calls)
-  bech32_decode_buidl            10.31        1.5x   (100000 calls)
-  bech32_decode_bitcoinlib       14.46        2.0x   (200000 calls)
-  bech32_decode_embit            14.64        2.1x   (200000 calls)
+                               μs/call     vs best
+  bech32_decode_btclib            7.04        1.0x   (200000 calls)
+  bech32_decode_buidl            10.26        1.5x   (100000 calls)
+  bech32_decode_embit            14.58        2.1x   (200000 calls)
+  bech32_decode_bitcoinlib       14.66        2.1x   (200000 calls)
 
 bech32m encode, a witness-v1 address from a 32-byte program
-                               us/call     vs best
-  bech32m_encode_btclib          13.47        1.0x   (200000 calls)
-  bech32m_encode_buidl           16.86        1.3x   (100000 calls)
-  bech32m_encode_embit           40.04        3.0x   (200000 calls)
+                               μs/call     vs best
+  bech32m_encode_btclib          13.33        1.0x   (200000 calls)
+  bech32m_encode_buidl           16.99        1.3x   (100000 calls)
+  bech32m_encode_embit           39.71        3.0x   (200000 calls)
 
 bech32m decode, a 32-byte program from a witness-v1 address
-                               us/call     vs best
-  bech32m_decode_btclib          11.53        1.0x   (200000 calls)
-  bech32m_decode_buidl           15.92        1.4x   (100000 calls)
-  bech32m_decode_embit           21.67        1.9x   (200000 calls)
+                               μs/call     vs best
+  bech32m_decode_btclib          11.56        1.0x   (200000 calls)
+  bech32m_decode_buidl           15.22        1.3x   (100000 calls)
+  bech32m_decode_embit           21.75        1.9x   (200000 calls)
 
 BIP32 derive, seed to m/0h/1 (16-byte seed)
-                               us/call     vs best
-  bip32_derive_pycoin            39.35        1.0x   (30000 calls)
-  bip32_derive_btclib            58.14        1.5x   (30000 calls)
-  bip32_derive_embit             71.57        1.8x   (15000 calls)
-  bip32_derive_buidl          89603.53     2276.9x   (12 calls)
+                               μs/call     vs best
+  bip32_derive_pycoin            39.77        1.0x   (30000 calls)
+  bip32_derive_btclib            58.89        1.5x   (30000 calls)
+  bip32_derive_embit             71.99        1.8x   (15000 calls)
+  bip32_derive_buidl          89539.27     2251.2x   (12 calls)
 ```
 
 ## What it shows

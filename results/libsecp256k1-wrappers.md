@@ -26,7 +26,7 @@ table][pure] and to [the libraries table][libs], never to this one.
 ## What produced it
 
 ```text
-when    : 2026-08-14 17:45 CEST (15:45 UTC)
+when    : 2026-08-14 18:24 CEST (16:24 UTC)
 python  : 3.13.14
 command : uv run python scripts/libsecp256k1_wrappers.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -49,40 +49,40 @@ libsecp256k1 under each row
   electrum-ecc      0.0.7     v0.7.1                  ctypes bindings, libsecp256k1.6.dylib
 
 ECDSA verify (32-byte digest, the public key parsed per call)
-                                   us/call     vs best
-  dsa_btclib_secp256k1               14.21       1.00x   (100000 calls)
-  dsa_coincurve                      14.33       1.01x   (100000 calls)
-  dsa_secp256k1                      14.78       1.04x   (100000 calls)
-  dsa_electrum_ecc                   16.69       1.18x   (100000 calls)
+                                   μs/call     vs best
+  dsa_coincurve                      14.36       1.00x   (100000 calls)
+  dsa_btclib_secp256k1               14.51       1.01x   (100000 calls)
+  dsa_secp256k1                      14.89       1.04x   (100000 calls)
+  dsa_electrum_ecc                   16.22       1.13x   (100000 calls)
 
 BIP340 verify (32-byte message, the public key parsed per call)
-                                   us/call     vs best
-  ssa_btclib_secp256k1               14.67       1.00x   (100000 calls)
-  ssa_coincurve                      14.75       1.01x   (100000 calls)
-  ssa_secp256k1                      15.23       1.04x   (100000 calls)
-  ssa_electrum_ecc                   18.54       1.26x   (100000 calls)
+                                   μs/call     vs best
+  ssa_btclib_secp256k1               14.81       1.00x   (100000 calls)
+  ssa_coincurve                      14.86       1.00x   (100000 calls)
+  ssa_secp256k1                      15.27       1.03x   (100000 calls)
+  ssa_electrum_ecc                   18.71       1.26x   (100000 calls)
 
 ECDSA sign (32-byte digest)
-                                   us/call     vs best
-  dsa_sign_secp256k1                 11.33       1.00x   (100000 calls)
-  dsa_sign_coincurve                 11.84       1.05x   (100000 calls)
-  dsa_sign_btclib_secp256k1          12.05       1.06x   (100000 calls)
-  dsa_sign_electrum_ecc              27.37       2.42x   (100000 calls)
-  dsa_sign_electrum_ecc_grind       115.89      10.23x   (100000 calls)
+                                   μs/call     vs best
+  dsa_sign_secp256k1                 11.59       1.00x   (100000 calls)
+  dsa_sign_coincurve                 11.91       1.03x   (100000 calls)
+  dsa_sign_btclib_secp256k1          12.13       1.05x   (100000 calls)
+  dsa_sign_electrum_ecc              28.49       2.46x   (100000 calls)
+  dsa_sign_electrum_ecc_grind       117.47      10.14x   (100000 calls)
 
 BIP340 sign (32-byte message)
-                                   us/call     vs best
-  ssa_sign_secp256k1                  7.75       1.00x   (100000 calls)
-  ssa_sign_btclib_secp256k1          15.88       2.05x   (100000 calls)
-  ssa_sign_coincurve                 27.37       3.53x   (100000 calls)
-  ssa_sign_electrum_ecc              31.32       4.04x   (100000 calls)
+                                   μs/call     vs best
+  ssa_sign_secp256k1                  7.81       1.00x   (100000 calls)
+  ssa_sign_btclib_secp256k1          15.97       2.04x   (100000 calls)
+  ssa_sign_coincurve                 27.60       3.53x   (100000 calls)
+  ssa_sign_electrum_ecc              31.55       4.04x   (100000 calls)
 
 public key tweak by a scalar, which is BIP32's step
-                                   us/call     vs best
-  tweak_coincurve                    11.84       1.00x   (100000 calls)
-  tweak_btclib_secp256k1             11.94       1.01x   (100000 calls)
-  tweak_secp256k1                    15.29       1.29x   (100000 calls)
-  tweak_electrum_ecc                 23.98       2.02x   (100000 calls)
+                                   μs/call     vs best
+  tweak_coincurve                    11.91       1.00x   (100000 calls)
+  tweak_btclib_secp256k1             12.05       1.01x   (100000 calls)
+  tweak_secp256k1                    15.42       1.29x   (100000 calls)
+  tweak_electrum_ecc                 24.13       2.03x   (100000 calls)
 ```
 
 ## What it shows

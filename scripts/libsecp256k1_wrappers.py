@@ -481,7 +481,7 @@ def table(title: str, rows: tuple[Callable[[], None], ...]) -> None:
     us = {func.__name__: benchmark(func, CALLS) for func in rows}
     against = min(us.values())
     print(title)
-    print(f"  {'':<30}{'us/call':>10}{'vs best':>12}")
+    print(f"  {'':<30}{'μs/call':>10}{'vs best':>12}")
     for name, value in sorted(us.items(), key=lambda row: row[1]):
         # two decimals on the ratio where the other scripts print one:
         # every row here calls the same C and they land within a few
