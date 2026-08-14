@@ -194,14 +194,20 @@ def test_a_distribution_with_no_metadata_at_all_is_named_not_installed(
     )
 
 
-def test_report_prints_one_line_per_package_and_the_interpreter(
+def test_report_prints_one_line_per_package_and_nothing_else(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The report is stdout, so that a paste carries it and the numbers."""
+    """The report is stdout, so that a paste carries it and the numbers.
+
+    One line per package and a blank one: the interpreter, the machine and
+    the time belong to the run rather than to the packages, and the block
+    above a published table is where all three are stated together.
+    """
     _provenance.report(("pytest", pytest.__file__))
     out = capsys.readouterr().out
     assert out.splitlines()[0].startswith("pytest")
-    assert "python              :" in out
+    assert out.splitlines()[1] == ""
+    assert "python" not in out
 
 
 def test_the_install_root_test_accepts_both_names_debian_uses(

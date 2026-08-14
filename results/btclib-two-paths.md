@@ -27,7 +27,7 @@ here first: an order of magnitude, never a figure to quote.
 ## What produced it
 
 ```text
-when    : 2026-08-14 17:32 CEST (15:32 UTC)
+when    : 2026-08-14 17:43 CEST (15:43 UTC)
 python  : 3.13.14
 command : uv run python scripts/btclib_two_paths.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -40,35 +40,34 @@ state   : a working desktop, browser and editor open — not a quiesced
 ```text
 btclib              : 2026.9
 btclib-secp256k1    : 0.8.0.1
-python              : 3.13.14
 
                                 us/call       vs best
-point_parse_bindings             3.6030          1.0x
-ellswift_decode_bindings         8.1861          1.0x
-mult_bindings                    8.2691          1.0x
-pubkey_bindings                  8.3911          1.0x
-dh_bindings                      15.671          1.0x
-taproot_tweak_bindings           17.194          1.0x
-dsa_sign_bindings                17.229          1.0x
-ssa_sign_bindings                20.159          1.0x
-dsa_verify_bindings              22.858          1.0x
-ssa_verify_bindings              23.097          1.0x
-bms_verify_bindings              26.910          1.0x
-bms_sign_bindings                28.268          1.0x
-dsa_recover_bindings             43.304          1.0x
-dsa_sign_pure_python             173.68         10.1x
-bms_sign_pure_python             356.43         12.6x
-ssa_sign_pure_python             310.99         15.4x
-ellswift_decode_pure_python      130.24         15.9x
-mult_pure_python                 141.31         17.1x
-taproot_tweak_pure_python        313.73         18.2x
-pubkey_pure_python               154.08         18.4x
-point_parse_pure_python          74.763         20.8x
-ssa_verify_pure_python           682.53         29.6x
-dsa_verify_pure_python           693.06         30.3x
-dh_pure_python                   553.04         35.3x
-bms_verify_pure_python           1359.0         50.5x
-dsa_recover_pure_python          2811.3         64.9x
+point_parse_bindings             3.4934          1.0x
+pubkey_bindings                  8.2504          1.0x
+mult_bindings                    8.2853          1.0x
+ellswift_decode_bindings         9.3068          1.0x
+dh_bindings                      15.753          1.0x
+taproot_tweak_bindings           17.274          1.0x
+dsa_sign_bindings                17.404          1.0x
+ssa_sign_bindings                20.756          1.0x
+dsa_verify_bindings              22.711          1.0x
+ssa_verify_bindings              23.001          1.0x
+bms_verify_bindings              23.834          1.0x
+bms_sign_bindings                31.071          1.0x
+dsa_recover_bindings             43.381          1.0x
+dsa_sign_pure_python             172.28          9.9x
+bms_sign_pure_python             345.23         11.1x
+ssa_sign_pure_python             304.65         14.7x
+ellswift_decode_pure_python      152.50         16.4x
+mult_pure_python                 140.90         17.0x
+taproot_tweak_pure_python        312.23         18.1x
+pubkey_pure_python               155.92         18.9x
+point_parse_pure_python          74.642         21.4x
+ssa_verify_pure_python           686.44         29.8x
+dsa_verify_pure_python           698.72         30.8x
+dh_pure_python                   560.55         35.6x
+bms_verify_pure_python           1350.0         56.6x
+dsa_recover_pure_python          2787.3         64.3x
 ```
 
 ## What it shows

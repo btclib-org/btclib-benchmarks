@@ -200,7 +200,10 @@ def report_setup() -> None:
     part a reader could doubt.
     """
     print("every row is pure Python arithmetic, held to it by")
-    print(f"  {'btclib':<20}its libsecp256k1 dispatch switched off")
+    print(
+        f"  {'btclib':<20}its delegation to btclib_secp256k1's cffi bindings "
+        "switched off"
+    )
     print(
         f"  {'pycoin':<20}PYCOIN_NATIVE=none before its import, resolving to "
         f"{_pycoin_backend()}"

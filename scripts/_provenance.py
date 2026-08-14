@@ -20,7 +20,6 @@ produced it.
 from __future__ import annotations
 
 import json
-import sys
 from importlib.metadata import PackageNotFoundError, version
 from importlib.metadata import distribution as _distribution
 from pathlib import Path
@@ -115,14 +114,18 @@ def describe(dist_name: str, module_file: str) -> str:
 
 
 def report(*packages: tuple[str, str]) -> None:
-    """Print a line per package, then the interpreter, then a blank line.
+    """Print a line per package, then a blank line.
 
     Written to stdout with the numbers rather than to stderr, because it
     is part of the result rather than commentary on it: pasting the whole
     of what the script printed has to be the easy path, and it only is if
     the two arrive together.
+
+    The interpreter is not among the lines. It belongs to the run rather
+    than to the packages -- as the machine and the time do, which no script
+    can state either -- and `results/` carries all three in one block above
+    the output. Printing it here put it twice in every published file.
     """
     for dist_name, module_file in packages:
         print(describe(dist_name, module_file))
-    print(f"{'python':<20}: {sys.version.split()[0]}")
     print()

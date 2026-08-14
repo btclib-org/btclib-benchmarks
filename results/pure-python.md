@@ -24,7 +24,7 @@ default beside it, which grinds until r fits in 32 bytes.
 ## What produced it
 
 ```text
-when    : 2026-08-14 17:33 CEST (15:33 UTC)
+when    : 2026-08-14 17:44 CEST (15:44 UTC)
 python  : 3.13.14
 command : uv run python scripts/pure_python.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -40,10 +40,9 @@ secp256k1lab        : 1.0.0
 ecdsa               : 0.19.2
 pycoin              : 0.92718.20260405
 buidl               : 0.2.36
-python              : 3.13.14
 
 every row is pure Python arithmetic, held to it by
-  btclib              its libsecp256k1 dispatch switched off
+  btclib              its delegation to btclib_secp256k1's cffi bindings switched off
   pycoin              PYCOIN_NATIVE=none before its import, resolving to pure Python
   buidl               being imported as buidl.pecc, not buidl.ecc
   ecdsa               having no compiled backend at all
@@ -52,38 +51,38 @@ every row is pure Python arithmetic, held to it by
 
 public key from a private key: a multiplication of the generator
                                             vs best
-  btclib                       193.50 us        1.0x
-  python-ecdsa                 286.12 us        1.5x
-  secp256k1lab                1338.30 us        6.9x
-  pycoin                      5941.30 us       30.7x
-  buidl.pecc                 30247.80 us      156.3x
+  btclib                       190.41 us        1.0x
+  python-ecdsa                 287.66 us        1.5x
+  secp256k1lab                1331.85 us        7.0x
+  pycoin                      5904.86 us       31.0x
+  buidl.pecc                 30085.90 us      158.0x
 
 ECDSA sign, over a 32-byte digest
                                             vs best
-  btclib                       179.69 us        1.0x
-  python-ecdsa                 301.75 us        1.7x
-  btclib, grinding low-r      1398.51 us        7.8x
-  pycoin                      6008.33 us       33.4x
-  buidl.pecc                 29994.61 us      166.9x
+  btclib                       181.13 us        1.0x
+  python-ecdsa                 301.43 us        1.7x
+  btclib, grinding low-r      1417.93 us        7.8x
+  pycoin                      5939.10 us       32.8x
+  buidl.pecc                 30020.24 us      165.7x
 
 ECDSA verify, over a 32-byte digest
                                             vs best
-  btclib                       759.57 us        1.0x
-  python-ecdsa                1069.52 us        1.4x
-  pycoin                     19107.55 us       25.2x
-  buidl.pecc                 61702.40 us       81.2x
+  btclib                       756.48 us        1.0x
+  python-ecdsa                1065.46 us        1.4x
+  pycoin                     18834.65 us       24.9x
+  buidl.pecc                 61615.40 us       81.4x
 
 BIP340 sign, over a 32-byte message
                                             vs best
-  btclib                       312.28 us        1.0x
-  secp256k1lab                7840.95 us       25.1x
-  buidl.pecc                 91119.55 us      291.8x
+  btclib                       314.76 us        1.0x
+  secp256k1lab                7824.44 us       24.9x
+  buidl.pecc                 90763.83 us      288.4x
 
 BIP340 verify, over a 32-byte message
                                             vs best
-  btclib                       707.09 us        1.0x
-  secp256k1lab                5186.26 us        7.3x
-  buidl.pecc                 60992.15 us       86.3x
+  btclib                       703.40 us        1.0x
+  secp256k1lab                5146.17 us        7.3x
+  buidl.pecc                 60693.27 us       86.3x
 ```
 
 ## What it shows

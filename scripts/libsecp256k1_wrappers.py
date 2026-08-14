@@ -233,10 +233,10 @@ LIBSECP256K1_PINS = {
 # script is about: three link it into a cffi extension at build time,
 # one opens the shared object beside the package through ctypes
 WRAPPERS = (
-    ("btclib-secp256k1", f"cffi, {_artifact('_btclib_secp256k1')}"),
-    ("coincurve", f"cffi, {_artifact('coincurve._libsecp256k1')}"),
-    ("secp256k1", f"cffi, {_artifact('secp256k1._libsecp256k1')}"),
-    ("electrum-ecc", f"ctypes, {_electrum_ecc_library()}"),
+    ("btclib-secp256k1", f"cffi bindings, {_artifact('_btclib_secp256k1')}"),
+    ("coincurve", f"cffi bindings, {_artifact('coincurve._libsecp256k1')}"),
+    ("secp256k1", f"cffi bindings, {_artifact('secp256k1._libsecp256k1')}"),
+    ("electrum-ecc", f"ctypes bindings, {_electrum_ecc_library()}"),
 )
 
 

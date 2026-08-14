@@ -22,7 +22,7 @@ of this was timed, not merely against btclib's answer.
 ## What produced it
 
 ```text
-when    : 2026-08-14 17:33 CEST (15:33 UTC)
+when    : 2026-08-14 17:44 CEST (15:44 UTC)
 python  : 3.13.14
 command : uv run python scripts/bitcoin_libraries.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -34,60 +34,58 @@ state   : a working desktop, browser and editor open — not a quiesced
 
 ```text
 btclib              : 2026.9
-btclib-secp256k1    : 0.8.0.1
 ecdsa               : 0.19.2
 pycoin              : 0.92718.20260405
 buidl               : 0.2.36
 embit               : 0.8.0
 python-bitcoinlib   : 0.12.2
-python              : 3.13.14
 
 arithmetic under each row
-  btclib              libsecp256k1, through btclib_secp256k1's cffi bindings
-  ecdsa               pure Python; it has no compiled backend at all
-  pycoin              libsecp256k1 already loaded in this process, through ctypes bindings
-  buidl               pure Python; its cecc cffi extension is not built
-  embit               libsecp256k1 it bundles itself, through ctypes bindings
-  python-bitcoinlib   OpenSSL's libcrypto, through ctypes bindings, no libsecp256k1 of its own being available to opt into
+  btclib              libsecp256k1 v0.8.0 compiled into btclib_secp256k1 0.8.0.1, _btclib_secp256k1.cpython-313-darwin.so, through cffi bindings
+  ecdsa               pure Python; it has no bindings of any kind
+  pycoin              the same libsecp256k1 btclib's row calls, which it neither bundles nor compiles, through ctypes bindings
+  buidl               pure Python; the cffi bindings of buidl.cecc are not built
+  embit               the prebuilt libsecp256k1 it bundles, libsecp256k1_darwin_arm64.dylib, through ctypes bindings
+  python-bitcoinlib   OpenSSL's libcrypto, through ctypes bindings, no libsecp256k1 of its own to opt into
 
 ECDSA sign (32-byte digest, secp256k1)
                            us/call     vs best
-  dsa_sign_pycoin            12.28        1.0x   (50000 calls)
-  dsa_sign_embit             14.14        1.2x   (50000 calls)
-  dsa_sign_btclib            17.27        1.4x   (50000 calls)
-  dsa_sign_embit_grind      120.67        9.8x   (20000 calls)
-  dsa_sign_btclib_grind     142.04       11.6x   (20000 calls)
-  dsa_sign_bitcoinlib       192.73       15.7x   (8000 calls)
-  dsa_sign_ecdsa            308.81       25.1x   (5000 calls)
-  dsa_sign_buidl          30503.70     2483.4x   (50 calls)
+  dsa_sign_pycoin            12.30        1.0x   (50000 calls)
+  dsa_sign_embit             14.15        1.2x   (50000 calls)
+  dsa_sign_btclib            17.04        1.4x   (50000 calls)
+  dsa_sign_embit_grind      120.34        9.8x   (20000 calls)
+  dsa_sign_btclib_grind     135.24       11.0x   (20000 calls)
+  dsa_sign_bitcoinlib       193.05       15.7x   (8000 calls)
+  dsa_sign_ecdsa            297.40       24.2x   (5000 calls)
+  dsa_sign_buidl          30069.80     2445.1x   (50 calls)
 
 ECDSA verify (32-byte digest, secp256k1)
                            us/call     vs best
-  dsa_verify_pycoin          12.79        1.0x   (50000 calls)
-  dsa_verify_embit           23.03        1.8x   (50000 calls)
-  dsa_verify_btclib          23.10        1.8x   (50000 calls)
-  dsa_verify_bitcoinlib     226.61       17.7x   (7000 calls)
-  dsa_verify_ecdsa         1106.51       86.5x   (3000 calls)
-  dsa_verify_buidl        62109.14     4855.1x   (25 calls)
+  dsa_verify_pycoin          12.94        1.0x   (50000 calls)
+  dsa_verify_btclib          22.72        1.8x   (50000 calls)
+  dsa_verify_embit           24.04        1.9x   (50000 calls)
+  dsa_verify_bitcoinlib     221.85       17.1x   (7000 calls)
+  dsa_verify_ecdsa         1076.48       83.2x   (3000 calls)
+  dsa_verify_buidl        63663.85     4918.6x   (25 calls)
 
 BIP340 sign (32-byte message)
                            us/call     vs best
-  ssa_sign_embit             21.36        1.0x   (50000 calls)
-  ssa_sign_btclib            23.19        1.1x   (50000 calls)
-  ssa_sign_buidl          92185.78     4314.8x   (20 calls)
+  ssa_sign_btclib            21.28        1.0x   (50000 calls)
+  ssa_sign_embit             21.71        1.0x   (50000 calls)
+  ssa_sign_buidl          93099.54     4374.9x   (20 calls)
 
 BIP340 verify (32-byte message)
                            us/call     vs best
-  ssa_verify_btclib          23.28        1.0x   (50000 calls)
-  ssa_verify_embit           24.25        1.0x   (50000 calls)
-  ssa_verify_buidl        61471.84     2640.1x   (25 calls)
+  ssa_verify_embit           23.48        1.0x   (50000 calls)
+  ssa_verify_btclib          23.53        1.0x   (50000 calls)
+  ssa_verify_buidl        61083.50     2601.6x   (25 calls)
 
 BIP32 derive, seed to m/0h/1 (16-byte seed)
                            us/call     vs best
-  bip32_derive_pycoin        40.01        1.0x   (30000 calls)
-  bip32_derive_btclib        59.92        1.5x   (30000 calls)
-  bip32_derive_embit         71.98        1.8x   (15000 calls)
-  bip32_derive_buidl      89465.10     2236.1x   (12 calls)
+  bip32_derive_pycoin        39.19        1.0x   (30000 calls)
+  bip32_derive_btclib        59.39        1.5x   (30000 calls)
+  bip32_derive_embit         71.07        1.8x   (15000 calls)
+  bip32_derive_buidl      90320.02     2304.9x   (12 calls)
 ```
 
 ## What it shows

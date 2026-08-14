@@ -65,6 +65,26 @@ The release notes, which say what a user has to act on, are in
   unrecorded for any other — a pin outliving its release would be the
   one figure in that output nothing re-derives.
 
+- **The interpreter is not in a script's output.** It belongs to the run
+  rather than to the packages, as the machine and the time do, and no script
+  can state those either -- so `results/` names all three in the block above
+  the output, and printing one of them twice per published file was the only
+  thing that came of having it in both.
+
+- **`bitcoin_libraries.py` says which libsecp256k1 btclib's row calls**,
+  where it used to print `btclib_secp256k1`'s own version number and leave
+  the library underneath unnamed. The revision is recorded against the
+  release it was read from and printed as unrecorded for any other, the
+  library being compiled into a cffi extension where nothing at run time can
+  recover it; the extension's file name goes beside it, and so does the
+  prebuilt library embit loaded, which is a file name because embit's
+  bundled libraries carry no version a caller can read.
+
+  Dropping `btclib_secp256k1` from that block turned pycoin's rows back into
+  Python rows, which is the fragility the docstring describes made concrete:
+  the import was load-bearing, its side effect being the symbols pycoin's
+  ctypes probe finds. It is back, with the reason written beside it.
+
 - **The wrapper table signs as well as verifying, and tweaks a public
   key.** Verification was the whole of it, which left out the operation the
   four APIs differ over most: signing separates them further, and
