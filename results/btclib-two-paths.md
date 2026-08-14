@@ -86,11 +86,10 @@ verification next, being a recovery with hashing around it. At the narrow end
 sit signing and ElligatorSwift decoding, where one multiplication is
 surrounded by work the C never does.
 
-The Python side is not a path nobody reaches. It answers for every curve
-that is not secp256k1, for a zero scalar, for the point at infinity, and
-for everything else the bindings decline — so what this table says about it
-is what a caller outside the fast case actually gets, and why the
-delegation is a delegation rather than a rewrite.
+The Python side is not a path nobody reaches: it answers for every curve
+that is not secp256k1, for a zero scalar, for the point at infinity, and for
+anything else outside libsecp256k1's entry points. What this table says about
+it is what a caller outside the fast case gets.
 
 ## Why BIP32 derivation is not a row, and how that is enforced
 
@@ -104,19 +103,16 @@ fingerprint, so a pair of rows for it would compare C against C with a Python
 step added. Its pair was far narrower than every other, which is what that
 looks like from the outside.
 
-That a row belongs here is therefore something to prove.
-`tests/pure_python_path_test.py` proves it: it replaces every bindings entry
-point with a function that raises, throws the switch, and calls every
-operation once. A row that has kept a foot in C raises instead of
-answering, and the failure names the call. BIP32 derivation is timed in
-[the bitcoin-libraries table][libs] instead, against three other libraries,
-where being C is the premise rather than the question.
+That a row belongs here is therefore a property to prove.
+`tests/pure_python_path_test.py` replaces every bindings entry point with a
+function that raises, throws the switch, and calls every operation: a row that
+has kept a foot in C raises instead of answering. BIP32 derivation is timed in
+[the bitcoin-libraries table][libs] instead, where being C is the premise.
 
 The labels name the two arithmetics rather than a package and a language:
-every row here is btclib, and every row here is invoked from Python. The
-libsecp256k1 rows are all timed before the Python ones because
-`python_arithmetic_only()` cannot be undone inside a process — the switch is
-thrown once, between the halves, and the sort happens afterwards.
+every row here is btclib, and every row is invoked from Python. The
+libsecp256k1 rows are timed first because `python_arithmetic_only()` cannot be
+undone inside a process; the sort happens afterwards.
 
 [readme]: https://github.com/btclib-org/btclib-benchmarks/blob/main/README.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md

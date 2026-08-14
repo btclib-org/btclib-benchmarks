@@ -2,57 +2,61 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""Verification timings of four wrappers of one C library, side by side.
+"""Timings of four wrappers of one C library, side by side.
 
 Every row calls `bitcoin-core/secp256k1`, so what separates them is the
-boundary crossing and not the arithmetic: cffi against ctypes, a
-signature in DER against one in 64 bytes, a public key handed over as
-bytes against one held as a Python object. That is the whole of the
-question here, and it is why there is no pure-Python row:
-`scripts/pure_python.py` asks what staying in Python costs and asks it
-better -- one reference column, a ratio against btclib's own Python path
-beside it, and every backend forced off rather than one switch flipped. A
-fallback implementation dropped into a table about bindings answers
-neither question well.
+boundary crossing rather than the arithmetic: cffi against ctypes, a signature
+in DER against one in 64 bytes, a public key handed over as bytes against one
+held as a Python object. There is no pure-Python row --
+`scripts/pure_python.py` asks what staying in Python costs, and asks it with
+every backend forced off rather than one switch flipped.
 
-btclib is therefore not imported here at all, the fixtures below coming
-from `btclib_secp256k1` and `hashlib`. Nothing in this script reaches
-into btclib's private dispatch, so importing it leaves the bindings on
-for the rest of the process -- which `pure_python.py` and
-`btclib_two_paths.py` cannot offer, each having a Python row to measure
-and one switch to throw for it.
+btclib is not imported here at all: the fixtures come from
+`btclib_secp256k1`, `_vectors` and `hashlib`, so nothing reaches into btclib's
+private dispatch and importing this module leaves the bindings on for the rest
+of the process.
 
-Measured is one call each of ECDSA and BIP340 *verification*, on one
-fixed key and message. Verification, because it is the operation all
-four expose with the same meaning and no nonce to agree on.
+Measured are ECDSA and BIP340 signing and verification, and a public key
+tweaked by a scalar, which is BIP32's step -- none of the four implements
+BIP32 itself, and all four expose the primitive it is built from.
+`electrum-ecc` has no tweak-add on `ECPubkey`, so it reaches the same point as
+a scalar times the generator plus an addition: two crossings where the others
+make one.
+
+Grinding is one row rather than four. `electrum-ecc` is the only one of them
+offering low-r grinding, so it has a `grind=False` row and its default beside
+it; grinding is a loop around a wrapper rather than anything the C library
+does, which is why the tables about libraries carry the same distinction for
+btclib and embit.
 
 ## The public key is parsed inside every timing
 
-Two of the four leave no choice: `btclib_secp256k1` takes bytes and
-parses per call, and electrum-ecc's `ECPubkey` holds x and y as Python
-integers and parses a `secp256k1_pubkey` again on every verify.
-coincurve and secp256k1-py could each be handed a parsed key once and
-are not, because a row that skipped what two of the four cannot skip
-would be timing a different operation.
+Two of the four leave no choice: `btclib_secp256k1` takes bytes and parses per
+call, and electrum-ecc's `ECPubkey` holds x and y as Python integers and
+parses a `secp256k1_pubkey` again on every verify. coincurve and secp256k1-py
+could each be handed a parsed key once and are not, because a row skipping
+what two of the four cannot skip would be timing a different operation.
 
-The signature is another matter. Each row takes the encoding its own API
-asks for and parses it wherever that API does; converting between the
-encodings happens once, in the fixtures, being no part of verifying.
+The signature is another matter: each row takes the encoding its own API asks
+for, and converting between encodings happens once, in the fixtures.
 
 ## "The same C library" is a claim about the API, not about the binary
 
-The four vendor different revisions of libsecp256k1, so
-`report_libsecp256k1` says which one is under each row: a current build
-timed against a stale one is not the comparison this table looks like.
-Three of them link the library into a cffi extension at build time,
-where the revision cannot be recovered at run time, so each pin is
-recorded below against the release it was read from and reported as
-unrecorded for any other release -- a pin that outlived the release it
-describes would be the one figure in this output that nothing
-re-derives.
+The four vendor different revisions, so `report_libsecp256k1` says which is
+under each row. Three link the library into a cffi extension at build time,
+where the revision cannot be recovered at run time, so each pin is recorded
+against the release it was read from and reported as unrecorded for any other.
 
-Not part of the test suite and not run by CI: measuring is done by a
-person on a machine whose state they know.
+What the four agree on is asserted per vector before anything is timed, and
+what they agree on is not everything: three produce the same ECDSA bytes for
+a key and a message, libsecp256k1's default nonce being RFC6979, while
+secp256k1-py's build does on x86-64 and does not on aarch64. So every wrapper
+is held to the portable claim -- that its signature verifies -- and to
+BIP340's own signatures where its API takes an aux_rand. secp256k1-py's
+`schnorr_sign` does not.
+
+Not part of the test suite and not run by CI: measuring is done by a person on
+a machine whose state they know.
 """
 
 from __future__ import annotations

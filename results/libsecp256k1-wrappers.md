@@ -101,12 +101,10 @@ percent off the best is not behind it in any durable sense, and being able
 to see how few percent is the point.
 
 The revisions are why the closeness is worth stating rather than assuming.
-These are four different vendored trees of one project, and the pins above
-the timings say so: `btclib_secp256k1`'s is the newest upstream tag of the
-four, and `secp256k1-py`'s predates upstream's first tagged release. So a
-row is not fast or slow purely as a binding — part of any difference is
-which library it was built against, and the output is where that is
-visible instead of being a footnote nobody re-derives.
+These are four vendored trees of one project, and the pins above the timings
+say so: `btclib_secp256k1`'s is the newest upstream tag of the four, and
+`secp256k1-py`'s predates upstream's first tagged release. Part of any
+difference is which library a row was built against.
 
 Each pin is keyed to the release it was read from and prints `unrecorded`
 for any other, so an upgraded comparand says that it has outgrown its pin

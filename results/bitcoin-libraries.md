@@ -142,15 +142,13 @@ property of the packages alone, which is what the setup block is for.
 Three things this output says are worth reading twice:
 
 - **pycoin's row is C on this run**, not Python, and it sorts above
-  btclib's. Its loader asks `ctypes.util.find_library` for a name that
-  resolves to nothing here, so it falls through to the symbols already in
-  the process — which `btclib_secp256k1`'s extension has put there — and it
-  only gets as far as asking because `bitcoin.core.key`, imported above it,
-  has already imported `ctypes.util`, which pycoin's own module does not.
-  So its rows call the same build btclib's rows call, through ctypes
-  instead of cffi, and dropping either import from the script would turn
-  the same rows back into Python. What that same package costs when it is
-  held to Python is the pycoin row of [the pure-Python table][pure].
+  btclib's — through two imports that are the script's rather than pycoin's.
+  `bitcoin.core.key` imports `ctypes.util`, which pycoin's loader needs and
+  does not import; the name it then asks for resolves to nothing, so the load
+  falls through to the symbols `btclib_secp256k1`'s extension has put in the
+  process. Its rows therefore call the same build btclib's rows call, through
+  ctypes instead of cffi. What the same package costs held to Python is the
+  pycoin row of [the pure-Python table][pure].
 - **two libraries here sign more than once by default.** btclib and embit
   both grind for a low-r signature — they sign repeatedly until r fits in
   32 bytes — so their default is not comparable per signature with the
@@ -171,22 +169,18 @@ Three things this output says are worth reading twice:
   verification costs. It is the sharpest reason in these four files for
   taking the input from a specification rather than choosing one.
 
-The encoding tables are the only ones here that are not curve work, and
-they are where these libraries differ most: pure Python in all five, so what
-separates them is the code and nothing else. They also hold the one wrong
-answer in this benchmark. `python-bitcoinlib` encodes a witness-v1 program
-with bech32's checksum constant where BIP350 requires bech32m's, and rejects
-the address BIP350 publishes, so it has no bech32m row — the script asserts
-both halves of that rather than leaving the absence unexplained.
+The encoding tables are the only ones that are not curve work, and they are
+where these libraries differ most: pure Python in all five, so what separates
+them is the code. They also hold the one wrong answer in this benchmark.
+`python-bitcoinlib` encodes a witness-v1 program with bech32's checksum
+constant where BIP350 requires bech32m's, and rejects the address BIP350
+publishes, so it has no bech32m row — the script asserts both halves of that.
 
-The loop counts are per row and print beside their rows, because sorting
-puts rows whose counts differ by orders of magnitude next to each other.
-pycoin's are the only ones the script picks at run time, from the backend
-it found: it is the one comparand here whose row can be C on one machine
-and Python on another, and a count that suits one of those measures the
-clock or takes minutes on the other. Every other row's count is written,
-buidl's small ones included — it is pure Python wherever its separate
-build step has not been run, which is everywhere this installs from PyPI.
+The loop counts are per row and print beside their rows, sorting putting rows
+orders of magnitude apart next to each other. pycoin's are the only ones
+picked at run time, from the backend found: it is the one comparand whose row
+can be C on one machine and Python on another, and a count that suits one
+measures the clock or takes minutes on the other.
 
 [readme]: https://github.com/btclib-org/btclib-benchmarks/blob/main/README.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
