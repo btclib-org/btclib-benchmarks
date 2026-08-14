@@ -11,7 +11,9 @@ costs in the steady state, once the key is whatever it is going to be.
 The second is what getting it there costs and after how many
 verifications that has paid for itself — which is the number a caller
 actually decides on, and it is against the same implementation's own
-unprepared row rather than against the fastest of the table.
+unprepared row rather than against the fastest of the table. Getting it
+there and nothing else: building the key is work the caller who does not
+prepare pays as well, so a column of differences must not carry it.
 
 One run, kept whole. Read [README.md][readme] on what these are: an order
 of magnitude, never a figure to quote.
@@ -19,7 +21,7 @@ of magnitude, never a figure to quote.
 ## What produced it
 
 ```text
-when    : 2026-08-14 18:42 CEST (16:42 UTC)
+when    : 2026-08-14 20:31 CEST (18:31 UTC)
 python  : 3.13.14
 command : uv run python scripts/key_reuse.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -37,18 +39,18 @@ ecdsa               : 0.19.2
 
 ECDSA verify, one key, every signature under it
                                                   vs best
-  btclib, bindings, parsed point      19.90 μs        1.0x
-  btclib, bindings, octets            22.49 μs        1.1x
-  python-ecdsa, precomputed          501.08 μs       25.2x
-  btclib, Python, parsed point       610.05 μs       30.6x
-  btclib, Python, octets             695.19 μs       34.9x
-  python-ecdsa                      1057.21 μs       53.1x
+  btclib, bindings, parsed point      20.46 μs        1.0x
+  btclib, bindings, octets            26.50 μs        1.3x
+  python-ecdsa, precomputed          536.22 μs       26.2x
+  btclib, Python, parsed point       606.98 μs       29.7x
+  btclib, Python, octets             696.97 μs       34.1x
+  python-ecdsa                      1083.57 μs       53.0x
 
 what preparing the key costs, and after how many verifications it pays
                                     prepare  saves/call  break-even
-  btclib, bindings, parse once        3.54 μs      2.59 μs       1.4
-  btclib, Python, parse once         74.32 μs     85.14 μs       0.9
-  python-ecdsa, precompute()       3748.04 μs    556.13 μs       6.7
+  btclib, bindings, parse once        3.55 μs      6.04 μs       0.6
+  btclib, Python, parse once         74.61 μs     89.98 μs       0.8
+  python-ecdsa, precompute()       3181.79 μs    547.35 μs       5.8
 ```
 
 ## What it shows
