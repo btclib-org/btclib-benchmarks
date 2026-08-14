@@ -21,7 +21,7 @@ of magnitude, never a figure to quote.
 ## What produced it
 
 ```text
-when    : 2026-08-14 20:31 CEST (18:31 UTC)
+when    : 2026-08-14 22:11 CEST (20:11 UTC)
 python  : 3.13.14
 command : uv run python scripts/key_reuse.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -33,24 +33,24 @@ state   : a working desktop, browser and editor open — not a quiesced
 
 ```text
 btclib              : 2026.9
-btclib-secp256k1    : 0.8.0.1
+btclib-secp256k1    : 0.8.0.2
 ecdsa               : 0.19.2
 
 
 ECDSA verify, one key, every signature under it
                                                   vs best
-  btclib, bindings, parsed point      20.46 μs        1.0x
-  btclib, bindings, octets            26.50 μs        1.3x
-  python-ecdsa, precomputed          536.22 μs       26.2x
-  btclib, Python, parsed point       606.98 μs       29.7x
-  btclib, Python, octets             696.97 μs       34.1x
-  python-ecdsa                      1083.57 μs       53.0x
+  btclib, bindings, parsed point      20.38 μs        1.0x
+  btclib, bindings, octets            23.15 μs        1.1x
+  python-ecdsa, precomputed          538.45 μs       26.4x
+  btclib, Python, octets             700.21 μs       34.4x
+  btclib, Python, parsed point       724.69 μs       35.6x
+  python-ecdsa                      1087.38 μs       53.3x
 
 what preparing the key costs, and after how many verifications it pays
                                     prepare  saves/call  break-even
-  btclib, bindings, parse once        3.55 μs      6.04 μs       0.6
-  btclib, Python, parse once         74.61 μs     89.98 μs       0.8
-  python-ecdsa, precompute()       3181.79 μs    547.35 μs       5.8
+  btclib, bindings, parse once        3.61 μs      2.77 μs       1.3
+  btclib, Python, parse once        109.56 μs    -24.48 μs      -4.5
+  python-ecdsa, precompute()       3228.44 μs    548.93 μs       5.9
 ```
 
 ## What it shows

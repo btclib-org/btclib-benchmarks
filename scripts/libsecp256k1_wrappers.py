@@ -43,9 +43,18 @@ for, and converting between encodings happens once, in the fixtures.
 ## "The same C library" is a claim about the API, not about the binary
 
 The four vendor different revisions, so `report_libsecp256k1` says which is
-under each row. Three link the library into a cffi extension at build time,
-where the revision cannot be recovered at run time, so each pin is recorded
-against the release it was read from and reported as unrecorded for any other.
+under each row -- from a pin, because none of them can be asked. Neither
+compiled artifact exports a version symbol; `btclib_secp256k1.version` is
+`importlib.metadata.version` re-exported, which answers for the wrapper and
+not for the library; coincurve and secp256k1-py expose only their own
+`__version__`; and electrum-ecc's `version_info` returns the path of the
+shared object it opened and nothing about its contents. So each pin is
+recorded against the release it was read from and reported as unrecorded for
+any other, and re-reading it is what a comparand's release costs.
+
+The durable fix belongs upstream rather than here: a wrapper that recorded its
+vendored revision at build time -- a constant its build script writes from the
+submodule it just compiled -- would let this row read what it now asserts.
 
 What the four agree on is asserted per vector before anything is timed, and
 what they agree on is not everything: three produce the same ECDSA bytes for
@@ -264,8 +273,9 @@ def _electrum_ecc_library() -> str:
 # Where each row's libsecp256k1 came from, read from the release named
 # beside it:
 #
-# - btclib-secp256k1: the `secp256k1` submodule pin at its own v0.8.0.1
-#   tag, 6e2c8bc, which is upstream's v0.8.0 tag exactly
+# - btclib-secp256k1: the `secp256k1` submodule pin at its own v0.8.0.2
+#   tag, 6e2c8bc, which is upstream's v0.8.0 tag exactly -- the same commit
+#   its v0.8.0.1 pinned, so that release moved and the library did not
 # - coincurve: `VENDORED_UPSTREAM_REF` in its pyproject.toml, 0cdc758a,
 #   which is upstream's v0.6.0
 # - secp256k1: `LIB_TARBALL_URL` in its setup.py, 9526874d, a master
@@ -279,7 +289,7 @@ def _electrum_ecc_library() -> str:
 # pin has to stop being claimed when the release it was read from is no
 # longer the one installed.
 LIBSECP256K1_PINS = {
-    "btclib-secp256k1": ("0.8.0.1", "v0.8.0"),
+    "btclib-secp256k1": ("0.8.0.2", "v0.8.0"),
     "coincurve": ("21.0.0", "v0.6.0"),
     "secp256k1": ("0.14.0", "9526874d, pre-v0.1.0"),
     "electrum-ecc": ("0.0.7", "v0.7.1"),

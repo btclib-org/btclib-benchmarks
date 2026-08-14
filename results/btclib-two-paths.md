@@ -27,7 +27,7 @@ here first: an order of magnitude, never a figure to quote.
 ## What produced it
 
 ```text
-when    : 2026-08-14 19:38 CEST (17:38 UTC)
+when    : 2026-08-14 22:09 CEST (20:09 UTC)
 python  : 3.13.14
 command : uv run python scripts/btclib_two_paths.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -41,36 +41,36 @@ state   : a working desktop, browser and editor open — not a quiesced
 btclib              : 2026.9
 
 the two arithmetics under each pair
-  libsecp256k1        bundled and compiled into btclib_secp256k1 0.8.0.1, through cffi bindings, _btclib_secp256k1.cpython-313-darwin.so
+  libsecp256k1        bundled and compiled into btclib_secp256k1 0.8.0.2, through cffi bindings, _btclib_secp256k1.cpython-313-darwin.so
   pure python         btclib's own curves/curve_group.py, the dispatch off
 
                                 μs/call       vs best
-point_parse_libsecp256k1         3.5759          1.0x
-mult_libsecp256k1                8.2607          1.0x
-ellswift_decode_libsecp256k1     8.6368          1.0x
-pubkey_libsecp256k1              11.086          1.0x
-dh_libsecp256k1                  13.650          1.0x
-taproot_tweak_libsecp256k1       17.247          1.0x
-dsa_sign_libsecp256k1            19.295          1.0x
-dsa_verify_libsecp256k1          22.984          1.0x
-ssa_verify_libsecp256k1          23.781          1.0x
-bms_verify_libsecp256k1          23.837          1.0x
-ssa_sign_libsecp256k1            24.889          1.0x
-bms_sign_libsecp256k1            30.311          1.0x
-dsa_recover_libsecp256k1         42.674          1.0x
-dsa_sign_pure_python             174.93          9.1x
-bms_sign_pure_python             345.40         11.4x
-ssa_sign_pure_python             321.79         12.9x
-pubkey_pure_python               148.34         13.4x
-ellswift_decode_pure_python      129.65         15.0x
-mult_pure_python                 143.03         17.3x
-taproot_tweak_pure_python        309.58         17.9x
-point_parse_pure_python          75.222         21.0x
-ssa_verify_pure_python           684.39         28.8x
-dsa_verify_pure_python           671.28         29.2x
-dh_pure_python                   548.00         40.1x
-bms_verify_pure_python           1351.3         56.7x
-dsa_recover_pure_python          3237.9         75.9x
+ellswift_decode_libsecp256k1     8.3310          1.0x
+point_parse_libsecp256k1         8.7365          1.0x
+dh_libsecp256k1                  13.847          1.0x
+taproot_tweak_libsecp256k1       17.348          1.0x
+mult_libsecp256k1                19.156          1.0x
+pubkey_libsecp256k1              19.303          1.0x
+dsa_verify_libsecp256k1          23.603          1.0x
+ssa_verify_libsecp256k1          23.914          1.0x
+bms_verify_libsecp256k1          24.050          1.0x
+dsa_sign_libsecp256k1            24.878          1.0x
+ssa_sign_libsecp256k1            25.119          1.0x
+bms_sign_libsecp256k1            30.526          1.0x
+dsa_recover_libsecp256k1         43.725          1.0x
+dsa_sign_pure_python             174.64          7.0x
+mult_pure_python                 139.10          7.3x
+pubkey_pure_python               148.00          7.7x
+point_parse_pure_python          74.896          8.6x
+bms_sign_pure_python             337.64         11.1x
+ssa_sign_pure_python             321.54         12.8x
+ellswift_decode_pure_python      128.26         15.4x
+taproot_tweak_pure_python        314.57         18.1x
+ssa_verify_pure_python           679.46         28.4x
+dsa_verify_pure_python           673.47         28.5x
+dh_pure_python                   548.84         39.6x
+bms_verify_pure_python           1329.4         55.3x
+dsa_recover_pure_python          3237.7         74.0x
 ```
 
 ## What it shows

@@ -26,7 +26,7 @@ table][pure] and to [the libraries table][libs], never to this one.
 ## What produced it
 
 ```text
-when    : 2026-08-14 19:39 CEST (17:39 UTC)
+when    : 2026-08-14 22:11 CEST (20:11 UTC)
 python  : 3.13.14
 command : uv run python scripts/libsecp256k1_wrappers.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
@@ -37,52 +37,52 @@ state   : a working desktop, browser and editor open — not a quiesced
 ## The output
 
 ```text
-btclib-secp256k1    : 0.8.0.1
+btclib-secp256k1    : 0.8.0.2
 coincurve           : 21.0.0
 secp256k1           : 0.14.0
 electrum-ecc        : 0.0.7
 
 libsecp256k1 under each row
-  btclib-secp256k1  0.8.0.1   v0.8.0                  cffi bindings, _btclib_secp256k1.cpython-313-darwin.so
+  btclib-secp256k1  0.8.0.2   v0.8.0                  cffi bindings, _btclib_secp256k1.cpython-313-darwin.so
   coincurve         21.0.0    v0.6.0                  cffi bindings, _libsecp256k1.cpython-313-darwin.so
   secp256k1         0.14.0    9526874d, pre-v0.1.0    cffi bindings, _libsecp256k1.cpython-313-darwin.so
   electrum-ecc      0.0.7     v0.7.1                  ctypes bindings, libsecp256k1.6.dylib
 
 ECDSA verify (32-byte digest, the public key parsed per call)
                                    μs/call     vs best
-  dsa_secp256k1                      11.78       1.00x   (100000 calls)
-  dsa_btclib_secp256k1               14.11       1.20x   (100000 calls)
-  dsa_coincurve                      14.12       1.20x   (100000 calls)
-  dsa_electrum_ecc                   16.04       1.36x   (100000 calls)
+  dsa_secp256k1                      11.82       1.00x   (100000 calls)
+  dsa_btclib_secp256k1               14.13       1.20x   (100000 calls)
+  dsa_coincurve                      14.23       1.20x   (100000 calls)
+  dsa_electrum_ecc                   16.08       1.36x   (100000 calls)
 
 BIP340 verify (32-byte message, the public key parsed per call)
                                    μs/call     vs best
-  ssa_btclib_secp256k1               14.57       1.00x   (100000 calls)
-  ssa_coincurve                      14.64       1.00x   (100000 calls)
-  ssa_secp256k1                      15.07       1.03x   (100000 calls)
-  ssa_electrum_ecc                   18.53       1.27x   (100000 calls)
+  ssa_coincurve                      14.67       1.00x   (100000 calls)
+  ssa_btclib_secp256k1               14.85       1.01x   (100000 calls)
+  ssa_secp256k1                      15.12       1.03x   (100000 calls)
+  ssa_electrum_ecc                   18.68       1.27x   (100000 calls)
 
 ECDSA sign (32-byte digest)
                                    μs/call     vs best
-  dsa_sign_secp256k1                 11.32       1.00x   (100000 calls)
-  dsa_sign_coincurve                 11.59       1.02x   (100000 calls)
-  dsa_sign_btclib_secp256k1          12.06       1.07x   (100000 calls)
-  dsa_sign_electrum_ecc              27.37       2.42x   (100000 calls)
-  dsa_sign_electrum_ecc_grind        59.72       5.27x   (100000 calls)
+  dsa_sign_secp256k1                 11.43       1.00x   (100000 calls)
+  dsa_sign_coincurve                 11.71       1.03x   (100000 calls)
+  dsa_sign_btclib_secp256k1          12.69       1.11x   (100000 calls)
+  dsa_sign_electrum_ecc              27.46       2.40x   (100000 calls)
+  dsa_sign_electrum_ecc_grind        61.61       5.39x   (100000 calls)
 
 BIP340 sign (32-byte message)
                                    μs/call     vs best
-  ssa_sign_secp256k1                  7.77       1.00x   (100000 calls)
-  ssa_sign_btclib_secp256k1          15.89       2.04x   (100000 calls)
-  ssa_sign_coincurve                 27.64       3.56x   (100000 calls)
-  ssa_sign_electrum_ecc              31.85       4.10x   (100000 calls)
+  ssa_sign_secp256k1                  7.81       1.00x   (100000 calls)
+  ssa_sign_btclib_secp256k1          16.05       2.05x   (100000 calls)
+  ssa_sign_coincurve                 27.42       3.51x   (100000 calls)
+  ssa_sign_electrum_ecc              31.50       4.03x   (100000 calls)
 
 public key tweak by a scalar, which is BIP32's step
                                    μs/call     vs best
-  tweak_coincurve                    10.38       1.00x   (100000 calls)
-  tweak_btclib_secp256k1             10.55       1.02x   (100000 calls)
-  tweak_secp256k1                    13.82       1.33x   (100000 calls)
-  tweak_electrum_ecc                 22.44       2.16x   (100000 calls)
+  tweak_coincurve                    10.45       1.00x   (100000 calls)
+  tweak_btclib_secp256k1             10.62       1.02x   (100000 calls)
+  tweak_secp256k1                    13.89       1.33x   (100000 calls)
+  tweak_electrum_ecc                 22.47       2.15x   (100000 calls)
 ```
 
 ## What it shows
@@ -105,6 +105,11 @@ These are four vendored trees of one project, and the pins above the timings
 say so: `btclib_secp256k1`'s is the newest upstream tag of the four, and
 `secp256k1-py`'s predates upstream's first tagged release. Part of any
 difference is which library a row was built against.
+
+Those pins are recorded rather than read because none of the four can be
+asked: no compiled artifact exports a version symbol, and each package's
+version attribute answers for the wrapper. A wrapper recording its vendored
+revision at build time would end the recording here.
 
 Each pin is keyed to the release it was read from and prints `unrecorded`
 for any other, so an upgraded comparand says that it has outgrown its pin

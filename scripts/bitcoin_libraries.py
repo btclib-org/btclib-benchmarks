@@ -187,12 +187,12 @@ DIGESTS = [int.from_bytes(v.msg, "big") % ORDER for v in DSA_VECTORS]
 # no version string. Both are printed as unrecorded for any other release,
 # because a floor is a floor and a comparand upgrades without a word.
 #
-# - btclib_secp256k1 0.8.0.1: its `secp256k1` submodule pin, 6e2c8bc, which
-#   is upstream's v0.8.0 tag exactly
+# - btclib_secp256k1 0.8.0.2: its `secp256k1` submodule pin, 6e2c8bc, which
+#   is upstream's v0.8.0 tag exactly, and the same commit 0.8.0.1 pinned
 # - embit 0.8.0: its `secp256k1/secp256k1-zkp` submodule pin, d9560e0a --
 #   ElementsProject's fork and not bitcoin-core/secp256k1, which is worth
 #   saying in a table that calls four other rows the same library
-PINS = {"btclib-secp256k1": ("0.8.0.1", "v0.8.0"), "embit": ("0.8.0", "d9560e0a")}
+PINS = {"btclib-secp256k1": ("0.8.0.2", "v0.8.0"), "embit": ("0.8.0", "d9560e0a")}
 
 
 def _pinned(dist_name: str) -> str:
