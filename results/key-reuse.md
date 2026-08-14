@@ -3,7 +3,7 @@
 ## This run
 
 ```text
-when    : 2026-08-14 23:16 CEST (21:16 UTC)
+when    : 2026-08-14 23:39 CEST (21:39 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/key_reuse.py
@@ -46,18 +46,18 @@ what a timing contains
 
 ECDSA verify, one key, every signature under it
                                                   vs best
-  btclib, bindings, parsed point      20.30 μs        1.0x
-  btclib, bindings, octets            23.10 μs        1.1x
-  python-ecdsa, precomputed          540.24 μs       26.6x
-  btclib, Python, parsed point       620.12 μs       30.5x
-  btclib, Python, octets             713.02 μs       35.1x
-  python-ecdsa                      1094.08 μs       53.9x
+  btclib, bindings, parsed point      18.34 μs        1.0x
+  btclib, bindings, octets            20.09 μs        1.1x
+  python-ecdsa, precomputed          546.60 μs       29.8x
+  btclib, Python, parsed point       606.40 μs       33.1x
+  btclib, Python, octets             696.39 μs       38.0x
+  python-ecdsa                      1132.35 μs       61.7x
 
 what preparing the key costs, and after how many verifications it pays
                                     prepare  saves/call  break-even
-  btclib, bindings, parse once        3.59 μs      2.80 μs       1.3
-  btclib, Python, parse once         79.35 μs     92.90 μs       0.9
-  python-ecdsa, precompute()       3355.89 μs    553.85 μs       6.1
+  btclib, bindings, parse once        3.60 μs      1.75 μs       2.1
+  btclib, Python, parse once         75.30 μs     89.99 μs       0.8
+  python-ecdsa, precompute()       3436.38 μs    585.75 μs       5.9
 ```
 
 ## What it shows

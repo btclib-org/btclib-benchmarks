@@ -12,7 +12,8 @@ held as a Python object. There is no pure-Python row --
 every backend forced off rather than one switch flipped.
 
 btclib is not imported here at all: the fixtures come from
-`btclib_secp256k1`, `_vectors` and `hashlib`, so nothing reaches into btclib's
+`btclib_secp256k1`, `_vectors` and `hashlib` -- the module, btclib-secp256k1
+being the package -- so nothing reaches into btclib's
 private dispatch and importing this module leaves the bindings on for the rest
 of the process.
 

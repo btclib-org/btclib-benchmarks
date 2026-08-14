@@ -197,7 +197,7 @@ def report_setup() -> None:
     """
     print("every row is pure Python arithmetic, held to it by")
     print(
-        f"  {'btclib':<20}its delegation to btclib_secp256k1's cffi bindings "
+        f"  {'btclib':<20}its delegation to btclib-secp256k1's cffi bindings "
         "switched off"
     )
     print(

@@ -21,7 +21,7 @@ property of the package:
   This row is C for two reasons that belong to the import list above:
   `bitcoin.core.key` imports `ctypes.util`, which pycoin's loader needs and
   does not import, and the name it then asks for resolves to nothing, so the
-  load falls through to the symbols `btclib_secp256k1`'s extension has put
+  load falls through to the symbols btclib-secp256k1's extension has put
   in the process. Drop either import and the row is Python. Its loop count
   follows the answer rather than being written once: `pycoin_calls` below.
 - buidl reaches C only if `libsec_build.py` was run against a system
@@ -102,7 +102,6 @@ from pathlib import Path
 import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
 import bitcoin.wallet as bitcoinlib_wallet
-import btclib
 import btclib.b32
 import btclib.b58
 
@@ -126,34 +125,69 @@ import embit.ec
 import embit.util.ctypes_secp256k1
 import pycoin.encoding.b58
 import pycoin.symbols.btc
-from _provenance import report, report_method
+from _provenance import origin_of, report_method
 from _vectors import bip32, signing
 from btclib.bip32 import bip32 as btclib_bip32
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
 from btclib.to_pub_key import pub_keyinfo_from_key, pub_keyinfo_from_prv_key
 
+# the release each version was published on, recorded because no installed
+# metadata carries it: a wheel's METADATA has a Version and no date, and the
+# dist-info directory's mtime is when the package was installed here. Keyed
+# by the release it was read for, so an upgraded comparand prints
+# `unrecorded` rather than a date that has stopped being true
+RELEASE_DATES = {
+    "ecdsa": ("0.19.2", "2026-03-26"),
+    "pycoin": ("0.92718.20260405", "2026-04-05"),
+    "buidl": ("0.2.36", "2022-02-28"),
+    "embit": ("0.8.0", "2024-05-30"),
+    "python-bitcoinlib": ("0.12.2", "2023-06-03"),
+}
+
+
+def _released(dist_name: str) -> str:
+    """Say when this build was published, or where it came from instead.
+
+    btclib resolves from its branch until 2026.9 is on PyPI, and a date
+    would be a claim about a release that has not happened: what the column
+    says for it is the branch and the commit, which is what a reader has to
+    look up to get these rows again.
+    """
+    if not (recorded := RELEASE_DATES.get(dist_name)):
+        # the branch and the commit, without the repository the package
+        # column has already named
+        return origin_of(dist_name).split()[-1]
+    return recorded[1] if version(dist_name) == recorded[0] else "unrecorded"
+
 
 def report_provenance() -> None:
-    """Say which build of every package in the table these rows are about.
+    """Print one row per package: what it is, and which arithmetic it ran.
 
-    Printed before any number: a released wheel and a working tree satisfy
-    the same requirement and resolve in silence, so which one ran is
-    something the output has to state rather than something the reader
-    assumes.
-
-    Every package, comparands included, so that a version number appears
-    once in this output and `report_setup` below is left with the one thing
-    a version cannot say: which arithmetic the row reached.
+    Printed before any number, because a released wheel and a working tree
+    satisfy the same requirement and resolve in silence. Four columns, each
+    answering a different question: the version and the release date say
+    which build this is, and the arithmetic says what the row measures --
+    three of these packages reach for a C library at import and fall back to
+    Python without saying so. Sorted newest release first.
     """
-    report(
-        ("btclib", btclib.__file__),
-        ("ecdsa", ecdsa.__file__),
-        ("pycoin", pycoin.symbols.btc.__file__),
-        ("buidl", buidl.pecc.__file__),
-        ("embit", embit.ec.__file__),
-        ("python-bitcoinlib", bitcoinlib_key.__file__),
+    rows = (
+        ("btclib", _arithmetic_btclib()),
+        ("ecdsa", "pure Python; no bindings of any kind, bundled or built"),
+        ("pycoin", _pycoin_backend()),
+        ("buidl", _buidl_backend()),
+        ("embit", _arithmetic_embit()),
+        ("python-bitcoinlib", _arithmetic_bitcoinlib()),
     )
+    print(f"{'package':<20}{'version':<18}{'released':<26}arithmetic")
+    for dist_name, arithmetic in sorted(
+        rows, key=lambda row: _released(row[0]), reverse=True
+    ):
+        print(
+            f"{dist_name:<20}{version(dist_name):<18}"
+            f"{_released(dist_name):<26}{arithmetic}"
+        )
+    print()
 
 
 # every published vector, cycled, rather than one input repeated: a row that
@@ -224,7 +258,7 @@ def _artifact(module_name: str) -> str:
 PYCOIN_NATIVE_MIXINS = {
     "pycoin.ecdsa.native.secp256k1": (
         "ctypes bindings to a libsecp256k1 it neither bundles nor builds: "
-        "btclib_secp256k1's, already in this process, which a PyPI install "
+        "btclib-secp256k1's, already in this process, which a PyPI install "
         "does not give"
     ),
     "pycoin.ecdsa.native.openssl": "OpenSSL's libcrypto ctypes bindings",
@@ -297,41 +331,33 @@ def pycoin_calls(c: int, python: int) -> int:
     return c if PYCOIN_REACHES_C else python
 
 
-def report_setup() -> None:
-    """Print which arithmetic each row reached, and how it reached it.
-
-    Not a version number: `report_provenance` above prints those, for every
-    package here, and this block answers the question a version cannot.
-    Every line names the same two things in the same order -- the code that
-    does the arithmetic, and the mechanism the row calls it through -- so
-    that two rows can be read against each other without translating
-    between one line's vocabulary and the next.
-
-    A benchmark result is not among them. What is here is what the numbers
-    below mean nothing without.
-    """
-    print("arithmetic under each row")
-    print(
-        f"  {'btclib':<20}bundled libsecp256k1 {_pinned('btclib-secp256k1')} "
-        f"cffi bindings, {_artifact('_btclib_secp256k1')}"
+def _arithmetic_btclib() -> str:
+    """Name the library btclib's rows call, and the extension it is in."""
+    return (
+        f"bundled libsecp256k1 {_pinned('btclib-secp256k1')} cffi bindings, "
+        f"{_artifact('_btclib_secp256k1')}"
     )
-    print(f"  {'ecdsa':<20}pure Python; no bindings of any kind, bundled or built")
-    print(f"  {'pycoin':<20}{_pycoin_backend()}")
-    print(f"  {'buidl':<20}{_buidl_backend()}")
-    print(
-        f"  {'embit':<20}bundled secp256k1-zkp {_pinned('embit')} ctypes bindings, "
+
+
+def _arithmetic_embit() -> str:
+    """Name the library embit loads, which is a fork rather than upstream."""
+    return (
+        f"bundled secp256k1-zkp {_pinned('embit')} ctypes bindings, "
         f"{Path(str(embit.util.ctypes_secp256k1._find_library())).name}"
     )
+
+
+def _arithmetic_bitcoinlib() -> str:
+    """Name what python-bitcoinlib loaded, and what it declined to load."""
     optional = (
         "a libsecp256k1 it found and does not use"
         if bitcoinlib_key.is_libsec256k1_available()
         else "no libsecp256k1 bundled, built or found"
     )
-    print(
-        f"  {'python-bitcoinlib':<20}OpenSSL's libcrypto ctypes bindings, "
+    return (
+        "OpenSSL's libcrypto ctypes bindings, "
         f"{Path(str(bitcoinlib_key._ssl._name)).name}; {optional}"
     )
-    print()
 
 
 # --- ECDSA sign and verify ---------------------------------------------
@@ -1004,8 +1030,6 @@ def table(
 def main() -> None:
     """Print every table, one operation at a time."""
     report_provenance()
-
-    report_setup()
 
     report_method()
 

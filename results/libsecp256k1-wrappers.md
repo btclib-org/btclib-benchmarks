@@ -27,7 +27,7 @@ secp256k1         0.14.0    2021-11-06   9526874d, pre-v0.1.0    cffi      _libs
 ## This run
 
 ```text
-when    : 2026-08-14 23:16 CEST (21:16 UTC)
+when    : 2026-08-14 23:39 CEST (21:39 UTC)
 python  : 3.13.14
 method  : five rounds per row, minimum kept; nothing else repeated
 command : uv run python scripts/libsecp256k1_wrappers.py
@@ -57,38 +57,38 @@ what a timing contains
 
 1. ECDSA sign (32-byte digest)
                                    μs/call     vs best   spread
-  dsa_sign_secp256k1                 11.43       1.00x    0.4%   (5x20000 calls)
-  dsa_sign_coincurve                 11.61       1.02x   16.1%   (5x20000 calls)
-  dsa_sign_btclib_secp256k1          12.05       1.05x    0.2%   (5x20000 calls)
-  dsa_sign_electrum_ecc              27.46       2.40x    0.5%   (5x20000 calls)
+  dsa_sign_secp256k1                 11.38       1.00x    0.9%   (5x20000 calls)
+  dsa_sign_coincurve                 11.66       1.02x    1.3%   (5x20000 calls)
+  dsa_sign_btclib_secp256k1          12.02       1.06x    1.4%   (5x20000 calls)
+  dsa_sign_electrum_ecc              27.45       2.41x    0.7%   (5x20000 calls)
 
 2. ECDSA verify (32-byte digest, the public key parsed per call)
                                    μs/call     vs best   spread
-  dsa_secp256k1                      11.78       1.00x    1.6%   (5x20000 calls)
-  dsa_btclib_secp256k1               14.10       1.20x    0.3%   (5x20000 calls)
-  dsa_coincurve                      14.13       1.20x    0.2%   (5x20000 calls)
-  dsa_electrum_ecc                   16.08       1.36x    0.1%   (5x20000 calls)
+  dsa_secp256k1                      11.76       1.00x    0.7%   (5x20000 calls)
+  dsa_coincurve                      14.11       1.20x    1.1%   (5x20000 calls)
+  dsa_btclib_secp256k1               14.13       1.20x    0.2%   (5x20000 calls)
+  dsa_electrum_ecc                   16.04       1.36x    0.2%   (5x20000 calls)
 
 3. BIP340 sign (32-byte message)
                                    μs/call     vs best   spread
-  ssa_sign_secp256k1                  7.81       1.00x    0.2%   (5x20000 calls)
-  ssa_sign_btclib_secp256k1          15.94       2.04x    0.5%   (5x20000 calls)
-  ssa_sign_coincurve                 27.40       3.51x    0.4%   (5x20000 calls)
-  ssa_sign_electrum_ecc              31.44       4.03x    2.2%   (5x20000 calls)
+  ssa_sign_secp256k1                  7.78       1.00x    0.3%   (5x20000 calls)
+  ssa_sign_btclib_secp256k1          15.91       2.05x    0.3%   (5x20000 calls)
+  ssa_sign_coincurve                 27.36       3.52x    0.2%   (5x20000 calls)
+  ssa_sign_electrum_ecc              31.44       4.04x    0.4%   (5x20000 calls)
 
 4. BIP340 verify (32-byte message, the public key parsed per call)
                                    μs/call     vs best   spread
-  ssa_coincurve                      14.62       1.00x    0.4%   (5x20000 calls)
-  ssa_btclib_secp256k1               14.62       1.00x    0.2%   (5x20000 calls)
-  ssa_secp256k1                      15.07       1.03x    0.3%   (5x20000 calls)
-  ssa_electrum_ecc                   18.56       1.27x    0.5%   (5x20000 calls)
+  ssa_coincurve                      14.54       1.00x    5.1%   (5x20000 calls)
+  ssa_btclib_secp256k1               14.60       1.00x    0.2%   (5x20000 calls)
+  ssa_secp256k1                      15.07       1.04x    0.3%   (5x20000 calls)
+  ssa_electrum_ecc                   18.58       1.28x   11.6%   (5x20000 calls)
 
 5. public key tweak by a scalar, which is BIP32's step
                                    μs/call     vs best   spread
   tweak_coincurve                    10.40       1.00x    0.3%   (5x20000 calls)
-  tweak_btclib_secp256k1             10.59       1.02x    0.2%   (5x20000 calls)
-  tweak_secp256k1                    13.93       1.34x    0.4%   (5x20000 calls)
-  tweak_electrum_ecc                 22.32       2.15x    1.0%   (5x20000 calls)
+  tweak_btclib_secp256k1             10.57       1.02x    0.3%   (5x20000 calls)
+  tweak_secp256k1                    13.93       1.34x    1.1%   (5x20000 calls)
+  tweak_electrum_ecc                 22.36       2.15x    1.4%   (5x20000 calls)
 ```
 
 ## What it shows

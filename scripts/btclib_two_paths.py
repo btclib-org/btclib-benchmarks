@@ -211,13 +211,20 @@ def python_arithmetic_only() -> None:
 
 
 def pubkey() -> None:
-    """Time the public key btclib derives from a private key."""
+    """Time a public key derived from a private key, SEC bytes out.
+
+    `generator_mult` below is the multiplication inside this one, without
+    the serialization: the two rows together say what each half costs.
+    """
     prvkey, _expected = next(PUBKEY_CYCLE)
     pub_keyinfo_from_prv_key(prvkey)[0]
 
 
 def point_parse() -> None:
-    """Time parsing a compressed public key, which recovers y from x."""
+    """Time parsing a compressed public key, which recovers y from x.
+
+    The reverse of what `pubkey_from_prvkey` serializes.
+    """
     pubkey_bytes, _expected = next(POINT_PARSE_CYCLE)
     sec_point.point_from_octets(pubkey_bytes)
 
@@ -352,15 +359,15 @@ def benchmark(func: Callable[[], None], mult_: int) -> float:
 # own overhead is a rounding error, short enough that every operation
 # through both arithmetics is a run somebody will wait for
 OPERATIONS = (
-    ("pubkey", pubkey, 25, 2),
-    ("point_parse", point_parse, 50, 5),
-    ("mult", mult, 25, 2),
+    ("pubkey_from_prvkey", pubkey, 25, 2),
+    ("pubkey_parse", point_parse, 50, 5),
+    ("generator_mult", mult, 25, 2),
     ("dsa_sign", dsa_sign, 25, 2),
     ("dsa_verify", dsa_verify, 25, 1),
     ("dsa_recover", dsa_recover, 10, 1),
     ("ssa_sign", ssa_sign, 25, 2),
     ("ssa_verify", ssa_verify, 25, 1),
-    ("dh", dh_shared_secret, 25, 2),
+    ("dh_shared_secret", dh_shared_secret, 25, 2),
     ("bms_sign", bms_sign, 15, 2),
     ("bms_verify", bms_verify, 15, 1),
     ("taproot_tweak", taproot_tweak, 25, 2),

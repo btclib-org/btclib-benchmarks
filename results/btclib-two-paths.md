@@ -3,7 +3,7 @@
 ## This run
 
 ```text
-when    : 2026-08-14 23:34 CEST (21:34 UTC)
+when    : 2026-08-14 23:39 CEST (21:39 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/btclib_two_paths.py
@@ -30,24 +30,24 @@ and every operation holding one that a caller would call is below.
 btclib 2026.9 (bindings 0.8.0.2), measured as μs/call, sorted on the ratio
 
                       libsecp256k1   pure python     ratio
-dsa_sign                    18.998        173.64      9.1x
-bms_sign                    30.229        339.05     11.2x
-ssa_sign                    24.679        320.98     13.0x
-pubkey                      10.260        148.11     14.4x
-ellswift_decode             9.3432        138.89     14.9x
-mult                        8.1802        138.17     16.9x
-taproot_tweak               17.165        306.25     17.8x
-point_parse                 3.8501        76.411     19.8x
-ssa_verify                  23.439        678.19     28.9x
-dsa_verify                  23.040        667.02     29.0x
-dh                          13.871        544.55     39.3x
-bms_verify                  23.777        1321.7     55.6x
-dsa_recover                 42.763        3210.0     75.1x
+dsa_sign                    16.546        160.62      9.7x
+bms_sign                    28.170        324.95     11.5x
+ssa_sign                    25.416        323.07     12.7x
+taproot_tweak               17.789        236.33     13.3x
+pubkey_from_prvkey          10.275        149.94     14.6x
+ellswift_decode             9.3297        145.37     15.6x
+generator_mult              8.2929        141.65     17.1x
+pubkey_parse                3.5835        74.935     20.9x
+bms_verify                  24.035        714.60     29.7x
+dsa_recover                 41.546        1325.2     31.9x
+ssa_verify                  20.939        681.12     32.5x
+dsa_verify                  19.907        678.35     34.1x
+dh_shared_secret            14.045        548.47     39.1x
 ```
 
 ## What it shows
 
-No ratio is under 1.0x: the bindings win every operation on this machine.
+No ratio is under 1.0x: the bindings win every operation.
 What the column spreads over is the part worth reading. Verification
 separates the two arithmetics further than signing does, in both schemes;
 public-key recovery, which is verification and then some, separates them
@@ -76,11 +76,8 @@ fingerprint, so a pair of rows for it would compare C against C with a Python
 step added. Its pair was far narrower than every other, which is what that
 looks like from the outside.
 
-That a row belongs here is therefore a property to prove.
-`tests/pure_python_path_test.py` replaces every bindings entry point with a
-function that raises, throws the switch, and calls every operation: a row that
-has kept a foot in C raises instead of answering. BIP32 derivation is timed in
-[the libraries table][libs] instead, where being C is the premise.
+BIP32 derivation is timed in [the libraries table][libs] instead, where being
+C is the premise.
 
 ## More benchmarks
 
