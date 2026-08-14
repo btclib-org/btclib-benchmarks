@@ -257,16 +257,15 @@ def test_bip340_verifying_a_message_of_another_size(
     the fixed-size entry point, which is the right call for the rows that
     time them and the wrong one for a message of another length.
     """
-    expected = vector["verification result"] == "TRUE"
-    try:
-        answer = SSA_VERIFIERS[package](
-            bytes.fromhex(vector["message"]),
-            bytes.fromhex(vector["public key"]),
-            bytes.fromhex(vector["signature"]),
-        )
-    except Exception:  # noqa: BLE001 - any refusal is a rejection
-        answer = False
-    assert answer == expected, vector["comment"]
+    # no `except` around this one, where the fixed-size test has one: all
+    # four of these vectors are valid, so there is no rejection to catch and
+    # a raise is a failure rather than an answer
+    answer = SSA_VERIFIERS[package](
+        bytes.fromhex(vector["message"]),
+        bytes.fromhex(vector["public key"]),
+        bytes.fromhex(vector["signature"]),
+    )
+    assert answer == (vector["verification result"] == "TRUE"), vector["comment"]
 
 
 # --- BIP32 --------------------------------------------------------------
