@@ -13,7 +13,10 @@ else -- pycoin is C there and Python here.
 
 ## How each row is held to Python
 
-`report_setup` prints this per row, once, above the tables.
+`report_provenance` prints this per row, in the column beside the version:
+every row here is Python, so the word belongs in the heading and what belongs
+beside each name is whatever made it true, which is different for each of them
+and is the only part a reader could doubt.
 
 - **btclib**: `curves.curve._libsecp256k1_available` is the switch every
   dispatch reads, so clearing it turns the delegation off everywhere at once.
@@ -72,36 +75,81 @@ os.environ["PYCOIN_NATIVE"] = "none"
 import time
 from collections.abc import Callable
 from hashlib import sha256
+from importlib.metadata import version
 from itertools import cycle
 
-import btclib
 import buidl.pecc
 import ecdsa
 import pycoin.symbols.btc
 import secp256k1lab.bip340
-from _provenance import report, report_method
+from _provenance import origin_of, report_method
 from _vectors import signing, verification
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
 from secp256k1lab.secp256k1 import G as LAB_G
 
+# the release each version was published on, recorded because no installed
+# metadata carries it: a wheel's METADATA has a Version and no date, and the
+# dist-info directory's mtime is when the package was installed here. Keyed
+# by the release it was read for, so an upgraded comparand prints
+# `unrecorded` rather than a date that has stopped being true.
+# secp256k1lab is on no index and is taken from a git tag, which is still a
+# release someone cut on a day, so it is recorded like the other four
+RELEASE_DATES = {
+    "secp256k1lab": ("1.0.0", "2025-03-26"),
+    "ecdsa": ("0.19.2", "2026-03-26"),
+    "pycoin": ("0.92718.20260405", "2026-04-05"),
+    "buidl": ("0.2.36", "2022-02-28"),
+}
+
+
+def _released(dist_name: str) -> str:
+    """Say when this build was published, or where it came from instead.
+
+    btclib resolves from its branch until 2026.9 is on PyPI, and a date would
+    be a claim about a release that has not happened: what the column says for
+    it is the branch and the commit, which is what a reader has to look up to
+    get these rows again. `scripts/bitcoin_libraries.py` prints the same
+    column by the same rule, over an overlapping set of packages.
+    """
+    if not (recorded := RELEASE_DATES.get(dist_name)):
+        # the branch and the commit, without the repository the package
+        # column has already named
+        return origin_of(dist_name).split()[-1]
+    return recorded[1] if version(dist_name) == recorded[0] else "unrecorded"
+
 
 def report_provenance() -> None:
-    """Say which build of each package these rows are about.
+    """Print one row per package: the build, and what holds it to Python.
 
-    Printed before any number: a released wheel and a working
-    tree satisfy the same requirement and resolve in silence, so
-    which one ran is something the output has to state rather
-    than something the reader assumes.
+    Printed before any number, because a released wheel and a working tree
+    satisfy the same requirement and resolve in silence. Not "pure Python" per
+    row: every row in these tables is, so the last column carries the
+    mechanism instead, which is the only part of the claim a reader could
+    doubt. pycoin's cell is read back rather than written down, a benchmark
+    that says Python on a row that loaded a shared object being worse than no
+    benchmark. Sorted newest release first.
     """
-    report(
-        ("btclib", btclib.__file__),
-        ("secp256k1lab", secp256k1lab.bip340.__file__),
-        ("ecdsa", ecdsa.__file__),
-        ("pycoin", pycoin.symbols.btc.__file__),
-        ("buidl", buidl.pecc.__file__),
+    rows = (
+        ("btclib", "its delegation to btclib-secp256k1's cffi bindings switched off"),
+        (
+            "pycoin",
+            f"PYCOIN_NATIVE=none before its import, resolving to {_pycoin_backend()}",
+        ),
+        ("buidl", "being imported as buidl.pecc, not buidl.ecc"),
+        ("ecdsa", "having no compiled backend at all"),
+        ("secp256k1lab", "having no compiled backend at all"),
     )
+    print(f"{'package':<16}{'version':<18}{'released':<19}held to Python by")
+    for dist_name, mechanism in sorted(
+        rows, key=lambda row: _released(row[0]), reverse=True
+    ):
+        print(
+            f"{dist_name:<16}{version(dist_name):<18}"
+            f"{_released(dist_name):<19}{mechanism}"
+        )
+    print()
 
 
 PYCOIN_GENERATOR = pycoin.symbols.btc.network.generator
@@ -184,30 +232,6 @@ def _pycoin_backend() -> str:
         if library is not None:
             return f"{library} -- PYCOIN_NATIVE did not take"
     return "pure Python"
-
-
-def report_setup() -> None:
-    """Print what holds each row to Python, having said once that all are.
-
-    Not a version number: `report_provenance` above prints those. Not "pure
-    Python" per row either -- every row in this table is, so the word
-    belongs in the heading and what belongs beside each name is the thing
-    that made it true, which is different for each of them and is the only
-    part a reader could doubt.
-    """
-    print("every row is pure Python arithmetic, held to it by")
-    print(
-        f"  {'btclib':<20}its delegation to btclib-secp256k1's cffi bindings "
-        "switched off"
-    )
-    print(
-        f"  {'pycoin':<20}PYCOIN_NATIVE=none before its import, resolving to "
-        f"{_pycoin_backend()}"
-    )
-    print(f"  {'buidl':<20}being imported as buidl.pecc, not buidl.ecc")
-    print(f"  {'ecdsa':<20}having no compiled backend at all")
-    print(f"  {'secp256k1lab':<20}having no compiled backend at all")
-    print()
 
 
 # --------------------------------------------------------------- pub key
@@ -387,13 +411,17 @@ def table(title: str, rows: tuple[tuple[str, Callable[[], None], int], ...]) -> 
 
     The order is the measurement's, which is what makes the table an answer
     rather than a list.
+
+    The unit is the column heading and not a suffix on every value, as the
+    other benchmarks print it: a word repeated down a column of five rows is
+    a column of that word.
     """
     us = {label: benchmark(func, calls) for label, func, calls in rows}
     against = min(us.values())
     print(f"\n{title}")
-    print(f"  {'':26s} {'':10s}      {'vs best':>8s}")
+    print(f"  {'':<26}{'μs/call':>10}{'vs best':>12}")
     for label, value in sorted(us.items(), key=lambda row: row[1]):
-        print(f"  {label:26s} {value:10.2f} μs   {value / against:8.1f}x")
+        print(f"  {label:<26}{value:10.2f}{value / against:11.1f}x")
 
 
 # the fixtures the third-party rows sign and verify, built once and
@@ -533,7 +561,6 @@ def main() -> None:
     ordering this script needs is that the switch precede every timing.
     """
     report_provenance()
-    report_setup()
     report_method()
     python_arithmetic_only()
 

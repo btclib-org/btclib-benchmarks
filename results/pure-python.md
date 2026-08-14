@@ -1,9 +1,28 @@
 # Every pure-Python implementation
 
+## The packages downloaded from PyPI
+
+```text
+package         version           released           held to Python by
+btclib          2026.9            main@a6988751392b  its delegation to btclib-secp256k1's cffi bindings switched off
+pycoin          0.92718.20260405  2026-04-05         PYCOIN_NATIVE=none before its import, resolving to pure Python
+ecdsa           0.19.2            2026-03-26         having no compiled backend at all
+secp256k1lab    1.0.0             2025-03-26         having no compiled backend at all
+buidl           0.2.36            2022-02-28         being imported as buidl.pecc, not buidl.ecc
+```
+
+Every row here is Python, so the word belongs in the heading rather than in
+five cells; the last column carries what makes it true, which is different
+for each of them and is the only part of the claim a reader could doubt.
+pycoin's cell is read back after the fact rather than written down: a
+benchmark that says Python on a row that loaded a shared object is worse
+than no benchmark. `secp256k1lab` is on no index and comes from its git
+tag, which is still a release somebody cut on a day.
+
 ## This run
 
 ```text
-when    : 2026-08-14 23:39 CEST (21:39 UTC)
+when    : 2026-08-15 00:17 CEST (22:17 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/pure_python.py
@@ -12,42 +31,19 @@ state   : a working desktop, browser and editor open — not a quiesced
           machine, which is the condition README.md says to distrust
 ```
 
-What `scripts/pure_python.py` printed on the machine named above: btclib's
-Python arithmetic, `secp256k1lab`, `python-ecdsa`, `pycoin` and
-`buidl.pecc`, each doing the same operation. Microseconds per call, fastest
-row first, and a ratio against whichever row came out quickest — no row
-here is C, so none of them is a reference line and none is named in
-advance.
-
-One run, kept whole — the block above the tables says what holds each row
-to Python, which is the claim the whole file rests on, and says it once:
-with every row Python, a row repeating the word would be a column of it.
-The numbers are an order of magnitude, never a figure to quote.
-
-The inputs are every BIP340 vector the file publishes, cycled: each call takes
-the next, so a row is an average over inputs nobody here chose. Both
-implementations that sign BIP340 are held to the signatures the specification
-publishes; ECDSA is not, RFC6979's nonce being btclib's own, so those rows
-stay checked against each other. btclib signs ECDSA twice, once per row: one
-signature, which is what the other implementations produce, and its own
-default beside it, which grinds until r fits in 32 bytes.
-
 ## The output
 
+Microseconds per call, fastest row first, and a ratio against whichever row
+came out quickest — no row here is C, so none of them is a reference line and
+none is named in advance.
+
+The inputs are every BIP340 vector the file publishes, cycled: each call takes
+the next, so a row is an average over inputs nobody here chose. btclib signs
+ECDSA twice, once per row: one signature, which is what the other
+implementations produce, and its own default beside it, which grinds until r
+fits in 32 bytes.
+
 ```text
-btclib              : 2026.9
-secp256k1lab        : 1.0.0
-ecdsa               : 0.19.2
-pycoin              : 0.92718.20260405
-buidl               : 0.2.36
-
-every row is pure Python arithmetic, held to it by
-  btclib              its delegation to btclib_secp256k1's cffi bindings switched off
-  pycoin              PYCOIN_NATIVE=none before its import, resolving to pure Python
-  buidl               being imported as buidl.pecc, not buidl.ecc
-  ecdsa               having no compiled backend at all
-  secp256k1lab        having no compiled backend at all
-
 what a timing contains
   one call per iteration, its answer discarded: no row checks
   itself, and no comparison is inside a measured loop
@@ -56,39 +52,39 @@ what a timing contains
 
 
 public key from a private key: a multiplication of the generator
-                                              vs best
-  btclib                         188.98 μs        1.0x
-  python-ecdsa                   216.76 μs        1.1x
-  secp256k1lab                   924.96 μs        4.9x
-  pycoin                        5923.47 μs       31.3x
-  buidl.pecc                   20893.75 μs      110.6x
+                               μs/call     vs best
+  btclib                        194.47        1.0x
+  python-ecdsa                  216.58        1.1x
+  secp256k1lab                  930.69        4.8x
+  pycoin                       6051.38       31.1x
+  buidl.pecc                  21012.79      108.1x
 
 ECDSA sign, over a 32-byte digest
-                                              vs best
-  btclib, one signature          167.46 μs        1.0x
-  python-ecdsa                   287.04 μs        1.7x
-  btclib, grinding (default)     623.43 μs        3.7x
-  pycoin                        6001.68 μs       35.8x
-  buidl.pecc                   29862.88 μs      178.3x
+                               μs/call     vs best
+  btclib, one signature         166.03        1.0x
+  python-ecdsa                  284.44        1.7x
+  btclib, grinding (default)    612.62        3.7x
+  pycoin                       5978.95       36.0x
+  buidl.pecc                  29727.18      179.0x
 
 ECDSA verify, over a 32-byte digest
-                                              vs best
-  btclib                         822.95 μs        1.0x
-  python-ecdsa                  1090.69 μs        1.3x
-  pycoin                       18958.38 μs       23.0x
-  buidl.pecc                   60908.78 μs       74.0x
+                               μs/call     vs best
+  btclib                        813.19        1.0x
+  python-ecdsa                 1093.71        1.3x
+  pycoin                      18815.58       23.1x
+  buidl.pecc                  61184.00       75.2x
 
 BIP340 sign, over a 32-byte message
-                                              vs best
-  btclib                         336.68 μs        1.0x
-  secp256k1lab                  7376.37 μs       21.9x
-  buidl.pecc                  110144.09 μs      327.1x
+                               μs/call     vs best
+  btclib                        330.57        1.0x
+  secp256k1lab                 7378.15       22.3x
+  buidl.pecc                 111120.56      336.2x
 
 BIP340 verify, over a 32-byte message
-                                              vs best
-  btclib                         686.32 μs        1.0x
-  secp256k1lab                  5128.88 μs        7.5x
-  buidl.pecc                   67834.38 μs       98.8x
+                               μs/call     vs best
+  btclib                        687.79        1.0x
+  secp256k1lab                 5138.28        7.5x
+  buidl.pecc                  68117.30       99.0x
 ```
 
 ## What it shows
