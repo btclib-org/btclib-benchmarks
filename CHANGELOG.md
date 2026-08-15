@@ -22,12 +22,12 @@ The release notes, which say what a user has to act on, are in
   a dependency. Here the comparands are what the project is for, and an
   alert names the package it is about.
 
-- **btclib-secp256k1's benchmark is `scripts/libsecp256k1_wrappers.py`
+- **btclib-secp256k1's benchmark is `scripts/libsecp256k1_bindings.py`
   now**, that repository having shipped one up to v0.8.0.1: it is the
   one of the four with a released ancestor, and the one HISTORY.md tells
   a reader what to do about. The other three have none.
 
-- **`scripts/libsecp256k1_wrappers.py` is wrapper against wrapper, and
+- **`scripts/libsecp256k1_bindings.py` is wrapper against wrapper, and
   nothing else.** Its released ancestor, btclib-secp256k1's
   `scripts/benchmark.py` up to v0.8.0.1, timed btclib's pure-Python
   arithmetic beside three bindings of libsecp256k1 — two questions in one
@@ -320,7 +320,7 @@ The release notes, which say what a user has to act on, are in
   `btclib_two_paths.py` divides each row by the quicker of its own pair,
   its rows being one operation through two paths — the fastest row of that
   whole table would divide a signature by a multiplication.
-  `libsecp256k1_wrappers.py` prints two decimals where the others print
+  `libsecp256k1_bindings.py` prints two decimals where the others print
   one, its rows all calling the same C and landing within a few percent
   where one decimal would read 1.0x down the whole column.
 

@@ -35,7 +35,7 @@ check there is, and a release is the moment to do it.
 uv run python scripts/btclib_two_paths.py
 uv run python scripts/bitcoin_libraries.py
 uv run python scripts/pure_python.py
-uv run python scripts/libsecp256k1_wrappers.py
+uv run python scripts/libsecp256k1_bindings.py
 ```
 
 Read each header before its numbers: the versions, and where each

@@ -34,7 +34,7 @@ BENCHMARKS = [
     "btclib_two_paths",
     "bitcoin_libraries",
     "pure_python",
-    "libsecp256k1_wrappers",
+    "libsecp256k1_bindings",
     "key_reuse",
 ]
 

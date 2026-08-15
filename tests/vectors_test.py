@@ -19,7 +19,7 @@ odd thing to have built.
 
 ## The configurations, and why one of them is a subprocess
 
-`scripts/bitcoin_libraries.py` and `scripts/libsecp256k1_wrappers.py` measure
+`scripts/bitcoin_libraries.py` and `scripts/libsecp256k1_bindings.py` measure
 these packages as installed, which is this process. `scripts/pure_python.py`
 and `scripts/btclib_two_paths.py` measure two of them with their C turned
 off, and neither switch can be undone: `PYCOIN_NATIVE` is read when pycoin

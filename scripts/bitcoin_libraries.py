@@ -41,7 +41,7 @@ lists, which is why the backend it resolved to is in the output.
 ## `bit` is not a row
 
 It installs, and its ECDSA is coincurve's libsecp256k1, which has a row of
-its own in `scripts/libsecp256k1_wrappers.py`. A `bit` row would add its
+its own in `scripts/libsecp256k1_bindings.py`. A `bit` row would add its
 wallet layer, not arithmetic.
 
 ## What is measured

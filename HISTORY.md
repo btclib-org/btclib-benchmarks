@@ -30,7 +30,7 @@ a process can answer.
 `scripts/benchmark.py` was part of that repository up to v0.8.0.1, with
 a `bench` dependency group installing what it measured against. Both are
 gone from it now, so `uv sync --group bench` there resolves nothing: the
-same benchmark is `scripts/libsecp256k1_wrappers.py` here, and README.md
+same benchmark is `scripts/libsecp256k1_bindings.py` here, and README.md
 has the commands.
 
 Two rows of it are not here, and are not meant to be: it timed btclib's
@@ -41,7 +41,7 @@ wrappers only, `electrum-ecc` among them.
 
 ### Installing needs autotools, not only pkg-config
 
-`electrum-ecc` is a comparand of `scripts/libsecp256k1_wrappers.py` and
+`electrum-ecc` is a comparand of `scripts/libsecp256k1_bindings.py` and
 ships no wheel: `uv sync` compiles the libsecp256k1 in its sdist, which
 runs `autogen.sh`. So `autoconf`, `automake` and `libtool` have to be
 present alongside the `pkg-config` and C toolchain the other two

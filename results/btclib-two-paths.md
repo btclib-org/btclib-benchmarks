@@ -110,7 +110,7 @@ C is the premise.
 Four other questions are published in `results/`, each with its own
 comparands:
 
-- [the libsecp256k1 bindings][wrappers] — four packages that wrap one C
+- [the libsecp256k1 bindings][bindings] — four packages that wrap one C
   library, and which revision of it each vendors
 - [python libraries][libs] — where bindings (if available) are just one
   component of a python library
@@ -119,7 +119,7 @@ comparands:
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
 
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
+[bindings]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-bindings.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md

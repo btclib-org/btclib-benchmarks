@@ -21,7 +21,7 @@ paragraph each, and none of the six is the same story:
 - **btclib** requires `btclib-secp256k1`, which bundles libsecp256k1 and
   compiles it into a cffi extension at install time, so a wheel from PyPI
   is enhanced without anything further being done to it. Which revision it
-  bundles is in [the bindings table][wrappers].
+  bundles is in [the bindings table][bindings].
 - **pycoin** bundles nothing and builds nothing. `pycoin.ecdsa.native` is a
   ctypes loader that asks the machine for a library by name, and a PyPI
   install therefore gets pure Python unless one is already there. Here one
@@ -212,7 +212,7 @@ from the backend found, for the reason its paragraph above gives.
 Four other questions are published in `results/`, each with its own
 comparands:
 
-- [the libsecp256k1 bindings][wrappers] — four packages that wrap one C
+- [the libsecp256k1 bindings][bindings] — four packages that wrap one C
   library, and which revision of it each vendors
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
   arithmetic against the bindings measured here
@@ -221,7 +221,7 @@ comparands:
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
 
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
+[bindings]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-bindings.md
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md

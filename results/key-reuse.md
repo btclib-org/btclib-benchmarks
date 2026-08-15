@@ -131,7 +131,7 @@ rather than an omission.
 Four other questions are published in `results/`, each with its own
 comparands:
 
-- [the libsecp256k1 bindings][wrappers] — four packages that wrap one C
+- [the libsecp256k1 bindings][bindings] — four packages that wrap one C
   library, and which revision of it each vendors
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
   arithmetic against the bindings measured here
@@ -140,7 +140,7 @@ comparands:
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
 
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
+[bindings]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-bindings.md
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md

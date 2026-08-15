@@ -124,7 +124,7 @@ def provenance() -> Provenance:
 
     The bindings' version is btclib-secp256k1's, that being what a caller
     installs; which revision of libsecp256k1 it bundled is recorded in
-    `scripts/libsecp256k1_wrappers.py`, against the release it was read
+    `scripts/libsecp256k1_bindings.py`, against the release it was read
     from, and one script naming a pin is enough.
     """
     stated = (

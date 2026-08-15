@@ -33,7 +33,7 @@ secp256k1         0.14.0   2021-11-06  9526874d, pre-v0.1.0  cffi      _libsecp2
 when    : 2026-08-15 06:19 CEST (04:19 UTC)
 python  : 3.13.14
 method  : 5 rounds per row, minimum kept; nothing else repeated
-command : uv run python scripts/libsecp256k1_wrappers.py
+command : uv run python scripts/libsecp256k1_bindings.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 state   : a working desktop, browser and editor open — not a quiesced
           machine, which is the condition README.md says to distrust

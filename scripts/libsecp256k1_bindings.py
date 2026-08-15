@@ -92,7 +92,7 @@ a machine whose state they know.
 
 ## What a run leaves behind
 
-The numbers are written to `results/libsecp256k1-wrappers.json` as this
+The numbers are written to `results/libsecp256k1-bindings.json` as this
 finishes, and `scripts/render.py` writes the page beside it from that file
 alone. So the prose around a table is rewritten and re-published
 without a machine and without a number being retyped: measuring and

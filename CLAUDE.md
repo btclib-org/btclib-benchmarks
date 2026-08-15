@@ -29,7 +29,7 @@ Five benchmarks, one question each:
   Python bitcoin libraries
 - `scripts/pure_python.py` — every pure-Python implementation of one
   operation, bindings as the reference line
-- `scripts/libsecp256k1_wrappers.py` — btclib_secp256k1 against the other
+- `scripts/libsecp256k1_bindings.py` — btclib_secp256k1 against the other
   wrappers of the same C library, and which revision of it each vendors
 - `scripts/key_reuse.py` — what a verifier pays per signature under a key
   it already has, raw against prepared, on both paths and against
@@ -92,11 +92,11 @@ machine, and what else was running on it.
   btclib's dispatch off process-wide and cannot be undone: it belongs
   inside `main()`, after every row that is meant to reach the bindings.
   At module level it would leave every later test in the process
-  measuring Python. `libsecp256k1_wrappers.py` does not import btclib at
+  measuring Python. `libsecp256k1_bindings.py` does not import btclib at
   all any more, and that is deliberate — a table of wrappers has no
   pure-Python row to switch for.
 - **The wrapper rows carry the libsecp256k1 revision each package
-  vendors**, `LIBSECP256K1_PINS` in `libsecp256k1_wrappers.py` holding
+  vendors**, `LIBSECP256K1_PINS` in `libsecp256k1_bindings.py` holding
   it: three of the four link the library into a cffi extension, where
   nothing at run time can say which revision that was. Each pin is keyed
   by the release it was read from, so an upgraded comparand prints

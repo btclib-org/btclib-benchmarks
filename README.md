@@ -13,7 +13,7 @@ Five benchmarks, each answering a different question:
   bitcoin libraries, over curve operations and the address encodings
 - **`pure_python.py`** — every pure-Python implementation of the same
   operation, against each other
-- **`libsecp256k1_wrappers.py`** — btclib-secp256k1 against the other
+- **`libsecp256k1_bindings.py`** — btclib-secp256k1 against the other
   wrappers of the same C library: `coincurve` and `secp256k1-py` through
   cffi, `electrum-ecc` through ctypes
 - **`key_reuse.py`** — what the second signature under the same key
@@ -111,7 +111,7 @@ a person does, on a machine whose state they know.
 
 ### The same C library is not the same binary
 
-`libsecp256k1_wrappers.py` compares four packages that all wrap
+`libsecp256k1_bindings.py` compares four packages that all wrap
 `bitcoin-core/secp256k1`, which is true of the API and not of what is
 linked: each vendors a revision of its own, and they are not the same
 revision. So that script prints, per row, which one is underneath it and
@@ -131,7 +131,7 @@ ratio against its fastest row, never against btclib's:
 - [btclib's two paths][two-paths]
 - [btclib against the other bitcoin libraries][libraries]
 - [every pure-Python implementation][pure]
-- [the libsecp256k1 wrappers][wrappers]
+- [the libsecp256k1 bindings][bindings]
 - [one key, every signature under it][reuse]
 
 The machine is named in each file, and so is what else was running on it.
@@ -150,7 +150,7 @@ both commands.
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
 [libraries]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
+[bindings]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-bindings.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
 
 ## Licence

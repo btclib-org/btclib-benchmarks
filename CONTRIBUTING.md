@@ -175,7 +175,7 @@ What it does check is what survives being automated:
 - **loop counts are per row** wherever a table mixes Python with C: the
   two differ by orders of magnitude, and one shared count either takes
   minutes or measures the clock's own resolution. A table whose rows are
-  all C can share one count, and `libsecp256k1_wrappers.py` does. Where
+  all C can share one count, and `libsecp256k1_bindings.py` does. Where
   the counts differ they print beside their rows, sorting putting rows
   three orders of magnitude apart next to each other. A row whose backend
   the script does not decide carries a count *per backend* and picks
