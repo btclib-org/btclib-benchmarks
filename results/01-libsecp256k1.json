@@ -5,7 +5,7 @@
     "when": "2026-08-15T07:52:36+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
-    "method": "30 rounds per row, minimum kept; nothing else repeated",
+    "method": "the quickest of the rounds kept; nothing else repeated",
     "command": "uv run python scripts/01-libsecp256k1.py",
     "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
   },

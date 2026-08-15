@@ -32,7 +32,7 @@ secp256k1         0.14.0   2021-11-06  9526874d, pre-v0.1.0  cffi      _libsecp2
 ```text
 when    : 2026-08-15 07:52 CEST (05:52 UTC)
 python  : 3.13.14
-method  : 30 rounds per row, minimum kept; nothing else repeated
+method  : the quickest of the rounds kept; nothing else repeated
 command : uv run python scripts/01-libsecp256k1.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 ```
@@ -57,35 +57,37 @@ takes the next vector's secret key as the scalar.
 
 <!-- output: begin -->
 ```text
-1. ECDSA sign (32-byte digest), 30x20000 calls each row
+30 rounds per row, 20000 calls each round
+
+1. ECDSA sign (32-byte digest)
                        μs/call        sd     vs best
   secp256k1              11.22    ± 0.16       1.00x
   coincurve              11.30    ± 0.07       1.01x
   btclib_secp256k1       11.99    ± 0.01       1.07x
   electrum_ecc           27.26    ± 0.53       2.43x
 
-2. ECDSA verify (32-byte digest, the public key parsed per call), 30x20000 calls each row
+2. ECDSA verify (32-byte digest, the public key parsed per call)
                        μs/call        sd     vs best
   secp256k1              11.73    ± 0.05       1.00x
   coincurve              14.06    ± 0.07       1.20x
   btclib_secp256k1       14.08    ± 0.01       1.20x
   electrum_ecc           15.96    ± 0.05       1.36x
 
-3. BIP340 sign (32-byte message), 30x20000 calls each row
+3. BIP340 sign (32-byte message)
                        μs/call        sd     vs best
   secp256k1               7.80    ± 0.18       1.00x
   btclib_secp256k1       15.85    ± 0.03       2.03x
   coincurve              27.31    ± 0.08       3.50x
   electrum_ecc           31.42    ± 0.41       4.03x
 
-4. BIP340 verify (32-byte message, the public key parsed per call), 30x20000 calls each row
+4. BIP340 verify (32-byte message, the public key parsed per call)
                        μs/call        sd     vs best
   coincurve              14.58    ± 0.03       1.00x
   btclib_secp256k1       14.58    ± 0.03       1.00x
   secp256k1              15.06    ± 0.01       1.03x
   electrum_ecc           18.53    ± 0.50       1.27x
 
-5. public key tweak by a scalar, which is BIP32's step, 30x20000 calls each row
+5. public key tweak by a scalar, which is BIP32's step
                        μs/call        sd     vs best
   coincurve              10.37    ± 0.02       1.00x
   btclib_secp256k1       10.56    ± 0.03       1.02x

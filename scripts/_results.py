@@ -416,25 +416,47 @@ def _call_note(row: Timing) -> str:
     return f"   ({counted} calls)"
 
 
-def _shared_call_note(rows: list[Timing]) -> str:
-    """Say how many calls a row is the average of, where every row says one.
+def counted_once(tables: Sequence[Table]) -> str:
+    """Say how many calls every row is the average of, where they agree.
 
-    A count repeated down a column is a column of that count. Where the
-    rows of a table differ -- which is every table whose comparands are
+    A count repeated down a column is a column of that count, and repeated
+    again in every title is that column turned sideways. So where a whole
+    page shares one it is said above the tables and nowhere else.
+
+    Where the rows differ -- which is every page whose comparands are
     orders of magnitude apart, a count sized for one measuring nothing on
-    another -- there is nothing to hoist, and each row keeps its own.
+    another -- there is nothing to hoist and each row keeps its own.
     """
-    counts = {_call_note(row) for row in rows}
+    counts = {
+        (row.rounds, row.calls)
+        for table in tables
+        for row in table.rows
+        if isinstance(row, Timing)
+    }
     if len(counts) != 1:
         return ""
-    return counts.pop().strip().removeprefix("(").removesuffix(")")
+    return counted_calls(*counts.pop())
 
 
-def rendered_ratios(table: Ratios, width: int) -> str:
+def counted_calls(rounds: int | None, calls: int | None) -> str:
+    """Return the line a page states its call count in, or nothing.
+
+    Taken by a script from its own constants before it has measured
+    anything, and by `counted_once` from the run afterwards, so that what
+    a person watches and what the page carries are the one sentence.
+    """
+    if calls is None:
+        return ""
+    if rounds is None:
+        return f"{calls} calls each row"
+    return f"{rounds} rounds per row, {calls} calls each round"
+
+
+def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
     """Return one operation's rows, quickest first, ratioed against the best.
 
-    The call count goes in the title where every row shares one, and stays
-    beside the rows where they do not.
+    `counted` says the page has already stated the call count above every
+    table, which is what `counted_once` decides.
     """
     quickest = min(row.us_per_call for row in table.rows)
     spreads = any(row.spread is not None for row in table.rows)
@@ -443,9 +465,7 @@ def rendered_ratios(table: Ratios, width: int) -> str:
     if deviations:
         heading += f"{'sd':>10}"
     heading += f"{'vs best':>12}"
-    shared = _shared_call_note(table.rows)
-    title = f"{table.title}, {shared} each row" if shared else table.title
-    lines = [title, heading + (f"{'spread':>9}" if spreads else "")]
+    lines = [table.title, heading + (f"{'spread':>9}" if spreads else "")]
     for row in sorted(table.rows, key=lambda row: row.us_per_call):
         ratio = row.us_per_call / quickest
         line = f"  {row.label:<{width}}{row.us_per_call:10.2f}"
@@ -454,7 +474,7 @@ def rendered_ratios(table: Ratios, width: int) -> str:
         line += f"{ratio:11.{table.decimals}f}x"
         if row.spread is not None:
             line += f"{row.spread:8.1%}"
-        lines.append((line if shared else line + _call_note(row)).rstrip())
+        lines.append((line if counted else line + _call_note(row)).rstrip())
     return "\n".join(lines)
 
 
@@ -506,10 +526,10 @@ def rendered_break_even(table: BreakEven, width: int) -> str:
     return "\n".join(lines)
 
 
-def rendered_table(table: Table, width: int) -> str:
+def rendered_table(table: Table, width: int, *, counted: bool = False) -> str:
     """Return whichever of the three shapes a table is."""
     if isinstance(table, Ratios):
-        return rendered_ratios(table, width)
+        return rendered_ratios(table, width, counted=counted)
     if isinstance(table, Pairs):
         return rendered_pairs(table, width)
     return rendered_break_even(table, width)
@@ -525,7 +545,13 @@ def rendered_output(measurement: Measurement) -> str:
     what the page carries.
     """
     width = width_for(labels_of(measurement.tables))
-    blocks = [rendered_table(table, width) for table in measurement.tables]
+    counted = counted_once(measurement.tables)
+    blocks = [
+        rendered_table(table, width, counted=bool(counted))
+        for table in measurement.tables
+    ]
+    if counted:
+        blocks.insert(0, counted)
     if measurement.timing_note:
         blocks.insert(0, "\n".join(measurement.timing_note))
     return "\n\n".join(blocks)

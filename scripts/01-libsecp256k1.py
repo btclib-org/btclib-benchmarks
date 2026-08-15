@@ -124,6 +124,7 @@ from _results import (
     Provenance,
     Ratios,
     Timing,
+    counted_calls,
     labels,
     page_of,
     rendered_provenance,
@@ -665,6 +666,9 @@ def main() -> None:
     packages = provenance()
     print(rendered_provenance(packages))
     print()
+    # the call count, once, above every table: `rendered_output` puts it
+    # in the same place when the page is built from the saved run
+    print(counted_calls(ROUNDS, CALLS), end="\n\n")
 
     width = width_for(
         [label for _, rows in TABLES for label in labels([f.__name__ for f in rows])]
@@ -672,7 +676,7 @@ def main() -> None:
     tables = []
     for title, rows in TABLES:
         table = measured(title, rows)
-        print(rendered_table(table, width))
+        print(rendered_table(table, width, counted=True))
         print()
         tables.append(table)
 
