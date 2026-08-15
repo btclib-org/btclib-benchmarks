@@ -140,6 +140,7 @@ from _results import (
     Provenance,
     Ratios,
     Timing,
+    Unavailable,
     labels,
     page_of,
     rendered_provenance,
@@ -1045,7 +1046,7 @@ def measured(title: str, rows: Rows) -> Ratios:
     of what a row is, and sorting mixes rows whose counts differ by orders
     of magnitude.
     """
-    timings = []
+    timings: list[Timing | Unavailable] = []
     for label, (func, calls) in zip(labels_of(rows), rows, strict=True):
         value, spread = benchmark(func, calls)
         timings.append(

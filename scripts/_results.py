@@ -100,6 +100,20 @@ class Timing:
 
 
 @dataclass(frozen=True)
+class Unavailable:
+    """One row of a table that was not measured, the package having no call.
+
+    Printed as `NA` where a number would be, and sorted under every row
+    that has one. A benchmark can always reach past a package into the C
+    it wraps and time that, and the number would be real; what it would
+    not be is the package's, and a reader comparing wrappers is asking
+    what each one offers rather than what its dependency can do.
+    """
+
+    label: str
+
+
+@dataclass(frozen=True)
 class Ratios:
     """Rows of one operation, to be printed fastest first.
 
@@ -114,7 +128,7 @@ class Ratios:
     """
 
     title: str
-    rows: list[Timing]
+    rows: list[Timing | Unavailable]
     decimals: int = 1
 
 
@@ -461,15 +475,16 @@ def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
     `counted` says the page has already stated the call count above every
     table, which is what `counted_once` decides.
     """
-    quickest = min(row.us_per_call for row in table.rows)
-    spreads = any(row.spread is not None for row in table.rows)
-    deviations = any(row.deviation is not None for row in table.rows)
+    timed = [row for row in table.rows if isinstance(row, Timing)]
+    quickest = min(row.us_per_call for row in timed)
+    spreads = any(row.spread is not None for row in timed)
+    deviations = any(row.deviation is not None for row in timed)
     heading = f"  {'':<{width}}{'μs/call':>10}"
     if deviations:
         heading += f"{'sd':>10}"
     heading += f"{'vs best':>12}"
     lines = [table.title, heading + (f"{'spread':>9}" if spreads else "")]
-    for row in sorted(table.rows, key=lambda row: row.us_per_call):
+    for row in sorted(timed, key=lambda row: row.us_per_call):
         ratio = row.us_per_call / quickest
         line = f"  {row.label:<{width}}{row.us_per_call:10.2f}"
         if row.deviation is not None:
@@ -478,6 +493,13 @@ def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
         if row.spread is not None:
             line += f"{row.spread:9.2f}"
         lines.append((line if counted else line + _call_note(row)).rstrip())
+    # under the numbers, and with none of the columns that follow one: a
+    # row without a measurement has no ratio to state and no scatter
+    lines += [
+        f"  {row.label:<{width}}{'NA':>10}"
+        for row in table.rows
+        if isinstance(row, Unavailable)
+    ]
     return "\n".join(lines)
 
 
@@ -576,7 +598,9 @@ def _table_as_json(table: Table) -> dict[str, object]:
             "title": table.title,
             "decimals": table.decimals,
             "rows": [
-                {
+                {"label": row.label, "unavailable": True}
+                if isinstance(row, Unavailable)
+                else {
                     key: value
                     for key, value in (
                         ("label", row.label),
@@ -626,7 +650,9 @@ def _table_from_json(saved: dict[str, object]) -> Table:
             title=title,
             decimals=int(str(saved["decimals"])),
             rows=[
-                Timing(
+                Unavailable(label=str(row["label"]))
+                if row.get("unavailable")
+                else Timing(
                     label=str(row["label"]),
                     us_per_call=float(row["us_per_call"]),
                     spread=None if row.get("spread") is None else float(row["spread"]),

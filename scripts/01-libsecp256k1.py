@@ -20,7 +20,9 @@ Measured are ECDSA and BIP340 signing and verification, a public key tweaked
 by a scalar, which is BIP32's step -- none of the four implements BIP32
 itself, and all four expose the primitive it is built from -- and the parse
 of a public key on its own, which is the step the verification and tweak
-rows repeat per call. `electrum-ecc` has no tweak-add on `ECPubkey`, so it
+rows repeat per call -- the verification tables taking the uncompressed
+65-byte key, which is the one every row of the two parses. `electrum-ecc`
+has no tweak-add on `ECPubkey`, so it
 reaches the same point as a scalar times the generator plus an addition: two
 crossings where the others make one.
 
@@ -32,12 +34,11 @@ costs -- and the parse tables do the same for a public key, 33 bytes against
 65: the compressed form makes the parser solve for y, and the uncompressed
 one hands it over.
 
-Not every API spells both. `coincurve` signs and verifies in DER alone, and
-`electrum-ecc` in the compact form alone, so the missing half of each is
-reached through the cffi or ctypes bindings that package's own method calls,
-serialized the other way. What that costs is the same C function either
-way -- what it says is which of the two encodings the wrapper leaves its
-caller to reach past it for.
+Not every API spells both. `coincurve` signs and verifies in DER alone, so
+its rows in the compact tables are `NA`; `electrum-ecc` signs in the compact
+form and carries its own converter to DER, so both of its rows are its own
+calls. Which encodings a wrapper offers is part of what it is, and a table
+that filled the gap from the C underneath would hide exactly that.
 
 ## One input per call, and no two tables over the same ones
 
@@ -57,10 +58,18 @@ published vector proves nothing here that another input would not, while what
 this table is read for -- the boundary crossing -- is the same for every
 input. What vectors are for is correctness, and correctness is `tests/`.
 
+Only the package's own API is measured, and where it has no such call the
+row is `NA` rather than a number: coincurve signs and verifies ECDSA in DER
+alone, so it has no row in the two compact tables. Reaching into the cffi or
+ctypes bindings underneath would produce a number, and the number would be
+libsecp256k1's rather than the wrapper's -- what a reader comparing wrappers
+asks is what each one offers.
+
 `electrum-ecc` is the only one of the four offering low-r grinding, so its
-row is `grind=False`: without it, its signing time would not be comparable
-with the other three, which sign once. The tables about libraries carry the
-distinction the other way, as a pair of rows, because there both btclib and
+row is `grind_r_value=False`: without it, its signing time would not be
+comparable with the other three, which sign once. The tables about libraries
+carry the distinction the other way, as a pair of rows, because there both
+btclib and
 embit grind by default -- two grinding libraries are worth comparing to each
 other, and one is not.
 
@@ -117,16 +126,15 @@ submodule it just compiled -- would let this row read what it now asserts.
 ## Correctness is not measured here
 
 A timed function calls one API and discards what it returns. It compares
-nothing, because a comparison inside the loop is time attributed to the
-wrapper that did not spend it, and a row that checks itself is measuring the
-check -- which is what coincurve's `sign_schnorr`, electrum-ecc's
-`schnorr_sign` and electrum-ecc's `ecdsa_sign` all do: each verifies the
-signature it just made before returning it, and neither convenience method
-lets a caller decline that. Tables 1 and 2's rows for those three calls go
-around it instead, into the same C binding the convenience method itself
-calls, and stop before the verification appended to it -- what they measure
-is the sign the wrapper offers, not the sign plus a check this project's
-own tests already make.
+nothing of its own, because a comparison inside the loop is time attributed
+to the wrapper that did not spend it.
+
+What a wrapper does inside its own call is another matter, and is measured:
+coincurve's `sign_schnorr` and electrum-ecc's `schnorr_sign` and `ecdsa_sign`
+each verify the signature they just made before returning it, and none of the
+three lets a caller decline that. It is part of what signing through those
+packages costs, so it is in their rows -- reaching past the method into the C
+underneath would time something the package does not offer.
 
 Nothing below asserts, either -- not in a timed function and not in the
 fixtures. Whether these packages answer correctly is
@@ -157,7 +165,6 @@ from __future__ import annotations
 import sys
 import time
 from collections.abc import Callable
-from ctypes import byref, c_size_t, create_string_buffer
 from hashlib import sha256
 from importlib.metadata import version
 from itertools import cycle
@@ -174,6 +181,7 @@ from _results import (
     Provenance,
     Ratios,
     Timing,
+    Unavailable,
     counted_calls,
     labels,
     page_of,
@@ -183,10 +191,6 @@ from _results import (
     taken_now,
     width_for,
 )
-from coincurve._libsecp256k1 import ffi as _coincurve_ffi
-from coincurve._libsecp256k1 import lib as _coincurve_lib
-from coincurve.context import GLOBAL_CONTEXT as _coincurve_ctx
-from electrum_ecc.ecc_fast import _libsecp256k1 as _electrum_lib
 
 
 def _built_from(dist_name: str) -> str:
@@ -463,22 +467,18 @@ def dsa_sign_der_secp256k1() -> None:
 
 
 def dsa_sign_der_electrum_ecc() -> None:
-    """Time electrum-ecc's ECDSA signing, its sanity check called around.
+    """Time electrum-ecc's ECDSA signing, DER through its own encoder.
 
-    `ecdsa_sign` answers in 64 bytes and verifies the signature it just
-    made before returning it, which its API offers no way to decline; this
-    row calls the ctypes bindings underneath directly instead -- the ones
-    `ecdsa_sign` itself calls -- and serializes to DER through the library
-    rather than through electrum-ecc's own encoder, which is what the other
-    three rows have libsecp256k1 do.
+    `ecdsa_sign` answers in 64 bytes, so DER is `ecdsa_der_sig_from_
+    ecdsa_sig64` after it -- both electrum-ecc's, which is what this row
+    is asked for. `grind_r_value=False` because the other three sign
+    once, and `ecdsa_sign` verifies what it made before returning it, a
+    check its API offers no way to decline and therefore part of what
+    signing through electrum-ecc costs.
     """
     prvkey, msg = next(DSA_SIGN_DER)
-    sig = create_string_buffer(64)
-    _electrum_lib.secp256k1_ecdsa_sign(_electrum_lib.ctx, sig, msg, prvkey, None, None)
-    der = create_string_buffer(72)
-    length = c_size_t(72)
-    _electrum_lib.secp256k1_ecdsa_signature_serialize_der(
-        _electrum_lib.ctx, der, byref(length), sig
+    electrum_ecc.ecdsa_der_sig_from_ecdsa_sig64(
+        electrum_ecc.ECPrivkey(prvkey).ecdsa_sign(msg, grind_r_value=False)
     )
 
 
@@ -486,24 +486,6 @@ def dsa_sign_der_btclib_secp256k1() -> None:
     """Time btclib_secp256k1's ECDSA signing, bytes in and DER out."""
     prvkey, msg = next(DSA_SIGN_DER)
     btclib_secp256k1.dsa.sign(msg, prvkey)
-
-
-def dsa_sign_compact_coincurve() -> None:
-    """Time coincurve's ECDSA signing to 64 bytes, which its API cannot spell.
-
-    `PrivateKey.sign` answers in DER and takes no say in it, so the
-    compact form is reached through the cffi bindings underneath -- the
-    ones that method itself calls, serialized the other way.
-    """
-    prvkey, msg = next(DSA_SIGN_COMPACT)
-    sig = _coincurve_ffi.new("secp256k1_ecdsa_signature *")
-    _coincurve_lib.secp256k1_ecdsa_sign(
-        _coincurve_ctx.ctx, sig, msg, prvkey, _coincurve_ffi.NULL, _coincurve_ffi.NULL
-    )
-    compact = _coincurve_ffi.new("unsigned char[64]")
-    _coincurve_lib.secp256k1_ecdsa_signature_serialize_compact(
-        _coincurve_ctx.ctx, compact, sig
-    )
 
 
 def dsa_sign_compact_secp256k1() -> None:
@@ -514,18 +496,15 @@ def dsa_sign_compact_secp256k1() -> None:
 
 
 def dsa_sign_compact_electrum_ecc() -> None:
-    """Time electrum-ecc's ECDSA signing to the 64 bytes its API answers in.
+    """Time electrum-ecc's ECDSA signing, in the 64 bytes its API answers in.
 
-    The ctypes bindings again, for the reason the DER row gives: what
-    `ecdsa_sign` adds to them is a verification no caller can decline.
+    One signature rather than a ground one, and the verification
+    `ecdsa_sign` performs on its own account before returning: what
+    signing through electrum-ecc costs, there being no spelling of it
+    without.
     """
     prvkey, msg = next(DSA_SIGN_COMPACT)
-    sig = create_string_buffer(64)
-    _electrum_lib.secp256k1_ecdsa_sign(_electrum_lib.ctx, sig, msg, prvkey, None, None)
-    compact = create_string_buffer(64)
-    _electrum_lib.secp256k1_ecdsa_signature_serialize_compact(
-        _electrum_lib.ctx, compact, sig
-    )
+    electrum_ecc.ECPrivkey(prvkey).ecdsa_sign(msg, grind_r_value=False)
 
 
 def dsa_sign_compact_btclib_secp256k1() -> None:
@@ -535,22 +514,14 @@ def dsa_sign_compact_btclib_secp256k1() -> None:
 
 
 def ssa_sign_coincurve() -> None:
-    """Time coincurve's BIP340 signing, its sanity check called around.
+    """Time coincurve's BIP340 signing, the keypair and the check included.
 
-    `sign_schnorr` builds the keypair fresh every call -- its API caches
-    none -- and then verifies the signature before returning it, a check
-    its API offers no way to decline. The keypair stays, being work every
-    call through this API pays; this row calls the cffi binding
-    underneath directly instead of `sign_schnorr`, the same one it calls,
-    stopping before the verification appended to it.
+    `sign_schnorr` builds the keypair fresh every call, its API caching
+    none, and verifies the signature before returning it, which it offers
+    no way to decline. Both are what signing through coincurve costs.
     """
     prvkey, msg = next(SSA_SIGN)
-    keypair = _coincurve_ffi.new("secp256k1_keypair *")
-    _coincurve_lib.secp256k1_keypair_create(_coincurve_ctx.ctx, keypair, prvkey)
-    sig = _coincurve_ffi.new("unsigned char[64]")
-    _coincurve_lib.secp256k1_schnorrsig_sign32(
-        _coincurve_ctx.ctx, sig, msg, keypair, AUX
-    )
+    coincurve.PrivateKey(prvkey).sign_schnorr(msg, AUX)
 
 
 def ssa_sign_secp256k1() -> None:
@@ -566,19 +537,14 @@ def ssa_sign_secp256k1() -> None:
 
 
 def ssa_sign_electrum_ecc() -> None:
-    """Time electrum-ecc's BIP340 signing, its sanity check called around.
+    """Time electrum-ecc's BIP340 signing, the keypair and the check included.
 
-    `schnorr_sign` builds the keypair fresh every call -- its API caches
-    none -- and then verifies the signature before returning it, a check
-    its API offers no way to decline. The keypair stays; this row calls
-    the ctypes binding underneath directly instead of `schnorr_sign`, the
-    same one it calls, stopping before the verification appended to it.
+    `schnorr_sign` builds the keypair fresh every call and verifies the
+    signature before returning it, neither of which its API lets a caller
+    decline.
     """
     prvkey, msg = next(SSA_SIGN)
-    keypair = create_string_buffer(96)
-    _electrum_lib.secp256k1_keypair_create(_electrum_lib.ctx, keypair, prvkey)
-    sig = create_string_buffer(64)
-    _electrum_lib.secp256k1_schnorrsig_sign32(_electrum_lib.ctx, sig, msg, keypair, AUX)
+    electrum_ecc.ECPrivkey(prvkey).schnorr_sign(msg, aux_rand32=AUX)
 
 
 def ssa_sign_btclib_secp256k1() -> None:
@@ -664,44 +630,19 @@ def dsa_verify_der_electrum_ecc() -> None:
     """Time electrum-ecc's ECDSA verification of a DER signature.
 
     `ECPubkey.ecdsa_verify` takes the 64-byte form and nothing else, so
-    DER goes through the ctypes bindings: the parse the other three rows
-    have libsecp256k1 do, done the same way here.
+    the DER goes through `ecdsa_sig64_from_der_sig` first -- electrum-ecc's
+    own, and the only spelling its API has for this.
     """
     pubkey, msg, sig = next(DSA_VERIFY_DER)
-    parsed = create_string_buffer(64)
-    _electrum_lib.secp256k1_ec_pubkey_parse(
-        _electrum_lib.ctx, parsed, pubkey, len(pubkey)
+    electrum_ecc.ECPubkey(pubkey).ecdsa_verify(
+        electrum_ecc.ecdsa_sig64_from_der_sig(sig), msg
     )
-    signature = create_string_buffer(64)
-    _electrum_lib.secp256k1_ecdsa_signature_parse_der(
-        _electrum_lib.ctx, signature, sig, len(sig)
-    )
-    _electrum_lib.secp256k1_ecdsa_verify(_electrum_lib.ctx, signature, msg, parsed)
 
 
 def dsa_verify_der_btclib_secp256k1() -> None:
     """Time btclib_secp256k1's ECDSA verification, bytes in every argument."""
     pubkey, msg, sig = next(DSA_VERIFY_DER)
     btclib_secp256k1.dsa.verify(msg, pubkey, sig)
-
-
-def dsa_verify_compact_coincurve() -> None:
-    """Time coincurve's ECDSA verification of 64 bytes, through the bindings.
-
-    `PublicKey.verify` takes DER and nothing else, so the compact form is
-    reached the way the compact signing row reaches it: the cffi bindings
-    that method itself calls, parsed the other way.
-    """
-    pubkey, msg, sig = next(DSA_VERIFY_COMPACT)
-    parsed = _coincurve_ffi.new("secp256k1_pubkey *")
-    _coincurve_lib.secp256k1_ec_pubkey_parse(
-        _coincurve_ctx.ctx, parsed, pubkey, len(pubkey)
-    )
-    signature = _coincurve_ffi.new("secp256k1_ecdsa_signature *")
-    _coincurve_lib.secp256k1_ecdsa_signature_parse_compact(
-        _coincurve_ctx.ctx, signature, sig
-    )
-    _coincurve_lib.secp256k1_ecdsa_verify(_coincurve_ctx.ctx, signature, msg, parsed)
 
 
 def dsa_verify_compact_secp256k1() -> None:
@@ -787,7 +728,6 @@ DSA_SIGN_DER_ROWS = (
     dsa_sign_der_btclib_secp256k1,
 )
 DSA_SIGN_COMPACT_ROWS = (
-    dsa_sign_compact_coincurve,
     dsa_sign_compact_secp256k1,
     dsa_sign_compact_electrum_ecc,
     dsa_sign_compact_btclib_secp256k1,
@@ -817,7 +757,6 @@ DSA_VERIFY_DER_ROWS = (
     dsa_verify_der_btclib_secp256k1,
 )
 DSA_VERIFY_COMPACT_ROWS = (
-    dsa_verify_compact_coincurve,
     dsa_verify_compact_secp256k1,
     dsa_verify_compact_electrum_ecc,
     dsa_verify_compact_btclib_secp256k1,
@@ -891,7 +830,11 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
     return quickest, max(rounds) - quickest
 
 
-def measured(title: str, rows: tuple[Callable[[], None], ...]) -> Ratios:
+def measured(
+    title: str,
+    rows: tuple[Callable[[], None], ...],
+    missing: tuple[str, ...] = (),
+) -> Ratios:
     """Time every row of one operation and return them as a table.
 
     The sort and the ratio are the renderer's. The ratio is against the
@@ -904,13 +847,19 @@ def measured(title: str, rows: tuple[Callable[[], None], ...]) -> Ratios:
     the same C and they land within a few percent of each other, so one
     decimal prints 1.0x for the whole column.
 
+    `missing` names the packages whose API has no such call, and they are
+    the rows that print `NA`. Reaching past one of them into the C it
+    wraps would produce a number, and the number would not be the
+    package's: what a reader comparing wrappers asks is what each one
+    offers.
+
     Which row is being timed goes to stderr as it starts, and is overwritten
     by the next: a run is minutes of silence otherwise, and a reader who
     cannot tell a slow row from a hung one will reach for the interrupt. On
     stderr because stdout is the output somebody pastes, and a progress line
     in it is a line no run produced.
     """
-    timings = []
+    timings: list[Timing | Unavailable] = [Unavailable(label) for label in missing]
     for label, func in zip(labels([func.__name__ for func in rows]), rows, strict=True):
         print(
             f"\r{title.split('.', maxsplit=1)[0]:>2}. {label:<20}",
@@ -940,25 +889,32 @@ def measured(title: str, rows: tuple[Callable[[], None], ...]) -> Ratios:
 # Sign before verify, and the parses in between: tables 4 and 5 price on
 # their own what every verification and every tweak repeats per call, so a
 # reader meets that parse once before meeting it inside four more tables
-TABLES = (
-    ("1. ECDSA sign (32-byte digest, DER out)", DSA_SIGN_DER_ROWS),
-    ("2. ECDSA sign (32-byte digest, 64-byte compact out)", DSA_SIGN_COMPACT_ROWS),
-    ("3. BIP340 sign (32-byte message)", SSA_SIGN_ROWS),
-    ("4. public key parse (a 33-byte compressed key)", PARSE_COMPRESSED_ROWS),
-    ("5. public key parse (a 65-byte uncompressed key)", PARSE_UNCOMPRESSED_ROWS),
+TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...]], ...] = (
+    ("1. ECDSA sign (32-byte digest, DER out)", DSA_SIGN_DER_ROWS, ()),
     (
-        "6. ECDSA verify (DER signature, the public key parsed per call)",
+        "2. ECDSA sign (32-byte digest, 64-byte compact out)",
+        DSA_SIGN_COMPACT_ROWS,
+        ("coincurve",),
+    ),
+    ("3. BIP340 sign (32-byte message)", SSA_SIGN_ROWS, ()),
+    ("4. public key parse (a 33-byte compressed key)", PARSE_COMPRESSED_ROWS, ()),
+    ("5. public key parse (a 65-byte uncompressed key)", PARSE_UNCOMPRESSED_ROWS, ()),
+    (
+        "6. ECDSA verify (DER signature, the 65-byte key parsed per call)",
         DSA_VERIFY_DER_ROWS,
+        (),
     ),
     (
-        "7. ECDSA verify (64-byte signature, the public key parsed per call)",
+        "7. ECDSA verify (64-byte signature, the 65-byte key parsed per call)",
         DSA_VERIFY_COMPACT_ROWS,
+        ("coincurve",),
     ),
     (
         "8. BIP340 verify (32-byte message, the public key parsed per call)",
         SSA_VERIFY_ROWS,
+        (),
     ),
-    ("9. public key tweak by a scalar, which is BIP32's step", TWEAK_ROWS),
+    ("9. public key tweak by a scalar, which is BIP32's step", TWEAK_ROWS, ()),
 )
 
 # what the run block claims about how these numbers were taken, said by
@@ -982,11 +938,15 @@ def main() -> None:
     print(rendered_provenance(packages))
     print()
     width = width_for(
-        [label for _, rows in TABLES for label in labels([f.__name__ for f in rows])]
+        [
+            label
+            for _, rows, missing in TABLES
+            for label in [*labels([f.__name__ for f in rows]), *missing]
+        ]
     )
     tables = []
-    for title, rows in TABLES:
-        table = measured(title, rows)
+    for title, rows, missing in TABLES:
+        table = measured(title, rows, missing)
         print(rendered_table(table, width, counted=True))
         print()
         tables.append(table)
