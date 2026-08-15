@@ -1,163 +1,189 @@
-# btclib against the other bitcoin libraries, one run
+# Bitcoin Python libraries
 
-What `scripts/bitcoin_libraries.py` printed on the machine named below:
-btclib with its bindings enabled, beside `ecdsa`, `pycoin`, `buidl`,
-`embit` and `python-bitcoinlib`, over ECDSA, BIP340 and one BIP32
-derivation, and then base58check, bech32 and bech32m in both directions.
-Microseconds per call, fastest row first, and a ratio against whichever row
-came out quickest.
+## The packages downloaded from PyPI
 
-One run, kept whole — including the setup block, which is the half of the
-output that says what each comparand resolved to. Read
-[README.md][readme] on what these numbers are before carrying any of them
-anywhere: an order of magnitude, never a figure to quote.
-
-The inputs are every BIP340 signing vector and every BIP32 chain the vendored
-files publish, cycled one per call. Every implementation's public key, BIP340
-signature and BIP32 child key is checked against what those specifications
-publish before anything is timed. The address rows are the exception: one
-witness-v0 and one witness-v1 address are what is vendored here, so those call
-one input.
-
-## What produced it
-
+<!-- provenance: begin -->
 ```text
-when    : 2026-08-14 20:31 CEST (18:31 UTC)
+package            version           released           arithmetic
+btclib             2026.9            main@a6988751392b  libsecp256k1 enhanced
+pycoin             0.92718.20260405  2026-04-05         libsecp256k1 enhanced
+ecdsa              0.19.2            2026-03-26         pure Python
+embit              0.8.0             2024-05-30         libsecp256k1 enhanced
+python-bitcoinlib  0.12.2            2023-06-03         OpenSSL's libcrypto
+buidl              0.2.36            2022-02-28         pure Python
+```
+<!-- provenance: end -->
+
+The last column says which arithmetic answered on the machine that ran
+this, and nothing about how the package got there. That part is one
+paragraph each, and none of the six is the same story:
+
+- **btclib** requires `btclib-secp256k1`, which bundles libsecp256k1 and
+  compiles it into a cffi extension at install time, so a wheel from PyPI
+  is enhanced without anything further being done to it. Which revision it
+  bundles is in [the bindings table][wrappers].
+- **pycoin** bundles nothing and builds nothing. `pycoin.ecdsa.native` is a
+  ctypes loader that asks the machine for a library by name, and a PyPI
+  install therefore gets pure Python unless one is already there. Here one
+  is: btclib-secp256k1's extension has put its symbols in this process, and
+  pycoin's loader finds them — through an import this script makes rather
+  than anything pycoin does. On a machine where nothing else has loaded
+  libsecp256k1, this row is Python, which is where the count it uses comes
+  from as well. What that costs is the pycoin row of [the pure-Python
+  table][pure].
+- **embit** ships its own shared library in the wheel and reaches it
+  through ctypes, and what it ships is secp256k1-zkp — ElementsProject's
+  fork — rather than bitcoin-core/secp256k1. It is not a package anyone can
+  install on its own, and the revision it carries is recorded here against
+  the release it was read from.
+- **buidl** has cffi bindings in `buidl.cecc`, and `pip install buidl` does
+  not build them: `libsec_build.py` compiles them against a system library
+  and has to be run by hand. So its rows are `buidl.pecc`, pure Python,
+  unless somebody did that.
+- **python-bitcoinlib** reaches C that is not libsecp256k1 at all —
+  OpenSSL's libcrypto, through ctypes. It can detect a libsecp256k1 and
+  does not use it for these operations.
+- **ecdsa** has no bindings of any kind, bundled, built or found.
+
+## This run
+
+<!-- run: begin -->
+```text
+when    : 2026-08-15 06:24 CEST (04:24 UTC)
 python  : 3.13.14
+method  : 3 rounds per row, minimum kept; nothing else repeated
 command : uv run python scripts/bitcoin_libraries.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 state   : a working desktop, browser and editor open — not a quiesced
           machine, which is the condition README.md says to distrust
 ```
+<!-- run: end -->
 
 ## The output
 
+Eleven tables: the curve operations, BIP32 derivation, and the three
+address encodings in both directions. Fastest row first, ratioed against
+whichever row came out quickest, with the spread of a row's own three
+rounds beside it — a row within a percent of the one above it, whose
+spread is the same size, is not behind it in any durable sense.
+
+The inputs are every BIP340 signing vector and every BIP32 chain the
+vendored files publish, cycled one per call; the address rows are the
+exception, one witness-v0 and one witness-v1 address being what is
+vendored, so they call one input.
+
+<!-- output: begin -->
 ```text
-btclib              : 2026.9
-ecdsa               : 0.19.2
-pycoin              : 0.92718.20260405
-buidl               : 0.2.36
-embit               : 0.8.0
-python-bitcoinlib   : 0.12.2
+what a timing contains
+  one call per iteration, its answer discarded: no row checks
+  itself, and no comparison is inside a measured loop
+  the answers are checked in tests/vectors_test.py, and where
+  each script builds its fixtures, which is before any clock
 
-arithmetic under each row
-  btclib              bundled libsecp256k1 v0.8.0 cffi bindings, _btclib_secp256k1.cpython-313-darwin.so
-  ecdsa               pure Python; no bindings of any kind, bundled or built
-  pycoin              ctypes bindings to a libsecp256k1 it neither bundles nor builds: btclib_secp256k1's, already in this process, which a PyPI install does not give
-  buidl               pure Python; buidl.cecc cffi bindings need libsec_build.py, unrun
-  embit               bundled secp256k1-zkp d9560e0a ctypes bindings, libsecp256k1_darwin_arm64.dylib
-  python-bitcoinlib   OpenSSL's libcrypto ctypes bindings, libssl.35.dylib; no libsecp256k1 bundled, built or found
+1. ECDSA sign (32-byte digest)
+                   μs/call     vs best   spread
+  pycoin             12.33        1.0x    0.1%   (3x50000 calls)
+  embit              14.14        1.1x    1.0%   (3x50000 calls)
+  btclib             16.42        1.3x    0.4%   (3x50000 calls)
+  embit_grind        49.88        4.0x    3.7%   (3x20000 calls)
+  btclib_grind       54.21        4.4x    0.3%   (3x20000 calls)
+  bitcoinlib        192.27       15.6x    0.6%   (3x8000 calls)
+  ecdsa             282.77       22.9x    0.5%   (3x5000 calls)
+  buidl           29531.26     2395.8x    0.1%   (3x50 calls)
 
-ECDSA sign (32-byte digest, secp256k1)
-                               μs/call     vs best
-  dsa_sign_pycoin                12.37        1.0x   (50000 calls)
-  dsa_sign_embit                 14.24        1.2x   (50000 calls)
-  dsa_sign_btclib                19.20        1.6x   (50000 calls)
-  dsa_sign_embit_grind           50.19        4.1x   (20000 calls)
-  dsa_sign_btclib_grind          65.21        5.3x   (20000 calls)
-  dsa_sign_bitcoinlib           195.19       15.8x   (8000 calls)
-  dsa_sign_ecdsa                292.46       23.6x   (5000 calls)
-  dsa_sign_buidl              29687.51     2399.2x   (50 calls)
+2. ECDSA verify (32-byte digest)
+                   μs/call     vs best   spread
+  pycoin             12.92        1.0x    0.0%   (3x50000 calls)
+  btclib             20.10        1.6x    0.7%   (3x50000 calls)
+  embit              23.11        1.8x    0.0%   (3x50000 calls)
+  bitcoinlib        218.30       16.9x    0.2%   (3x7000 calls)
+  ecdsa            1109.32       85.9x    0.1%   (3x3000 calls)
+  buidl           60691.99     4699.0x    0.2%   (3x25 calls)
 
-ECDSA verify (32-byte digest, secp256k1)
-                               μs/call     vs best
-  dsa_verify_pycoin              13.00        1.0x   (50000 calls)
-  dsa_verify_btclib              23.08        1.8x   (50000 calls)
-  dsa_verify_embit               23.18        1.8x   (50000 calls)
-  dsa_verify_bitcoinlib         220.09       16.9x   (7000 calls)
-  dsa_verify_ecdsa             1123.59       86.4x   (3000 calls)
-  dsa_verify_buidl            61170.11     4704.2x   (25 calls)
+3. BIP340 sign (32-byte message)
+                   μs/call     vs best   spread
+  embit              21.25        1.0x    0.1%   (3x50000 calls)
+  btclib             22.33        1.1x    0.1%   (3x50000 calls)
+  buidl          106922.54     5030.8x    0.2%   (3x20 calls)
 
-BIP340 sign (32-byte message)
-                               μs/call     vs best
-  ssa_sign_embit                 21.35        1.0x   (50000 calls)
-  ssa_sign_btclib                22.71        1.1x   (50000 calls)
-  ssa_sign_buidl             107967.08     5057.5x   (20 calls)
+4. BIP340 verify (32-byte message)
+                   μs/call     vs best   spread
+  embit              24.28        1.0x    2.1%   (3x50000 calls)
+  btclib             31.84        1.3x    0.2%   (3x50000 calls)
+  buidl           68884.12     2837.1x    0.6%   (3x25 calls)
 
-BIP340 verify (32-byte message)
-                               μs/call     vs best
-  ssa_verify_embit               24.68        1.0x   (50000 calls)
-  ssa_verify_btclib              34.78        1.4x   (50000 calls)
-  ssa_verify_buidl            69374.86     2811.4x   (25 calls)
+5. BIP32 derive, seed to child, every chain BIP32 publishes
+                   μs/call     vs best   spread
+  pycoin             48.56        1.0x    0.4%   (3x30000 calls)
+  btclib             63.39        1.3x    0.7%   (3x30000 calls)
+  embit              87.19        1.8x    0.2%   (3x15000 calls)
+  buidl          104267.76     2147.3x    7.1%   (3x12 calls)
 
-base58check encode, a P2PKH address from a hash160
-                               μs/call     vs best
-  base58_encode_embit             2.16        1.0x   (200000 calls)
-  base58_encode_buidl             2.31        1.1x   (200000 calls)
-  base58_encode_btclib            2.46        1.1x   (200000 calls)
-  base58_encode_bitcoinlib        2.54        1.2x   (100000 calls)
-  base58_encode_pycoin            3.68        1.7x   (200000 calls)
+6. base58check encode, a P2PKH address from a hash160
+                   μs/call     vs best   spread
+  embit               2.15        1.0x    0.2%   (3x200000 calls)
+  buidl               2.31        1.1x    0.2%   (3x200000 calls)
+  btclib              2.38        1.1x    0.5%   (3x200000 calls)
+  bitcoinlib          2.55        1.2x    0.4%   (3x100000 calls)
+  pycoin              3.70        1.7x    0.2%   (3x200000 calls)
 
-base58check decode, a hash160 from a P2PKH address
-                               μs/call     vs best
-  base58_decode_btclib            2.53        1.0x   (200000 calls)
-  base58_decode_embit             2.58        1.0x   (200000 calls)
-  base58_decode_buidl             3.02        1.2x   (200000 calls)
-  base58_decode_pycoin            3.74        1.5x   (200000 calls)
-  base58_decode_bitcoinlib        4.36        1.7x   (100000 calls)
+7. base58check decode, a hash160 from a P2PKH address
+                   μs/call     vs best   spread
+  btclib              2.43        1.0x    0.3%   (3x200000 calls)
+  embit               2.50        1.0x    0.4%   (3x200000 calls)
+  buidl               3.02        1.2x    0.6%   (3x200000 calls)
+  pycoin              3.75        1.5x    1.1%   (3x200000 calls)
+  bitcoinlib          4.23        1.7x    0.6%   (3x100000 calls)
 
-bech32 encode, a witness-v0 address from a 20-byte program
-                               μs/call     vs best
-  bech32_encode_btclib            8.07        1.0x   (200000 calls)
-  bech32_encode_buidl            11.31        1.4x   (100000 calls)
-  bech32_encode_bitcoinlib       26.52        3.3x   (200000 calls)
-  bech32_encode_embit            26.68        3.3x   (200000 calls)
+8. bech32 encode, a witness-v0 address from a 20-byte program
+                   μs/call     vs best   spread
+  btclib              8.05        1.0x    1.0%   (3x200000 calls)
+  buidl              11.39        1.4x    1.1%   (3x100000 calls)
+  bitcoinlib         26.64        3.3x    0.2%   (3x200000 calls)
+  embit              26.67        3.3x    0.1%   (3x200000 calls)
 
-bech32 decode, a 20-byte program from a witness-v0 address
-                               μs/call     vs best
-  bech32_decode_btclib            7.10        1.0x   (200000 calls)
-  bech32_decode_buidl            10.58        1.5x   (100000 calls)
-  bech32_decode_bitcoinlib       14.57        2.1x   (200000 calls)
-  bech32_decode_embit            14.63        2.1x   (200000 calls)
+9. bech32 decode, a 20-byte program from a witness-v0 address
+                   μs/call     vs best   spread
+  btclib              7.06        1.0x    0.3%   (3x200000 calls)
+  buidl              10.30        1.5x    0.2%   (3x100000 calls)
+  bitcoinlib         14.62        2.1x    0.9%   (3x200000 calls)
+  embit              14.63        2.1x    0.0%   (3x200000 calls)
 
-bech32m encode, a witness-v1 address from a 32-byte program
-                               μs/call     vs best
-  bech32m_encode_btclib          13.26        1.0x   (200000 calls)
-  bech32m_encode_buidl           16.87        1.3x   (100000 calls)
-  bech32m_encode_embit           39.93        3.0x   (200000 calls)
+10. bech32m encode, a witness-v1 address from a 32-byte program
+                   μs/call     vs best   spread
+  btclib             13.80        1.0x    1.3%   (3x200000 calls)
+  buidl              17.14        1.2x    0.1%   (3x100000 calls)
+  embit              40.23        2.9x    0.7%   (3x200000 calls)
 
-bech32m decode, a 32-byte program from a witness-v1 address
-                               μs/call     vs best
-  bech32m_decode_btclib          11.52        1.0x   (200000 calls)
-  bech32m_decode_buidl           15.56        1.4x   (100000 calls)
-  bech32m_decode_embit           21.68        1.9x   (200000 calls)
-
-BIP32 derive, seed to child, every chain BIP32 publishes
-                               μs/call     vs best
-  bip32_derive_pycoin            48.80        1.0x   (30000 calls)
-  bip32_derive_btclib            62.53        1.3x   (30000 calls)
-  bip32_derive_embit             88.66        1.8x   (15000 calls)
-  bip32_derive_buidl         107962.60     2212.3x   (12 calls)
+11. bech32m decode, a 32-byte program from a witness-v1 address
+                   μs/call     vs best   spread
+  btclib             11.72        1.0x    0.6%   (3x200000 calls)
+  buidl              15.43        1.3x    0.2%   (3x100000 calls)
+  embit              22.02        1.9x    0.1%   (3x200000 calls)
 ```
+<!-- output: end -->
 
 ## What it shows
 
-The sort separates the rows into the two groups the setup block predicts:
+The sort separates the rows into the two groups the packages table predicts:
 the ones that reach C land within a small factor of one another, and the
 pure-Python rows fall an order of magnitude or more behind them —
 `buidl.pecc` by a great deal more than that. python-bitcoinlib's OpenSSL
 path sits between the two groups. Which row is in which group is not a
-property of the packages alone, which is what the setup block is for.
+property of the packages alone, which is what that table's last column is
+for.
 
-Three things this output says are worth reading twice:
+Two things this output says are worth reading twice:
 
-- **pycoin's row is C on this run**, not Python, and it sorts above
-  btclib's — through two imports that are the script's rather than pycoin's.
-  `bitcoin.core.key` imports `ctypes.util`, which pycoin's loader needs and
-  does not import; the name it then asks for resolves to nothing, so the load
-  falls through to the symbols `btclib_secp256k1`'s extension has put in the
-  process. Its rows therefore call the same build btclib's rows call, through
-  ctypes instead of cffi. What the same package costs held to Python is the
-  pycoin row of [the pure-Python table][pure].
 - **two libraries here sign more than once by default.** btclib and embit
   both grind for a low-r signature — they sign repeatedly until r fits in
   32 bytes — so their default is not comparable per signature with the
   four rows that sign once. Each therefore has two rows: one signature,
   which is the comparable one, and the default beside it, whose cost is
   that signature times however many draws it took before r fit. Half of
-  all draws fit already, so two signatures is the expectation and this
-  pair asks several times that — the ratio between a library's two rows is
-  where to read what it actually was. That multiple is a property of the
+  all draws fit already, so two signatures is the expectation, and both
+  libraries here ask for more than that — the ratio between a library's
+  two rows is where to read how many it took. That multiple is a property of the
   pair rather than of either library, and it is why the grinding rows sit
   where they do in the order rather than beside their own one-signature
   rows.
@@ -174,16 +200,31 @@ where these libraries differ most: pure Python in all five, so what separates
 them is the code. They also hold the one wrong answer in this benchmark.
 `python-bitcoinlib` encodes a witness-v1 program with bech32's checksum
 constant where BIP350 requires bech32m's, and rejects the address BIP350
-publishes, so it has no bech32m row — the script asserts both halves of that.
+publishes, so it has no bech32m row — `tests/vectors_test.py` holds it to
+both halves of that.
 
 The loop counts are per row and print beside their rows, sorting putting rows
-orders of magnitude apart next to each other. pycoin's are the only ones
-picked at run time, from the backend found: it is the one comparand whose row
-can be C on one machine and Python on another, and a count that suits one
-measures the clock or takes minutes on the other.
+orders of magnitude apart next to each other. pycoin's are picked at run time,
+from the backend found, for the reason its paragraph above gives.
 
-[readme]: https://github.com/btclib-org/btclib-benchmarks/blob/main/README.md
+## More benchmarks
+
+Four other questions are published in `results/`, each with its own
+comparands:
+
+- [the libsecp256k1 bindings][wrappers] — four packages that wrap one C
+  library, and which revision of it each vendors
+- [btclib's two paths][two-paths] — btclib against itself, its pure-Python
+  arithmetic against the bindings measured here
+- [every pure-Python implementation][pure] — the same operations with no
+  bindings anywhere
+- [one key, every signature under it][reuse] — what the second verification
+  under a key costs, which a table of fresh keys cannot show
+
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
+[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
+[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
 
 <!-- The output above is a script's, whose columns are the script's to
      choose; rewrapping it to 80 would make it something else. The

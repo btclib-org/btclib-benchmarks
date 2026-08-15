@@ -14,6 +14,7 @@ uv sync --locked                            # installs the comparands, and
 uv run pytest                               # the suite, gated at 100%
 uv run pre-commit run --all-files           # every lint hook, what CI runs
 uv run python scripts/bitcoin_libraries.py  # a benchmark, by hand
+uv run python scripts/render.py             # the pages, from the saved runs
 ```
 
 `CONTRIBUTING.md` carries each of these with its reasoning.
@@ -34,8 +35,35 @@ Five benchmarks, one question each:
   it already has, raw against prepared, on both paths and against
   python-ecdsa's `precompute()`
 
-`scripts/_provenance.py` is the only module the suite covers, and the
-only one that is not a benchmark.
+`scripts/_provenance.py` is the only module the suite covers.
+`scripts/_results.py` and `scripts/render.py` are the other two
+non-benchmarks, and they are outside the gate on purpose — see below.
+
+## Measuring and publishing are two commands
+
+A benchmark writes `results/<name>.json`: the numbers as measured, the
+packages block, and what the run block states. `scripts/render.py` writes
+`results/<name>.md` from that file, replacing only what lies between the
+`<!-- run: begin -->`-style markers and leaving every word of prose
+alone. So a heading is reworded and re-published without a machine, where
+before it cost either a fresh run — different numbers — or an edited
+block, whose numbers no run ever printed.
+
+Three rules follow, and breaking any of them puts the coupling back:
+
+- **`render.py` and `_results.py` import no benchmark.** Importing one
+  builds its fixtures and runs its cross-comparand assertions.
+- **Nothing derived is stored.** Ratios, savings, break-evens and the
+  sort are computed at render time from the microseconds beside them, and
+  the column widths from the labels. A number in the JSON is a number a
+  clock produced.
+- **Neither module is covered**, and that is the same decision: a page is
+  written by a command a person runs, and putting the rewording of a
+  heading behind the suite is what the split removed. `render.py --check`
+  is what says a page still matches its run.
+
+`results/machine.toml` holds the two lines no process can answer — which
+machine, and what else was running on it.
 
 ## Non-obvious facts that will otherwise waste a session
 

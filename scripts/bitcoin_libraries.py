@@ -21,7 +21,7 @@ property of the package:
   This row is C for two reasons that belong to the import list above:
   `bitcoin.core.key` imports `ctypes.util`, which pycoin's loader needs and
   does not import, and the name it then asks for resolves to nothing, so the
-  load falls through to the symbols `btclib_secp256k1`'s extension has put
+  load falls through to the symbols btclib-secp256k1's extension has put
   in the process. Drop either import and the row is Python. Its loop count
   follows the answer rather than being written once: `pycoin_calls` below.
 - buidl reaches C only if `libsec_build.py` was run against a system
@@ -78,13 +78,29 @@ nor BIP32, so neither has a row in those tables. pycoin's `ecdsa.Generator`
 has no derivation function either, which is why its BIP32 row goes through
 `pycoin.symbols.btc.network`.
 
+A timed function calls one library and discards what it returns: no row
+checks its own answer, which would put the check inside the number.
+`tests/vectors_test.py` is where the answers are checked, running the
+vendored vectors against every library timed here. The assertions below run
+at import, where the fixtures are built, so the suite loading this module
+runs them and no timing carries them.
+
 Not part of the test suite and not run by CI: a shared runner disagrees with
 a laptop by more than most of the differences here.
+
+## What a run leaves behind
+
+The numbers are written to `results/bitcoin-libraries.json` as this finishes,
+and `scripts/render.py` writes the page beside it from that file
+alone. So the prose around a table is rewritten and re-published
+without a machine and without a number being retyped: measuring and
+publishing are two commands.
 """
 
 from __future__ import annotations
 
 import hashlib
+import sys
 import time
 from collections.abc import Callable
 from importlib.metadata import version
@@ -95,7 +111,6 @@ from pathlib import Path
 import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
 import bitcoin.wallet as bitcoinlib_wallet
-import btclib
 import btclib.b32
 import btclib.b58
 
@@ -116,36 +131,82 @@ import embit.base58
 import embit.bech32
 import embit.bip32
 import embit.ec
-import embit.util.ctypes_secp256k1
 import pycoin.encoding.b58
 import pycoin.symbols.btc
-from _provenance import report
+from _provenance import WHAT_A_TIMING_CONTAINS, origin_of
+from _results import (
+    Measurement,
+    Provenance,
+    Ratios,
+    Timing,
+    rendered_provenance,
+    rendered_table,
+    save,
+    slug,
+    taken_now,
+    width_for,
+)
 from _vectors import bip32, signing
 from btclib.bip32 import bip32 as btclib_bip32
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
 from btclib.to_pub_key import pub_keyinfo_from_key, pub_keyinfo_from_prv_key
 
+# the release each version was published on, recorded because no installed
+# metadata carries it: a wheel's METADATA has a Version and no date, and the
+# dist-info directory's mtime is when the package was installed here. Keyed
+# by the release it was read for, so an upgraded comparand prints
+# `unrecorded` rather than a date that has stopped being true
+RELEASE_DATES = {
+    "ecdsa": ("0.19.2", "2026-03-26"),
+    "pycoin": ("0.92718.20260405", "2026-04-05"),
+    "buidl": ("0.2.36", "2022-02-28"),
+    "embit": ("0.8.0", "2024-05-30"),
+    "python-bitcoinlib": ("0.12.2", "2023-06-03"),
+}
 
-def report_provenance() -> None:
-    """Say which build of every package in the table these rows are about.
 
-    Printed before any number: a released wheel and a working tree satisfy
-    the same requirement and resolve in silence, so which one ran is
-    something the output has to state rather than something the reader
-    assumes.
+def _released(dist_name: str) -> str:
+    """Say when this build was published, or where it came from instead.
 
-    Every package, comparands included, so that a version number appears
-    once in this output and `report_setup` below is left with the one thing
-    a version cannot say: which arithmetic the row reached.
+    btclib resolves from its branch until 2026.9 is on PyPI, and a date
+    would be a claim about a release that has not happened: what the column
+    says for it is the branch and the commit, which is what a reader has to
+    look up to get these rows again.
     """
-    report(
-        ("btclib", btclib.__file__),
-        ("ecdsa", ecdsa.__file__),
-        ("pycoin", pycoin.symbols.btc.__file__),
-        ("buidl", buidl.pecc.__file__),
-        ("embit", embit.ec.__file__),
-        ("python-bitcoinlib", bitcoinlib_key.__file__),
+    if not (recorded := RELEASE_DATES.get(dist_name)):
+        # the branch and the commit, without the repository the package
+        # column has already named
+        return origin_of(dist_name).split()[-1]
+    return recorded[1] if version(dist_name) == recorded[0] else "unrecorded"
+
+
+def provenance() -> Provenance:
+    """Return one row per package: what it is, and which arithmetic it ran.
+
+    Above every number, because a released wheel and a working tree satisfy
+    the same requirement and resolve in silence. Four columns, each
+    answering a different question: the version and the release date say
+    which build this is, and the arithmetic says what the row measures --
+    three of these packages reach for a C library at import and fall back to
+    Python without saying so. Sorted newest release first.
+    """
+    rows = (
+        ("btclib", LIBSECP256K1),
+        ("ecdsa", PURE_PYTHON),
+        ("pycoin", _pycoin_backend()),
+        ("buidl", _buidl_backend()),
+        ("embit", LIBSECP256K1),
+        ("python-bitcoinlib", _arithmetic_bitcoinlib()),
+    )
+    return Provenance(
+        columns=["package", "version", "released", "arithmetic"],
+        rows=[
+            [dist_name, version(dist_name), _released(dist_name), arithmetic]
+            for dist_name, arithmetic in sorted(
+                rows, key=lambda row: _released(row[0]), reverse=True
+            )
+        ],
     )
 
 
@@ -187,12 +248,12 @@ DIGESTS = [int.from_bytes(v.msg, "big") % ORDER for v in DSA_VECTORS]
 # no version string. Both are printed as unrecorded for any other release,
 # because a floor is a floor and a comparand upgrades without a word.
 #
-# - btclib_secp256k1 0.8.0.1: its `secp256k1` submodule pin, 6e2c8bc, which
-#   is upstream's v0.8.0 tag exactly
+# - btclib_secp256k1 0.8.0.2: its `secp256k1` submodule pin, 6e2c8bc, which
+#   is upstream's v0.8.0 tag exactly, and the same commit 0.8.0.1 pinned
 # - embit 0.8.0: its `secp256k1/secp256k1-zkp` submodule pin, d9560e0a --
 #   ElementsProject's fork and not bitcoin-core/secp256k1, which is worth
 #   saying in a table that calls four other rows the same library
-PINS = {"btclib-secp256k1": ("0.8.0.1", "v0.8.0"), "embit": ("0.8.0", "d9560e0a")}
+PINS = {"btclib-secp256k1": ("0.8.0.2", "v0.8.0"), "embit": ("0.8.0", "d9560e0a")}
 
 
 def _pinned(dist_name: str) -> str:
@@ -214,13 +275,19 @@ def _artifact(module_name: str) -> str:
 # system library answers to the name `ctypes.util.find_library` is given --
 # and the row below is C only because this process already holds
 # btclib_secp256k1's copy, which is not what pip install produces
+# what the column says, and all it says: which arithmetic answered on the
+# machine that ran this. How each package got there -- what it bundles,
+# what it builds, what it happened to find -- is prose in
+# `results/bitcoin-libraries.md`, because it is a paragraph per package and
+# a table column has to be readable across six rows
+LIBSECP256K1 = "libsecp256k1 enhanced"
+PURE_PYTHON = "pure Python"
+OPENSSL = "OpenSSL's libcrypto"
+
+
 PYCOIN_NATIVE_MIXINS = {
-    "pycoin.ecdsa.native.secp256k1": (
-        "ctypes bindings to a libsecp256k1 it neither bundles nor builds: "
-        "btclib_secp256k1's, already in this process, which a PyPI install "
-        "does not give"
-    ),
-    "pycoin.ecdsa.native.openssl": "OpenSSL's libcrypto ctypes bindings",
+    "pycoin.ecdsa.native.secp256k1": LIBSECP256K1,
+    "pycoin.ecdsa.native.openssl": OPENSSL,
 }
 
 
@@ -234,8 +301,8 @@ def _buidl_backend() -> str:
     step by hand.
     """
     if buidl.libsec_status.is_libsec_enabled():
-        return "built libsecp256k1 cffi bindings, buidl.cecc"
-    return "pure Python; buidl.cecc cffi bindings need libsec_build.py, unrun"
+        return LIBSECP256K1
+    return PURE_PYTHON
 
 
 def _pycoin_native_module() -> str | None:
@@ -266,7 +333,7 @@ def _pycoin_native_module() -> str | None:
 def _pycoin_backend() -> str:
     """Name the arithmetic pycoin's Generator actually runs, this machine."""
     module = _pycoin_native_module()
-    return PYCOIN_NATIVE_MIXINS[module] if module else "pure Python"
+    return PYCOIN_NATIVE_MIXINS[module] if module else PURE_PYTHON
 
 
 # read once, at import, because that is when pycoin decided it: the mixin
@@ -290,41 +357,14 @@ def pycoin_calls(c: int, python: int) -> int:
     return c if PYCOIN_REACHES_C else python
 
 
-def report_setup() -> None:
-    """Print which arithmetic each row reached, and how it reached it.
+def _arithmetic_bitcoinlib() -> str:
+    """Say what python-bitcoinlib's rows ran, which is neither of the two.
 
-    Not a version number: `report_provenance` above prints those, for every
-    package here, and this block answers the question a version cannot.
-    Every line names the same two things in the same order -- the code that
-    does the arithmetic, and the mechanism the row calls it through -- so
-    that two rows can be read against each other without translating
-    between one line's vocabulary and the next.
-
-    A benchmark result is not among them. What is here is what the numbers
-    below mean nothing without.
+    It reaches C, so `pure Python` would be wrong, and the C is OpenSSL's
+    libcrypto rather than libsecp256k1, so the other value would be wrong
+    too. A third value is what an honest column costs here.
     """
-    print("arithmetic under each row")
-    print(
-        f"  {'btclib':<20}bundled libsecp256k1 {_pinned('btclib-secp256k1')} "
-        f"cffi bindings, {_artifact('_btclib_secp256k1')}"
-    )
-    print(f"  {'ecdsa':<20}pure Python; no bindings of any kind, bundled or built")
-    print(f"  {'pycoin':<20}{_pycoin_backend()}")
-    print(f"  {'buidl':<20}{_buidl_backend()}")
-    print(
-        f"  {'embit':<20}bundled secp256k1-zkp {_pinned('embit')} ctypes bindings, "
-        f"{Path(str(embit.util.ctypes_secp256k1._find_library())).name}"
-    )
-    optional = (
-        "a libsecp256k1 it found and does not use"
-        if bitcoinlib_key.is_libsec256k1_available()
-        else "no libsecp256k1 bundled, built or found"
-    )
-    print(
-        f"  {'python-bitcoinlib':<20}OpenSSL's libcrypto ctypes bindings, "
-        f"{Path(str(bitcoinlib_key._ssl._name)).name}; {optional}"
-    )
-    print()
+    return OPENSSL
 
 
 # --- ECDSA sign and verify ---------------------------------------------
@@ -505,7 +545,7 @@ def dsa_sign_btclib_grind() -> None:
 def dsa_verify_btclib() -> None:
     """Time ECDSA verification through btclib, bindings enabled."""
     msg, _, pubkey, sig = next(DSA_BTCLIB)
-    assert dsa.verify_(msg, pubkey, sig)
+    dsa.verify_(msg, pubkey, sig)
 
 
 def dsa_sign_ecdsa() -> None:
@@ -519,7 +559,7 @@ def dsa_sign_ecdsa() -> None:
 def dsa_verify_ecdsa() -> None:
     """Time ECDSA verification through the `ecdsa` PyPI package."""
     msg, key, sig = next(DSA_ECDSA)
-    assert key.verifying_key.verify_digest(sig, msg, sigdecode=ecdsa.util.sigdecode_der)
+    key.verifying_key.verify_digest(sig, msg, sigdecode=ecdsa.util.sigdecode_der)
 
 
 def dsa_sign_pycoin() -> None:
@@ -531,7 +571,7 @@ def dsa_sign_pycoin() -> None:
 def dsa_verify_pycoin() -> None:
     """Time ECDSA verification through pycoin's Generator."""
     _, digest, pair, sig = next(DSA_PYCOIN)
-    assert pycoin_generator.verify(pair, digest, sig)
+    pycoin_generator.verify(pair, digest, sig)
 
 
 def dsa_sign_buidl() -> None:
@@ -543,7 +583,7 @@ def dsa_sign_buidl() -> None:
 def dsa_verify_buidl() -> None:
     """Time ECDSA verification through buidl's pure-Python S256Point."""
     key, digest, sig = next(DSA_BUIDL)
-    assert key.point.verify(digest, sig)
+    key.point.verify(digest, sig)
 
 
 def dsa_sign_bitcoinlib() -> None:
@@ -555,7 +595,7 @@ def dsa_sign_bitcoinlib() -> None:
 def dsa_verify_bitcoinlib() -> None:
     """Time ECDSA verification through python-bitcoinlib's CPubKey."""
     msg, _, pubkey, sig = next(DSA_BITCOINLIB)
-    assert pubkey.verify(msg, sig)
+    pubkey.verify(msg, sig)
 
 
 def dsa_sign_embit() -> None:
@@ -584,7 +624,7 @@ def dsa_sign_embit_grind() -> None:
 def dsa_verify_embit() -> None:
     """Time ECDSA verification through embit's bundled library."""
     msg, _, pubkey, sig = next(DSA_EMBIT)
-    assert pubkey.verify(sig, msg)
+    pubkey.verify(sig, msg)
 
 
 # --- BIP340 (Schnorr) sign and verify -----------------------------------
@@ -650,7 +690,7 @@ def ssa_sign_btclib() -> None:
 def ssa_verify_btclib() -> None:
     """Time BIP340 verification through btclib, bindings enabled."""
     msg, prvkey, _, sig = next(SSA_BTCLIB)
-    assert ssa.verify_(msg, pub_keyinfo_from_prv_key(prvkey)[0][1:], sig)
+    ssa.verify_(msg, pub_keyinfo_from_prv_key(prvkey)[0][1:], sig)
 
 
 def ssa_sign_buidl() -> None:
@@ -662,7 +702,7 @@ def ssa_sign_buidl() -> None:
 def ssa_verify_buidl() -> None:
     """Time BIP340 verification through buidl's pure-Python S256Point."""
     key, msg, _, sig = next(SSA_BUIDL)
-    assert key.point.verify_schnorr(msg, sig)
+    key.point.verify_schnorr(msg, sig)
 
 
 def ssa_sign_embit() -> None:
@@ -674,7 +714,7 @@ def ssa_sign_embit() -> None:
 def ssa_verify_embit() -> None:
     """Time BIP340 verification through embit's bundled library."""
     _, pubkey, msg, sig = next(SSA_EMBIT)
-    assert pubkey.schnorr_verify(sig, msg)
+    pubkey.schnorr_verify(sig, msg)
 
 
 # --- BIP32 derivation ---------------------------------------------------
@@ -725,26 +765,26 @@ BIP32 = cycle(list(zip(DERIVATIONS, EXPECTED_CHILDREN, strict=True)))
 
 def bip32_derive_btclib() -> None:
     """Time seed-to-child BIP32 derivation through btclib, bindings enabled."""
-    chain, expected = next(BIP32)
-    assert _btclib_child_pubkey(chain.seed, chain.path) == expected
+    chain, _expected = next(BIP32)
+    _btclib_child_pubkey(chain.seed, chain.path)
 
 
 def bip32_derive_pycoin() -> None:
     """Time seed-to-child BIP32 derivation through pycoin's BIP32Node."""
-    chain, expected = next(BIP32)
-    assert _pycoin_child_pubkey(chain.seed, chain.path) == expected
+    chain, _expected = next(BIP32)
+    _pycoin_child_pubkey(chain.seed, chain.path)
 
 
 def bip32_derive_embit() -> None:
     """Time seed-to-child BIP32 derivation through embit's HDKey."""
-    chain, expected = next(BIP32)
-    assert _embit_child_pubkey(chain.seed, chain.path) == expected
+    chain, _expected = next(BIP32)
+    _embit_child_pubkey(chain.seed, chain.path)
 
 
 def bip32_derive_buidl() -> None:
     """Time seed-to-child BIP32 derivation through buidl's HDPrivateKey."""
-    chain, expected = next(BIP32)
-    assert _buidl_child_pubkey(chain.seed, chain.path) == expected
+    chain, _expected = next(BIP32)
+    _buidl_child_pubkey(chain.seed, chain.path)
 
 
 # --- base58check, bech32 and bech32m, over published addresses ---------
@@ -768,22 +808,22 @@ BECH32M_ADDRESS = "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj
 
 def base58_encode_btclib() -> None:
     """Time btclib's base58check encoding of a P2PKH address."""
-    assert btclib.b58.address_from_h160("p2pkh", WITNESS_V0) == BASE58_ADDRESS
+    btclib.b58.address_from_h160("p2pkh", WITNESS_V0)
 
 
 def base58_encode_pycoin() -> None:
     """Time pycoin's, which takes the version byte in the payload."""
-    assert pycoin.encoding.b58.b2a_hashed_base58(BASE58_PAYLOAD) == BASE58_ADDRESS
+    pycoin.encoding.b58.b2a_hashed_base58(BASE58_PAYLOAD)
 
 
 def base58_encode_embit() -> None:
     """Time embit's, which spells the checksum in the function name."""
-    assert embit.base58.encode_check(BASE58_PAYLOAD) == BASE58_ADDRESS
+    embit.base58.encode_check(BASE58_PAYLOAD)
 
 
 def base58_encode_buidl() -> None:
     """Time buidl's, whose helper module carries it."""
-    assert buidl.helper.encode_base58_checksum(BASE58_PAYLOAD) == BASE58_ADDRESS
+    buidl.helper.encode_base58_checksum(BASE58_PAYLOAD)
 
 
 def base58_encode_bitcoinlib() -> None:
@@ -793,114 +833,106 @@ def base58_encode_bitcoinlib() -> None:
     operation the other four perform: `P2PKHBitcoinAddress.from_bytes` is
     where the checksummed encoding lives.
     """
-    assert str(bitcoinlib_wallet.P2PKHBitcoinAddress.from_bytes(WITNESS_V0, 0)) == (
-        BASE58_ADDRESS
-    )
+    str(bitcoinlib_wallet.P2PKHBitcoinAddress.from_bytes(WITNESS_V0, 0))
 
 
 def base58_decode_btclib() -> None:
     """Time btclib's base58check decoding, which returns the script type too."""
-    assert btclib.b58.h160_from_address(BASE58_ADDRESS)[1] == WITNESS_V0
+    btclib.b58.h160_from_address(BASE58_ADDRESS)[1]
 
 
 def base58_decode_pycoin() -> None:
     """Time pycoin's, which returns the version byte with the payload."""
-    assert pycoin.encoding.b58.a2b_hashed_base58(BASE58_ADDRESS) == BASE58_PAYLOAD
+    pycoin.encoding.b58.a2b_hashed_base58(BASE58_ADDRESS)
 
 
 def base58_decode_embit() -> None:
     """Time embit's."""
-    assert embit.base58.decode_check(BASE58_ADDRESS) == BASE58_PAYLOAD
+    embit.base58.decode_check(BASE58_ADDRESS)
 
 
 def base58_decode_buidl() -> None:
     """Time buidl's, which drops the version byte and returns the hash160."""
-    assert buidl.helper.decode_base58(BASE58_ADDRESS) == WITNESS_V0
+    buidl.helper.decode_base58(BASE58_ADDRESS)
 
 
 def base58_decode_bitcoinlib() -> None:
     """Time python-bitcoinlib's, through the address class again."""
-    assert bytes(bitcoinlib_wallet.CBitcoinAddress(BASE58_ADDRESS)) == WITNESS_V0
+    bytes(bitcoinlib_wallet.CBitcoinAddress(BASE58_ADDRESS))
 
 
 def bech32_encode_btclib() -> None:
     """Time btclib's bech32 encoding of a witness-v0 address."""
-    assert btclib.b32.address_from_witness(0, WITNESS_V0) == BECH32_ADDRESS
+    btclib.b32.address_from_witness(0, WITNESS_V0)
 
 
 def bech32_encode_embit() -> None:
     """Time embit's, which takes the human-readable part per call."""
-    assert embit.bech32.encode("bc", 0, WITNESS_V0) == BECH32_ADDRESS
+    embit.bech32.encode("bc", 0, WITNESS_V0)
 
 
 def bech32_encode_buidl() -> None:
     """Time buidl's, which takes a serialized witness program."""
-    assert (
-        buidl.bech32.encode_bech32_checksum(
-            b"\x00" + bytes([len(WITNESS_V0)]) + WITNESS_V0, network="mainnet"
-        )
-        == BECH32_ADDRESS
+    buidl.bech32.encode_bech32_checksum(
+        b"\x00" + bytes([len(WITNESS_V0)]) + WITNESS_V0, network="mainnet"
     )
 
 
 def bech32_encode_bitcoinlib() -> None:
     """Time python-bitcoinlib's, a copy of the reference implementation."""
-    assert bitcoin.bech32.encode("bc", 0, WITNESS_V0) == BECH32_ADDRESS
+    bitcoin.bech32.encode("bc", 0, WITNESS_V0)
 
 
 def bech32_decode_btclib() -> None:
     """Time btclib's bech32 decoding, which returns the witness version too."""
-    assert btclib.b32.witness_from_address(BECH32_ADDRESS)[1] == WITNESS_V0
+    btclib.b32.witness_from_address(BECH32_ADDRESS)[1]
 
 
 def bech32_decode_embit() -> None:
     """Time embit's, which returns the program as a list of integers."""
-    assert bytes(embit.bech32.decode("bc", BECH32_ADDRESS)[1]) == WITNESS_V0
+    bytes(embit.bech32.decode("bc", BECH32_ADDRESS)[1])
 
 
 def bech32_decode_buidl() -> None:
     """Time buidl's, which returns the network beside the program."""
-    assert buidl.bech32.decode_bech32(BECH32_ADDRESS)[2] == WITNESS_V0
+    buidl.bech32.decode_bech32(BECH32_ADDRESS)[2]
 
 
 def bech32_decode_bitcoinlib() -> None:
     """Time python-bitcoinlib's."""
-    assert bytes(bitcoin.bech32.decode("bc", BECH32_ADDRESS)[1]) == WITNESS_V0
+    bytes(bitcoin.bech32.decode("bc", BECH32_ADDRESS)[1])
 
 
 def bech32m_encode_btclib() -> None:
     """Time btclib's bech32m encoding of a witness-v1 address."""
-    assert btclib.b32.address_from_witness(1, WITNESS_V1) == BECH32M_ADDRESS
+    btclib.b32.address_from_witness(1, WITNESS_V1)
 
 
 def bech32m_encode_embit() -> None:
     """Time embit's, which picks the constant from the witness version."""
-    assert embit.bech32.encode("bc", 1, WITNESS_V1) == BECH32M_ADDRESS
+    embit.bech32.encode("bc", 1, WITNESS_V1)
 
 
 def bech32m_encode_buidl() -> None:
     """Time buidl's, from a serialized witness-v1 program."""
-    assert (
-        buidl.bech32.encode_bech32_checksum(
-            b"\x51" + bytes([len(WITNESS_V1)]) + WITNESS_V1, network="mainnet"
-        )
-        == BECH32M_ADDRESS
+    buidl.bech32.encode_bech32_checksum(
+        b"\x51" + bytes([len(WITNESS_V1)]) + WITNESS_V1, network="mainnet"
     )
 
 
 def bech32m_decode_btclib() -> None:
     """Time btclib's bech32m decoding."""
-    assert btclib.b32.witness_from_address(BECH32M_ADDRESS)[1] == WITNESS_V1
+    btclib.b32.witness_from_address(BECH32M_ADDRESS)[1]
 
 
 def bech32m_decode_embit() -> None:
     """Time embit's."""
-    assert bytes(embit.bech32.decode("bc", BECH32M_ADDRESS)[1]) == WITNESS_V1
+    bytes(embit.bech32.decode("bc", BECH32M_ADDRESS)[1])
 
 
 def bech32m_decode_buidl() -> None:
     """Time buidl's."""
-    assert buidl.bech32.decode_bech32(BECH32M_ADDRESS)[2] == WITNESS_V1
+    buidl.bech32.decode_bech32(BECH32M_ADDRESS)[2]
 
 
 # python-bitcoinlib has no bech32m row in either direction, and the reason
@@ -944,11 +976,21 @@ for _encoding_row in (
     _encoding_row()
 
 
-def benchmark(func: Callable[[], None], calls: int) -> float:
-    """Call `func` `calls` times and return microseconds per call.
+ROUNDS = 3
+
+
+def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
+    """Return the microseconds per call of the quickest round, and the spread.
+
+    `ROUNDS` rounds of `calls` calls each. The minimum is the estimate:
+    noise is one-sided -- nothing on this machine makes a call quicker than
+    it is -- so the quickest round is the one that ran with least taken from
+    it. The spread is how far the slowest round ran from the quickest, and
+    it is printed rather than hidden because it is the only thing in the
+    output that says whether the machine was quiet while a row was measured.
 
     Returned and not printed: the tables below are sorted fastest to
-    slowest and each row divides by btclib's, neither of which can be
+    slowest and each row divides by the quickest, neither of which can be
     done a line at a time -- every number has to be in hand before the
     first line is.
 
@@ -957,59 +999,89 @@ def benchmark(func: Callable[[], None], calls: int) -> float:
     the C-backed ones, so one loop count for all of them would either sit
     for minutes on the slowest or measure the fastest against the
     resolution of the clock. Each count below was picked from a first
-    timed call to land near 1.5 seconds -- long enough that Python's own
-    call overhead is a rounding error next to it, short enough that the
-    whole script is a run to wait for, not start and leave. pycoin's rows
-    are the exception and carry two counts each, being the only rows whose
-    backend this script does not decide: `pycoin_calls` above.
+    timed call to land near half a second -- long enough that Python's own
+    call overhead is a rounding error next to it, short enough that every
+    row three times over is a run to wait for, not start and leave.
+    pycoin's rows are the exception and carry two counts each, being the
+    only rows whose backend this script does not decide: `pycoin_calls`
+    above.
     """
     # perf_counter and not time(): the wall clock can step backwards
     # under an NTP correction, and a benchmark is the one place that
     # shows up as a negative duration
-    start = time.perf_counter()
-    for _ in range(calls):
-        func()
-    end = time.perf_counter()
-    return (end - start) / calls * 1e6
+    rounds = []
+    for _ in range(ROUNDS):
+        start = time.perf_counter()
+        for _ in range(calls):
+            func()
+        rounds.append((time.perf_counter() - start) / calls * 1e6)
+    quickest = min(rounds)
+    return quickest, max(rounds) / quickest - 1
 
 
-def table(
-    title: str,
-    rows: tuple[tuple[Callable[[], None], int], ...],
-) -> None:
-    """Time one operation's rows, then print them fastest first.
+def _labels(names: list[str]) -> list[str]:
+    """Drop the operation from each row's name, the title having said it.
 
-    The ratio is against the fastest row, whichever package that turns out
-    to be, so the top row reads 1.0x and each row below says what
-    choosing it instead would cost. Against btclib's row -- the obvious
-    candidate, this being btclib's benchmark -- the column would print
-    fractions under one for anything quicker, which reads as btclib's
-    score rather than as the table's answer; where btclib stands is the
-    row's own position in the order, and that is now visible without a
-    column claiming it.
-
-    Sorted on the measurement rather than written in an order, so the
-    order carries the run's answer instead of an editor's opinion of it.
-    The loop counts stay per row and print beside their rows: they are
-    part of what a row is, and sorting mixes rows whose counts differ by
-    orders of magnitude.
+    Every function in a table is named `<operation>_<comparand>`, so the
+    operation is the leading run of underscore-separated words they all
+    share: printing it on every row is the same prefix thirty times over,
+    and what a reader compares is what is left of the name. Whole words
+    rather than characters, or three rows reading `btclib`, `embit` and
+    `buidl` would lose a `b` to what they happen to share.
     """
-    us = {func.__name__: (benchmark(func, calls), calls) for func, calls in rows}
-    against = min(value for value, _ in us.values())
-    print(title)
-    print(f"  {'':<26}{'μs/call':>10}{'vs best':>12}")
-    for name, (value, calls) in sorted(us.items(), key=lambda row: row[1][0]):
-        print(f"  {name:<26}{value:10.2f}{value / against:11.1f}x   ({calls} calls)")
+    split = [name.split("_") for name in names]
+    shared = 0
+    while len({parts[shared] for parts in split}) == 1 and all(
+        len(parts) > shared + 1 for parts in split
+    ):
+        shared += 1
+    return ["_".join(parts[shared:]) for parts in split]
 
 
-def main() -> None:
-    """Print every table, one operation at a time."""
-    report_provenance()
+Rows = tuple[tuple[Callable[[], None], int], ...]
 
-    report_setup()
 
-    table(
-        "ECDSA sign (32-byte digest, secp256k1)",
+def labels_of(rows: Rows) -> list[str]:
+    """Return what one table's rows are called, the operation dropped."""
+    return _labels([func.__name__ for func, _ in rows])
+
+
+def measured(title: str, rows: Rows) -> Ratios:
+    """Time one operation's rows and return them as a table.
+
+    The sort and the ratio are the renderer's. The ratio is against the
+    fastest row, whichever package that turns out to be, so the top row
+    reads 1.0x and each row below says what choosing it instead would cost.
+    Against btclib's row -- the obvious candidate, this being btclib's
+    benchmark -- the column would print fractions under one for anything
+    quicker, which reads as btclib's score rather than as the table's
+    answer; where btclib stands is the row's own position in the order.
+
+    The loop counts stay per row and print beside their rows: they are part
+    of what a row is, and sorting mixes rows whose counts differ by orders
+    of magnitude.
+    """
+    timings = []
+    for label, (func, calls) in zip(labels_of(rows), rows, strict=True):
+        value, spread = benchmark(func, calls)
+        timings.append(
+            Timing(
+                label=label,
+                us_per_call=value,
+                spread=spread,
+                calls=calls,
+                rounds=ROUNDS,
+            )
+        )
+    return Ratios(title=title, rows=timings)
+
+
+# every table of this benchmark, declared rather than called: the label
+# column is one width for the whole page, which is a fact about all eleven
+# tables and cannot be known while the first is being measured
+TABLES: tuple[tuple[str, Rows], ...] = (
+    (
+        "1. ECDSA sign (32-byte digest)",
         (
             (dsa_sign_btclib, 50_000),
             (dsa_sign_btclib_grind, 20_000),
@@ -1020,11 +1092,9 @@ def main() -> None:
             (dsa_sign_embit, 50_000),
             (dsa_sign_embit_grind, 20_000),
         ),
-    )
-    print()
-
-    table(
-        "ECDSA verify (32-byte digest, secp256k1)",
+    ),
+    (
+        "2. ECDSA verify (32-byte digest)",
         (
             (dsa_verify_btclib, 50_000),
             (dsa_verify_ecdsa, 3_000),
@@ -1033,31 +1103,34 @@ def main() -> None:
             (dsa_verify_bitcoinlib, 7_000),
             (dsa_verify_embit, 50_000),
         ),
-    )
-    print()
-
-    table(
-        "BIP340 sign (32-byte message)",
+    ),
+    (
+        "3. BIP340 sign (32-byte message)",
         (
             (ssa_sign_btclib, 50_000),
             (ssa_sign_buidl, 20),
             (ssa_sign_embit, 50_000),
         ),
-    )
-    print()
-
-    table(
-        "BIP340 verify (32-byte message)",
+    ),
+    (
+        "4. BIP340 verify (32-byte message)",
         (
             (ssa_verify_btclib, 50_000),
             (ssa_verify_buidl, 25),
             (ssa_verify_embit, 50_000),
         ),
-    )
-    print()
-
-    table(
-        "base58check encode, a P2PKH address from a hash160",
+    ),
+    (
+        "5. BIP32 derive, seed to child, every chain BIP32 publishes",
+        (
+            (bip32_derive_btclib, 30_000),
+            (bip32_derive_pycoin, pycoin_calls(30_000, 75)),
+            (bip32_derive_embit, 15_000),
+            (bip32_derive_buidl, 12),
+        ),
+    ),
+    (
+        "6. base58check encode, a P2PKH address from a hash160",
         (
             (base58_encode_btclib, 200_000),
             (base58_encode_pycoin, 200_000),
@@ -1065,11 +1138,9 @@ def main() -> None:
             (base58_encode_buidl, 200_000),
             (base58_encode_bitcoinlib, 100_000),
         ),
-    )
-    print()
-
-    table(
-        "base58check decode, a hash160 from a P2PKH address",
+    ),
+    (
+        "7. base58check decode, a hash160 from a P2PKH address",
         (
             (base58_decode_btclib, 200_000),
             (base58_decode_pycoin, 200_000),
@@ -1077,60 +1148,80 @@ def main() -> None:
             (base58_decode_buidl, 200_000),
             (base58_decode_bitcoinlib, 100_000),
         ),
-    )
-    print()
-
-    table(
-        "bech32 encode, a witness-v0 address from a 20-byte program",
+    ),
+    (
+        "8. bech32 encode, a witness-v0 address from a 20-byte program",
         (
             (bech32_encode_btclib, 200_000),
             (bech32_encode_embit, 200_000),
             (bech32_encode_buidl, 100_000),
             (bech32_encode_bitcoinlib, 200_000),
         ),
-    )
-    print()
-
-    table(
-        "bech32 decode, a 20-byte program from a witness-v0 address",
+    ),
+    (
+        "9. bech32 decode, a 20-byte program from a witness-v0 address",
         (
             (bech32_decode_btclib, 200_000),
             (bech32_decode_embit, 200_000),
             (bech32_decode_buidl, 100_000),
             (bech32_decode_bitcoinlib, 200_000),
         ),
-    )
-    print()
-
-    table(
-        "bech32m encode, a witness-v1 address from a 32-byte program",
+    ),
+    (
+        "10. bech32m encode, a witness-v1 address from a 32-byte program",
         (
             (bech32m_encode_btclib, 200_000),
             (bech32m_encode_embit, 200_000),
             (bech32m_encode_buidl, 100_000),
         ),
-    )
-    print()
-
-    table(
-        "bech32m decode, a 32-byte program from a witness-v1 address",
+    ),
+    (
+        "11. bech32m decode, a 32-byte program from a witness-v1 address",
         (
             (bech32m_decode_btclib, 200_000),
             (bech32m_decode_embit, 200_000),
             (bech32m_decode_buidl, 100_000),
         ),
-    )
+    ),
+)
+
+# what the run block claims about how these numbers were taken, said by
+# the script that takes them: `benchmark` above is where the rounds and
+# the minimum are, and the spread column is what a reader checks it by
+METHOD = f"{ROUNDS} rounds per row, minimum kept; nothing else repeated"
+
+
+def main() -> None:
+    """Print every table, one operation at a time, and save the run.
+
+    Each table is printed as it is measured, this being a run somebody
+    watches for several minutes, and printed through the same renderer
+    that writes the page -- so the terminal is not a preview of the
+    published block, it is that block.
+    """
+    packages = provenance()
+    print(rendered_provenance(packages))
+    print()
+    print("\n".join(WHAT_A_TIMING_CONTAINS))
     print()
 
-    table(
-        "BIP32 derive, seed to child, every chain BIP32 publishes",
-        (
-            (bip32_derive_btclib, 30_000),
-            (bip32_derive_pycoin, pycoin_calls(30_000, 75)),
-            (bip32_derive_embit, 15_000),
-            (bip32_derive_buidl, 12),
-        ),
+    width = width_for([label for _, rows in TABLES for label in labels_of(rows)])
+    tables = []
+    for title, rows in TABLES:
+        table = measured(title, rows)
+        print(rendered_table(table, width))
+        print()
+        tables.append(table)
+
+    saved = save(
+        Measurement(
+            benchmark=slug(__file__),
+            run=taken_now(__file__, METHOD),
+            provenance=packages,
+            tables=tables,
+        )
     )
+    print(f"saved to {saved}", file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

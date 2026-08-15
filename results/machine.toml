@@ -1,0 +1,17 @@
+# The two lines of a run block that no process can answer, kept where a
+# person can edit them and read back into every measurement taken here.
+#
+# `state` is the reason this file exists. What else the machine was doing
+# is a fact about the room, and it is the fact a reader most needs: these
+# numbers were taken on a working desktop and not on a quiesced machine,
+# which is the condition README.md says to distrust. Nothing in a process
+# can see a browser being open, so a run that did not ask a person would
+# have to either invent the line or leave it out.
+#
+# `machine` overrides what the run detects, which on this platform is
+# already the chip and the build rather than `platform.processor()`'s
+# answer of `arm`. It is written down all the same: a run of these
+# benchmarks on somebody else's machine wants to say whose, and this is
+# the one place where saying so is an edit rather than a patch.
+machine = "Apple M5, macOS 26.6 (build 25G72), arm64"
+state = "a working desktop, browser and editor open — not a quiesced machine, which is the condition README.md says to distrust"

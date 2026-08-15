@@ -10,7 +10,7 @@ The release notes, which say what a user has to act on, are in
 
 ### The benchmarks
 
-- **The four benchmarks of btclib and btclib_secp256k1 live here**, and
+- **The four benchmarks of btclib and btclib-secp256k1 live here**, and
   the comparands with them: `ecdsa`, `pycoin`, `buidl`, `embit`,
   `python-bitcoinlib`, `coincurve`, `secp256k1`, `electrum-ecc`,
   `secp256k1lab`.
@@ -22,13 +22,13 @@ The release notes, which say what a user has to act on, are in
   a dependency. Here the comparands are what the project is for, and an
   alert names the package it is about.
 
-- **btclib_secp256k1's benchmark is `scripts/libsecp256k1_wrappers.py`
+- **btclib-secp256k1's benchmark is `scripts/libsecp256k1_wrappers.py`
   now**, that repository having shipped one up to v0.8.0.1: it is the
   one of the four with a released ancestor, and the one HISTORY.md tells
   a reader what to do about. The other three have none.
 
 - **`scripts/libsecp256k1_wrappers.py` is wrapper against wrapper, and
-  nothing else.** Its released ancestor, btclib_secp256k1's
+  nothing else.** Its released ancestor, btclib-secp256k1's
   `scripts/benchmark.py` up to v0.8.0.1, timed btclib's pure-Python
   arithmetic beside three bindings of libsecp256k1 — two questions in one
   table, and neither of them answered well. The two pure-Python rows are
@@ -39,7 +39,7 @@ The release notes, which say what a user has to act on, are in
   the boundary crossing, every row of it calling the same C.
 
   That takes btclib out of the script altogether: the fixtures come from
-  `btclib_secp256k1` and `hashlib`, so nothing there reaches into
+  `btclib-secp256k1` and `hashlib`, so nothing there reaches into
   btclib's private dispatch, and importing it leaves the bindings on for
   the rest of the process. It also carries the check the other three do,
   in both directions — every row is called at import, and every row is
@@ -48,7 +48,7 @@ The release notes, which say what a user has to act on, are in
   true to whatever it is handed.
 
 - **`electrum-ecc` is a fourth wrapper row**, and the closest comparand
-  `btclib_secp256k1` has: it wraps the same library, and wraps it the
+  `btclib-secp256k1` has: it wraps the same library, and wraps it the
   other way, ctypes where the other three use cffi. That is the whole of
   what separates them once the C underneath is the same, which is why
   the row belongs in this table and not in `bitcoin_libraries.py` —
@@ -70,7 +70,7 @@ The release notes, which say what a user has to act on, are in
   vector file and BIP32's, copied from btclib's vendored copies at a pinned
   commit with the digests published beside them and checked on every run, and
   `tests/vectors_test.py` runs them against every implementation this project
-  times — btclib, btclib_secp256k1, coincurve, secp256k1-py, electrum-ecc,
+  times — btclib, btclib-secp256k1, coincurve, secp256k1-py, electrum-ecc,
   embit, buidl and secp256k1lab, each in the spelling its API offers.
 
   The negative cases are why it is worth having. Eight of BIP340's nineteen
@@ -95,6 +95,24 @@ The release notes, which say what a user has to act on, are in
   Nothing failed. The one wrong answer this project has found stays the one
   the benchmark itself asserts: `python-bitcoinlib`'s bech32m.
 
+- **No timed function checks its own answer.** Rows across all five scripts
+  compared what they had just computed against an expected value, inside the
+  loop being timed: an equality on bytes, a `verify` whose result was
+  asserted, a membership test over a list of recovered keys. Each
+  of those is time charged to the comparand that did not spend it, and the
+  cost is not even across rows -- comparing DER against DER is not comparing
+  two Python integers, and a row whose API returns an object pays for
+  serializing it before the comparison can be written at all.
+
+  The checks did not move to nowhere. `tests/vectors_test.py` is where the
+  answers are checked, against what the specifications publish rather than
+  against a sibling row, and the cross-comparand assertions each script
+  still makes now sit where its fixtures are built -- at import, which is
+  what the suite runs when it loads the module. What a benchmark measures and
+  what a suite asserts had been one thing, and they are two.
+
+  Every published table was re-run, the verification rows moving most.
+
 - **Grinding is represented the same way everywhere, including where that
   means no row.** btclib and embit grind by default and `electrum-ecc`
   offers it, so each has a `grind=False` row beside a row of its default in
@@ -118,7 +136,7 @@ The release notes, which say what a user has to act on, are in
   thing that came of having it in both.
 
 - **`bitcoin_libraries.py` says which libsecp256k1 btclib's row calls**,
-  where it used to print `btclib_secp256k1`'s own version number and leave
+  where it used to print `btclib-secp256k1`'s own version number and leave
   the library underneath unnamed. The revision is recorded against the
   release it was read from and printed as unrecorded for any other, the
   library being compiled into a cffi extension where nothing at run time can
@@ -126,21 +144,23 @@ The release notes, which say what a user has to act on, are in
   prebuilt library embit loaded, which is a file name because embit's
   bundled libraries carry no version a caller can read.
 
-  Dropping `btclib_secp256k1` from that block turned pycoin's rows back into
+  Dropping `btclib-secp256k1` from that block turned pycoin's rows back into
   Python rows, which is the fragility the docstring describes made concrete:
   the import was load-bearing, its side effect being the symbols pycoin's
   ctypes probe finds. It is back, with the reason written beside it.
 
 - **The wrapper table signs as well as verifying, and tweaks a public
   key.** Verification was the whole of it, which left out the operation the
-  four APIs differ over most: signing separates them further, and
-  `electrum-ecc` is the only one of them offering low-r grinding, so it has
-  two rows where the others have one. The four also agree on one ECDSA
+  four APIs differ over most. `electrum-ecc` signs with
+  `grind_r_value=False`, it being the only one of the four offering low-r
+  grinding: a row that grinds is a multiple of a row that signs once, and
+  three of these rows sign once. Three of the four also agree on one
   signature exactly -- libsecp256k1's default nonce is RFC6979, so one key
-  and one message give one signature through four APIs, and the script now
-  asserts that. BIP340 is checked against the vector for three of them;
-  `secp256k1-py`'s `schnorr_sign` takes no aux_rand, so what its API leaves
-  checkable is that its signature verifies.
+  and one message give one signature through three APIs, and the fixtures
+  check that. `secp256k1-py`'s build agrees on x86-64 and not on aarch64, so
+  what every wrapper is held to is the portable claim, that the signature
+  verifies; BIP340 is checked against the vector for the three whose API
+  takes an aux_rand.
 
   The last table is BIP32's step and not BIP32: none of the four implements
   derivation, and all four expose the primitive it is built from, a public
@@ -159,7 +179,7 @@ The release notes, which say what a user has to act on, are in
   once: what Python costs, which `btclib_two_paths.py` answers over
   btclib's own two paths, and which Python implementation is quicker, which
   is the one this script is for. So the bindings row is gone, with the
-  `btclib_secp256k1` line beside it, and what is left is one ratio against
+  `btclib-secp256k1` line beside it, and what is left is one ratio against
   whichever row came out fastest. "Pure Python" is said once, in the block
   above the tables, rather than per row -- and the block says what holds
   each row to Python, which is different for each of them and is the part a
@@ -338,9 +358,42 @@ The release notes, which say what a user has to act on, are in
   pycoin's own `except AttributeError` reports it as no library found —
   `bitcoin.core.key`, above it in the same script, imports it — and the
   library name it then asks for resolves to nothing, so the load falls
-  through to the symbols `btclib_secp256k1`'s extension has already put in
+  through to the symbols `btclib-secp256k1`'s extension has already put in
   the process. Both are properties of the import list, and the script's
   docstring now says so.
+
+- **A run is saved as data, and the page is rendered from it.** Each
+  benchmark writes `results/<name>.json` as it finishes — every number as
+  measured, the packages block, and what the run block states — and
+  `scripts/render.py` writes `results/<name>.md` from that file, between
+  the markers the page carries and touching no word of the prose around
+  them. Before this, publishing a run meant a person copying what
+  scrolled past into a page and typing the clock and the machine in
+  beside it, which made the two things one: rewording a heading cost
+  either a fresh measurement, whose numbers are different, or a
+  hand-edited block, whose numbers no run ever printed. It is now two
+  commands, and the second needs no machine.
+
+  Nothing derived is stored. Ratios, savings, break-evens, the sort and
+  the column widths are all computed at render time from the microseconds
+  beside them, so a number in the file is a number a clock produced, and
+  a mistake in a derived column is fixed without measuring again. The
+  widths in particular were hand-set per script and are now taken from
+  the labels, one width per page: a comparand with a longer name widens
+  the column instead of overflowing a number somebody chose.
+
+  `render.py` imports no benchmark, which is the property that makes it
+  cheap — importing one builds every fixture and runs every
+  cross-comparand assertion. Neither it nor `scripts/_results.py` is
+  under the coverage gate, deliberately: a page is written by a command a
+  person runs, and putting the rewording of a heading behind the suite is
+  the coupling this split removes. `render.py --check` is what says a
+  page still matches the run it publishes.
+
+  `results/machine.toml` holds the two lines no process can answer, which
+  machine and what else was running on it. The rest of the run block is
+  taken where the run is: the clock, the interpreter, the command, and
+  the chip and OS build read from the machine itself.
 
 - **Each benchmark prints where its packages came from** before any
   number, `scripts/_provenance.py` being what answers it. A released

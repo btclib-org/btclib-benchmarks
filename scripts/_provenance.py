@@ -67,7 +67,7 @@ def _under_install_root(module_file: str) -> bool:
     )
 
 
-def _from_a_declared_source(dist_name: str) -> bool:
+def from_a_declared_source(dist_name: str) -> bool:
     """Say whether an install came from an index or from a pinned revision.
 
     Those are the two origins that need no saying, being what a declared
@@ -108,24 +108,59 @@ def describe(dist_name: str, module_file: str) -> str:
         return f"{dist_name:<20}: not installed"
     if not _under_install_root(module_file):
         return f"{dist_name:<20}: {released:<24} (sys.path: {module_file})"
-    if _from_a_declared_source(dist_name):
+    if from_a_declared_source(dist_name):
         return f"{dist_name:<20}: {released}"
     return f"{dist_name:<20}: {released:<24} ({origin_of(dist_name)})"
 
 
-def report(*packages: tuple[str, str]) -> None:
-    """Print a line per package, then a blank line.
+# what a timing contains, said in the output rather than only in the prose
+# about it. A reader looking at two rows a percent apart is entitled to know
+# whether part of the difference is an assertion one row could write more
+# cheaply than another. It is not: a timed function calls one API and
+# discards what it comes back with, and where the answers *are* checked is
+# named here, so the answer travels with the numbers rather than sitting in
+# a file the numbers do not point at.
+#
+# Lines and not a print, because a run and a re-render both need them and
+# only one of the two has a stream to write to: `_results` stores these with
+# the measurement, so a page keeps the claim its own run made.
+WHAT_A_TIMING_CONTAINS = (
+    "what a timing contains",
+    "  one call per iteration, its answer discarded: no row checks",
+    "  itself, and no comparison is inside a measured loop",
+    "  the answers are checked in tests/vectors_test.py, and where",
+    "  each script builds its fixtures, which is before any clock",
+)
 
-    Written to stdout with the numbers rather than to stderr, because it
-    is part of the result rather than commentary on it: pasting the whole
-    of what the script printed has to be the easy path, and it only is if
-    the two arrive together.
+
+def described(
+    *packages: tuple[str, str], dates: dict[str, tuple[str, str]] | None = None
+) -> list[str]:
+    """Return one line per package, for the block above the numbers.
+
+    `dates` maps a distribution to the release it was recorded at and the day
+    that release was published. Recorded, because no installed metadata
+    carries it: a wheel's METADATA has a Version and no date, and the
+    dist-info directory's mtime is when the package was installed here. A date
+    prints only for the release it was read at, and the version prints alone
+    for any other -- the same rule the libsecp256k1 pins follow, and for the
+    same reason.
+
+    Returned rather than printed, which is what lets one run be published
+    twice: the lines go into the saved measurement beside the numbers, and
+    `scripts/render.py` writes both into the page without asking the
+    interpreter anything. Printing them put the answer somewhere only a
+    person with a terminal could reach it.
 
     The interpreter is not among the lines. It belongs to the run rather
     than to the packages -- as the machine and the time do, which no script
-    can state either -- and `results/` carries all three in one block above
-    the output. Printing it here put it twice in every published file.
+    can state either -- and the run block above the output carries all three.
     """
+    lines = []
     for dist_name, module_file in packages:
-        print(describe(dist_name, module_file))
-    print()
+        line = describe(dist_name, module_file)
+        recorded = (dates or {}).get(dist_name)
+        if recorded and version(dist_name) == recorded[0]:
+            line = f"{line}, released {recorded[1]}"
+        lines.append(line)
+    return lines

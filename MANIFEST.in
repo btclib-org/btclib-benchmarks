@@ -14,8 +14,11 @@ recursive-include tests *.py
 recursive-include vectors *.csv *.json *.md
 # the runs the README links to, which are output rather than furniture:
 # a checkout is where a benchmark is run, and these say what running one
-# produced on a machine that is named
-recursive-include results *.md
+# produced on a machine that is named. The .json beside each page is that
+# run as data and the page is rendered from it, so shipping one without
+# the other would ship a page nothing can rebuild; machine.toml is the two
+# lines of it no process can answer
+recursive-include results *.md *.json *.toml
 # the documentation sources, which the sphinx gate builds from an
 # unpacked sdist as readily as from a checkout
 recursive-include docs *.md

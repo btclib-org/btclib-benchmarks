@@ -1,19 +1,19 @@
 # btclib-benchmarks
 
 Timings of [btclib](https://github.com/btclib-org/btclib) and
-[btclib_secp256k1](https://github.com/btclib-org/btclib-secp256k1)
+[btclib-secp256k1](https://github.com/btclib-org/btclib-secp256k1)
 against the packages they are usefully compared with.
 
 Five benchmarks, each answering a different question:
 
 - **`btclib_two_paths.py`** — btclib against btclib: its pure-Python
-  arithmetic against the libsecp256k1 that `btclib_secp256k1` bundles and
+  arithmetic against the libsecp256k1 that `btclib-secp256k1` bundles and
   compiles into a cffi extension
 - **`bitcoin_libraries.py`** — btclib as installed, against other Python
   bitcoin libraries, over curve operations and the address encodings
 - **`pure_python.py`** — every pure-Python implementation of the same
   operation, against each other
-- **`libsecp256k1_wrappers.py`** — btclib_secp256k1 against the other
+- **`libsecp256k1_wrappers.py`** — btclib-secp256k1 against the other
   wrappers of the same C library: `coincurve` and `secp256k1-py` through
   cffi, `electrum-ecc` through ctypes
 - **`key_reuse.py`** — what the second signature under the same key
@@ -24,7 +24,7 @@ Five benchmarks, each answering a different question:
 
 The comparands are third-party packages: `ecdsa`, `pycoin`, `buidl`,
 `embit`, `python-bitcoinlib`, `coincurve`, `secp256k1`, `electrum-ecc`.
-Measured from inside btclib or btclib_secp256k1 they would be resolved
+Measured from inside btclib or btclib-secp256k1 they would be resolved
 into the lock of a library that never imports them — so a vulnerability
 reported against a comparand would be reported against btclib, and a
 reader of that alert would have to work out that the package was a
@@ -55,7 +55,7 @@ benchmark that cannot install its comparands measures nothing, so
 `.python-version` pins 3.13 where the rest of this org pins 3.14.
 
 Raise the pin when both publish a `cp314` wheel. Neither of the other two
-wrappers holds any part of it: `btclib_secp256k1` publishes past `cp313`
+wrappers holds any part of it: `btclib-secp256k1` publishes past `cp313`
 already, and `electrum-ecc` has no wheel on PyPI at all — it compiles at
 install time, and what it builds is tagged `py3-none`, the C being
 reached through ctypes rather than linked into an extension.
@@ -77,7 +77,7 @@ findable.
 ### Measuring a working tree instead of a release
 
 The default is deliberate: every comparand is timed at its **published
-release**, btclib and btclib_secp256k1 included, because `pip install` is
+release**, btclib and btclib-secp256k1 included, because `pip install` is
 what an end user gets and that is the only performance an end user has.
 
 To time a checkout instead — an unreleased optimization, say — install it
@@ -110,7 +110,7 @@ linked: each vendors a revision of its own, and they are not the same
 revision. So that script prints, per row, which one is underneath it and
 how the row reaches it. Read that beside the timings — a build against a
 stale one is not the comparison the table looks like, and where
-`btclib_secp256k1` is the one lagging, the output is where it says so.
+`btclib-secp256k1` is the one lagging, the output is where it says so.
 
 ## One run of each, published
 
@@ -131,6 +131,14 @@ The machine is named in each file, and so is what else was running on it.
 They are a record of one run, not a claim about anyone else's hardware:
 what makes them worth publishing is that they are reproducible by one
 command, not that they are authoritative.
+
+Beside each page is the run it publishes, `results/<name>.json`: the
+numbers as they were measured, and everything the page states about how.
+A benchmark writes it, `scripts/render.py` writes the page from it, and
+the two are separate commands on purpose — the prose around a table gets
+rewritten far more often than a machine gets measured, and it must not
+cost a fresh run or a hand-edited number to do it. `CONTRIBUTING.md` has
+both commands.
 
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
 [libraries]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md

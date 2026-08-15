@@ -62,10 +62,19 @@ already has a saving available, and where btclib has none to offer.
 The reference is the fastest row of each table, as the pure-Python
 benchmark prints it, and not a row named in advance: with two paths and
 two libraries in one table, naming one would be choosing.
+
+## What a run leaves behind
+
+The numbers are written to `results/key-reuse.json` as this finishes,
+and `scripts/render.py` writes the page beside it from that file
+alone. So the prose around a table is rewritten and re-published
+without a machine and without a number being retyped: measuring and
+publishing are two commands.
 """
 
 from __future__ import annotations
 
+import sys
 import time
 from collections.abc import Callable
 from hashlib import sha256
@@ -74,19 +83,41 @@ from itertools import cycle
 import btclib
 import btclib_secp256k1
 import ecdsa
-from _provenance import report
+from _provenance import described
+from _results import (
+    BreakEven,
+    Measurement,
+    Preparation,
+    Provenance,
+    Ratios,
+    Timing,
+    rendered_output,
+    rendered_provenance,
+    save,
+    slug,
+    taken_now,
+)
 from _vectors import signing
 from btclib.curves import curve, sec_point
 from btclib.ecc import dsa
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
 
 
-def report_provenance() -> None:
-    """Say which build of each package these rows are about."""
-    report(
-        ("btclib", btclib.__file__),
-        ("btclib-secp256k1", btclib_secp256k1.__file__),
-        ("ecdsa", ecdsa.__file__),
+def provenance() -> Provenance:
+    """Say which build of each package these rows are about.
+
+    Three lines and no columns: what a reader of this table needs is which
+    build answered, and `describe` already lays a version out against a
+    name -- a header over three cells would be furniture.
+    """
+    return Provenance(
+        columns=[],
+        rows=[],
+        notes=described(
+            ("btclib", btclib.__file__),
+            ("btclib-secp256k1", btclib_secp256k1.__file__),
+            ("ecdsa", ecdsa.__file__),
+        ),
     )
 
 
@@ -216,8 +247,8 @@ def verify_ecdsa_prepared() -> None:
 
 def parse_point() -> None:
     """Time the preparation btclib offers: decompressing the key once."""
-    octets, expected = next(PARSE)
-    assert sec_point.point_from_octets(octets) == expected
+    octets, _expected = next(PARSE)
+    sec_point.point_from_octets(octets)
 
 
 def benchmark(func: Callable[[], None], calls: int) -> float:
@@ -272,41 +303,26 @@ def precompute_once(calls: int) -> float:
     return elapsed / calls * 1e6
 
 
-def table(title: str, rows: dict[str, float]) -> None:
-    """Print one table, fastest first, against the fastest of its rows."""
-    against = min(rows.values())
-    print(f"\n{title}")
-    print(f"  {'':30s} {'':10s}      {'vs best':>8s}")
-    for label, value in sorted(rows.items(), key=lambda row: row[1]):
-        print(f"  {label:30s} {value:10.2f} μs   {value / against:8.1f}x")
-
-
-def break_even(title: str, rows: tuple[tuple[str, float, float, float], ...]) -> None:
-    """Print what each preparation costs and when it has paid for itself.
-
-    The break-even is against the same implementation's own unprepared
-    row and not against the fastest of the table: what a caller decides
-    is whether to prepare *this* key, and the row that answers that is
-    the one they would otherwise have run.
-    """
-    print(f"\n{title}")
-    print(f"  {'':30s} {'prepare':>10s} {'saves/call':>11s} {'break-even':>11s}")
-    for label, prepare, plain, prepared in rows:
-        saved = plain - prepared
-        calls = prepare / saved
-        print(f"  {label:30s} {prepare:9.2f} μs {saved:9.2f} μs {calls:9.1f}")
+# what the run block claims about how these numbers were taken. Every row
+# here is timed once: the two paths and the two libraries are orders of
+# magnitude apart, and what this table asks -- whether preparing a key is
+# worth it -- is not a question rounds would sharpen
+METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
 
 
 def main() -> None:
-    """Time every row, bindings first, and print the tables.
+    """Time every row, bindings first, print the tables and save the run.
 
     The order is `python_arithmetic_only`'s requirement: it cannot be
     undone within a process, so every row that is meant to reach the
     bindings runs before it and every row that is meant to measure Python
     runs after.
-    """
-    report_provenance()
 
+    Nothing is printed until it is all measured, both tables being sorted
+    and ratioed across their own rows. What reaches the terminal is what
+    `render.py` puts in the page, the two coming from one rendering of one
+    saved run.
+    """
     bindings_octets = benchmark(verify_octets, 20_000)
     bindings_point = benchmark(verify_point, 20_000)
     bindings_parse = prepare_once(parse_point, 20_000)
@@ -321,31 +337,61 @@ def main() -> None:
     python_point = benchmark(verify_point, 500)
     python_parse = prepare_once(parse_point, 2_000)
 
-    table(
-        "ECDSA verify, one key, every signature under it",
-        {
-            "btclib, bindings, octets": bindings_octets,
-            "btclib, bindings, parsed point": bindings_point,
-            "btclib, Python, octets": python_octets,
-            "btclib, Python, parsed point": python_point,
-            "python-ecdsa": ecdsa_plain,
-            "python-ecdsa, precomputed": ecdsa_prepared,
-        },
+    verify = Ratios(
+        title="ECDSA verify, one key, every signature under it",
+        rows=[
+            Timing(label=label, us_per_call=value)
+            for label, value in (
+                ("btclib, bindings, octets", bindings_octets),
+                ("btclib, bindings, parsed point", bindings_point),
+                ("btclib, Python, octets", python_octets),
+                ("btclib, Python, parsed point", python_point),
+                ("python-ecdsa", ecdsa_plain),
+                ("python-ecdsa, precomputed", ecdsa_prepared),
+            )
+        ],
     )
 
-    break_even(
-        "what preparing the key costs, and after how many verifications it pays",
-        (
-            (
-                "btclib, bindings, parse once",
-                bindings_parse,
-                bindings_octets,
-                bindings_point,
+    # what a preparation saves, and after how many calls it has paid, are
+    # the renderer's to divide out: what is measured is the preparation and
+    # the two verifications it sits between. Those two are the same
+    # implementation's own rows and not the fastest of the table -- what a
+    # caller decides is whether to prepare *this* key, and the row that
+    # answers is the one they would otherwise have run
+    costs = BreakEven(
+        title="what preparing the key costs, and after how many verifications it pays",
+        rows=[
+            Preparation(
+                label="btclib, bindings, parse once",
+                prepare=bindings_parse,
+                plain=bindings_octets,
+                prepared=bindings_point,
             ),
-            ("btclib, Python, parse once", python_parse, python_octets, python_point),
-            ("python-ecdsa, precompute()", ecdsa_prepare, ecdsa_plain, ecdsa_prepared),
-        ),
+            Preparation(
+                label="btclib, Python, parse once",
+                prepare=python_parse,
+                plain=python_octets,
+                prepared=python_point,
+            ),
+            Preparation(
+                label="python-ecdsa, precompute()",
+                prepare=ecdsa_prepare,
+                plain=ecdsa_plain,
+                prepared=ecdsa_prepared,
+            ),
+        ],
     )
+
+    measurement = Measurement(
+        benchmark=slug(__file__),
+        run=taken_now(__file__, METHOD),
+        provenance=provenance(),
+        tables=[verify, costs],
+    )
+    print(rendered_provenance(measurement.provenance))
+    print()
+    print(rendered_output(measurement))
+    print(f"\nsaved to {save(measurement)}", file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

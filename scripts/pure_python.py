@@ -13,7 +13,10 @@ else -- pycoin is C there and Python here.
 
 ## How each row is held to Python
 
-`report_setup` prints this per row, once, above the tables.
+`provenance` says this per row, in the column beside the version:
+every row here is Python, so the word belongs in the heading and what belongs
+beside each name is whatever made it true, which is different for each of them
+and is the only part a reader could doubt.
 
 - **btclib**: `curves.curve._libsecp256k1_available` is the switch every
   dispatch reads, so clearing it turns the delegation off everywhere at once.
@@ -51,9 +54,22 @@ it: python-ecdsa returns the generator *object* as the public key of the
 private key 1, precomputed table and all, so a row verifying against that key
 verifies with a table no real key gets.
 
-Not part of the test suite and not run by CI, as the others are not: nothing
-here is a correctness check, though every row is checked before it is timed --
-against btclib's answer, and against BIP340's where there is one.
+A timed function calls one implementation and discards what it returns:
+nothing here is a correctness check. `tests/vectors_test.py` is, and it runs
+the vendored vectors against every implementation timed here, in this
+script's pure-Python configuration as well as the default one. The
+assertions below run at import, where the fixtures are built, so the suite
+loading this module runs them and no timing carries them.
+
+Not part of the test suite and not run by CI, as the others are not.
+
+## What a run leaves behind
+
+The numbers are written to `results/pure-python.json` as this finishes,
+and `scripts/render.py` writes the page beside it from that file
+alone. So the prose around a table is rewritten and re-published
+without a machine and without a number being retyped: measuring and
+publishing are two commands.
 """
 
 from __future__ import annotations
@@ -64,38 +80,96 @@ import os
 # the native lookup runs at import time and never again
 os.environ["PYCOIN_NATIVE"] = "none"
 
+import sys
 import time
 from collections.abc import Callable
 from hashlib import sha256
+from importlib.metadata import version
 from itertools import cycle
 
-import btclib
 import buidl.pecc
 import ecdsa
 import pycoin.symbols.btc
 import secp256k1lab.bip340
-from _provenance import report
+from _provenance import WHAT_A_TIMING_CONTAINS, origin_of
+from _results import (
+    Measurement,
+    Provenance,
+    Ratios,
+    Timing,
+    rendered_provenance,
+    rendered_table,
+    save,
+    slug,
+    taken_now,
+    width_for,
+)
 from _vectors import signing, verification
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
 from secp256k1lab.secp256k1 import G as LAB_G
 
+# the release each version was published on, recorded because no installed
+# metadata carries it: a wheel's METADATA has a Version and no date, and the
+# dist-info directory's mtime is when the package was installed here. Keyed
+# by the release it was read for, so an upgraded comparand prints
+# `unrecorded` rather than a date that has stopped being true.
+# secp256k1lab is on no index and is taken from a git tag, which is still a
+# release someone cut on a day, so it is recorded like the other four
+RELEASE_DATES = {
+    "secp256k1lab": ("1.0.0", "2025-03-26"),
+    "ecdsa": ("0.19.2", "2026-03-26"),
+    "pycoin": ("0.92718.20260405", "2026-04-05"),
+    "buidl": ("0.2.36", "2022-02-28"),
+}
 
-def report_provenance() -> None:
-    """Say which build of each package these rows are about.
 
-    Printed before any number: a released wheel and a working
-    tree satisfy the same requirement and resolve in silence, so
-    which one ran is something the output has to state rather
-    than something the reader assumes.
+def _released(dist_name: str) -> str:
+    """Say when this build was published, or where it came from instead.
+
+    btclib resolves from its branch until 2026.9 is on PyPI, and a date would
+    be a claim about a release that has not happened: what the column says for
+    it is the branch and the commit, which is what a reader has to look up to
+    get these rows again. `scripts/bitcoin_libraries.py` prints the same
+    column by the same rule, over an overlapping set of packages.
     """
-    report(
-        ("btclib", btclib.__file__),
-        ("secp256k1lab", secp256k1lab.bip340.__file__),
-        ("ecdsa", ecdsa.__file__),
-        ("pycoin", pycoin.symbols.btc.__file__),
-        ("buidl", buidl.pecc.__file__),
+    if not (recorded := RELEASE_DATES.get(dist_name)):
+        # the branch and the commit, without the repository the package
+        # column has already named
+        return origin_of(dist_name).split()[-1]
+    return recorded[1] if version(dist_name) == recorded[0] else "unrecorded"
+
+
+def provenance() -> Provenance:
+    """Return one row per package: the build, and what holds it to Python.
+
+    Above every number, because a released wheel and a working tree satisfy
+    the same requirement and resolve in silence. Not "pure Python" per row:
+    every row in these tables is, so the last column carries the mechanism
+    instead, which is the only part of the claim a reader could doubt.
+    pycoin's cell is read back rather than written down, a benchmark that
+    says Python on a row that loaded a shared object being worse than no
+    benchmark. Sorted newest release first.
+    """
+    rows = (
+        ("btclib", "its delegation to btclib-secp256k1's cffi bindings switched off"),
+        (
+            "pycoin",
+            f"PYCOIN_NATIVE=none before its import, resolving to {_pycoin_backend()}",
+        ),
+        ("buidl", "being imported as buidl.pecc, not buidl.ecc"),
+        ("ecdsa", "having no compiled backend at all"),
+        ("secp256k1lab", "having no compiled backend at all"),
+    )
+    return Provenance(
+        columns=["package", "version", "released", "held to Python by"],
+        rows=[
+            [dist_name, version(dist_name), _released(dist_name), mechanism]
+            for dist_name, mechanism in sorted(
+                rows, key=lambda row: _released(row[0]), reverse=True
+            )
+        ],
     )
 
 
@@ -181,69 +255,39 @@ def _pycoin_backend() -> str:
     return "pure Python"
 
 
-def report_setup() -> None:
-    """Print what holds each row to Python, having said once that all are.
-
-    Not a version number: `report_provenance` above prints those. Not "pure
-    Python" per row either -- every row in this table is, so the word
-    belongs in the heading and what belongs beside each name is the thing
-    that made it true, which is different for each of them and is the only
-    part a reader could doubt.
-    """
-    print("every row is pure Python arithmetic, held to it by")
-    print(
-        f"  {'btclib':<20}its delegation to btclib_secp256k1's cffi bindings "
-        "switched off"
-    )
-    print(
-        f"  {'pycoin':<20}PYCOIN_NATIVE=none before its import, resolving to "
-        f"{_pycoin_backend()}"
-    )
-    print(f"  {'buidl':<20}being imported as buidl.pecc, not buidl.ecc")
-    print(f"  {'ecdsa':<20}having no compiled backend at all")
-    print(f"  {'secp256k1lab':<20}having no compiled backend at all")
-    print()
-
-
 # --------------------------------------------------------------- pub key
 
 
 def pubkey_btclib() -> None:
     """Time the generator multiplication btclib answers a public key with."""
-    scalar, expected = next(PUBKEY_BTCLIB)
-    assert pub_keyinfo_from_prv_key(scalar)[0] == expected
+    scalar, _expected = next(PUBKEY_BTCLIB)
+    pub_keyinfo_from_prv_key(scalar)[0]
 
 
 def pubkey_lab() -> None:
     """Time secp256k1lab's, which multiplies G through a table of its own."""
-    scalar, expected = next(PUBKEY_LAB)
-    assert (scalar * LAB_G).to_bytes_compressed() == expected
+    scalar, _expected = next(PUBKEY_LAB)
+    (scalar * LAB_G).to_bytes_compressed()
 
 
 def pubkey_buidl() -> None:
     """Time buidl's pure-Python S256Point."""
-    scalar, expected = next(PUBKEY_BUIDL)
-    assert buidl.pecc.PrivateKey(scalar).point.sec() == expected
+    scalar, _expected = next(PUBKEY_BUIDL)
+    buidl.pecc.PrivateKey(scalar).point.sec()
 
 
 def pubkey_ecdsa() -> None:
     """Time python-ecdsa's."""
-    scalar, expected = next(PUBKEY_ECDSA)
-    assert (
-        ecdsa.SigningKey.from_secret_exponent(
-            scalar, curve=ecdsa.SECP256k1
-        ).verifying_key.to_string("compressed")
-        == expected
-    )
+    scalar, _expected = next(PUBKEY_ECDSA)
+    ecdsa.SigningKey.from_secret_exponent(
+        scalar, curve=ecdsa.SECP256k1
+    ).verifying_key.to_string("compressed")
 
 
 def pubkey_pycoin() -> None:
     """Time pycoin's, its native backends turned off."""
-    scalar, expected = next(PUBKEY_PYCOIN)
-    assert (
-        pycoin.symbols.btc.network.keys.private(secret_exponent=scalar).sec()
-        == expected
-    )
+    scalar, _expected = next(PUBKEY_PYCOIN)
+    pycoin.symbols.btc.network.keys.private(secret_exponent=scalar).sec()
 
 
 # ----------------------------------------------------------------- ECDSA
@@ -255,8 +299,8 @@ def dsa_sign_btclib() -> None:
     `grind=False`, which is not btclib's default: one signature is what every
     other row in the table produces, and the default is the row below.
     """
-    msg, prvkey, expected = next(DSA_SIGN_BTCLIB)
-    assert dsa.sign_(msg, prvkey, grind=False) == expected
+    msg, prvkey, _expected = next(DSA_SIGN_BTCLIB)
+    dsa.sign_(msg, prvkey, grind=False)
 
 
 def dsa_sign_btclib_grind() -> None:
@@ -288,7 +332,7 @@ def dsa_sign_ecdsa() -> None:
 def dsa_verify_ecdsa() -> None:
     """Time an ECDSA verification through python-ecdsa."""
     msg, key, sig = next(DSA_ECDSA)
-    assert key.verifying_key.verify_digest(sig, msg)
+    key.verifying_key.verify_digest(sig, msg)
 
 
 def dsa_sign_pycoin() -> None:
@@ -300,7 +344,7 @@ def dsa_sign_pycoin() -> None:
 def dsa_verify_pycoin() -> None:
     """Time an ECDSA verification through pycoin's Generator."""
     _, digest, pair, sig = next(DSA_PYCOIN)
-    assert PYCOIN_GENERATOR.verify(pair, digest, sig)
+    PYCOIN_GENERATOR.verify(pair, digest, sig)
 
 
 def dsa_sign_buidl() -> None:
@@ -312,7 +356,7 @@ def dsa_sign_buidl() -> None:
 def dsa_verify_buidl() -> None:
     """Time an ECDSA verification through buidl's pure-Python module."""
     key, digest, sig = next(DSA_BUIDL)
-    assert key.point.verify(digest, sig)
+    key.point.verify(digest, sig)
 
 
 # ---------------------------------------------------------------- BIP340
@@ -320,8 +364,8 @@ def dsa_verify_buidl() -> None:
 
 def ssa_sign_btclib() -> None:
     """Time a BIP340 signature through btclib, over the vector's aux_rand."""
-    msg, prvkey, aux, expected = next(SSA_BTCLIB_SIGN)
-    assert ssa.sign_(msg, prvkey, aux=aux).serialize() == expected
+    msg, prvkey, aux, _expected = next(SSA_BTCLIB_SIGN)
+    ssa.sign_(msg, prvkey, aux=aux).serialize()
 
 
 def ssa_verify_btclib() -> None:
@@ -332,14 +376,14 @@ def ssa_verify_btclib() -> None:
 
 def ssa_sign_lab() -> None:
     """Time a BIP340 signature through secp256k1lab."""
-    msg, prvkey, aux, expected = next(SSA_LAB_SIGN)
-    assert secp256k1lab.bip340.schnorr_sign(msg, prvkey, aux) == expected
+    msg, prvkey, aux, _expected = next(SSA_LAB_SIGN)
+    secp256k1lab.bip340.schnorr_sign(msg, prvkey, aux)
 
 
 def ssa_verify_lab() -> None:
     """Time a BIP340 verification through secp256k1lab."""
     msg, xonly_pubkey, sig = next(SSA_LAB_VERIFY)
-    assert secp256k1lab.bip340.schnorr_verify(msg, xonly_pubkey, sig)
+    secp256k1lab.bip340.schnorr_verify(msg, xonly_pubkey, sig)
 
 
 def ssa_sign_buidl() -> None:
@@ -351,7 +395,7 @@ def ssa_sign_buidl() -> None:
 def ssa_verify_buidl() -> None:
     """Time a BIP340 verification through buidl's pure-Python module."""
     key, msg, sig = next(SSA_BUIDL_VERIFY)
-    assert key.point.verify_schnorr(msg, sig)
+    key.point.verify_schnorr(msg, sig)
 
 
 # ------------------------------------------------------------- the timing
@@ -376,25 +420,27 @@ def benchmark(func: Callable[[], None], calls: int) -> float:
     return (time.perf_counter() - start) / calls * 1e6
 
 
-def table(title: str, rows: tuple[tuple[str, Callable[[], None], int], ...]) -> None:
-    """Time one operation's rows, then print them fastest first.
+Rows = tuple[tuple[str, Callable[[], None], int], ...]
 
-    One ratio, against whichever row came out quickest, as the other three
-    benchmarks print: with every row a Python implementation of the same
-    operation, the fastest of them is the only reference that is not a
-    choice. Naming a row instead -- btclib's, this being btclib's benchmark
-    -- would print fractions under one on the runs where another row won,
-    and where btclib stands is its own place in the order.
 
-    The order is the measurement's, which is what makes the table an answer
-    rather than a list.
+def measured(title: str, rows: Rows) -> Ratios:
+    """Time one operation's rows and return them as a table.
+
+    The sort and the ratio are the renderer's: one ratio, against whichever
+    row came out quickest, as the other three benchmarks print it. With
+    every row a Python implementation of the same operation, the fastest of
+    them is the only reference that is not a choice -- naming a row instead,
+    btclib's, this being btclib's benchmark, would print fractions under one
+    on the runs where another row won, and where btclib stands is its own
+    place in the order.
     """
-    us = {label: benchmark(func, calls) for label, func, calls in rows}
-    against = min(us.values())
-    print(f"\n{title}")
-    print(f"  {'':26s} {'':10s}      {'vs best':>8s}")
-    for label, value in sorted(us.items(), key=lambda row: row[1]):
-        print(f"  {label:26s} {value:10.2f} μs   {value / against:8.1f}x")
+    return Ratios(
+        title=title,
+        rows=[
+            Timing(label=label, us_per_call=benchmark(func, calls))
+            for label, func, calls in rows
+        ],
+    )
 
 
 # the fixtures the third-party rows sign and verify, built once and
@@ -526,18 +572,11 @@ SSA_BUIDL_VERIFY = cycle(
 )
 
 
-def main() -> None:
-    """Throw the switch, then print a table per operation.
-
-    `python_arithmetic_only` comes first and nothing here is timed before
-    it: with no reference row left to measure through the bindings, the one
-    ordering this script needs is that the switch precede every timing.
-    """
-    report_provenance()
-    report_setup()
-    python_arithmetic_only()
-
-    table(
+# every table of this benchmark, declared rather than called: the label
+# column is one width for the whole page, which is a fact about all five
+# tables and cannot be known while the first is being measured
+TABLES: tuple[tuple[str, Rows], ...] = (
+    (
         "public key from a private key: a multiplication of the generator",
         (
             ("btclib", pubkey_btclib, 200),
@@ -546,9 +585,8 @@ def main() -> None:
             ("pycoin", pubkey_pycoin, 20),
             ("buidl.pecc", pubkey_buidl, 10),
         ),
-    )
-
-    table(
+    ),
+    (
         "ECDSA sign, over a 32-byte digest",
         (
             ("btclib, one signature", dsa_sign_btclib, 50),
@@ -557,9 +595,8 @@ def main() -> None:
             ("pycoin", dsa_sign_pycoin, 20),
             ("buidl.pecc", dsa_sign_buidl, 10),
         ),
-    )
-
-    table(
+    ),
+    (
         "ECDSA verify, over a 32-byte digest",
         (
             ("btclib", dsa_verify_btclib, 50),
@@ -567,25 +604,69 @@ def main() -> None:
             ("pycoin", dsa_verify_pycoin, 10),
             ("buidl.pecc", dsa_verify_buidl, 10),
         ),
-    )
-
-    table(
+    ),
+    (
         "BIP340 sign, over a 32-byte message",
         (
             ("btclib", ssa_sign_btclib, 50),
             ("secp256k1lab", ssa_sign_lab, 50),
             ("buidl.pecc", ssa_sign_buidl, 5),
         ),
-    )
-
-    table(
+    ),
+    (
         "BIP340 verify, over a 32-byte message",
         (
             ("btclib", ssa_verify_btclib, 50),
             ("secp256k1lab", ssa_verify_lab, 50),
             ("buidl.pecc", ssa_verify_buidl, 10),
         ),
+    ),
+)
+
+# what the run block claims about how these numbers were taken. Every row
+# here is timed once: the counts are small, these being the slowest rows
+# this project prints, and three rounds of the slowest would be a run
+# nobody waits for
+METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
+
+
+def main() -> None:
+    """Throw the switch, print a table per operation, and save the run.
+
+    `python_arithmetic_only` comes first and nothing here is timed before
+    it: with no reference row left to measure through the bindings, the one
+    ordering this script needs is that the switch precede every timing.
+
+    Each table is printed as it is measured, this being a run somebody
+    watches, and printed through the same renderer that writes the page --
+    so the terminal is not a preview of the published block, it is that
+    block.
+    """
+    packages = provenance()
+    print(rendered_provenance(packages))
+    print()
+    print("\n".join(WHAT_A_TIMING_CONTAINS))
+    print()
+
+    python_arithmetic_only()
+
+    width = width_for([label for _, rows in TABLES for label, _, _ in rows])
+    tables = []
+    for title, rows in TABLES:
+        table = measured(title, rows)
+        print(rendered_table(table, width))
+        print()
+        tables.append(table)
+
+    saved = save(
+        Measurement(
+            benchmark=slug(__file__),
+            run=taken_now(__file__, METHOD),
+            provenance=packages,
+            tables=tables,
+        )
     )
+    print(f"saved to {saved}", file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "benchmark": "btclib-two-paths",
+  "run": {
+    "when": "2026-08-15T06:19:06+02:00",
+    "timezone": "CEST",
+    "python": "3.13.14",
+    "method": "one run, kept whole — nothing repeated, no outlier discarded",
+    "command": "uv run python scripts/btclib_two_paths.py",
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64",
+    "state": "a working desktop, browser and editor open — not a quiesced machine, which is the condition README.md says to distrust"
+  },
+  "provenance": {
+    "columns": [],
+    "rows": [],
+    "notes": [
+      "btclib 2026.9 (bindings 0.8.0.2), measured as μs/call, sorted on the ratio"
+    ]
+  },
+  "timing_note": [],
+  "tables": [
+    {
+      "kind": "pairs",
+      "title": "",
+      "columns": [
+        "libsecp256k1",
+        "pure python"
+      ],
+      "rows": [
+        {
+          "label": "pubkey_from_prvkey",
+          "values": [
+            10.123798325657845,
+            147.28029200341552
+          ]
+        },
+        {
+          "label": "pubkey_parse",
+          "values": [
+            3.5281466599553823,
+            74.1705915890634
+          ]
+        },
+        {
+          "label": "generator_mult",
+          "values": [
+            8.1438949983567,
+            139.54989600460976
+          ]
+        },
+        {
+          "label": "dsa_sign",
+          "values": [
+            16.16116668097675,
+            159.5383124658838
+          ]
+        },
+        {
+          "label": "dsa_verify",
+          "values": [
+            19.428598321974277,
+            665.52016697824
+          ]
+        },
+        {
+          "label": "dsa_recover",
+          "values": [
+            39.61517079733312,
+            1306.3653749413788
+          ]
+        },
+        {
+          "label": "ssa_sign",
+          "values": [
+            24.6596849989146,
+            317.2236455138773
+          ]
+        },
+        {
+          "label": "ssa_verify",
+          "values": [
+            20.31040832400322,
+            673.0967918410897
+          ]
+        },
+        {
+          "label": "dh_shared_secret",
+          "values": [
+            13.527461644262075,
+            542.4173959763721
+          ]
+        },
+        {
+          "label": "bms_sign",
+          "values": [
+            27.411338935295742,
+            321.5037294430658
+          ]
+        },
+        {
+          "label": "bms_verify",
+          "values": [
+            23.47581667515139,
+            710.755999898538
+          ]
+        },
+        {
+          "label": "taproot_tweak",
+          "values": [
+            17.28557332418859,
+            233.01510454621166
+          ]
+        },
+        {
+          "label": "ellswift_decode",
+          "values": [
+            7.959979996085167,
+            121.54983333311975
+          ]
+        }
+      ]
+    }
+  ]
+}

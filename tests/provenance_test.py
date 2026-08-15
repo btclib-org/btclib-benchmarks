@@ -194,20 +194,40 @@ def test_a_distribution_with_no_metadata_at_all_is_named_not_installed(
     )
 
 
-def test_report_prints_one_line_per_package_and_nothing_else(
-    capsys: pytest.CaptureFixture[str],
+def test_a_recorded_release_date_is_given_beside_the_version_it_was_read_at(
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The report is stdout, so that a paste carries it and the numbers.
+    """No installed metadata carries a release date, so one is recorded.
 
-    One line per package and a blank one: the interpreter, the machine and
-    the time belong to the run rather than to the packages, and the block
-    above a published table is where all three are stated together.
+    Recorded against a release: the date is given for that one and the
+    version stands alone for any other, which is what keeps a date from
+    outliving the release it describes.
     """
-    _provenance.report(("pytest", pytest.__file__))
-    out = capsys.readouterr().out
-    assert out.splitlines()[0].startswith("pytest")
-    assert out.splitlines()[1] == ""
-    assert "python" not in out
+    monkeypatch.setattr(_provenance, "version", lambda _: "1.2.3")
+    dated = _provenance.described(
+        ("pytest", pytest.__file__), dates={"pytest": ("1.2.3", "2026-01-01")}
+    )
+    assert "released 2026-01-01" in dated[0]
+
+    stale = _provenance.described(
+        ("pytest", pytest.__file__), dates={"pytest": ("9.9.9", "2026-01-01")}
+    )
+    assert "released" not in stale[0]
+
+
+def test_described_returns_one_line_per_package_and_nothing_else() -> None:
+    """Lines and not a print, so that one run can be published twice.
+
+    They go into the saved measurement beside the numbers, which is what
+    lets a page be rewritten without a machine. One line per package and no
+    others: the interpreter, the machine and the time belong to the run
+    rather than to the packages, and the run block is where all three are
+    stated together.
+    """
+    lines = _provenance.described(("pytest", pytest.__file__))
+    assert len(lines) == 1
+    assert lines[0].startswith("pytest")
+    assert "python" not in lines[0]
 
 
 def test_the_install_root_test_accepts_both_names_debian_uses(
@@ -217,3 +237,17 @@ def test_the_install_root_test_accepts_both_names_debian_uses(
     for name in ("site-packages", "dist-packages"):
         assert _provenance._under_install_root(str(tmp_path / name / "p" / "m.py"))
     assert not _provenance._under_install_root(str(tmp_path / "src" / "m.py"))
+
+
+def test_what_a_timing_contains_says_a_timing_holds_no_check() -> None:
+    """The claim is in the output, not only in the prose about it.
+
+    A reader comparing two rows a percent apart has to be able to rule out
+    that one of them paid for an assertion the other wrote more cheaply, and
+    the place to rule it out is the block above the numbers. This test is the
+    only thing keeping that block and `tests/vectors_test.py` from drifting
+    apart: it names the file the output points at.
+    """
+    said = "\n".join(_provenance.WHAT_A_TIMING_CONTAINS)
+    assert "tests/vectors_test.py" in said
+    assert Path("tests/vectors_test.py").is_file()
