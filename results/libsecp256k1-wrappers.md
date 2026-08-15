@@ -151,8 +151,9 @@ comparands:
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
 
-<!-- The output above is a script's, whose columns are the script's to
-     choose; rewrapping it to 80 would make it something else. The
-     configuration comment below has to open with its own keyword, so the
-     reason for it is here rather than inside it. -->
+<!-- The blocks above are rendered from the saved run beside this file,
+     and their columns are sized from what is in them; rewrapping one to 80
+     would make it something else. The configuration comment below has to
+     open with its own keyword, so the reason for it is here rather than
+     inside it. -->
 <!-- markdownlint-configure-file { "MD013": { "code_blocks": false } } -->

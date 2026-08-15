@@ -53,8 +53,8 @@ for, and converting between encodings happens once, in the fixtures.
 
 ## "The same C library" is a claim about the API, not about the binary
 
-The four vendor different revisions, so `report_libsecp256k1` says which is
-under each row -- from a pin, because none of them can be asked. Neither
+The four vendor different revisions, so `provenance` says which is under
+each row -- from a pin, because none of them can be asked. Neither
 compiled artifact exports a version symbol; `btclib_secp256k1.version` is
 `importlib.metadata.version` re-exported, which answers for the wrapper and
 not for the library; coincurve and secp256k1-py expose only their own

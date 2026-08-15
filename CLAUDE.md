@@ -46,7 +46,7 @@ packages block, and what the run block states. `scripts/render.py` writes
 `results/<name>.md` from that file, replacing only what lies between the
 `<!-- run: begin -->`-style markers and leaving every word of prose
 alone. So a heading is reworded and re-published without a machine, where
-before it cost either a fresh run — different numbers — or an edited
+otherwise it costs either a fresh run — different numbers — or an edited
 block, whose numbers no run ever printed.
 
 Three rules follow, and breaking any of them puts the coupling back:
@@ -59,8 +59,8 @@ Three rules follow, and breaking any of them puts the coupling back:
   clock produced.
 - **Neither module is covered**, and that is the same decision: a page is
   written by a command a person runs, and putting the rewording of a
-  heading behind the suite is what the split removed. `render.py --check`
-  is what says a page still matches its run.
+  heading behind the suite is the coupling this split removes.
+  `render.py --check` is what says a page still matches its run.
 
 `results/machine.toml` holds the two lines no process can answer — which
 machine, and what else was running on it.

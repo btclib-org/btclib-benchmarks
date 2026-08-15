@@ -12,7 +12,7 @@ library that lacks the feature.
 
 ## What each row's arithmetic is
 
-`report_setup` prints it per row, because for two of them it is not a
+`provenance` says it per row, because for two of them it is not a
 property of the package:
 
 - pycoin bundles no library and builds no extension. Its `native/secp256k1`
@@ -238,7 +238,7 @@ DIGESTS = [int.from_bytes(v.msg, "big") % ORDER for v in DSA_VECTORS]
 # binds to that same `Optimizations` class, so a probe looking for that
 # spelling among the base names could not fire at all -- which is how
 # this table came to print "pure Python" beside timings that were C.
-# The strings are a line of `report_setup`'s block, so they name the code
+# The strings are a cell of `provenance`'s table, so they name the code
 # and then the mechanism, as every other line there does. Which copy of
 # libsecp256k1 is a property of the process rather than of pycoin, and the
 # module docstring is where that is spelled out.
@@ -318,7 +318,7 @@ def _pycoin_native_module() -> str | None:
     reason it is read at run time rather than written down: the module
     docstring has the two imports this script happens to make that turn
     pycoin's row into C, and neither of them is pycoin's doing. Two
-    things need the answer -- the line `report_setup` prints, and the
+    things need the answer -- the cell `provenance` fills, and the
     loop count `pycoin_calls` picks -- so it is one function and not a
     string parsed twice.
     """

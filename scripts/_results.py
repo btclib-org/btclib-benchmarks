@@ -4,18 +4,14 @@
 
 """One run of one benchmark, kept as data rather than as a paste.
 
-A measurement and the page about it are two things, and they were one: a
-script printed a table, and publishing it meant a person copying what
-scrolled past into `results/`. What the page needed and the script did not
-print -- the clock, the machine, what else was running on it -- was typed
-in beside the paste, and correcting a heading afterwards meant either
-measuring again or editing a number by hand, which is the one edit this
-project cannot allow.
-
-So a run is written here instead: one JSON file per benchmark, beside the
-page it feeds, holding everything that page states about it.
-`scripts/render.py` builds the page from that file, so re-publishing is
-free and needs no machine.
+A measurement and the page about it are two different things, and only
+the first of them needs a machine. So a run is kept here as data: one
+JSON file per benchmark, beside the page it feeds, holding every number
+as measured and everything that page states about how -- the clock, the
+interpreter, the machine, what else was running on it.
+`scripts/render.py` builds the page from that file, so rewording a
+heading costs neither a fresh measurement, whose numbers are different,
+nor a block edited by hand, whose numbers no run ever printed.
 
 ## What is stored is what was measured, and no more
 
@@ -33,10 +29,10 @@ together that script's rows land.
 
 ## The layout is computed, so a longer name cannot break a column
 
-Every column is sized from what is in it. The scripts each carried their
-own hand-set widths, which held until a comparand with a longer name
-arrived and pushed one row out of line with the rest -- silently, a
-`<20` being a floor and not a fence.
+Every column is sized from what is in it, and one width serves a whole
+page. A width written into a format string is a floor rather than a
+fence: a comparand whose name outgrows it pushes its own row out of line
+with the others, and nothing anywhere says so.
 
 ## Nothing here imports a benchmark
 

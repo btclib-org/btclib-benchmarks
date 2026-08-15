@@ -47,6 +47,11 @@ Each prints what it resolved — package versions, and which arithmetic
 backend each comparand actually ran — before any number, because a timing
 means nothing without them.
 
+A run also writes itself to `results/<name>.json`, and
+`scripts/render.py` is what turns that into the published page. Two
+commands rather than one, for the reason under "One run of each,
+published" below.
+
 ### The interpreter is 3.13, not 3.14
 
 `coincurve` and `secp256k1` publish wheels up to `cp313` and no further,
@@ -87,10 +92,12 @@ over the top:
 uv run --with-editable /path/to/btclib python scripts/bitcoin_libraries.py
 ```
 
-The scripts print `btclib.__file__` in their setup block, so which of the
-two you measured is on the screen rather than assumed. That check is not
-decoration: an editable install and a released wheel of the same package
-resolve silently, and the wrong one produces a plausible table.
+The packages block names the version, and where an install is not the
+declared one it names that too — `editable: /path/to/btclib` for the
+command above, `sys.path:` for a checkout shadowing an install. So which
+of the two you measured is on the screen rather than assumed, and that is
+not decoration: an editable install and a released wheel of the same
+package resolve silently, and the wrong one produces a plausible table.
 
 ## Reading the output
 

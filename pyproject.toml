@@ -222,8 +222,8 @@ source = ["scripts", "tests"]
 # not coupled to the suite: a run is saved as data and rendered back into
 # markdown by a command a person runs, and the whole value of that is that
 # it needs neither a machine nor a test run. A gate over them would put
-# the rewording of a heading behind the suite, which is the coupling the
-# split was made to remove. What holds them honest instead is that they
+# the rewording of a heading behind the suite, which is the coupling this
+# split removes. What holds them honest instead is that they
 # are the *only* writer of those blocks -- `render.py --check` says
 # whether a page still matches the run it claims to publish, and a page
 # nobody can edit by hand cannot drift from its numbers
@@ -306,7 +306,9 @@ preview = true
 explicit-preview-rules = true
 # the selection btclib-org holds its Python to, as bitcoin-core-rpc's own
 # pyproject.toml puts it. PTH is not here, and that is the one deliberate
-# subtraction: btclib selects it, and this project opens no file at all
+# subtraction: btclib selects it, and the handful of files this project
+# opens -- the vendored vectors, a saved run, a page being rendered -- are
+# reached through `pathlib` already, so the rule would have nothing to say
 select = [
     "A",
     "B",

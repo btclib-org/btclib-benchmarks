@@ -14,11 +14,11 @@ markers the page carries. Everything else in the page -- the headings,
 the paragraph explaining what a column means, the analysis under the
 numbers -- is prose somebody wrote, and this never touches it.
 
-That separation is the point. Rewording a heading used to mean either
-running the benchmark again, which produces different numbers on a
-machine in a different mood, or editing the block by hand, which produces
-numbers no run ever printed. Now it means editing the prose and running
-this, and the numbers are the ones the last measurement found.
+That separation is the point. Rewording a heading otherwise costs either
+a run of the benchmark, which produces different numbers on a machine in
+a different mood, or an edit to the block by hand, which produces numbers
+no run ever printed. Here it costs the edit and this command, and the
+numbers stay the ones the last measurement found.
 
 ## What is replaced, and what a page without a marker gets
 

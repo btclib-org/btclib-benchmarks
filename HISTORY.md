@@ -7,11 +7,23 @@ The record behind these notes is [CHANGELOG.md][record].
 
 ## v2026.9 (work in progress, not released yet)
 
-The first release: four benchmarks of
+The first release: five benchmarks of
 [btclib](https://github.com/btclib-org/btclib) and
 [btclib_secp256k1](https://github.com/btclib-org/btclib-secp256k1), one
 script to one question. README.md says what each of them measures and
 how to run it.
+
+### Running a benchmark does not publish it
+
+A run writes `results/<name>.json` and prints its tables; the page beside
+that file is written by `uv run python scripts/render.py`, which reads
+the saved run and measures nothing. So the prose around a table is
+rewritten and re-published without a machine, and no published number is
+ever one somebody typed.
+
+`results/machine.toml` is the one file to edit before measuring here: it
+names the machine and says what else was running on it, which nothing in
+a process can answer.
 
 ### If you ran btclib_secp256k1's own benchmark
 

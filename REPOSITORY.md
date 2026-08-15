@@ -113,7 +113,7 @@ repositories have, and the reason there is no `publishing` section here.
   group builds, so the sphinx gate is runnable, but no service is
   subscribed to this repository.
 - **No CodeQL.** It analyses a library's own code for vulnerabilities;
-  what is here is four scripts that time other people's packages, and
+  what is here is five scripts that time other people's packages, and
   the packages they time are analysed where they live.
 - **No scheduled workflow.** Nothing here should run without someone
   asking: a benchmark on a shared runner is a number produced under

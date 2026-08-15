@@ -2,7 +2,7 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""Where the packages being timed came from, printed before any number.
+"""Where the packages being timed came from, said above every number.
 
 A released wheel, a git checkout and an editable install of the same
 distribution all satisfy the same requirement, all resolve without a

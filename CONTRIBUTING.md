@@ -52,7 +52,7 @@ uv run python scripts/render.py --check    # name what is stale, write none
 carries, and touches nothing else in it. So the prose around the numbers
 — the headings, the paragraph explaining a column, the analysis — is
 edited and re-published without measuring again, which is the whole
-reason the two are separate: a reworded heading used to mean either a
+reason the two are separate: a reworded heading otherwise costs either a
 fresh run, whose numbers are different, or a hand-edited block, whose
 numbers are nobody's.
 

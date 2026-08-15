@@ -192,7 +192,7 @@ Two things this output says are worth reading twice:
   the public key — precomputed table and all — and a row verifying against
   it verifies with a table no real key gets, at about half the cost. The
   key here is BIP340's, which has no such table, so the row costs what
-  verification costs. It is the sharpest reason in these four files for
+  verification costs. It is the sharpest reason in these five files for
   taking the input from a specification rather than choosing one.
 
 The encoding tables are the only ones that are not curve work, and they are
@@ -226,8 +226,9 @@ comparands:
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
 
-<!-- The output above is a script's, whose columns are the script's to
-     choose; rewrapping it to 80 would make it something else. The
-     configuration comment below has to open with its own keyword, so the
-     reason for it is here rather than inside it. -->
+<!-- The blocks above are rendered from the saved run beside this file,
+     and their columns are sized from what is in them; rewrapping one to 80
+     would make it something else. The configuration comment below has to
+     open with its own keyword, so the reason for it is here rather than
+     inside it. -->
 <!-- markdownlint-configure-file { "MD013": { "code_blocks": false } } -->
