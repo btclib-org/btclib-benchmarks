@@ -6,17 +6,17 @@ against the packages they are usefully compared with.
 
 Five benchmarks, each answering a different question:
 
-- **`btclib_two_paths.py`** — btclib against btclib: its pure-Python
+- **`02-btclib-vs-btclib.py`** — btclib against btclib: its pure-Python
   arithmetic against the libsecp256k1 that `btclib-secp256k1` bundles and
   compiles into a cffi extension
-- **`bitcoin_libraries.py`** — btclib as installed, against other Python
+- **`03-libraries.py`** — btclib as installed, against other Python
   bitcoin libraries, over curve operations and the address encodings
-- **`pure_python.py`** — every pure-Python implementation of the same
+- **`04-pure-python.py`** — every pure-Python implementation of the same
   operation, against each other
-- **`libsecp256k1_bindings.py`** — btclib-secp256k1 against the other
+- **`01-libsecp256k1.py`** — btclib-secp256k1 against the other
   wrappers of the same C library: `coincurve` and `secp256k1-py` through
   cffi, `electrum-ecc` through ctypes
-- **`key_reuse.py`** — what the second signature under the same key
+- **`05-key-reuse.py`** — what the second signature under the same key
   costs: the other four time one verification with a fresh key, and a
   verifier never does
 
@@ -40,7 +40,7 @@ Nothing is installed: the scripts are run from a checkout.
 
 ```shell
 uv sync --locked
-uv run python scripts/bitcoin_libraries.py
+uv run python scripts/03-libraries.py
 ```
 
 Each prints what it resolved — package versions, and which arithmetic
@@ -66,7 +66,7 @@ install time, and what it builds is tagged `py3-none`, the C being
 reached through ctypes rather than linked into an extension.
 
 The `requires-python` floor is 3.11, and that end is set by a comparand
-too: `secp256k1lab` declares it, and `scripts/pure_python.py` imports it
+too: `secp256k1lab` declares it, and `scripts/04-pure-python.py` imports it
 unguarded.
 
 ### Installing the comparands needs a build toolchain
@@ -89,7 +89,7 @@ To time a checkout instead — an unreleased optimization, say — install it
 over the top:
 
 ```shell
-uv run --with-editable /path/to/btclib python scripts/bitcoin_libraries.py
+uv run --with-editable /path/to/btclib python scripts/03-libraries.py
 ```
 
 The packages block names the version, and where an install is not the
@@ -111,7 +111,7 @@ a person does, on a machine whose state they know.
 
 ### The same C library is not the same binary
 
-`libsecp256k1_bindings.py` compares four packages that all wrap
+`01-libsecp256k1.py` compares four packages that all wrap
 `bitcoin-core/secp256k1`, which is true of the API and not of what is
 linked: each vendors a revision of its own, and they are not the same
 revision. So that script prints, per row, which one is underneath it and
@@ -134,8 +134,8 @@ ratio against its fastest row, never against btclib's:
 - [the libsecp256k1 wrappers][wrappers]
 - [one key, every signature under it][reuse]
 
-The machine is named in each file, and so is what else was running on it.
-They are a record of one run, not a claim about anyone else's hardware:
+The machine is named in each file. They are a record of one run, not a
+claim about anyone else's hardware:
 what makes them worth publishing is that they are reproducible by one
 command, not that they are authoritative.
 

@@ -1,6 +1,6 @@
 # 3.13 and not the 3.14 the rest of this org pins, and the reason is a
 # comparand rather than a preference: coincurve and secp256k1, two of the
-# wrappers scripts/libsecp256k1_bindings.py exists to compare, publish
+# wrappers scripts/01-libsecp256k1.py exists to compare, publish
 # wheels up to cp313 and no further, and neither builds from source
 # without pkg-config and a toolchain. A benchmark that cannot install
 # its comparands measures nothing.

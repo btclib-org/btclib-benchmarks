@@ -31,11 +31,11 @@ import time
 import pytest
 
 BENCHMARKS = [
-    "btclib_two_paths",
-    "bitcoin_libraries",
-    "pure_python",
-    "libsecp256k1_bindings",
-    "key_reuse",
+    "01-libsecp256k1",
+    "02-btclib-vs-btclib",
+    "03-libraries",
+    "04-pure-python",
+    "05-key-reuse",
 ]
 
 # an import does fixture work -- key derivation, a signature per comparand,

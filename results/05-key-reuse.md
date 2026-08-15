@@ -7,14 +7,12 @@
 when    : 2026-08-15 06:19 CEST (04:19 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
-command : uv run python scripts/key_reuse.py
+command : uv run python scripts/05-key-reuse.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
 ```
 <!-- run: end -->
 
-What `scripts/key_reuse.py` printed on the machine named above: the same
+What `scripts/05-key-reuse.py` printed on the machine named above: the same
 ECDSA verification, with the public key handed in raw and with it
 prepared, on both of btclib's paths and against `python-ecdsa`. The other
 four benchmarks time one verification with a fresh key; a verifier never

@@ -6,7 +6,7 @@
 
 `pip install btclib` installs the `btclib_secp256k1` wrapper with it, so
 this times that path and never the pure-Python fallback, which
-`scripts/pure_python.py` covers. Every comparand is timed at its own latest
+`scripts/04-pure-python.py` covers. Every comparand is timed at its own latest
 PyPI release, on operations it offers: nothing here is compared against a
 library that lacks the feature.
 
@@ -41,7 +41,7 @@ lists, which is why the backend it resolved to is in the output.
 ## `bit` is not a row
 
 It installs, and its ECDSA is coincurve's libsecp256k1, which has a row of
-its own in `scripts/libsecp256k1_bindings.py`. A `bit` row would add its
+its own in `scripts/01-libsecp256k1.py`. A `bit` row would add its
 wallet layer, not arithmetic.
 
 ## What is measured
@@ -141,6 +141,7 @@ from _results import (
     Ratios,
     Timing,
     labels,
+    page_of,
     rendered_provenance,
     rendered_table,
     save,
@@ -1173,12 +1174,6 @@ TABLES: tuple[tuple[str, Rows], ...] = (
 METHOD = f"{ROUNDS} rounds per row, minimum kept; nothing else repeated"
 
 
-# the page this run is published as, named here because it cannot be
-# derived: a page ordered among its siblings carries a number no module
-# name may start with
-BENCHMARK = "03-libraries"
-
-
 def main() -> None:
     """Print every table, one operation at a time, and save the run.
 
@@ -1203,7 +1198,7 @@ def main() -> None:
 
     saved = save(
         Measurement(
-            benchmark=BENCHMARK,
+            benchmark=page_of(__file__),
             run=taken_now(__file__, METHOD),
             provenance=packages,
             tables=tables,

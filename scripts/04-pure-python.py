@@ -6,9 +6,9 @@
 
 Every row is Python arithmetic and the question is which is quicker at it, so
 no row is a reference line and the ratio is against whichever came out
-fastest. What Python costs against C is `scripts/btclib_two_paths.py`'s
+fastest. What Python costs against C is `scripts/02-btclib-vs-btclib.py`'s
 question; what `pip install <package>` gives is
-`scripts/bitcoin_libraries.py`'s, where the same package names mean something
+`scripts/03-libraries.py`'s, where the same package names mean something
 else -- pycoin is C there and Python here.
 
 ## How each row is held to Python
@@ -97,6 +97,7 @@ from _results import (
     Provenance,
     Ratios,
     Timing,
+    page_of,
     rendered_provenance,
     rendered_table,
     save,
@@ -130,7 +131,7 @@ def _released(dist_name: str) -> str:
     btclib resolves from its branch until 2026.9 is on PyPI, and a date would
     be a claim about a release that has not happened: what the column says for
     it is the branch and the commit, which is what a reader has to look up to
-    get these rows again. `scripts/bitcoin_libraries.py` prints the same
+    get these rows again. `scripts/03-libraries.py` prints the same
     column by the same rule, over an overlapping set of packages.
     """
     if not (recorded := RELEASE_DATES.get(dist_name)):
@@ -229,7 +230,7 @@ def python_arithmetic_only() -> None:
 # because the name is `Optimizations` in both of them and the fallback is
 # `noop` in both of them: a probe reading names sees nothing to report
 # however loudly a shared object is being called, which is what
-# `bitcoin_libraries.py` was doing before it read modules instead.
+# `03-libraries.py` was doing before it read modules instead.
 PYCOIN_NATIVE_MIXINS = {
     "pycoin.ecdsa.native.secp256k1": "libsecp256k1",
     "pycoin.ecdsa.native.openssl": "OpenSSL",
@@ -243,7 +244,7 @@ def _pycoin_backend() -> str:
     Python; it is read back rather than assumed, a benchmark that says
     "Python" on a row that loaded a shared object being worse than no
     benchmark. There is no public flag to read, so this reads the MRO the
-    generator ended up with, as `bitcoin_libraries.py` does.
+    generator ended up with, as `03-libraries.py` does.
     """
     for base in type(PYCOIN_GENERATOR).__mro__:
         if "noop" in base.__qualname__:
@@ -629,12 +630,6 @@ TABLES: tuple[tuple[str, Rows], ...] = (
 METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
 
 
-# the page this run is published as, named here because it cannot be
-# derived: a page ordered among its siblings carries a number no module
-# name may start with
-BENCHMARK = "04-pure-python"
-
-
 def main() -> None:
     """Throw the switch, print a table per operation, and save the run.
 
@@ -665,7 +660,7 @@ def main() -> None:
 
     saved = save(
         Measurement(
-            benchmark=BENCHMARK,
+            benchmark=page_of(__file__),
             run=taken_now(__file__, METHOD),
             provenance=packages,
             tables=tables,

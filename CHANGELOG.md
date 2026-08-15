@@ -22,17 +22,17 @@ The release notes, which say what a user has to act on, are in
   a dependency. Here the comparands are what the project is for, and an
   alert names the package it is about.
 
-- **btclib-secp256k1's benchmark is `scripts/libsecp256k1_bindings.py`
+- **btclib-secp256k1's benchmark is `scripts/01-libsecp256k1.py`
   now**, that repository having shipped one up to v0.8.0.1: it is the
   one of the four with a released ancestor, and the one HISTORY.md tells
   a reader what to do about. The other three have none.
 
-- **`scripts/libsecp256k1_bindings.py` is wrapper against wrapper, and
+- **`scripts/01-libsecp256k1.py` is wrapper against wrapper, and
   nothing else.** Its released ancestor, btclib-secp256k1's
   `scripts/benchmark.py` up to v0.8.0.1, timed btclib's pure-Python
   arithmetic beside three bindings of libsecp256k1 — two questions in one
   table, and neither of them answered well. The two pure-Python rows are
-  not here: `scripts/pure_python.py` asks what staying in Python costs
+  not here: `scripts/04-pure-python.py` asks what staying in Python costs
   and asks it better, with one reference column, a ratio against btclib's
   own Python path beside it, and every backend forced off rather than one
   switch flipped. What is left is the question the wrapper table is for,
@@ -51,7 +51,7 @@ The release notes, which say what a user has to act on, are in
   `btclib-secp256k1` has: it wraps the same library, and wraps it the
   other way, ctypes where the other three use cffi. That is the whole of
   what separates them once the C underneath is the same, which is why
-  the row belongs in this table and not in `bitcoin_libraries.py` —
+  the row belongs in this table and not in `03-libraries.py` —
   `electrum-ecc` is not a bitcoin library, and timing it there would
   answer "which binding is faster" in a table about libraries.
 
@@ -116,7 +116,7 @@ The release notes, which say what a user has to act on, are in
 - **Grinding is represented the same way everywhere, including where that
   means no row.** btclib and embit grind by default and `electrum-ecc`
   offers it, so each has a `grind=False` row beside a row of its default in
-  the three benchmarks that compare packages. `btclib_two_paths.py` has
+  the three benchmarks that compare packages. `02-btclib-vs-btclib.py` has
   none, by the same rule rather than in spite of it: grinding multiplies both
   paths by the same number of attempts, so the ratio the table is read for
   does not move, as measuring it confirmed, and the rows would restate the
@@ -135,7 +135,7 @@ The release notes, which say what a user has to act on, are in
   the output, and printing one of them twice per published file was the only
   thing that came of having it in both.
 
-- **`bitcoin_libraries.py` says which libsecp256k1 btclib's row calls**,
+- **`03-libraries.py` says which libsecp256k1 btclib's row calls**,
   where it used to print `btclib-secp256k1`'s own version number and leave
   the library underneath unnamed. The revision is recorded against the
   release it was read from and printed as unrecorded for any other, the
@@ -168,15 +168,15 @@ The release notes, which say what a user has to act on, are in
   it reaches the same point as a scalar times the generator plus an
   addition -- two crossings where the others make one.
 
-- **Every table prints microseconds per call.** `btclib_two_paths.py` had
+- **Every table prints microseconds per call.** `02-btclib-vs-btclib.py` had
   been printing seconds per thousand: a unit that changes between
   benchmarks is a unit a reader converts before comparing two of them. Five
   significant digits there, where the quickest row is a few microseconds
   and the slowest four orders above it.
 
-- **`pure_python.py` has no reference line and no second ratio.** It was a
+- **`04-pure-python.py` has no reference line and no second ratio.** It was a
   table of Python rows against the bindings, which asked two questions at
-  once: what Python costs, which `btclib_two_paths.py` answers over
+  once: what Python costs, which `02-btclib-vs-btclib.py` answers over
   btclib's own two paths, and which Python implementation is quicker, which
   is the one this script is for. So the bindings row is gone, with the
   `btclib-secp256k1` line beside it, and what is left is one ratio against
@@ -196,7 +196,7 @@ The release notes, which say what a user has to act on, are in
   the declaration asks for, where `editable:`, `local:` and `sys.path:` say
   the run is measuring something else.
 
-- **`bitcoin_libraries.py` no longer times four signatures against one.**
+- **`03-libraries.py` no longer times four signatures against one.**
   btclib and embit both grind for a low-r signature by default — sign
   repeatedly until r fits in 32 bytes — where python-ecdsa, pycoin, buidl
   and python-bitcoinlib sign once. Each of the two now has a `grind=False`
@@ -242,7 +242,7 @@ The release notes, which say what a user has to act on, are in
   private key published in a BIP is exactly what a scanner cannot tell from
   a credential, and CONTRIBUTING.md now has the command that records one.
 
-- **`btclib_two_paths.py` covers every operation that has two paths**,
+- **`02-btclib-vs-btclib.py` covers every operation that has two paths**,
   where it covered five. `_libsecp256k1_serves` is the
   predicate every dispatch site asks, so which operations qualify is a
   list to read rather than a judgement: public key derivation, point
@@ -269,7 +269,7 @@ The release notes, which say what a user has to act on, are in
   derivation in C and moved only the public key derived for the
   fingerprint, which is why that pair read far narrower than every other. It
   is still timed in
-  `bitcoin_libraries.py`, where being C is the premise rather than the
+  `03-libraries.py`, where being C is the premise rather than the
   question.
 
   Reading a ratio off a published table is a poor way to catch that, so
@@ -291,7 +291,7 @@ The release notes, which say what a user has to act on, are in
   table's two labels are made from the operation's name, and a pair can no
   longer drift apart in the edit that adds a row.
 
-- **pycoin's rows in `bitcoin_libraries.py` are sized by the backend they
+- **pycoin's rows in `03-libraries.py` are sized by the backend they
   resolved to.** Their counts were picked when that script's pycoin was
   pure Python, and nobody re-picked them when it turned out to be C: three
   rows ran a couple of hundred calls or fewer beside neighbours running
@@ -306,7 +306,7 @@ The release notes, which say what a user has to act on, are in
 
 - **Every table is sorted fastest row first, with a ratio against its
   fastest row.** Both were previously the reader's job: rows printed in
-  the order they were written, and only `pure_python.py` divided anything,
+  the order they were written, and only `04-pure-python.py` divided anything,
   so a table of six packages left the comparison it exists for to be done
   by hand — and an order written by hand is an opinion about a result
   rather than the result.
@@ -315,12 +315,12 @@ The release notes, which say what a user has to act on, are in
   the one row in these tables that cannot be it: a column against btclib
   prints fractions under one for everything faster, which reads as
   btclib's score rather than as the table's answer, and where btclib
-  stands is its own place in the order. So `pure_python.py`'s two columns
+  stands is its own place in the order. So `04-pure-python.py`'s two columns
   are against the fastest row and the fastest *Python* row, and
-  `btclib_two_paths.py` divides each row by the quicker of its own pair,
+  `02-btclib-vs-btclib.py` divides each row by the quicker of its own pair,
   its rows being one operation through two paths — the fastest row of that
   whole table would divide a signature by a multiplication.
-  `libsecp256k1_bindings.py` prints two decimals where the others print
+  `01-libsecp256k1.py` prints two decimals where the others print
   one, its rows all calling the same C and landing within a few percent
   where one decimal would read 1.0x down the whole column.
 
@@ -333,21 +333,21 @@ The release notes, which say what a user has to act on, are in
 
 - **`results/` publishes one run of each benchmark**, linked from
   README.md, each file carrying the header its script printed above the
-  numbers and naming the machine and what else was running on it. A
+  numbers and naming the machine it ran on. A
   benchmark whose output lives only in a terminal is one nobody can
   compare against, and the alternative — numbers quoted in prose — is the
   thing this project forbids everywhere else. They are a record of one
   run, not a claim about anyone's hardware: nothing there was repeated and
   no outlier was discarded, exactly as the scripts do not.
 
-- **`bitcoin_libraries.py` was calling pycoin's row pure Python while it
+- **`03-libraries.py` was calling pycoin's row pure Python while it
   ran C.** `_pycoin_backend()` looked for `LibSECP256K1` among the base
   class names of the generator pycoin built, and that name is an alias
   pycoin binds to a class called `Optimizations` — as its OpenSSL module
   also calls its own. So both positive branches were unreachable and every
   run reported the fallback. It reads each base's module now, which is
   what distinguishes them, and the same blind check is repaired in
-  `pure_python.py`, where `PYCOIN_NATIVE` made the answer right by
+  `04-pure-python.py`, where `PYCOIN_NATIVE` made the answer right by
   construction and the safety net that was to catch it failing was dead
   code.
 
@@ -421,10 +421,10 @@ The release notes, which say what a user has to act on, are in
   the coupling this split removes. `render.py --check` is what says a
   page still matches the run it publishes.
 
-  `results/machine.toml` holds the two lines no process can answer, which
-  machine and what else was running on it. The rest of the run block is
-  taken where the run is: the clock, the interpreter, the command, and
-  the chip and OS build read from the machine itself.
+  `results/machine.toml` overrides the one line a run may get wrong,
+  which machine it was taken on. The rest of the run block is taken where
+  the run is: the clock, the interpreter, the command, and the chip and
+  OS build read from the machine itself.
 
 - **Each benchmark prints where its packages came from** before any
   number, `scripts/_provenance.py` being what answers it. A released

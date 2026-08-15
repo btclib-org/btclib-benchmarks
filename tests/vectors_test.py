@@ -19,9 +19,9 @@ odd thing to have built.
 
 ## The configurations, and why one of them is a subprocess
 
-`scripts/bitcoin_libraries.py` and `scripts/libsecp256k1_bindings.py` measure
-these packages as installed, which is this process. `scripts/pure_python.py`
-and `scripts/btclib_two_paths.py` measure two of them with their C turned
+`scripts/03-libraries.py` and `scripts/01-libsecp256k1.py` measure
+these packages as installed, which is this process. `scripts/04-pure-python.py`
+and `scripts/02-btclib-vs-btclib.py` measure two of them with their C turned
 off, and neither switch can be undone: `PYCOIN_NATIVE` is read when pycoin
 is imported, and btclib's dispatch flag cannot be restored once cleared
 without leaving every later test measuring something it did not choose. So
@@ -85,7 +85,7 @@ DATA = _vectors.VECTORS
 # quietly become the new question
 DIGESTS = _vectors.DIGESTS
 
-# the pure-Python configuration, as `scripts/pure_python.py` measures it: the
+# the pure-Python configuration, as `scripts/04-pure-python.py` measures it: the
 # environment variable pycoin reads at import, and btclib's dispatch off
 PURE_PYTHON = bool(os.environ.get("BENCHMARKS_PURE_PYTHON"))
 if PURE_PYTHON:  # pragma: no cover - the child process is the one that runs it
@@ -538,7 +538,7 @@ def test_the_pure_python_configuration_answers_the_same_vectors() -> None:
     """Re-run this file with the C turned off, which is a second process.
 
     `PYCOIN_NATIVE` is read when pycoin is imported and btclib's dispatch
-    flag cannot be restored, so the configuration `scripts/pure_python.py`
+    flag cannot be restored, so the configuration `scripts/04-pure-python.py`
     measures cannot be reached from inside a suite that also measures the
     other one. What is asserted is what a reader of that benchmark needs:
     the Python arithmetic answers every vector the C arithmetic answers.

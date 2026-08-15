@@ -32,10 +32,10 @@ implementation gets a fast path. Running all four by hand is the only
 check there is, and a release is the moment to do it.
 
 ```shell
-uv run python scripts/btclib_two_paths.py
-uv run python scripts/bitcoin_libraries.py
-uv run python scripts/pure_python.py
-uv run python scripts/libsecp256k1_bindings.py
+uv run python scripts/02-btclib-vs-btclib.py
+uv run python scripts/03-libraries.py
+uv run python scripts/04-pure-python.py
+uv run python scripts/01-libsecp256k1.py
 ```
 
 Read each header before its numbers: the versions, and where each

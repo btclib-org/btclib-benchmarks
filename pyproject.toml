@@ -75,7 +75,7 @@ dependencies = [
     "secp256k1>=0.14.0",
     # on no index at all, so [tool.uv.sources] below takes it from its
     # git tag. It declares >=3.11, and that is where this project's own
-    # floor comes from: scripts/pure_python.py imports it unguarded, so
+    # floor comes from: scripts/04-pure-python.py imports it unguarded, so
     # on 3.10 the module cannot be loaded at all -- which CI found, the
     # marker this used to carry having made it absent rather than
     # unresolvable. A benchmark that will not start says more than one
@@ -181,7 +181,7 @@ filterwarnings = ["error"]
 # correctly, that being the whole job of the digest. The typo is
 # upstream's to fix
 skip = ".secrets.baseline,uv.lock,vectors/*"
-# the PyPI package scripts/bitcoin_libraries.py compares against, which is
+# the PyPI package scripts/03-libraries.py compares against, which is
 # a real word to codespell by way of "build". It cannot be spelled
 # differently: it is the name on the index
 ignore-words-list = "buidl"
@@ -241,11 +241,11 @@ source = ["scripts", "tests"]
 omit = [
     "*/site-packages/*",
     "scripts/_results.py",
-    "scripts/bitcoin_libraries.py",
-    "scripts/btclib_two_paths.py",
-    "scripts/key_reuse.py",
-    "scripts/libsecp256k1_bindings.py",
-    "scripts/pure_python.py",
+    "scripts/03-libraries.py",
+    "scripts/02-btclib-vs-btclib.py",
+    "scripts/05-key-reuse.py",
+    "scripts/01-libsecp256k1.py",
+    "scripts/04-pure-python.py",
     "scripts/render.py",
 ]
 

@@ -8,7 +8,7 @@ Every row calls `bitcoin-core/secp256k1`, so what separates them is the
 boundary crossing rather than the arithmetic: cffi against ctypes, a signature
 in DER against one in 64 bytes, a public key handed over as bytes against one
 held as a Python object. There is no pure-Python row --
-`scripts/pure_python.py` asks what staying in Python costs, and asks it with
+`scripts/04-pure-python.py` asks what staying in Python costs, and asks it with
 every backend forced off rather than one switch flipped.
 
 btclib is not imported here at all: the fixtures come from
@@ -101,6 +101,7 @@ publishing are two commands.
 
 from __future__ import annotations
 
+import statistics
 import sys
 import time
 from collections.abc import Callable
@@ -124,6 +125,7 @@ from _results import (
     Ratios,
     Timing,
     labels,
+    page_of,
     rendered_provenance,
     rendered_table,
     save,
@@ -565,27 +567,32 @@ for _row in DSA_ROWS + SSA_ROWS + DSA_SIGN_ROWS + SSA_SIGN_ROWS + TWEAK_ROWS:
 
 # One count for every row, where the scripts that mix Python in need one per
 # function: every row here is a call into C and they land within a factor of a
-# few. Five rounds of it, and the row reports the *minimum*: interference on a
-# shared machine only ever adds time, so the fastest round is the one least
-# disturbed, and a mean would carry every interruption into the number. The
-# spread beside it says how much there was to discard -- a row whose rounds
-# disagree by a few percent measured a busy machine, and the reader can see it
-# rather than being told the machine was quiet.
+# few. Thirty rounds of it, and the row reports the *minimum*: interference on
+# a shared machine only ever adds time, so the fastest round is the one least
+# disturbed, and a mean would carry every interruption into the number.
 #
-# The count is a fifth of what one round used to be, so five rounds cost what
-# one run cost: robustness here is a rearrangement rather than a bill.
+# Thirty rather than a handful because the standard deviation beside each row
+# is a claim about a distribution, and a handful of rounds is too few to make
+# one. It costs a few minutes per run, which is what a table read for years
+# is worth.
 CALLS = 20_000
-ROUNDS = 5
+ROUNDS = 30
 
 
 def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
-    """Return the microseconds per call of the quickest round, and the spread.
+    """Return the quickest round's microseconds per call, and their deviation.
 
     `ROUNDS` rounds of `calls` calls each. The minimum is the estimate: noise
     is one-sided, so the quickest round is the one that ran with least taken
-    from it. The spread is how far the slowest round ran from the quickest, as
-    a fraction of the quickest, and it is printed rather than hidden because
-    it is the only thing in the output that says whether the machine was quiet.
+    from it, and a mean would carry every interruption into the number.
+
+    The standard deviation is over the rounds, and it is printed rather than
+    hidden because it is the only thing in the output that says whether the
+    machine was quiet. Read it as the scatter of the rounds and not as an
+    interval around the value beside it: that value is the quickest of them
+    and therefore sits at the low edge of the distribution the deviation
+    describes, which is the price of an estimator that refuses to average in
+    a machine's bad moments.
     """
     # perf_counter and not time(): the wall clock can step backwards under an
     # NTP correction, and a benchmark is the one place that shows up as a
@@ -596,8 +603,7 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
         for _ in range(calls):
             func()
         rounds.append((time.perf_counter() - start) / calls * 1e6)
-    quickest = min(rounds)
-    return quickest, max(rounds) / quickest - 1
+    return min(rounds), statistics.stdev(rounds)
 
 
 def measured(title: str, rows: tuple[Callable[[], None], ...]) -> Ratios:
@@ -615,12 +621,12 @@ def measured(title: str, rows: tuple[Callable[[], None], ...]) -> Ratios:
     """
     timings = []
     for label, func in zip(labels([func.__name__ for func in rows]), rows, strict=True):
-        value, spread = benchmark(func, CALLS)
+        value, deviation = benchmark(func, CALLS)
         timings.append(
             Timing(
                 label=label,
                 us_per_call=value,
-                spread=spread,
+                deviation=deviation,
                 calls=CALLS,
                 rounds=ROUNDS,
             )
@@ -641,14 +647,8 @@ TABLES = (
 
 # what the run block claims about how these numbers were taken, said by
 # the script that takes them: `benchmark` above is where the five rounds
-# and the minimum are, and the spread column is what a reader checks it by
+# and the minimum are, and the sd column is what a reader checks it by
 METHOD = f"{ROUNDS} rounds per row, minimum kept; nothing else repeated"
-
-
-# the page this run is published as, named here because it cannot be
-# derived: a page ordered among its siblings carries a number no module
-# name may start with
-BENCHMARK = "01-libsecp256k1"
 
 
 def main() -> None:
@@ -678,7 +678,7 @@ def main() -> None:
 
     saved = save(
         Measurement(
-            benchmark=BENCHMARK,
+            benchmark=page_of(__file__),
             run=taken_now(__file__, METHOD),
             provenance=packages,
             tables=tables,

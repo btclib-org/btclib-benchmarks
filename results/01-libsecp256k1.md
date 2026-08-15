@@ -30,13 +30,11 @@ secp256k1         0.14.0   2021-11-06  9526874d, pre-v0.1.0  cffi      _libsecp2
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-15 06:19 CEST (04:19 UTC)
+when    : 2026-08-15 07:52 CEST (05:52 UTC)
 python  : 3.13.14
-method  : 5 rounds per row, minimum kept; nothing else repeated
-command : uv run python scripts/libsecp256k1_bindings.py
+method  : 30 rounds per row, minimum kept; nothing else repeated
+command : uv run python scripts/01-libsecp256k1.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
 ```
 <!-- run: end -->
 
@@ -59,40 +57,40 @@ takes the next vector's secret key as the scalar.
 
 <!-- output: begin -->
 ```text
-1. ECDSA sign (32-byte digest)
-                       μs/call     vs best   spread
-  secp256k1              11.17       1.00x    0.5%   (5x20000 calls)
-  coincurve              11.38       1.02x    0.9%   (5x20000 calls)
-  btclib_secp256k1       11.90       1.07x    0.5%   (5x20000 calls)
-  electrum_ecc           27.10       2.43x    0.1%   (5x20000 calls)
+1. ECDSA sign (32-byte digest), 30x20000 calls each row
+                       μs/call        sd     vs best
+  secp256k1              11.22    ± 0.16       1.00x
+  coincurve              11.30    ± 0.07       1.01x
+  btclib_secp256k1       11.99    ± 0.01       1.07x
+  electrum_ecc           27.26    ± 0.53       2.43x
 
-2. ECDSA verify (32-byte digest, the public key parsed per call)
-                       μs/call     vs best   spread
-  secp256k1              11.71       1.00x    0.1%   (5x20000 calls)
-  coincurve              13.97       1.19x    1.1%   (5x20000 calls)
-  btclib_secp256k1       13.99       1.19x    0.5%   (5x20000 calls)
-  electrum_ecc           15.86       1.35x    0.5%   (5x20000 calls)
+2. ECDSA verify (32-byte digest, the public key parsed per call), 30x20000 calls each row
+                       μs/call        sd     vs best
+  secp256k1              11.73    ± 0.05       1.00x
+  coincurve              14.06    ± 0.07       1.20x
+  btclib_secp256k1       14.08    ± 0.01       1.20x
+  electrum_ecc           15.96    ± 0.05       1.36x
 
-3. BIP340 sign (32-byte message)
-                       μs/call     vs best   spread
-  secp256k1               7.76       1.00x    0.4%   (5x20000 calls)
-  btclib_secp256k1       15.84       2.04x    0.8%   (5x20000 calls)
-  coincurve              27.24       3.51x    0.4%   (5x20000 calls)
-  electrum_ecc           31.24       4.02x    0.4%   (5x20000 calls)
+3. BIP340 sign (32-byte message), 30x20000 calls each row
+                       μs/call        sd     vs best
+  secp256k1               7.80    ± 0.18       1.00x
+  btclib_secp256k1       15.85    ± 0.03       2.03x
+  coincurve              27.31    ± 0.08       3.50x
+  electrum_ecc           31.42    ± 0.41       4.03x
 
-4. BIP340 verify (32-byte message, the public key parsed per call)
-                       μs/call     vs best   spread
-  coincurve              14.52       1.00x    0.4%   (5x20000 calls)
-  btclib_secp256k1       14.56       1.00x    0.4%   (5x20000 calls)
-  secp256k1              15.01       1.03x    0.2%   (5x20000 calls)
-  electrum_ecc           18.45       1.27x    0.1%   (5x20000 calls)
+4. BIP340 verify (32-byte message, the public key parsed per call), 30x20000 calls each row
+                       μs/call        sd     vs best
+  coincurve              14.58    ± 0.03       1.00x
+  btclib_secp256k1       14.58    ± 0.03       1.00x
+  secp256k1              15.06    ± 0.01       1.03x
+  electrum_ecc           18.53    ± 0.50       1.27x
 
-5. public key tweak by a scalar, which is BIP32's step
-                       μs/call     vs best   spread
-  coincurve              10.34       1.00x    0.5%   (5x20000 calls)
-  btclib_secp256k1       10.53       1.02x    0.2%   (5x20000 calls)
-  secp256k1              13.73       1.33x    0.1%   (5x20000 calls)
-  electrum_ecc           22.18       2.15x    0.8%   (5x20000 calls)
+5. public key tweak by a scalar, which is BIP32's step, 30x20000 calls each row
+                       μs/call        sd     vs best
+  coincurve              10.37    ± 0.02       1.00x
+  btclib_secp256k1       10.56    ± 0.03       1.02x
+  secp256k1              13.83    ± 0.26       1.33x
+  electrum_ecc           22.34    ± 0.21       2.16x
 ```
 <!-- output: end -->
 
@@ -105,9 +103,16 @@ measure is the boundary crossing.
 The ctypes row is last in both verification tables, 2 and 4. The three cffi
 rows are close enough that their order among themselves is not settled by one
 run on a machine like this — which of them reads fastest moves between runs,
-and the `spread` column says how much a single run's own five rounds already
-moved: a row within a percent of the best, with a spread of the same size, is
-not behind it in any durable sense.
+and the `sd` column is how to see that without waiting for another: where two
+rows are a few hundredths apart and each round of each scattered by as much,
+neither is ahead of the other in any durable sense. Table 4 has such a pair,
+and its two are separated by less than either's own scatter.
+
+Read that column as the spread of the rounds rather than as an interval
+around the number beside it. The value is the *quickest* round, deliberately
+— interference only ever adds time, so the fastest of thirty is the one that
+ran with least taken from it — and it therefore sits at the low edge of the
+distribution the deviation describes.
 
 ## What the rows leave out
 

@@ -52,10 +52,8 @@ paragraph each, and none of the six is the same story:
 when    : 2026-08-15 06:24 CEST (04:24 UTC)
 python  : 3.13.14
 method  : 3 rounds per row, minimum kept; nothing else repeated
-command : uv run python scripts/bitcoin_libraries.py
+command : uv run python scripts/03-libraries.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
 ```
 <!-- run: end -->
 

@@ -38,7 +38,7 @@ narrower than every other, which is how that showed.
 That a row belongs here is therefore a property to prove.
 `tests/pure_python_path_test.py` blocks every libsecp256k1 entry point and
 asserts each operation still answers. BIP32 derivation is timed in
-`scripts/bitcoin_libraries.py`, where being C is the premise.
+`scripts/03-libraries.py`, where being C is the premise.
 
 ## One function per operation, timed twice
 
@@ -94,6 +94,7 @@ from _results import (
     Pair,
     Pairs,
     Provenance,
+    page_of,
     rendered_provenance,
     rendered_table,
     save,
@@ -123,7 +124,7 @@ def provenance() -> Provenance:
 
     The wrapper's version is btclib-secp256k1's, that being what a caller
     installs; which revision of libsecp256k1 it bundled is recorded in
-    `scripts/libsecp256k1_bindings.py`, against the release it was read
+    `scripts/01-libsecp256k1.py`, against the release it was read
     from, and one script naming a pin is enough.
     """
     stated = (
@@ -407,12 +408,6 @@ OPERATIONS = (
 METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
 
 
-# the page this run is published as, named here because it cannot be
-# derived: a page ordered among its siblings carries a number no module
-# name may start with
-BENCHMARK = "02-btclib-vs-btclib"
-
-
 def main() -> None:
     """Time every operation through both paths, print the table, save the run.
 
@@ -463,7 +458,7 @@ def main() -> None:
         ],
     )
     measurement = Measurement(
-        benchmark=BENCHMARK,
+        benchmark=page_of(__file__),
         run=taken_now(__file__, METHOD),
         provenance=provenance(),
         tables=[table],

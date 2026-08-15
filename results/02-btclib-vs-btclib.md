@@ -7,10 +7,8 @@
 when    : 2026-08-15 06:19 CEST (04:19 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
-command : uv run python scripts/btclib_two_paths.py
+command : uv run python scripts/02-btclib-vs-btclib.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
 ```
 <!-- run: end -->
 
@@ -33,19 +31,19 @@ and every operation holding one that a caller would call is below.
 btclib 2026.9 (wrapper 0.8.0.2), measured as μs/call, sorted on the ratio
 
                       libsecp256k1   pure python     ratio
-dsa_sign                    16.161        159.54      9.9x
-bms_sign                    27.411        321.50     11.7x
-ssa_sign                    24.660        317.22     12.9x
-taproot_tweak               17.286        233.02     13.5x
-pubkey_from_prvkey          10.124        147.28     14.5x
-ellswift_decode             7.9600        121.55     15.3x
-generator_mult              8.1439        139.55     17.1x
-pubkey_parse                3.5281        74.171     21.0x
-bms_verify                  23.476        710.76     30.3x
-dsa_recover                 39.615        1306.4     33.0x
-ssa_verify                  20.310        673.10     33.1x
-dsa_verify                  19.429        665.52     34.3x
-dh_shared_secret            13.527        542.42     40.1x
+dsa_sign                      16.2           160      9.9x
+bms_sign                      27.4           322     11.7x
+ssa_sign                      24.7           317     12.9x
+taproot_tweak                 17.3           233     13.5x
+pubkey_from_prvkey            10.1           147     14.5x
+ellswift_decode               7.96           122     15.3x
+generator_mult                8.14           140     17.1x
+pubkey_parse                  3.53          74.2     21.0x
+bms_verify                    23.5           711     30.3x
+dsa_recover                   39.6          1310     33.0x
+ssa_verify                    20.3           673     33.1x
+dsa_verify                    19.4           666     34.3x
+dh_shared_secret              13.5           542     40.1x
 ```
 <!-- output: end -->
 

@@ -99,7 +99,7 @@ whatever raises.
 
 ## What is not here yet
 
-The address encodings are timed in `scripts/bitcoin_libraries.py` and their
+The address encodings are timed in `scripts/03-libraries.py` and their
 vectors are not vendored: BIP173's and BIP350's valid and invalid address
 lists belong beside these four, and the bech32m defect that benchmark found
 in `python-bitcoinlib` is exactly what an invalid-address list is for.

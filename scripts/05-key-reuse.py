@@ -91,6 +91,7 @@ from _results import (
     Provenance,
     Ratios,
     Timing,
+    page_of,
     rendered_output,
     rendered_provenance,
     save,
@@ -309,12 +310,6 @@ def precompute_once(calls: int) -> float:
 METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
 
 
-# the page this run is published as, named here because it cannot be
-# derived: a page ordered among its siblings carries a number no module
-# name may start with
-BENCHMARK = "05-key-reuse"
-
-
 def main() -> None:
     """Time every row, libsecp256k1 first, print the tables and save the run.
 
@@ -388,7 +383,7 @@ def main() -> None:
     )
 
     measurement = Measurement(
-        benchmark=BENCHMARK,
+        benchmark=page_of(__file__),
         run=taken_now(__file__, METHOD),
         provenance=provenance(),
         tables=[verify, costs],

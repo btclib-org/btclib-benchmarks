@@ -28,10 +28,8 @@ tag, which is still a release somebody cut on a day.
 when    : 2026-08-15 06:19 CEST (04:19 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
-command : uv run python scripts/pure_python.py
+command : uv run python scripts/04-pure-python.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
 ```
 <!-- run: end -->
 

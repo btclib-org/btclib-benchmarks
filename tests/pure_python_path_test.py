@@ -2,7 +2,7 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""Every row of `btclib_two_paths.py` really has a pure-Python path.
+"""Every row of `02-btclib-vs-btclib.py` really has a pure-Python path.
 
 That script's whole premise is that each operation in it can be answered
 twice, once in C and once in Python, and `python_arithmetic_only` is how it
@@ -26,17 +26,23 @@ question rather than an answer: replacing it breaks the dispatch for every
 row and proves nothing about any of them.
 
 In a subprocess, because none of this can be undone in the process that
-does it -- neither the switch, which `btclib_two_paths.py` documents, nor
+does it -- neither the switch, which `02-btclib-vs-btclib.py` documents, nor
 the patching, which reaches into modules the rest of the suite imports.
 """
 
 from __future__ import annotations
 
+import importlib
 import subprocess
 import sys
 from pathlib import Path
 
-import btclib_two_paths
+# `import` cannot spell it: the five scripts are named for the pages
+# they publish, which begin with a number and hold hyphens. Nothing
+# imports them by statement -- a person runs `python scripts/<name>.py`
+# and the suite asks `importlib` for them by string, which is indifferent
+# to what a Python identifier may look like
+TWO_PATHS = importlib.import_module("02-btclib-vs-btclib")
 
 # where `conftest.py` points this process's own import path, spelled again
 # rather than imported from it: mypy resolves modules by path and a test
@@ -47,8 +53,8 @@ SCRIPTS = Path(__file__).parents[1] / "scripts"
 # operation. Written as a program rather than as a helper module because it
 # has to run somewhere this suite is not: see the docstring
 PROBE = """
-import sys, types
-import btclib_two_paths as B
+import importlib, sys, types
+B = importlib.import_module("02-btclib-vs-btclib")
 
 
 class BindingsCalled(RuntimeError):
@@ -123,4 +129,4 @@ def test_every_operation_answers_without_the_bindings() -> None:
     # every row reported, so a probe that fell out early cannot pass as a
     # probe that found nothing
     answered = [line for line in lines if line.startswith("PYTHON ")]
-    assert len(answered) == len(btclib_two_paths.OPERATIONS)
+    assert len(answered) == len(TWO_PATHS.OPERATIONS)
