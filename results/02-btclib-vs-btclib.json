@@ -14,7 +14,7 @@
     "columns": [],
     "rows": [],
     "notes": [
-      "btclib 2026.9 (bindings 0.8.0.2), measured as μs/call, sorted on the ratio"
+      "btclib 2026.9 (wrapper 0.8.0.2), measured as μs/call, sorted on the ratio"
     ]
   },
   "timing_note": [],

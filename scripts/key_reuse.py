@@ -213,7 +213,7 @@ PREPARE = cycle([v.prvkey for v in SIGNING])
 def python_arithmetic_only() -> None:
     """Turn btclib's libsecp256k1 dispatch off, everywhere at once.
 
-    Called once, from `main`, after every bindings row has been timed:
+    Called once, from `main`, after every libsecp256k1 row has been timed:
     the assignment cannot be undone within a process, so the order of the
     rows below is the measurement's own requirement and not a choice.
     """
@@ -316,11 +316,11 @@ BENCHMARK = "05-key-reuse"
 
 
 def main() -> None:
-    """Time every row, bindings first, print the tables and save the run.
+    """Time every row, libsecp256k1 first, print the tables and save the run.
 
     The order is `python_arithmetic_only`'s requirement: it cannot be
     undone within a process, so every row that is meant to reach the
-    bindings runs before it and every row that is meant to measure Python
+    libsecp256k1 runs before it and every row that is meant to measure Python
     runs after.
 
     Nothing is printed until it is all measured, both tables being sorted
@@ -347,8 +347,8 @@ def main() -> None:
         rows=[
             Timing(label=label, us_per_call=value)
             for label, value in (
-                ("btclib, bindings, octets", bindings_octets),
-                ("btclib, bindings, parsed point", bindings_point),
+                ("btclib, libsecp256k1, octets", bindings_octets),
+                ("btclib, libsecp256k1, parsed point", bindings_point),
                 ("btclib, Python, octets", python_octets),
                 ("btclib, Python, parsed point", python_point),
                 ("python-ecdsa", ecdsa_plain),
@@ -367,7 +367,7 @@ def main() -> None:
         title="what preparing the key costs, and after how many verifications it pays",
         rows=[
             Preparation(
-                label="btclib, bindings, parse once",
+                label="btclib, libsecp256k1, parse once",
                 prepare=bindings_parse,
                 plain=bindings_octets,
                 prepared=bindings_point,

@@ -131,7 +131,7 @@ ratio against its fastest row, never against btclib's:
 - [btclib's two paths][two-paths]
 - [btclib against the other bitcoin libraries][libraries]
 - [every pure-Python implementation][pure]
-- [the libsecp256k1 bindings][bindings]
+- [the libsecp256k1 wrappers][wrappers]
 - [one key, every signature under it][reuse]
 
 The machine is named in each file, and so is what else was running on it.
@@ -150,7 +150,7 @@ both commands.
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
 [libraries]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
-[bindings]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 
 ## Licence

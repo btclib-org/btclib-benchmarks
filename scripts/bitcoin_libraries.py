@@ -4,7 +4,7 @@
 
 """Timings of btclib as installed, against other Python bitcoin libraries.
 
-`pip install btclib` installs the `btclib_secp256k1` bindings with it, so
+`pip install btclib` installs the `btclib_secp256k1` wrapper with it, so
 this times that path and never the pure-Python fallback, which
 `scripts/pure_python.py` covers. Every comparand is timed at its own latest
 PyPI release, on operations it offers: nothing here is compared against a
@@ -61,12 +61,13 @@ exception and say so where they are defined.
 - BIP340 sign and verify, over each vector's message and aux_rand. BIP340
   does not hash its message, so this is the value every implementation signs
   byte for byte, and it is libsecp256k1's fixed-size entry point, which is
-  what keeps btclib's row on the bindings path. The vector's aux_rand makes
+  what keeps btclib's row on the libsecp256k1 path. The vector's aux_rand
+  makes
   both signing rows reproducible, and therefore checkable against BIP340.
 - BIP32 derivation, every chain the vector file publishes, checked against
   the public key it publishes for that path.
 - base58check, bech32 and bech32m, encoding and decoding. Pure Python in
-  every library here, so these rows say nothing about bindings and
+  every library here, so these rows say nothing about wrappers and
   everything about the code -- and they hold the one wrong answer in this
   benchmark: `python-bitcoinlib` encodes a witness-v1 program with bech32's
   checksum constant where BIP350 requires bech32m's, and rejects the address
@@ -119,7 +120,7 @@ import btclib.b58
 # pycoin's ctypes probe -- run when pycoin is imported, below -- finds them
 # there or falls back to Python. Drop this line and pycoin's rows become
 # Python rows, which the docstring above is about. btclib's own dispatch
-# imports the bindings when it first needs them, too late for that probe
+# imports the wrapper when it first needs it, too late for that probe
 import btclib_secp256k1  # noqa: F401
 import buidl.bech32
 import buidl.hd
@@ -139,6 +140,7 @@ from _results import (
     Provenance,
     Ratios,
     Timing,
+    labels,
     rendered_provenance,
     rendered_table,
     save,
@@ -241,7 +243,7 @@ DIGESTS = [int.from_bytes(v.msg, "big") % ORDER for v in DSA_VECTORS]
 # and then the mechanism, as every other line there does. Which copy of
 # libsecp256k1 is a property of the process rather than of pycoin, and the
 # module docstring is where that is spelled out.
-# Which library each row's bindings reach, keyed to the release the pin was
+# Which library each row's wrapper reaches, keyed to the release the pin was
 # read from. Neither revision can be recovered at run time: btclib's is
 # compiled into a cffi extension, and embit's is a prebuilt binary carrying
 # no version string. Both are printed as unrecorded for any other release,
@@ -516,7 +518,7 @@ DSA_EMBIT = cycle(
 
 
 def dsa_sign_btclib() -> None:
-    """Time one ECDSA signature through btclib, bindings enabled.
+    """Time one ECDSA signature through btclib, libsecp256k1 enabled.
 
     `grind=False`, which is not btclib's default and is what makes this row
     comparable: every other row in the table produces one signature, and
@@ -542,7 +544,7 @@ def dsa_sign_btclib_grind() -> None:
 
 
 def dsa_verify_btclib() -> None:
-    """Time ECDSA verification through btclib, bindings enabled."""
+    """Time ECDSA verification through btclib, libsecp256k1 enabled."""
     msg, _, pubkey, sig = next(DSA_BTCLIB)
     dsa.verify_(msg, pubkey, sig)
 
@@ -681,13 +683,13 @@ SSA_EMBIT = cycle(
 
 
 def ssa_sign_btclib() -> None:
-    """Time BIP340 signing through btclib, bindings enabled."""
+    """Time BIP340 signing through btclib, libsecp256k1 enabled."""
     msg, prvkey, aux, _ = next(SSA_BTCLIB)
     ssa.sign_(msg, prvkey, aux=aux)
 
 
 def ssa_verify_btclib() -> None:
-    """Time BIP340 verification through btclib, bindings enabled."""
+    """Time BIP340 verification through btclib, libsecp256k1 enabled."""
     msg, prvkey, _, sig = next(SSA_BTCLIB)
     ssa.verify_(msg, pub_keyinfo_from_prv_key(prvkey)[0][1:], sig)
 
@@ -763,7 +765,7 @@ BIP32 = cycle(list(zip(DERIVATIONS, EXPECTED_CHILDREN, strict=True)))
 
 
 def bip32_derive_btclib() -> None:
-    """Time seed-to-child BIP32 derivation through btclib, bindings enabled."""
+    """Time seed-to-child BIP32 derivation through btclib, libsecp256k1 on."""
     chain, _expected = next(BIP32)
     _btclib_child_pubkey(chain.seed, chain.path)
 
@@ -1018,31 +1020,12 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
     return quickest, max(rounds) / quickest - 1
 
 
-def _labels(names: list[str]) -> list[str]:
-    """Drop the operation from each row's name, the title having said it.
-
-    Every function in a table is named `<operation>_<comparand>`, so the
-    operation is the leading run of underscore-separated words they all
-    share: printing it on every row is the same prefix thirty times over,
-    and what a reader compares is what is left of the name. Whole words
-    rather than characters, or three rows reading `btclib`, `embit` and
-    `buidl` would lose a `b` to what they happen to share.
-    """
-    split = [name.split("_") for name in names]
-    shared = 0
-    while len({parts[shared] for parts in split}) == 1 and all(
-        len(parts) > shared + 1 for parts in split
-    ):
-        shared += 1
-    return ["_".join(parts[shared:]) for parts in split]
-
-
 Rows = tuple[tuple[Callable[[], None], int], ...]
 
 
 def labels_of(rows: Rows) -> list[str]:
     """Return what one table's rows are called, the operation dropped."""
-    return _labels([func.__name__ for func, _ in rows])
+    return labels([func.__name__ for func, _ in rows])
 
 
 def measured(title: str, rows: Rows) -> Ratios:

@@ -38,6 +38,12 @@ DIGESTS = {
     "bip32_test_vectors.json": (
         "5a0e3411f974989d9c65ee542101f175ce3847300fd5bdafdd2812ce5fb85594"
     ),
+    "ecdsa_secp256k1_sha256_bitcoin_test.json": (
+        "27c848b8cfa4e3f3bfbda27971542dd9b827e393842d5549fdfdf1923771c756"
+    ),
+    "base58_encode_decode.json": (
+        "20d51011f49339714c28b9244cc5238f4c78bb9206dc8fc61500aed6fc2682ca"
+    ),
 }
 
 
@@ -134,6 +140,70 @@ def signing() -> list[Signing]:
         )
         for v in bip340()
         if v.prvkey is not None and len(v.msg) == 32
+    ]
+
+
+class Base58(NamedTuple):
+    """One base58 pair: the bytes, and what they encode to.
+
+    Base58 and not base58check -- Bitcoin Core's file pins the alphabet and
+    the leading-zero rule, and the checksum is a layer above both.
+    """
+
+    payload: bytes
+    encoded: str
+
+
+def base58() -> list[Base58]:
+    """Return every base58 pair, in the order the file publishes them."""
+    return [
+        Base58(payload=bytes.fromhex(hexed), encoded=encoded)
+        for hexed, encoded in json.loads(read("base58_encode_decode.json"))
+    ]
+
+
+class Wycheproof(NamedTuple):
+    """One ECDSA verification case, decoded.
+
+    `msg` is the message and not a digest: this file's scheme hashes with
+    SHA-256, and what a verifier is handed is `sha256(msg)`. `flags` is
+    Wycheproof's own naming of what a case is testing, which is how the
+    suite says why a package is allowed to disagree with one.
+    """
+
+    number: int
+    pubkey: bytes
+    msg: bytes
+    sig: bytes
+    valid: bool
+    flags: tuple[str, ...]
+    comment: str
+
+
+def wycheproof() -> list[Wycheproof]:
+    """Return every ECDSA verification case, group by group.
+
+    The public key belongs to the group and the signatures to the cases
+    inside it, so a flat list repeats the key: what a caller wants is one
+    case at a time, and ninety-nine groups of a handful is not a shape any
+    of them asked for.
+
+    Uncompressed, which every implementation here parses, where only some
+    take the DER-wrapped SubjectPublicKeyInfo the file also publishes.
+    """
+    published = json.loads(read("ecdsa_secp256k1_sha256_bitcoin_test.json"))
+    return [
+        Wycheproof(
+            number=int(case["tcId"]),
+            pubkey=bytes.fromhex(group["publicKey"]["uncompressed"]),
+            msg=bytes.fromhex(case["msg"]),
+            sig=bytes.fromhex(case["sig"]),
+            valid=case["result"] == "valid",
+            flags=tuple(case.get("flags", ())),
+            comment=case["comment"],
+        )
+        for group in published["testGroups"]
+        for case in group["tests"]
     ]
 
 

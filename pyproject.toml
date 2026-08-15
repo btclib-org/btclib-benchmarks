@@ -173,7 +173,14 @@ xfail_strict = true
 filterwarnings = ["error"]
 
 [tool.codespell]
-skip = ".secrets.baseline,uv.lock"
+# `vectors/` is skipped whole, and the reason is the point of vendoring:
+# those files are byte for byte the copies `vectors/README.md` publishes a
+# digest for, and a spelling fix inside one is a copy that has stopped
+# being the file it claims to be. Wycheproof's has `empyt` in three
+# comments, which codespell corrects and the digest check then rejects --
+# correctly, that being the whole job of the digest. The typo is
+# upstream's to fix
+skip = ".secrets.baseline,uv.lock,vectors/*"
 # the PyPI package scripts/bitcoin_libraries.py compares against, which is
 # a real word to codespell by way of "build". It cannot be spelled
 # differently: it is the name on the index
@@ -181,7 +188,11 @@ ignore-words-list = "buidl"
 ignore-regex = '`[^`]*`'
 
 [tool.typos.files]
-extend-exclude = [".secrets.baseline", "uv.lock"]
+# `vectors/` for the reason [tool.codespell] gives above, and here it
+# matters more: this hook runs with --write-changes, so an uncorrected
+# vendored file is one it silently rewrites into a copy whose digest no
+# longer matches the provenance published for it
+extend-exclude = [".secrets.baseline", "uv.lock", "vectors/"]
 
 [tool.typos.default]
 # an unbroken run of 26 characters or more is a key, a signature or a

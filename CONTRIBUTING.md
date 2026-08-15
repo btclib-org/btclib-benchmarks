@@ -105,15 +105,21 @@ What it does check is what survives being automated:
 
 - that every measured package answers the vendored vectors, in the
   configuration it is measured in. `tests/vectors_test.py` runs BIP340's
-  own vectors and BIP32's against every implementation this project times,
+  vectors, BIP32's, Wycheproof's ECDSA file and Core's base58 pairs
+  against every implementation this project times,
   btclib included — redundant with btclib's own suite, deliberately, it
   being the one package these tables exist to publish. The negative cases
   are the point: an implementation that accepts a public key off the curve
   or an s past the order passes a round-trip check and fails this one. The
   pure-Python configuration is a subprocess, `PYCOIN_NATIVE` being read at
   import and btclib's dispatch flag being unrestorable.
+
+  Where a package answers a case differently, the answer is recorded as an
+  expected failure with the reason beside it, never excluded. `xfail_strict`
+  is on, so a release that fixes one fails the suite instead of passing
+  quietly — which is the only way a recorded defect stays current.
 - that each row of `btclib_two_paths.py` has a second path at all.
-  `tests/pure_python_path_test.py` blocks every bindings entry point and
+  `tests/pure_python_path_test.py` blocks every libsecp256k1 entry point and
   calls every operation: a row that has kept a foot in C raises instead of
   answering. BIP32 derivation was such a row.
 - that every script *loads*, which runs the fixtures at its top and the

@@ -30,7 +30,7 @@ and every operation holding one that a caller would call is below.
 
 <!-- output: begin -->
 ```text
-btclib 2026.9 (bindings 0.8.0.2), measured as μs/call, sorted on the ratio
+btclib 2026.9 (wrapper 0.8.0.2), measured as μs/call, sorted on the ratio
 
                       libsecp256k1   pure python     ratio
 dsa_sign                    16.161        159.54      9.9x
@@ -51,7 +51,7 @@ dh_shared_secret            13.527        542.42     40.1x
 
 ## What it shows
 
-No ratio is under 1.0x: the bindings win every operation. What the column
+No ratio is under 1.0x: libsecp256k1 wins every operation. What the column
 spreads over is the part worth reading, and it sorts the table into two
 groups with a gap between them.
 
@@ -110,16 +110,16 @@ C is the premise.
 Four other questions are published in `results/`, each with its own
 comparands:
 
-- [the libsecp256k1 bindings][bindings] — four packages that wrap one C
+- [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C
   library, and which revision of it each vendors
-- [python libraries][libs] — where bindings (if available) are just one
+- [python libraries][libs] — where a wrapper, if there is one, is just one
   component of a python library
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
 
-[bindings]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md

@@ -362,6 +362,37 @@ The release notes, which say what a user has to act on, are in
   the process. Both are properties of the import list, and the script's
   docstring now says so.
 
+- **Wycheproof's ECDSA file and Bitcoin Core's base58 pairs are vendored**,
+  beside BIP340's vectors and BIP32's, and every implementation this project
+  times is held to both. `vectors/README.md` publishes a digest per file and
+  the suite checks it on every run, so a copy that drifts fails a test
+  rather than quietly becoming the new question — which is not
+  hypothetical: `codespell` and `typos` both corrected `empyt` inside the
+  Wycheproof file on the first run, and the digest is what caught it. Both
+  now skip `vectors/` for that reason.
+
+  What the two files found is the reason to have them. Wycheproof's is
+  adversarial where BIP340's is a specification's own list: pycoin accepts
+  a run of signatures it should refuse and buidl a few, all of them a DER
+  decoder reading BER long forms, wrong lengths or trailing bytes, plus two
+  in buidl where the arithmetic admits an r it should not and rejects a
+  valid signature. Core's base58 file catches buidl again, on the empty
+  payload its encoder raises for. Every one of those is recorded as an
+  expected failure with `xfail_strict` on, so the day a release fixes one
+  the suite fails and somebody comes back to the table.
+
+  The low-s cases are *not* recorded as failures, and the distinction
+  matters: that file is `EcdsaBitcoinVerify`, and refusing the high s of a
+  malleable pair is bitcoin's policy rather than ECDSA's. libsecp256k1
+  applies it inside `secp256k1_ecdsa_verify`, so the packages reaching that
+  C inherit it and the ones implementing ECDSA themselves answer true —
+  both right to a different question, and each asserted as its own.
+
+  RFC6979's file was considered and left out. It publishes NIST curves and
+  no secp256k1, that pair being absent from its appendix A.2, so nothing
+  this project times could be held to it; the secp256k1 vectors btclib uses
+  are five tuples in its test source rather than a file to vendor.
+
 - **A run is saved as data, and the page is rendered from it.** Each
   benchmark writes `results/<name>.json` as it finishes — every number as
   measured, the packages block, and what the run block states — and

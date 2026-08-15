@@ -9,7 +9,7 @@ same public function, and its two columns are the two arithmetics that answer
 underneath -- the libsecp256k1 that btclib-secp256k1 bundles and compiles into
 a cffi extension, or the Python of `curves/curve_group.py`. `pip install
 btclib` installs both, so neither column is a package a reader chooses
-between, and the ratio is what the Python costs when the bindings decline.
+between, and the ratio is what the Python costs when libsecp256k1 declines.
 
 It declines for every curve that is not secp256k1, for a zero scalar, for the
 point at infinity, and for anything outside what libsecp256k1's entry points
@@ -36,7 +36,7 @@ would compare C against C with a Python step added. Its ratio was far
 narrower than every other, which is how that showed.
 
 That a row belongs here is therefore a property to prove.
-`tests/pure_python_path_test.py` blocks every bindings entry point and
+`tests/pure_python_path_test.py` blocks every libsecp256k1 entry point and
 asserts each operation still answers. BIP32 derivation is timed in
 `scripts/bitcoin_libraries.py`, where being C is the premise.
 
@@ -121,13 +121,13 @@ def provenance() -> Provenance:
     sense that it has edges, and the unit and the sort have to be said
     somewhere above the numbers, which is here.
 
-    The bindings' version is btclib-secp256k1's, that being what a caller
+    The wrapper's version is btclib-secp256k1's, that being what a caller
     installs; which revision of libsecp256k1 it bundled is recorded in
     `scripts/libsecp256k1_bindings.py`, against the release it was read
     from, and one script naming a pin is enough.
     """
     stated = (
-        f"btclib {version('btclib')} (bindings {version('btclib-secp256k1')}), "
+        f"btclib {version('btclib')} (wrapper {version('btclib-secp256k1')}), "
         f"measured as \N{GREEK SMALL LETTER MU}s/call, sorted on the ratio"
     )
     odd = [
@@ -226,12 +226,12 @@ def python_arithmetic_only() -> None:
     so this one assignment reaches the nine modules that imported the
     predicate by name. Naming modules instead is what leaves a row meant
     to measure Python measuring C, and it does so silently: a pure-Python
-    public key comes back at bindings speed, `to_pub_key` asking
+    public key comes back at libsecp256k1 speed, `to_pub_key` asking
     `curves.sec_point`, which is the module such a list forgets. A row
     added below cannot reintroduce that.
 
-    Called once, after every fixture above is built: those go through the
-    bindings too, and there is no reason to slow them down.
+    Called once, after every fixture above is built: those go through
+    libsecp256k1 too, and there is no reason to slow them down.
     """
     curve._libsecp256k1_available = False
 
@@ -329,7 +329,7 @@ def ellswift_decode() -> None:
     ellswift.decode_var(ell)
 
 
-# every row is called once, through the bindings, before anything is
+# every row is called once, through libsecp256k1, before anything is
 # timed: an operation whose fixture is wrong would otherwise be timed
 # rather than reported
 for _op in (
@@ -365,8 +365,8 @@ def benchmark(func: Callable[[], None], mult_: int) -> float:
 
     The count is per operation *and* per path, the two columns below
     holding the two: the pure Python side of a row is one to two orders of
-    magnitude slower than the bindings, so one count for both would either
-    sit for minutes on the Python row or measure the bindings against the
+    magnitude slower than libsecp256k1, so one count for both would either
+    sit for minutes on the Python row or measure libsecp256k1 against the
     resolution of the clock.
     """
     # perf_counter and not time(): the wall clock can step backwards
@@ -380,7 +380,7 @@ def benchmark(func: Callable[[], None], mult_: int) -> float:
 
 
 # one operation per entry, with the thousands of calls to give it through
-# the bindings and through Python. Each count was picked from a first timed
+# libsecp256k1 and through Python. Each count was picked from a first timed
 # call to put its column near half a second -- long enough that the loop's
 # own overhead is a rounding error, short enough that every operation
 # through both arithmetics is a run somebody will wait for
@@ -418,7 +418,7 @@ def main() -> None:
 
     The timing order is what the measurement requires:
     `python_arithmetic_only` cannot be undone within a process, so every
-    operation is timed through the bindings before it runs, and through
+    operation is timed through libsecp256k1 before it runs, and through
     Python after. The printing order is the run's own, sorted on the ratio,
     which is why the two are no longer the same loop.
 
@@ -442,9 +442,9 @@ def main() -> None:
     # question is what an operation costs each way, and two rows made the
     # reader find the second half of a pair somewhere else in the sort.
     #
-    # The ratio is the renderer's, dividing Python by the bindings rather
+    # The ratio is the renderer's, dividing Python by libsecp256k1 rather
     # than the slower by the quicker, so its direction carries information:
-    # under 1.0x is a pair where the bindings lost, which no absolute value
+    # under 1.0x is a pair where libsecp256k1 lost, which no absolute value
     # would say. The other benchmarks divide by the quickest row of the
     # table; here that row would divide a signature by a point parse, which
     # is two amounts of work and no comparison at all.

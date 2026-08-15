@@ -52,20 +52,30 @@ from collections.abc import Callable
 from pathlib import Path
 
 import _vectors
+import bitcoin.base58
+import btclib.base58
+import btclib_secp256k1.dsa
 import btclib_secp256k1.ssa
 import buidl.hd
+import buidl.helper
 import buidl.pecc
 import coincurve
+import ecdsa
 import electrum_ecc
+import embit.base58
 import embit.bip32
 import embit.ec
+import pycoin.encoding.b58
 import pycoin.symbols.btc
 import pytest
 import secp256k1
 import secp256k1lab.bip340
 from btclib.bip32 import bip32
 from btclib.curves import curve
-from btclib.ecc import ssa
+from btclib.ecc import dsa, ssa
+from pycoin.ecdsa.secp256k1 import secp256k1_generator as pycoin_generator
+from pycoin.encoding.sec import sec_to_public_pair
+from pycoin.satoshi.der import sigdecode_der
 
 DATA = _vectors.VECTORS
 
@@ -253,6 +263,225 @@ def test_bip340_verifying_a_message_of_another_size(
         bytes.fromhex(vector["signature"]),
     )
     assert answer == (vector["verification result"] == "TRUE"), vector["comment"]
+
+
+# --- ECDSA verification, Wycheproof's bitcoin file ----------------------
+
+
+def _secp256k1_py_verify(pubkey: bytes, digest: bytes, sig: bytes) -> bool:
+    """Verify through secp256k1-py, whose API parses the two in two calls.
+
+    A function rather than a lambda because the parsed key is wanted twice:
+    once to deserialize the signature against and once to verify with.
+    """
+    key = secp256k1.PublicKey(pubkey, raw=True)
+    return bool(key.ecdsa_verify(digest, key.ecdsa_deserialize(sig), raw=True))
+
+
+# every implementation of ECDSA verification this project times, each handed
+# the public key uncompressed, the SHA-256 of the message, and the signature
+# in DER. Four of them convert: electrum-ecc wants 64 bytes, buidl and pycoin
+# want the two integers, and the conversion is inside the entry here because
+# rejecting a signature it cannot parse is one of the answers being tested
+DSA_VERIFIERS: dict[str, Callable[[bytes, bytes, bytes], bool]] = {
+    "btclib": lambda pubkey, digest, sig: dsa.verify_(digest, pubkey, sig),
+    "btclib_secp256k1": lambda pubkey, digest, sig: btclib_secp256k1.dsa.verify(
+        digest, pubkey, sig
+    ),
+    "coincurve": lambda pubkey, digest, sig: coincurve.PublicKey(pubkey).verify(
+        sig, digest, None
+    ),
+    "secp256k1-py": _secp256k1_py_verify,
+    "electrum-ecc": lambda pubkey, digest, sig: electrum_ecc.ECPubkey(
+        pubkey
+    ).ecdsa_verify(electrum_ecc.ecdsa_sig64_from_der_sig(sig), digest),
+    "embit": lambda pubkey, digest, sig: embit.ec.PublicKey.parse(pubkey).verify(
+        embit.ec.Signature.parse(sig), digest
+    ),
+    "python-ecdsa": lambda pubkey, digest, sig: ecdsa.VerifyingKey.from_string(
+        pubkey, curve=ecdsa.SECP256k1
+    ).verify_digest(sig, digest, sigdecode=ecdsa.util.sigdecode_der),
+    "buidl.pecc": lambda pubkey, digest, sig: buidl.pecc.S256Point.parse(pubkey).verify(
+        int.from_bytes(digest, "big"), buidl.pecc.Signature.parse(sig)
+    ),
+    "pycoin": lambda pubkey, digest, sig: pycoin_generator.verify(
+        sec_to_public_pair(pubkey, pycoin_generator),
+        int.from_bytes(digest, "big"),
+        sigdecode_der(sig),
+    ),
+}
+
+# the two cases that are bitcoin's rule rather than ECDSA's. A signature and
+# its counterpart with s replaced by n-s both verify, which is what
+# malleability *is*; rejecting the high one is the policy libsecp256k1 applies
+# inside `secp256k1_ecdsa_verify`, and this file -- `EcdsaBitcoinVerify` --
+# asks for it. So the packages that reach that C inherit the rule, and the
+# ones that implement ECDSA themselves leave the policy to their caller and
+# answer true. Both answers are right to a different question, which is why
+# these two are expected the other way round below rather than excused: the
+# assertion is still that the signature verifies, which it does.
+#
+# tc388 is flagged `ArithmeticError` and its comment says what it is, "edge
+# case for signature malleability" -- so the pair is named by number rather
+# than by flag, the file's own labels not separating these two from the
+# arithmetic cases that are real
+MALLEABILITY = (1, 388)
+LOW_S_IS_THE_CALLER_S = (
+    "btclib",
+    "electrum-ecc",
+    "python-ecdsa",
+    "buidl.pecc",
+    "pycoin",
+)
+
+# and the cases two packages answer wrongly, which is what a file of
+# adversarial encodings is for. Recorded rather than excluded, and marked
+# xfail rather than asserted: `xfail_strict` is on, so a release that fixes
+# one of these fails the suite and somebody comes back to this table.
+#
+# Every one of them accepts a signature the file rejects, bar buidl's tc346,
+# which rejects a valid one. pycoin's are a DER decoder that reads BER long
+# forms, trailing bytes and lengths that overflow a uint64; buidl's are the
+# same family, plus two where the arithmetic admits an r no verification
+# should. Neither is a benchmark row that stops meaning anything -- both
+# libraries verify the signatures this project times, which are the ones a
+# specification publishes -- but a reader of those rows is owed the fact
+# that their acceptance is wider than the arithmetic underneath.
+LAX_DER_OR_WORSE = {
+    "buidl.pecc": {
+        79: "prepending 0's to r",
+        100: "truncated r",
+        123: "prepending 0's to s",
+        346: "k*G has a large x-coordinate, and this one rejects a valid sig",
+        347: "r too large",
+    },
+    "pycoin": dict.fromkeys(
+        (3, 4, 62, 63, 109, 110), "a BER long-form length where DER has one form"
+    )
+    | dict.fromkeys(
+        (5, 7, 8, 9, 10, 11, 12, 13, 20, 42, 79, 123),
+        "a length that is wrong, or that overflows a uint64",
+    )
+    | dict.fromkeys(
+        (18, 21, 50, 51, 52, 53, 54, 57, 100),
+        "bytes appended to, or taken from, a signature that then still parses",
+    ),
+}
+
+WYCHEPROOF = _vectors.wycheproof()
+
+
+def _wycheproof_cases() -> list[pytest.param]:  # type: ignore[valid-type]
+    """Pair every package with every case, marking what each is known to miss.
+
+    One parametrize over pairs rather than two stacked over packages and
+    cases, because what is known is a property of the pair: pycoin's DER
+    decoder is wrong about a length, and nothing else here is.
+    """
+    return [
+        pytest.param(
+            package,
+            case,
+            marks=(
+                pytest.mark.xfail(strict=True, reason=known[case.number])
+                if (known := LAX_DER_OR_WORSE.get(package, {})).get(case.number)
+                and case.number not in MALLEABILITY
+                else ()
+            ),
+            id=f"{package}-tc{case.number}",
+        )
+        for package in sorted(DSA_VERIFIERS)
+        for case in WYCHEPROOF
+    ]
+
+
+@pytest.mark.parametrize("package, case", _wycheproof_cases())
+def test_ecdsa_verification_matches_wycheproof(
+    package: str, case: _vectors.Wycheproof
+) -> None:
+    """Accept what the file accepts and reject what it rejects.
+
+    A raise counts as a rejection, as it does for BIP340: an API that
+    refuses to parse a signature whose length overflows a uint64 has
+    answered correctly, differently spelled.
+    """
+    expected = case.valid
+    if case.number in MALLEABILITY and package in LOW_S_IS_THE_CALLER_S:
+        expected = True
+    digest = hashlib.sha256(case.msg).digest()
+    try:
+        answer = DSA_VERIFIERS[package](case.pubkey, digest, case.sig)
+    except Exception:  # noqa: BLE001 - any refusal is a rejection
+        answer = False
+    assert bool(answer) == expected, f"tc{case.number}: {case.comment}"
+
+
+# --- base58, Bitcoin Core's own pairs -----------------------------------
+
+# every library whose base58check encoding this project times, asked for the
+# codec underneath it. Core's file is base58 with no checksum on it, which is
+# the layer the timed rows are built from and the one where implementations
+# differ: the alphabet is easy and the leading zeros are not, a zero byte
+# being a `1` rather than a digit of a number.
+#
+# btclib spells the plain codec privately, `encode` and `decode` being the
+# checksummed pair the rest of its module is about. Reaching for the private
+# name is the only way to ask this question of it, and asking it of the
+# public one would be asking a different question of every library here
+BASE58_ENCODERS: dict[str, Callable[[bytes], str]] = {
+    "btclib": lambda payload: btclib.base58._b58encode(payload).decode(),
+    "pycoin": pycoin.encoding.b58.b2a_base58,
+    "embit": embit.base58.encode,
+    "buidl": buidl.helper.encode_base58,
+    "python-bitcoinlib": bitcoin.base58.encode,
+}
+# buidl is not among the decoders, and cannot be: it publishes no base58
+# decode without a checksum. `raw_decode_base58` verifies one and raises
+# when there is none to verify, and `decode_base58` drops the version byte
+# on top of that. Which packages can be asked a question is a fact about
+# their APIs, so it is written down rather than discovered by a loop that
+# skips whatever raises
+BASE58_DECODERS: dict[str, Callable[[str], bytes]] = {
+    "btclib": lambda encoded: btclib.base58._b58decode(encoded.encode()),
+    "pycoin": pycoin.encoding.b58.a2b_base58,
+    "embit": embit.base58.decode,
+    "python-bitcoinlib": bitcoin.base58.decode,
+}
+
+# buidl's encoder cannot be handed nothing: it goes through `int(s.hex(), 16)`,
+# which raises on the empty string rather than answering with it. Core
+# publishes the empty payload as the first pair of the file, so this is a row
+# of the benchmark answering a published case wrongly -- recorded here rather
+# than dropped from the list, and `xfail_strict` turns a fixed release into a
+# failing suite
+EMPTY_PAYLOAD_RAISES = ("buidl",)
+
+BASE58 = _vectors.base58()
+
+
+def _base58_ids(vectors: list[_vectors.Base58]) -> list[str]:
+    """Name a pair by what it encodes, the empty one included."""
+    return [v.payload.hex()[:16] or "empty" for v in vectors]
+
+
+@pytest.mark.parametrize("package", sorted(BASE58_ENCODERS))
+@pytest.mark.parametrize("vector", BASE58, ids=_base58_ids(BASE58))
+def test_base58_encoding_matches_the_vector(
+    package: str, vector: _vectors.Base58
+) -> None:
+    """Encode the bytes Core publishes and get the string it publishes."""
+    if not vector.payload and package in EMPTY_PAYLOAD_RAISES:
+        pytest.xfail(f"{package} raises on the empty payload rather than encoding it")
+    assert BASE58_ENCODERS[package](vector.payload) == vector.encoded
+
+
+@pytest.mark.parametrize("package", sorted(BASE58_DECODERS))
+@pytest.mark.parametrize("vector", BASE58, ids=_base58_ids(BASE58))
+def test_base58_decoding_matches_the_vector(
+    package: str, vector: _vectors.Base58
+) -> None:
+    """And back, which is where a leading zero is dropped or kept."""
+    assert bytes(BASE58_DECODERS[package](vector.encoded)) == vector.payload
 
 
 # --- BIP32 --------------------------------------------------------------

@@ -356,6 +356,25 @@ def rendered_run(run: Run) -> str:
     return "\n".join(lines + state)
 
 
+def labels(names: list[str]) -> list[str]:
+    """Drop the operation from each row's name, the title having said it.
+
+    Every function in a table is named `<operation>_<comparand>`, so the
+    operation is the leading run of underscore-separated words they all
+    share: printing it on every row is the same prefix repeated down a
+    column, and what a reader compares is what is left of the name. Whole
+    words rather than characters, or three rows reading `btclib`, `embit`
+    and `buidl` would lose a `b` to what they happen to share.
+    """
+    split = [name.split("_") for name in names]
+    shared = 0
+    while len({parts[shared] for parts in split}) == 1 and all(
+        len(parts) > shared + 1 for parts in split
+    ):
+        shared += 1
+    return ["_".join(parts[shared:]) for parts in split]
+
+
 def labels_of(tables: Sequence[Table]) -> list[str]:
     """Return every label in a run, whichever shape of table holds it."""
     return [row.label for table in tables for row in table.rows]

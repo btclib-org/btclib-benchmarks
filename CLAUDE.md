@@ -23,12 +23,12 @@ uv run python scripts/render.py             # the pages, from the saved runs
 
 Five benchmarks, one question each:
 
-- `scripts/btclib_two_paths.py` — btclib's bindings path against its own
+- `scripts/btclib_two_paths.py` — btclib's libsecp256k1 path against its own
   pure-Python arithmetic
-- `scripts/bitcoin_libraries.py` — btclib, bindings on, against other
+- `scripts/bitcoin_libraries.py` — btclib, libsecp256k1 on, against other
   Python bitcoin libraries
 - `scripts/pure_python.py` — every pure-Python implementation of one
-  operation, bindings as the reference line
+  operation, libsecp256k1 as the reference line
 - `scripts/libsecp256k1_bindings.py` — btclib_secp256k1 against the other
   wrappers of the same C library, and which revision of it each vendors
 - `scripts/key_reuse.py` — what a verifier pays per signature under a key
@@ -90,7 +90,7 @@ machine, and what else was running on it.
   that is what makes the suite possible. `btclib_two_paths.py` and
   `pure_python.py` also call `python_arithmetic_only()`, which turns
   btclib's dispatch off process-wide and cannot be undone: it belongs
-  inside `main()`, after every row that is meant to reach the bindings.
+  inside `main()`, after every row that is meant to reach libsecp256k1.
   At module level it would leave every later test in the process
   measuring Python. `libsecp256k1_bindings.py` does not import btclib at
   all any more, and that is deliberate — a table of wrappers has no

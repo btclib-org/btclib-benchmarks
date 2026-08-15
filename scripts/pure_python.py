@@ -219,7 +219,7 @@ def python_arithmetic_only() -> None:
     such a list forgets. No row added below can reintroduce that.
 
     Called before anything is timed, and after every fixture above is built:
-    those want the bindings, and there is no reason to slow them down.
+    those want libsecp256k1, and there is no reason to slow them down.
     """
     curve._libsecp256k1_available = False
 
@@ -404,8 +404,8 @@ def benchmark(func: Callable[[], None], calls: int) -> float:
     """Return microseconds per call, `calls` calls of `func`.
 
     A returned number and not a printed one: every row is a ratio against
-    the bindings, which is the column this script exists for, so the
-    reference has to be in hand before anything is printed.
+    the quickest of its table, so the reference has to be in hand before
+    anything is printed.
 
     `calls` is per function rather than shared: the slowest row here is
     four orders of magnitude off the reference, and one count for all of
@@ -639,7 +639,7 @@ def main() -> None:
     """Throw the switch, print a table per operation, and save the run.
 
     `python_arithmetic_only` comes first and nothing here is timed before
-    it: with no reference row left to measure through the bindings, the one
+    it: with no reference row left to measure through libsecp256k1, the one
     ordering this script needs is that the switch precede every timing.
 
     Each table is printed as it is measured, this being a run somebody

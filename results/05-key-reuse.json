@@ -33,11 +33,11 @@
       "decimals": 1,
       "rows": [
         {
-          "label": "btclib, bindings, octets",
+          "label": "btclib, libsecp256k1, octets",
           "us_per_call": 19.698875001631677
         },
         {
-          "label": "btclib, bindings, parsed point",
+          "label": "btclib, libsecp256k1, parsed point",
           "us_per_call": 17.111779155675322
         },
         {
@@ -63,7 +63,7 @@
       "title": "what preparing the key costs, and after how many verifications it pays",
       "rows": [
         {
-          "label": "btclib, bindings, parse once",
+          "label": "btclib, libsecp256k1, parse once",
           "prepare": 3.5413957899436355,
           "plain": 19.698875001631677,
           "prepared": 17.111779155675322

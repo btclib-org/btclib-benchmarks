@@ -10,8 +10,11 @@ include .python-version
 recursive-include scripts *.py
 recursive-include tests *.py
 # the vendored vectors and the file that says where they came from, which
-# the benchmarks and the suite both read and check the digests of
+# the benchmarks and the suite both read and check the digests of.
+# WYCHEPROOF_COPYING has no extension and is named in full: it is the
+# licence of one of the three, and a licence ships with what it covers
 recursive-include vectors *.csv *.json *.md
+include vectors/WYCHEPROOF_COPYING
 # the runs the README links to, which are output rather than furniture:
 # a checkout is where a benchmark is run, and these say what running one
 # produced on a machine that is named. The .json beside each page is that

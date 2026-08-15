@@ -34,7 +34,7 @@ same benchmark is `scripts/libsecp256k1_bindings.py` here, and README.md
 has the commands.
 
 Two rows of it are not here, and are not meant to be: it timed btclib's
-pure-Python arithmetic beside the bindings, which is
+pure-Python arithmetic beside the wrappers, which is
 `scripts/pure_python.py`'s question in this repository, asked against
 every pure-Python implementation instead of one. The wrapper table is
 wrappers only, `electrum-ecc` among them.

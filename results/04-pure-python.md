@@ -136,16 +136,16 @@ which is why the pair can be read at all.
 Four other questions are published in `results/`, each with its own
 comparands:
 
-- [the libsecp256k1 bindings][bindings] — four packages that wrap one C
+- [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C
   library, and which revision of it each vendors
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
-  arithmetic against the bindings measured here
-- [python libraries][libs] — where bindings (if available) are just one
+  arithmetic against the wrappers measured here
+- [python libraries][libs] — where a wrapper, if there is one, is just one
   component of a python library
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
 
-[bindings]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md

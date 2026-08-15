@@ -117,12 +117,13 @@ import coincurve
 import electrum_ecc
 import electrum_ecc.ecc_fast
 import secp256k1
-from _provenance import WHAT_A_TIMING_CONTAINS, from_a_declared_source, origin_of
+from _provenance import from_a_declared_source, origin_of
 from _results import (
     Measurement,
     Provenance,
     Ratios,
     Timing,
+    labels,
     rendered_provenance,
     rendered_table,
     save,
@@ -613,11 +614,11 @@ def measured(title: str, rows: tuple[Callable[[], None], ...]) -> Ratios:
     decimal prints 1.0x for the whole column.
     """
     timings = []
-    for func in rows:
+    for label, func in zip(labels([func.__name__ for func in rows]), rows, strict=True):
         value, spread = benchmark(func, CALLS)
         timings.append(
             Timing(
-                label=func.__name__,
+                label=label,
                 us_per_call=value,
                 spread=spread,
                 calls=CALLS,
@@ -664,10 +665,10 @@ def main() -> None:
     packages = provenance()
     print(rendered_provenance(packages))
     print()
-    print("\n".join(WHAT_A_TIMING_CONTAINS))
-    print()
 
-    width = width_for([func.__name__ for _, rows in TABLES for func in rows])
+    width = width_for(
+        [label for _, rows in TABLES for label in labels([f.__name__ for f in rows])]
+    )
     tables = []
     for title, rows in TABLES:
         table = measured(title, rows)
@@ -681,6 +682,10 @@ def main() -> None:
             run=taken_now(__file__, METHOD),
             provenance=packages,
             tables=tables,
+            # the page says what a timing contains in its own prose, above
+            # the block: the claim belongs to a reader who has not reached
+            # the numbers yet, and repeating it inside them is furniture
+            timing_note=[],
         )
     )
     print(f"saved to {saved}", file=sys.stderr)
