@@ -43,9 +43,9 @@ interpreter, the machine, the method. Nothing about the page is decided
 there.
 
 ```shell
-uv run python scripts/render.py            # every page, from its saved run
-uv run python scripts/render.py key-reuse  # one of them
-uv run python scripts/render.py --check    # name what is stale, write none
+uv run python scripts/render.py               # every page, from its run
+uv run python scripts/render.py 05-key-reuse  # one of them
+uv run python scripts/render.py --check       # name what is stale, write none
 ```
 
 `render.py` puts the three blocks into the page between the markers it

@@ -92,7 +92,7 @@ a machine whose state they know.
 
 ## What a run leaves behind
 
-The numbers are written to `results/libsecp256k1-bindings.json` as this
+The numbers are written to `results/01-libsecp256k1.json` as this
 finishes, and `scripts/render.py` writes the page beside it from that file
 alone. So the prose around a table is rewritten and re-published
 without a machine and without a number being retyped: measuring and
@@ -126,7 +126,6 @@ from _results import (
     rendered_provenance,
     rendered_table,
     save,
-    slug,
     taken_now,
     width_for,
 )
@@ -645,6 +644,12 @@ TABLES = (
 METHOD = f"{ROUNDS} rounds per row, minimum kept; nothing else repeated"
 
 
+# the page this run is published as, named here because it cannot be
+# derived: a page ordered among its siblings carries a number no module
+# name may start with
+BENCHMARK = "01-libsecp256k1"
+
+
 def main() -> None:
     """Print the five tables, one operation each, and save the run.
 
@@ -672,7 +677,7 @@ def main() -> None:
 
     saved = save(
         Measurement(
-            benchmark=slug(__file__),
+            benchmark=BENCHMARK,
             run=taken_now(__file__, METHOD),
             provenance=packages,
             tables=tables,

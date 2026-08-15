@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "benchmark": "key-reuse",
+  "benchmark": "05-key-reuse",
   "run": {
     "when": "2026-08-15T06:19:13+02:00",
     "timezone": "CEST",

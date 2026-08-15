@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "benchmark": "btclib-two-paths",
+  "benchmark": "02-btclib-vs-btclib",
   "run": {
     "when": "2026-08-15T06:19:06+02:00",
     "timezone": "CEST",

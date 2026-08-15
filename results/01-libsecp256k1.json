@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "benchmark": "libsecp256k1-bindings",
+  "benchmark": "01-libsecp256k1",
   "run": {
     "when": "2026-08-15T06:19:50+02:00",
     "timezone": "CEST",

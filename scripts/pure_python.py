@@ -65,7 +65,7 @@ Not part of the test suite and not run by CI, as the others are not.
 
 ## What a run leaves behind
 
-The numbers are written to `results/pure-python.json` as this finishes,
+The numbers are written to `results/04-pure-python.json` as this finishes,
 and `scripts/render.py` writes the page beside it from that file
 alone. So the prose around a table is rewritten and re-published
 without a machine and without a number being retyped: measuring and
@@ -100,7 +100,6 @@ from _results import (
     rendered_provenance,
     rendered_table,
     save,
-    slug,
     taken_now,
     width_for,
 )
@@ -630,6 +629,12 @@ TABLES: tuple[tuple[str, Rows], ...] = (
 METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
 
 
+# the page this run is published as, named here because it cannot be
+# derived: a page ordered among its siblings carries a number no module
+# name may start with
+BENCHMARK = "04-pure-python"
+
+
 def main() -> None:
     """Throw the switch, print a table per operation, and save the run.
 
@@ -660,7 +665,7 @@ def main() -> None:
 
     saved = save(
         Measurement(
-            benchmark=slug(__file__),
+            benchmark=BENCHMARK,
             run=taken_now(__file__, METHOD),
             provenance=packages,
             tables=tables,

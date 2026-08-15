@@ -221,10 +221,10 @@ comparands:
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
 
-[bindings]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-bindings.md
-[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
-[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
-[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
+[bindings]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
+[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
+[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
+[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 
 <!-- The blocks above are rendered from the saved run beside this file,
      and their columns are sized from what is in them; rewrapping one to 80

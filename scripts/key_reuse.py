@@ -65,7 +65,7 @@ two libraries in one table, naming one would be choosing.
 
 ## What a run leaves behind
 
-The numbers are written to `results/key-reuse.json` as this finishes,
+The numbers are written to `results/05-key-reuse.json` as this finishes,
 and `scripts/render.py` writes the page beside it from that file
 alone. So the prose around a table is rewritten and re-published
 without a machine and without a number being retyped: measuring and
@@ -94,7 +94,6 @@ from _results import (
     rendered_output,
     rendered_provenance,
     save,
-    slug,
     taken_now,
 )
 from _vectors import signing
@@ -310,6 +309,12 @@ def precompute_once(calls: int) -> float:
 METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
 
 
+# the page this run is published as, named here because it cannot be
+# derived: a page ordered among its siblings carries a number no module
+# name may start with
+BENCHMARK = "05-key-reuse"
+
+
 def main() -> None:
     """Time every row, bindings first, print the tables and save the run.
 
@@ -383,7 +388,7 @@ def main() -> None:
     )
 
     measurement = Measurement(
-        benchmark=slug(__file__),
+        benchmark=BENCHMARK,
         run=taken_now(__file__, METHOD),
         provenance=provenance(),
         tables=[verify, costs],

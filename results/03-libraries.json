@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "benchmark": "bitcoin-libraries",
+  "benchmark": "03-libraries",
   "run": {
     "when": "2026-08-15T06:24:08+02:00",
     "timezone": "CEST",

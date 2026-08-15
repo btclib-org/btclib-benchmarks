@@ -90,7 +90,7 @@ a laptop by more than most of the differences here.
 
 ## What a run leaves behind
 
-The numbers are written to `results/bitcoin-libraries.json` as this finishes,
+The numbers are written to `results/03-libraries.json` as this finishes,
 and `scripts/render.py` writes the page beside it from that file
 alone. So the prose around a table is rewritten and re-published
 without a machine and without a number being retyped: measuring and
@@ -142,7 +142,6 @@ from _results import (
     rendered_provenance,
     rendered_table,
     save,
-    slug,
     taken_now,
     width_for,
 )
@@ -278,7 +277,7 @@ def _artifact(module_name: str) -> str:
 # what the column says, and all it says: which arithmetic answered on the
 # machine that ran this. How each package got there -- what it bundles,
 # what it builds, what it happened to find -- is prose in
-# `results/bitcoin-libraries.md`, because it is a paragraph per package and
+# `results/03-libraries.md`, because it is a paragraph per package and
 # a table column has to be readable across six rows
 LIBSECP256K1 = "libsecp256k1 enhanced"
 PURE_PYTHON = "pure Python"
@@ -1191,6 +1190,12 @@ TABLES: tuple[tuple[str, Rows], ...] = (
 METHOD = f"{ROUNDS} rounds per row, minimum kept; nothing else repeated"
 
 
+# the page this run is published as, named here because it cannot be
+# derived: a page ordered among its siblings carries a number no module
+# name may start with
+BENCHMARK = "03-libraries"
+
+
 def main() -> None:
     """Print every table, one operation at a time, and save the run.
 
@@ -1215,7 +1220,7 @@ def main() -> None:
 
     saved = save(
         Measurement(
-            benchmark=slug(__file__),
+            benchmark=BENCHMARK,
             run=taken_now(__file__, METHOD),
             provenance=packages,
             tables=tables,

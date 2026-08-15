@@ -202,6 +202,12 @@ class Run:
 class Measurement:
     """A whole run: what ran it, what it found, and what it can be asked.
 
+    `benchmark` names the run's file and the page it feeds, and each
+    script declares its own rather than having it derived from the script's
+    name. A page ordered among its siblings carries a number, and no
+    module name may begin with one -- so the two names are free to differ,
+    and the script says which page is its.
+
     `timing_note` is the block saying a timed call checks nothing, stored
     with the numbers rather than written by the renderer: a page is a
     record of one run, and a claim about what that run contained must not
@@ -291,15 +297,6 @@ def taken_now(script: str, method: str) -> Run:
         machine=recorded.get("machine") or _detected_machine(),
         state=recorded.get("state") or NO_STATE,
     )
-
-
-def slug(script: str) -> str:
-    """Return the name a benchmark's run and its page share.
-
-    One name for the script, the saved run and the published page, so that
-    none of the three can be found without the other two.
-    """
-    return Path(script).stem.replace("_", "-")
 
 
 # --- rendering, which both the run and a re-render go through -----------

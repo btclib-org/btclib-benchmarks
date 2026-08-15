@@ -5,7 +5,7 @@
 """Write the published pages from the saved runs, measuring nothing.
 
     uv run python scripts/render.py            # every page, from its run
-    uv run python scripts/render.py key-reuse  # one of them
+    uv run python scripts/render.py 05-key-reuse   # one of them
     uv run python scripts/render.py --check    # say what is stale, write none
 
 A benchmark writes `results/<name>.json` when it is run. This reads that
@@ -141,7 +141,7 @@ def main(arguments: list[str]) -> int:
     """Render the pages named, or every page that has a saved run.
 
     A name is a benchmark's, and a path to either of its two files is
-    taken as that name: `results/key-reuse.md` is what tab completion
+    taken as that name: `results/05-key-reuse.md` is what tab completion
     offers, and refusing it would be a puzzle rather than a rule.
     """
     check = "--check" in arguments
