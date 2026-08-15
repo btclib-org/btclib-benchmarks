@@ -89,10 +89,19 @@ to BIP340's own signatures where its API takes an aux_rand. secp256k1-py's
 
 Not part of the test suite and not run by CI: measuring is done by a person on
 a machine whose state they know.
+
+## What a run leaves behind
+
+The numbers are written to `results/libsecp256k1-wrappers.json` as this
+finishes, and `scripts/render.py` writes the page beside it from that file
+alone. So the prose around a table is rewritten and re-published
+without a machine and without a number being retyped: measuring and
+publishing are two commands.
 """
 
 from __future__ import annotations
 
+import sys
 import time
 from collections.abc import Callable
 from hashlib import sha256
@@ -108,12 +117,24 @@ import coincurve
 import electrum_ecc
 import electrum_ecc.ecc_fast
 import secp256k1
-from _provenance import from_a_declared_source, origin_of, report_method
+from _provenance import WHAT_A_TIMING_CONTAINS, from_a_declared_source, origin_of
+from _results import (
+    Measurement,
+    Provenance,
+    Ratios,
+    Timing,
+    rendered_provenance,
+    rendered_table,
+    save,
+    slug,
+    taken_now,
+    width_for,
+)
 from _vectors import signing, verification
 
 
-def report_provenance() -> None:
-    """Print one row per wrapper: what it is, and what is under it.
+def provenance() -> Provenance:
+    """Return one row per wrapper: what it is, and what is under it.
 
     Six columns, because the reader of this table needs all six and each
     answers a different question. The version and the release date say which
@@ -131,29 +152,38 @@ def report_provenance() -> None:
     reader has to act on, and a column of "released" repeated four times is
     not.
     """
-    print(
-        f"{'package':<18}{'version':<10}{'released':<13}"
-        f"{'libsecp256k1 pin':<24}{'bindings':<10}binary"
-    )
+    rows = []
     by_date = sorted(WRAPPERS, key=lambda row: RELEASE_DATES[row[0]][1], reverse=True)
     for dist_name, bindings, binary in by_date:
         installed = version(dist_name)
         recorded_pin, pin = LIBSECP256K1_PINS[dist_name]
         recorded_date, date = RELEASE_DATES[dist_name]
-        underneath = pin if installed == recorded_pin else "unrecorded"
-        released = date if installed == recorded_date else "unrecorded"
-        print(
-            f"{dist_name:<18}{installed:<10}{released:<13}"
-            f"{underneath:<24}{bindings:<10}{binary}"
+        rows.append(
+            [
+                dist_name,
+                installed,
+                date if installed == recorded_date else "unrecorded",
+                pin if installed == recorded_pin else "unrecorded",
+                bindings,
+                binary,
+            ]
         )
-    odd = {
-        dist_name: origin_of(dist_name)
-        for dist_name, _, _ in WRAPPERS
-        if not from_a_declared_source(dist_name)
-    }
-    for dist_name, origin in odd.items():
-        print(f"{dist_name} is installed from {origin}")
-    print()
+    return Provenance(
+        columns=[
+            "package",
+            "version",
+            "released",
+            "libsecp256k1 pin",
+            "bindings",
+            "binary",
+        ],
+        rows=rows,
+        notes=[
+            f"{dist_name} is installed from {origin_of(dist_name)}"
+            for dist_name, _, _ in WRAPPERS
+            if not from_a_declared_source(dist_name)
+        ],
+    )
 
 
 # every published vector, cycled, rather than one input repeated: a row that
@@ -570,50 +600,85 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
     return quickest, max(rounds) / quickest - 1
 
 
-def table(title: str, rows: tuple[Callable[[], None], ...]) -> None:
-    """Time every row of one operation, then print them fastest first.
+def measured(title: str, rows: tuple[Callable[[], None], ...]) -> Ratios:
+    """Time every row of one operation and return them as a table.
 
-    The ratio is against the fastest row, whichever it turns out to be, so the
-    top row reads 1.00x and every other says what it costs to use that one
-    instead. Against a named row the column would answer a question the reader
-    did not ask on the runs where that row is not the quickest.
+    The sort and the ratio are the renderer's. The ratio is against the
+    fastest row, whichever it turns out to be, so the top row reads 1.00x
+    and every other says what it costs to use that one instead; against a
+    named row the column would answer a question the reader did not ask on
+    the runs where that row is not the quickest.
+
+    Two decimals where the other scripts ask for one: every row here calls
+    the same C and they land within a few percent of each other, so one
+    decimal prints 1.0x for the whole column.
     """
-    measured = {func.__name__: benchmark(func, CALLS) for func in rows}
-    against = min(value for value, _ in measured.values())
-    print(title)
-    print(f"  {'':<30}{'μs/call':>10}{'vs best':>12}{'spread':>9}")
-    for name, (value, spread) in sorted(measured.items(), key=lambda row: row[1][0]):
-        # two decimals on the ratio where the other scripts print one: every
-        # row here calls the same C and they land within a few percent of each
-        # other, so one decimal prints 1.0x for the whole column
-        print(
-            f"  {name:<30}{value:10.2f}{value / against:11.2f}x{spread:8.1%}"
-            f"   ({ROUNDS}x{CALLS} calls)"
+    timings = []
+    for func in rows:
+        value, spread = benchmark(func, CALLS)
+        timings.append(
+            Timing(
+                label=func.__name__,
+                us_per_call=value,
+                spread=spread,
+                calls=CALLS,
+                rounds=ROUNDS,
+            )
         )
+    return Ratios(title=title, decimals=2, rows=timings)
+
+
+# every table of this benchmark, declared rather than called: the label
+# column is one width for the whole page, which is a fact about all five
+# tables and cannot be known while the first is being measured
+TABLES = (
+    ("1. ECDSA sign (32-byte digest)", DSA_SIGN_ROWS),
+    ("2. ECDSA verify (32-byte digest, the public key parsed per call)", DSA_ROWS),
+    ("3. BIP340 sign (32-byte message)", SSA_SIGN_ROWS),
+    ("4. BIP340 verify (32-byte message, the public key parsed per call)", SSA_ROWS),
+    ("5. public key tweak by a scalar, which is BIP32's step", TWEAK_ROWS),
+)
+
+# what the run block claims about how these numbers were taken, said by
+# the script that takes them: `benchmark` above is where the five rounds
+# and the minimum are, and the spread column is what a reader checks it by
+METHOD = f"{ROUNDS} rounds per row, minimum kept; nothing else repeated"
 
 
 def main() -> None:
-    """Print the two tables, one operation each.
+    """Print the five tables, one operation each, and save the run.
 
-    No order is forced on the timing any more: with the pure-Python rows
-    gone, nothing here changes state a later row would read. The order
-    the rows are *printed* in is the measurement's own, fastest first,
-    which is a property of the run rather than of this file.
+    No order is forced on the timing: with the pure-Python rows gone,
+    nothing here changes state a later row would read. The order the rows
+    are *printed* in is the measurement's own, fastest first, which is a
+    property of the run rather than of this file.
+
+    Each table is printed as it is measured, this being a run somebody
+    watches, and printed through the same renderer that writes the page.
     """
-    report_provenance()
-    report_method()
+    packages = provenance()
+    print(rendered_provenance(packages))
+    print()
+    print("\n".join(WHAT_A_TIMING_CONTAINS))
+    print()
 
-    table("1. ECDSA sign (32-byte digest)", DSA_SIGN_ROWS)
-    print()
-    table("2. ECDSA verify (32-byte digest, the public key parsed per call)", DSA_ROWS)
-    print()
-    table("3. BIP340 sign (32-byte message)", SSA_SIGN_ROWS)
-    print()
-    table(
-        "4. BIP340 verify (32-byte message, the public key parsed per call)", SSA_ROWS
+    width = width_for([func.__name__ for _, rows in TABLES for func in rows])
+    tables = []
+    for title, rows in TABLES:
+        table = measured(title, rows)
+        print(rendered_table(table, width))
+        print()
+        tables.append(table)
+
+    saved = save(
+        Measurement(
+            benchmark=slug(__file__),
+            run=taken_now(__file__, METHOD),
+            provenance=packages,
+            tables=tables,
+        )
     )
-    print()
-    table("5. public key tweak by a scalar, which is BIP32's step", TWEAK_ROWS)
+    print(f"saved to {saved}", file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

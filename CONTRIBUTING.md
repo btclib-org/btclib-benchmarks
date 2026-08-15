@@ -35,6 +35,40 @@ uv run --with-editable /path/to/btclib python scripts/bitcoin_libraries.py
 The header then says `editable: /path/to/btclib` where it otherwise says
 `released`, which is the point of printing it.
 
+## Publishing a run, which is a second command
+
+A run writes `results/<name>.json` as it finishes: every number, the
+packages block, and what the run block states — the clock, the
+interpreter, the machine, the method. Nothing about the page is decided
+there.
+
+```shell
+uv run python scripts/render.py            # every page, from its saved run
+uv run python scripts/render.py key-reuse  # one of them
+uv run python scripts/render.py --check    # name what is stale, write none
+```
+
+`render.py` puts the three blocks into the page between the markers it
+carries, and touches nothing else in it. So the prose around the numbers
+— the headings, the paragraph explaining a column, the analysis — is
+edited and re-published without measuring again, which is the whole
+reason the two are separate: a reworded heading used to mean either a
+fresh run, whose numbers are different, or a hand-edited block, whose
+numbers are nobody's.
+
+It reads the saved run and imports no benchmark. That matters more than
+it sounds: importing one derives keys, signs a message per comparand and
+runs every cross-comparand assertion before it will answer anything.
+
+The two lines no process can answer are in `results/machine.toml` —
+which machine, and what else was running on it. Edit that file when
+either stops being true; every run taken afterwards carries the new
+answer, and runs already saved keep the one they were taken under.
+
+`--check` says whether a page still matches the run it publishes. It is
+not wired into CI, and deliberately: a page is written by a command a
+person runs, not by a gate.
+
 ## The gates
 
 ```shell

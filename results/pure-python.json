@@ -1,0 +1,178 @@
+{
+  "schema": 1,
+  "benchmark": "pure-python",
+  "run": {
+    "when": "2026-08-15T06:19:59+02:00",
+    "timezone": "CEST",
+    "python": "3.13.14",
+    "method": "one run, kept whole — nothing repeated, no outlier discarded",
+    "command": "uv run python scripts/pure_python.py",
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64",
+    "state": "a working desktop, browser and editor open — not a quiesced machine, which is the condition README.md says to distrust"
+  },
+  "provenance": {
+    "columns": [
+      "package",
+      "version",
+      "released",
+      "held to Python by"
+    ],
+    "rows": [
+      [
+        "btclib",
+        "2026.9",
+        "main@a6988751392b",
+        "its delegation to btclib-secp256k1's cffi bindings switched off"
+      ],
+      [
+        "pycoin",
+        "0.92718.20260405",
+        "2026-04-05",
+        "PYCOIN_NATIVE=none before its import, resolving to pure Python"
+      ],
+      [
+        "ecdsa",
+        "0.19.2",
+        "2026-03-26",
+        "having no compiled backend at all"
+      ],
+      [
+        "secp256k1lab",
+        "1.0.0",
+        "2025-03-26",
+        "having no compiled backend at all"
+      ],
+      [
+        "buidl",
+        "0.2.36",
+        "2022-02-28",
+        "being imported as buidl.pecc, not buidl.ecc"
+      ]
+    ],
+    "notes": []
+  },
+  "timing_note": [
+    "what a timing contains",
+    "  one call per iteration, its answer discarded: no row checks",
+    "  itself, and no comparison is inside a measured loop",
+    "  the answers are checked in tests/vectors_test.py, and where",
+    "  each script builds its fixtures, which is before any clock"
+  ],
+  "tables": [
+    {
+      "kind": "ratios",
+      "title": "public key from a private key: a multiplication of the generator",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 187.05604481510818
+        },
+        {
+          "label": "secp256k1lab",
+          "us_per_call": 913.6237506754696
+        },
+        {
+          "label": "python-ecdsa",
+          "us_per_call": 212.92916499078274
+        },
+        {
+          "label": "pycoin",
+          "us_per_call": 5964.229197707027
+        },
+        {
+          "label": "buidl.pecc",
+          "us_per_call": 20691.48749578744
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "ECDSA sign, over a 32-byte digest",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib, one signature",
+          "us_per_call": 161.97083983570337
+        },
+        {
+          "label": "btclib, grinding (default)",
+          "us_per_call": 602.1833512932062
+        },
+        {
+          "label": "python-ecdsa",
+          "us_per_call": 282.43958950042725
+        },
+        {
+          "label": "pycoin",
+          "us_per_call": 6139.470846392214
+        },
+        {
+          "label": "buidl.pecc",
+          "us_per_call": 29624.212509952486
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "ECDSA verify, over a 32-byte digest",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 817.5183413550258
+        },
+        {
+          "label": "python-ecdsa",
+          "us_per_call": 1085.795839317143
+        },
+        {
+          "label": "pycoin",
+          "us_per_call": 19103.954103775322
+        },
+        {
+          "label": "buidl.pecc",
+          "us_per_call": 60612.57082037628
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "BIP340 sign, over a 32-byte message",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 333.0483241006732
+        },
+        {
+          "label": "secp256k1lab",
+          "us_per_call": 7335.1666843518615
+        },
+        {
+          "label": "buidl.pecc",
+          "us_per_call": 109615.20839482546
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "BIP340 verify, over a 32-byte message",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 690.9658201038837
+        },
+        {
+          "label": "secp256k1lab",
+          "us_per_call": 5090.28831962496
+        },
+        {
+          "label": "buidl.pecc",
+          "us_per_call": 67653.22911087424
+        }
+      ]
+    }
+  ]
+}

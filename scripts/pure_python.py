@@ -13,7 +13,7 @@ else -- pycoin is C there and Python here.
 
 ## How each row is held to Python
 
-`report_provenance` prints this per row, in the column beside the version:
+`provenance` says this per row, in the column beside the version:
 every row here is Python, so the word belongs in the heading and what belongs
 beside each name is whatever made it true, which is different for each of them
 and is the only part a reader could doubt.
@@ -62,6 +62,14 @@ assertions below run at import, where the fixtures are built, so the suite
 loading this module runs them and no timing carries them.
 
 Not part of the test suite and not run by CI, as the others are not.
+
+## What a run leaves behind
+
+The numbers are written to `results/pure-python.json` as this finishes,
+and `scripts/render.py` writes the page beside it from that file
+alone. So the prose around a table is rewritten and re-published
+without a machine and without a number being retyped: measuring and
+publishing are two commands.
 """
 
 from __future__ import annotations
@@ -72,6 +80,7 @@ import os
 # the native lookup runs at import time and never again
 os.environ["PYCOIN_NATIVE"] = "none"
 
+import sys
 import time
 from collections.abc import Callable
 from hashlib import sha256
@@ -82,7 +91,19 @@ import buidl.pecc
 import ecdsa
 import pycoin.symbols.btc
 import secp256k1lab.bip340
-from _provenance import origin_of, report_method
+from _provenance import WHAT_A_TIMING_CONTAINS, origin_of
+from _results import (
+    Measurement,
+    Provenance,
+    Ratios,
+    Timing,
+    rendered_provenance,
+    rendered_table,
+    save,
+    slug,
+    taken_now,
+    width_for,
+)
 from _vectors import signing, verification
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
@@ -120,15 +141,15 @@ def _released(dist_name: str) -> str:
     return recorded[1] if version(dist_name) == recorded[0] else "unrecorded"
 
 
-def report_provenance() -> None:
-    """Print one row per package: the build, and what holds it to Python.
+def provenance() -> Provenance:
+    """Return one row per package: the build, and what holds it to Python.
 
-    Printed before any number, because a released wheel and a working tree
-    satisfy the same requirement and resolve in silence. Not "pure Python" per
-    row: every row in these tables is, so the last column carries the
-    mechanism instead, which is the only part of the claim a reader could
-    doubt. pycoin's cell is read back rather than written down, a benchmark
-    that says Python on a row that loaded a shared object being worse than no
+    Above every number, because a released wheel and a working tree satisfy
+    the same requirement and resolve in silence. Not "pure Python" per row:
+    every row in these tables is, so the last column carries the mechanism
+    instead, which is the only part of the claim a reader could doubt.
+    pycoin's cell is read back rather than written down, a benchmark that
+    says Python on a row that loaded a shared object being worse than no
     benchmark. Sorted newest release first.
     """
     rows = (
@@ -141,15 +162,15 @@ def report_provenance() -> None:
         ("ecdsa", "having no compiled backend at all"),
         ("secp256k1lab", "having no compiled backend at all"),
     )
-    print(f"{'package':<16}{'version':<18}{'released':<19}held to Python by")
-    for dist_name, mechanism in sorted(
-        rows, key=lambda row: _released(row[0]), reverse=True
-    ):
-        print(
-            f"{dist_name:<16}{version(dist_name):<18}"
-            f"{_released(dist_name):<19}{mechanism}"
-        )
-    print()
+    return Provenance(
+        columns=["package", "version", "released", "held to Python by"],
+        rows=[
+            [dist_name, version(dist_name), _released(dist_name), mechanism]
+            for dist_name, mechanism in sorted(
+                rows, key=lambda row: _released(row[0]), reverse=True
+            )
+        ],
+    )
 
 
 PYCOIN_GENERATOR = pycoin.symbols.btc.network.generator
@@ -399,29 +420,27 @@ def benchmark(func: Callable[[], None], calls: int) -> float:
     return (time.perf_counter() - start) / calls * 1e6
 
 
-def table(title: str, rows: tuple[tuple[str, Callable[[], None], int], ...]) -> None:
-    """Time one operation's rows, then print them fastest first.
+Rows = tuple[tuple[str, Callable[[], None], int], ...]
 
-    One ratio, against whichever row came out quickest, as the other three
-    benchmarks print: with every row a Python implementation of the same
-    operation, the fastest of them is the only reference that is not a
-    choice. Naming a row instead -- btclib's, this being btclib's benchmark
-    -- would print fractions under one on the runs where another row won,
-    and where btclib stands is its own place in the order.
 
-    The order is the measurement's, which is what makes the table an answer
-    rather than a list.
+def measured(title: str, rows: Rows) -> Ratios:
+    """Time one operation's rows and return them as a table.
 
-    The unit is the column heading and not a suffix on every value, as the
-    other benchmarks print it: a word repeated down a column of five rows is
-    a column of that word.
+    The sort and the ratio are the renderer's: one ratio, against whichever
+    row came out quickest, as the other three benchmarks print it. With
+    every row a Python implementation of the same operation, the fastest of
+    them is the only reference that is not a choice -- naming a row instead,
+    btclib's, this being btclib's benchmark, would print fractions under one
+    on the runs where another row won, and where btclib stands is its own
+    place in the order.
     """
-    us = {label: benchmark(func, calls) for label, func, calls in rows}
-    against = min(us.values())
-    print(f"\n{title}")
-    print(f"  {'':<26}{'μs/call':>10}{'vs best':>12}")
-    for label, value in sorted(us.items(), key=lambda row: row[1]):
-        print(f"  {label:<26}{value:10.2f}{value / against:11.1f}x")
+    return Ratios(
+        title=title,
+        rows=[
+            Timing(label=label, us_per_call=benchmark(func, calls))
+            for label, func, calls in rows
+        ],
+    )
 
 
 # the fixtures the third-party rows sign and verify, built once and
@@ -553,18 +572,11 @@ SSA_BUIDL_VERIFY = cycle(
 )
 
 
-def main() -> None:
-    """Throw the switch, then print a table per operation.
-
-    `python_arithmetic_only` comes first and nothing here is timed before
-    it: with no reference row left to measure through the bindings, the one
-    ordering this script needs is that the switch precede every timing.
-    """
-    report_provenance()
-    report_method()
-    python_arithmetic_only()
-
-    table(
+# every table of this benchmark, declared rather than called: the label
+# column is one width for the whole page, which is a fact about all five
+# tables and cannot be known while the first is being measured
+TABLES: tuple[tuple[str, Rows], ...] = (
+    (
         "public key from a private key: a multiplication of the generator",
         (
             ("btclib", pubkey_btclib, 200),
@@ -573,9 +585,8 @@ def main() -> None:
             ("pycoin", pubkey_pycoin, 20),
             ("buidl.pecc", pubkey_buidl, 10),
         ),
-    )
-
-    table(
+    ),
+    (
         "ECDSA sign, over a 32-byte digest",
         (
             ("btclib, one signature", dsa_sign_btclib, 50),
@@ -584,9 +595,8 @@ def main() -> None:
             ("pycoin", dsa_sign_pycoin, 20),
             ("buidl.pecc", dsa_sign_buidl, 10),
         ),
-    )
-
-    table(
+    ),
+    (
         "ECDSA verify, over a 32-byte digest",
         (
             ("btclib", dsa_verify_btclib, 50),
@@ -594,25 +604,69 @@ def main() -> None:
             ("pycoin", dsa_verify_pycoin, 10),
             ("buidl.pecc", dsa_verify_buidl, 10),
         ),
-    )
-
-    table(
+    ),
+    (
         "BIP340 sign, over a 32-byte message",
         (
             ("btclib", ssa_sign_btclib, 50),
             ("secp256k1lab", ssa_sign_lab, 50),
             ("buidl.pecc", ssa_sign_buidl, 5),
         ),
-    )
-
-    table(
+    ),
+    (
         "BIP340 verify, over a 32-byte message",
         (
             ("btclib", ssa_verify_btclib, 50),
             ("secp256k1lab", ssa_verify_lab, 50),
             ("buidl.pecc", ssa_verify_buidl, 10),
         ),
+    ),
+)
+
+# what the run block claims about how these numbers were taken. Every row
+# here is timed once: the counts are small, these being the slowest rows
+# this project prints, and three rounds of the slowest would be a run
+# nobody waits for
+METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
+
+
+def main() -> None:
+    """Throw the switch, print a table per operation, and save the run.
+
+    `python_arithmetic_only` comes first and nothing here is timed before
+    it: with no reference row left to measure through the bindings, the one
+    ordering this script needs is that the switch precede every timing.
+
+    Each table is printed as it is measured, this being a run somebody
+    watches, and printed through the same renderer that writes the page --
+    so the terminal is not a preview of the published block, it is that
+    block.
+    """
+    packages = provenance()
+    print(rendered_provenance(packages))
+    print()
+    print("\n".join(WHAT_A_TIMING_CONTAINS))
+    print()
+
+    python_arithmetic_only()
+
+    width = width_for([label for _, rows in TABLES for label, _, _ in rows])
+    tables = []
+    for title, rows in TABLES:
+        table = measured(title, rows)
+        print(rendered_table(table, width))
+        print()
+        tables.append(table)
+
+    saved = save(
+        Measurement(
+            benchmark=slug(__file__),
+            run=taken_now(__file__, METHOD),
+            provenance=packages,
+            tables=tables,
+        )
     )
+    print(f"saved to {saved}", file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

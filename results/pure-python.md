@@ -2,14 +2,16 @@
 
 ## The packages downloaded from PyPI
 
+<!-- provenance: begin -->
 ```text
-package         version           released           held to Python by
-btclib          2026.9            main@a6988751392b  its delegation to btclib-secp256k1's cffi bindings switched off
-pycoin          0.92718.20260405  2026-04-05         PYCOIN_NATIVE=none before its import, resolving to pure Python
-ecdsa           0.19.2            2026-03-26         having no compiled backend at all
-secp256k1lab    1.0.0             2025-03-26         having no compiled backend at all
-buidl           0.2.36            2022-02-28         being imported as buidl.pecc, not buidl.ecc
+package       version           released           held to Python by
+btclib        2026.9            main@a6988751392b  its delegation to btclib-secp256k1's cffi bindings switched off
+pycoin        0.92718.20260405  2026-04-05         PYCOIN_NATIVE=none before its import, resolving to pure Python
+ecdsa         0.19.2            2026-03-26         having no compiled backend at all
+secp256k1lab  1.0.0             2025-03-26         having no compiled backend at all
+buidl         0.2.36            2022-02-28         being imported as buidl.pecc, not buidl.ecc
 ```
+<!-- provenance: end -->
 
 Every row here is Python, so the word belongs in the heading rather than in
 five cells; the last column carries what makes it true, which is different
@@ -21,8 +23,9 @@ tag, which is still a release somebody cut on a day.
 
 ## This run
 
+<!-- run: begin -->
 ```text
-when    : 2026-08-15 00:17 CEST (22:17 UTC)
+when    : 2026-08-15 06:19 CEST (04:19 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/pure_python.py
@@ -30,6 +33,7 @@ machine : Apple M5, macOS 26.6 (build 25G72), arm64
 state   : a working desktop, browser and editor open — not a quiesced
           machine, which is the condition README.md says to distrust
 ```
+<!-- run: end -->
 
 ## The output
 
@@ -43,6 +47,7 @@ ECDSA twice, once per row: one signature, which is what the other
 implementations produce, and its own default beside it, which grinds until r
 fits in 32 bytes.
 
+<!-- output: begin -->
 ```text
 what a timing contains
   one call per iteration, its answer discarded: no row checks
@@ -50,42 +55,42 @@ what a timing contains
   the answers are checked in tests/vectors_test.py, and where
   each script builds its fixtures, which is before any clock
 
-
 public key from a private key: a multiplication of the generator
-                               μs/call     vs best
-  btclib                        194.47        1.0x
-  python-ecdsa                  216.58        1.1x
-  secp256k1lab                  930.69        4.8x
-  pycoin                       6051.38       31.1x
-  buidl.pecc                  21012.79      108.1x
+                                 μs/call     vs best
+  btclib                          187.06        1.0x
+  python-ecdsa                    212.93        1.1x
+  secp256k1lab                    913.62        4.9x
+  pycoin                         5964.23       31.9x
+  buidl.pecc                    20691.49      110.6x
 
 ECDSA sign, over a 32-byte digest
-                               μs/call     vs best
-  btclib, one signature         166.03        1.0x
-  python-ecdsa                  284.44        1.7x
-  btclib, grinding (default)    612.62        3.7x
-  pycoin                       5978.95       36.0x
-  buidl.pecc                  29727.18      179.0x
+                                 μs/call     vs best
+  btclib, one signature           161.97        1.0x
+  python-ecdsa                    282.44        1.7x
+  btclib, grinding (default)      602.18        3.7x
+  pycoin                         6139.47       37.9x
+  buidl.pecc                    29624.21      182.9x
 
 ECDSA verify, over a 32-byte digest
-                               μs/call     vs best
-  btclib                        813.19        1.0x
-  python-ecdsa                 1093.71        1.3x
-  pycoin                      18815.58       23.1x
-  buidl.pecc                  61184.00       75.2x
+                                 μs/call     vs best
+  btclib                          817.52        1.0x
+  python-ecdsa                   1085.80        1.3x
+  pycoin                        19103.95       23.4x
+  buidl.pecc                    60612.57       74.1x
 
 BIP340 sign, over a 32-byte message
-                               μs/call     vs best
-  btclib                        330.57        1.0x
-  secp256k1lab                 7378.15       22.3x
-  buidl.pecc                 111120.56      336.2x
+                                 μs/call     vs best
+  btclib                          333.05        1.0x
+  secp256k1lab                   7335.17       22.0x
+  buidl.pecc                   109615.21      329.1x
 
 BIP340 verify, over a 32-byte message
-                               μs/call     vs best
-  btclib                        687.79        1.0x
-  secp256k1lab                 5138.28        7.5x
-  buidl.pecc                  68117.30       99.0x
+                                 μs/call     vs best
+  btclib                          690.97        1.0x
+  secp256k1lab                   5090.29        7.4x
+  buidl.pecc                    67653.23       97.9x
 ```
+<!-- output: end -->
 
 ## What it shows
 

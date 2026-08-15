@@ -70,16 +70,37 @@ loading this module runs them and no timing carries them.
 
 Not part of the test suite and not run by CI. No third-party dependency
 either.
+
+## What a run leaves behind
+
+The numbers are written to `results/btclib-two-paths.json` as this finishes,
+and `scripts/render.py` writes the page beside it from that file
+alone. So the prose around a table is rewritten and re-published
+without a machine and without a number being retyped: measuring and
+publishing are two commands.
 """
 
 from __future__ import annotations
 
+import sys
 import time
 from collections.abc import Callable
 from importlib.metadata import version
 from itertools import cycle
 
 from _provenance import from_a_declared_source, origin_of
+from _results import (
+    Measurement,
+    Pair,
+    Pairs,
+    Provenance,
+    rendered_provenance,
+    rendered_table,
+    save,
+    slug,
+    taken_now,
+    width_for,
+)
 from _vectors import signing, verification
 from btclib import b58
 from btclib.curves import curve, sec_point
@@ -88,28 +109,34 @@ from btclib.script import taproot
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
 
 
-def report_provenance() -> None:
+def provenance() -> Provenance:
     """Say which build of each package these rows are about, in one line.
 
     A released wheel and a working tree satisfy the same requirement and
     resolve in silence, so which one ran is something the output has to
     state rather than something the reader assumes. Where an install is not
-    the declared one, that is what a reader has to act on, and it prints
+    the declared one, that is what a reader has to act on, and it goes
     under the line rather than inside it.
+
+    Two packages and no columns: a table of two rows is a table only in the
+    sense that it has edges, and the unit and the sort have to be said
+    somewhere above the numbers, which is here.
 
     The bindings' version is btclib-secp256k1's, that being what a caller
     installs; which revision of libsecp256k1 it bundled is recorded in
     `scripts/libsecp256k1_wrappers.py`, against the release it was read
     from, and one script naming a pin is enough.
     """
-    print(
+    stated = (
         f"btclib {version('btclib')} (bindings {version('btclib-secp256k1')}), "
         f"measured as \N{GREEK SMALL LETTER MU}s/call, sorted on the ratio"
     )
-    for dist_name in ("btclib", "btclib-secp256k1"):
-        if not from_a_declared_source(dist_name):
-            print(f"  {dist_name}: {origin_of(dist_name)}")
-    print()
+    odd = [
+        f"  {dist_name}: {origin_of(dist_name)}"
+        for dist_name in ("btclib", "btclib-secp256k1")
+        if not from_a_declared_source(dist_name)
+    ]
+    return Provenance(columns=[], rows=[], notes=[stated, *odd])
 
 
 # every published vector, cycled, rather than one input repeated: a row that
@@ -375,17 +402,26 @@ OPERATIONS = (
 )
 
 
+# what the run block claims about how these numbers were taken, said by
+# the script that took them rather than typed into the page afterwards:
+# one call count per operation per path, timed once, and reported
+METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
+
+
 def main() -> None:
-    """Time every operation through both paths, and print the table sorted.
+    """Time every operation through both paths, print the table, save the run.
 
     The timing order is what the measurement requires:
     `python_arithmetic_only` cannot be undone within a process, so every
     operation is timed through the bindings before it runs, and through
-    Python after. The printing order is the run's own, fastest first,
+    Python after. The printing order is the run's own, sorted on the ratio,
     which is why the two are no longer the same loop.
-    """
-    report_provenance()
 
+    Nothing is printed until every number is in hand, this table being
+    sorted on a ratio between two of them; what goes to the terminal is
+    what `render.py` will put in the page, both of them being this one
+    function's answer over the run saved at the end.
+    """
     seconds = {
         f"{name}_libsecp256k1": benchmark(op, calls)
         for name, op, calls, _ in OPERATIONS
@@ -401,27 +437,40 @@ def main() -> None:
     # question is what an operation costs each way, and two rows made the
     # reader find the second half of a pair somewhere else in the sort.
     #
-    # The ratio divides Python by the bindings rather than the slower by the
-    # quicker, so its direction carries information: under 1.0x is a pair
-    # where the bindings lost, which no absolute value would say. The other
-    # benchmarks divide by the quickest row of the table; here that row
-    # would divide a signature by a point parse, which is two amounts of
-    # work and no comparison at all.
-    rows = sorted(
-        (
-            (
-                name,
-                seconds[f"{name}_libsecp256k1"],
-                seconds[f"{name}_pure_python"],
-                seconds[f"{name}_pure_python"] / seconds[f"{name}_libsecp256k1"],
+    # The ratio is the renderer's, dividing Python by the bindings rather
+    # than the slower by the quicker, so its direction carries information:
+    # under 1.0x is a pair where the bindings lost, which no absolute value
+    # would say. The other benchmarks divide by the quickest row of the
+    # table; here that row would divide a signature by a point parse, which
+    # is two amounts of work and no comparison at all.
+    table = Pairs(
+        title="",
+        columns=("libsecp256k1", "pure python"),
+        rows=[
+            Pair(
+                label=name,
+                values=(
+                    seconds[f"{name}_libsecp256k1"],
+                    seconds[f"{name}_pure_python"],
+                ),
             )
             for name, _, _, _ in OPERATIONS
-        ),
-        key=lambda row: row[3],
+        ],
     )
-    print(f"{'':<20}{'libsecp256k1':>14}{'pure python':>14}{'ratio':>10}")
-    for name, quick, slow, ratio in rows:
-        print(f"{name:<20}{quick:>#14.5g}{slow:>#14.5g}{ratio:>9.1f}x")
+    measurement = Measurement(
+        benchmark=slug(__file__),
+        run=taken_now(__file__, METHOD),
+        provenance=provenance(),
+        tables=[table],
+        # no block saying what a timing contains: every row here is btclib
+        # called through one public function, and there is no comparand to
+        # have been given an advantage over
+        timing_note=[],
+    )
+    print(rendered_provenance(measurement.provenance))
+    print()
+    print(rendered_table(table, width_for([row.label for row in table.rows])))
+    print(f"\nsaved to {save(measurement)}", file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

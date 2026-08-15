@@ -87,11 +87,20 @@ runs them and no timing carries them.
 
 Not part of the test suite and not run by CI: a shared runner disagrees with
 a laptop by more than most of the differences here.
+
+## What a run leaves behind
+
+The numbers are written to `results/bitcoin-libraries.json` as this finishes,
+and `scripts/render.py` writes the page beside it from that file
+alone. So the prose around a table is rewritten and re-published
+without a machine and without a number being retyped: measuring and
+publishing are two commands.
 """
 
 from __future__ import annotations
 
 import hashlib
+import sys
 import time
 from collections.abc import Callable
 from importlib.metadata import version
@@ -124,7 +133,19 @@ import embit.bip32
 import embit.ec
 import pycoin.encoding.b58
 import pycoin.symbols.btc
-from _provenance import origin_of, report_method
+from _provenance import WHAT_A_TIMING_CONTAINS, origin_of
+from _results import (
+    Measurement,
+    Provenance,
+    Ratios,
+    Timing,
+    rendered_provenance,
+    rendered_table,
+    save,
+    slug,
+    taken_now,
+    width_for,
+)
 from _vectors import bip32, signing
 from btclib.bip32 import bip32 as btclib_bip32
 from btclib.curves import curve
@@ -160,11 +181,11 @@ def _released(dist_name: str) -> str:
     return recorded[1] if version(dist_name) == recorded[0] else "unrecorded"
 
 
-def report_provenance() -> None:
-    """Print one row per package: what it is, and which arithmetic it ran.
+def provenance() -> Provenance:
+    """Return one row per package: what it is, and which arithmetic it ran.
 
-    Printed before any number, because a released wheel and a working tree
-    satisfy the same requirement and resolve in silence. Four columns, each
+    Above every number, because a released wheel and a working tree satisfy
+    the same requirement and resolve in silence. Four columns, each
     answering a different question: the version and the release date say
     which build this is, and the arithmetic says what the row measures --
     three of these packages reach for a C library at import and fall back to
@@ -178,15 +199,15 @@ def report_provenance() -> None:
         ("embit", LIBSECP256K1),
         ("python-bitcoinlib", _arithmetic_bitcoinlib()),
     )
-    print(f"{'package':<20}{'version':<18}{'released':<20}arithmetic")
-    for dist_name, arithmetic in sorted(
-        rows, key=lambda row: _released(row[0]), reverse=True
-    ):
-        print(
-            f"{dist_name:<20}{version(dist_name):<18}"
-            f"{_released(dist_name):<20}{arithmetic}"
-        )
-    print()
+    return Provenance(
+        columns=["package", "version", "released", "arithmetic"],
+        rows=[
+            [dist_name, version(dist_name), _released(dist_name), arithmetic]
+            for dist_name, arithmetic in sorted(
+                rows, key=lambda row: _released(row[0]), reverse=True
+            )
+        ],
+    )
 
 
 # every published vector, cycled, rather than one input repeated: a row that
@@ -1017,52 +1038,49 @@ def _labels(names: list[str]) -> list[str]:
     return ["_".join(parts[shared:]) for parts in split]
 
 
-def table(
-    title: str,
-    rows: tuple[tuple[Callable[[], None], int], ...],
-) -> None:
-    """Time one operation's rows, then print them fastest first.
+Rows = tuple[tuple[Callable[[], None], int], ...]
 
-    The ratio is against the fastest row, whichever package that turns out
-    to be, so the top row reads 1.0x and each row below says what
-    choosing it instead would cost. Against btclib's row -- the obvious
-    candidate, this being btclib's benchmark -- the column would print
-    fractions under one for anything quicker, which reads as btclib's
-    score rather than as the table's answer; where btclib stands is the
-    row's own position in the order, and that is now visible without a
-    column claiming it.
 
-    Sorted on the measurement rather than written in an order, so the
-    order carries the run's answer instead of an editor's opinion of it.
-    The loop counts stay per row and print beside their rows: they are
-    part of what a row is, and sorting mixes rows whose counts differ by
-    orders of magnitude.
+def labels_of(rows: Rows) -> list[str]:
+    """Return what one table's rows are called, the operation dropped."""
+    return _labels([func.__name__ for func, _ in rows])
+
+
+def measured(title: str, rows: Rows) -> Ratios:
+    """Time one operation's rows and return them as a table.
+
+    The sort and the ratio are the renderer's. The ratio is against the
+    fastest row, whichever package that turns out to be, so the top row
+    reads 1.0x and each row below says what choosing it instead would cost.
+    Against btclib's row -- the obvious candidate, this being btclib's
+    benchmark -- the column would print fractions under one for anything
+    quicker, which reads as btclib's score rather than as the table's
+    answer; where btclib stands is the row's own position in the order.
+
+    The loop counts stay per row and print beside their rows: they are part
+    of what a row is, and sorting mixes rows whose counts differ by orders
+    of magnitude.
     """
-    measured = {
-        label: (*benchmark(func, calls), calls)
-        for label, (func, calls) in zip(
-            _labels([func.__name__ for func, _ in rows]), rows, strict=True
+    timings = []
+    for label, (func, calls) in zip(labels_of(rows), rows, strict=True):
+        value, spread = benchmark(func, calls)
+        timings.append(
+            Timing(
+                label=label,
+                us_per_call=value,
+                spread=spread,
+                calls=calls,
+                rounds=ROUNDS,
+            )
         )
-    }
-    against = min(value for value, _, _ in measured.values())
-    print(title)
-    print(f"  {'':<26}{'μs/call':>10}{'vs best':>12}{'spread':>8}")
-    for name, (value, spread, calls) in sorted(
-        measured.items(), key=lambda row: row[1][0]
-    ):
-        print(
-            f"  {name:<26}{value:10.2f}{value / against:11.1f}x{spread:7.1%}"
-            f"   ({ROUNDS}x{calls} calls)"
-        )
+    return Ratios(title=title, rows=timings)
 
 
-def main() -> None:
-    """Print every table, one operation at a time."""
-    report_provenance()
-
-    report_method()
-
-    table(
+# every table of this benchmark, declared rather than called: the label
+# column is one width for the whole page, which is a fact about all eleven
+# tables and cannot be known while the first is being measured
+TABLES: tuple[tuple[str, Rows], ...] = (
+    (
         "1. ECDSA sign (32-byte digest)",
         (
             (dsa_sign_btclib, 50_000),
@@ -1074,10 +1092,8 @@ def main() -> None:
             (dsa_sign_embit, 50_000),
             (dsa_sign_embit_grind, 20_000),
         ),
-    )
-    print()
-
-    table(
+    ),
+    (
         "2. ECDSA verify (32-byte digest)",
         (
             (dsa_verify_btclib, 50_000),
@@ -1087,30 +1103,24 @@ def main() -> None:
             (dsa_verify_bitcoinlib, 7_000),
             (dsa_verify_embit, 50_000),
         ),
-    )
-    print()
-
-    table(
+    ),
+    (
         "3. BIP340 sign (32-byte message)",
         (
             (ssa_sign_btclib, 50_000),
             (ssa_sign_buidl, 20),
             (ssa_sign_embit, 50_000),
         ),
-    )
-    print()
-
-    table(
+    ),
+    (
         "4. BIP340 verify (32-byte message)",
         (
             (ssa_verify_btclib, 50_000),
             (ssa_verify_buidl, 25),
             (ssa_verify_embit, 50_000),
         ),
-    )
-    print()
-
-    table(
+    ),
+    (
         "5. BIP32 derive, seed to child, every chain BIP32 publishes",
         (
             (bip32_derive_btclib, 30_000),
@@ -1118,10 +1128,8 @@ def main() -> None:
             (bip32_derive_embit, 15_000),
             (bip32_derive_buidl, 12),
         ),
-    )
-    print()
-
-    table(
+    ),
+    (
         "6. base58check encode, a P2PKH address from a hash160",
         (
             (base58_encode_btclib, 200_000),
@@ -1130,10 +1138,8 @@ def main() -> None:
             (base58_encode_buidl, 200_000),
             (base58_encode_bitcoinlib, 100_000),
         ),
-    )
-    print()
-
-    table(
+    ),
+    (
         "7. base58check decode, a hash160 from a P2PKH address",
         (
             (base58_decode_btclib, 200_000),
@@ -1142,10 +1148,8 @@ def main() -> None:
             (base58_decode_buidl, 200_000),
             (base58_decode_bitcoinlib, 100_000),
         ),
-    )
-    print()
-
-    table(
+    ),
+    (
         "8. bech32 encode, a witness-v0 address from a 20-byte program",
         (
             (bech32_encode_btclib, 200_000),
@@ -1153,10 +1157,8 @@ def main() -> None:
             (bech32_encode_buidl, 100_000),
             (bech32_encode_bitcoinlib, 200_000),
         ),
-    )
-    print()
-
-    table(
+    ),
+    (
         "9. bech32 decode, a 20-byte program from a witness-v0 address",
         (
             (bech32_decode_btclib, 200_000),
@@ -1164,28 +1166,62 @@ def main() -> None:
             (bech32_decode_buidl, 100_000),
             (bech32_decode_bitcoinlib, 200_000),
         ),
-    )
-    print()
-
-    table(
+    ),
+    (
         "10. bech32m encode, a witness-v1 address from a 32-byte program",
         (
             (bech32m_encode_btclib, 200_000),
             (bech32m_encode_embit, 200_000),
             (bech32m_encode_buidl, 100_000),
         ),
-    )
-    print()
-
-    table(
+    ),
+    (
         "11. bech32m decode, a 32-byte program from a witness-v1 address",
         (
             (bech32m_decode_btclib, 200_000),
             (bech32m_decode_embit, 200_000),
             (bech32m_decode_buidl, 100_000),
         ),
-    )
+    ),
+)
+
+# what the run block claims about how these numbers were taken, said by
+# the script that takes them: `benchmark` above is where the rounds and
+# the minimum are, and the spread column is what a reader checks it by
+METHOD = f"{ROUNDS} rounds per row, minimum kept; nothing else repeated"
+
+
+def main() -> None:
+    """Print every table, one operation at a time, and save the run.
+
+    Each table is printed as it is measured, this being a run somebody
+    watches for several minutes, and printed through the same renderer
+    that writes the page -- so the terminal is not a preview of the
+    published block, it is that block.
+    """
+    packages = provenance()
+    print(rendered_provenance(packages))
     print()
+    print("\n".join(WHAT_A_TIMING_CONTAINS))
+    print()
+
+    width = width_for([label for _, rows in TABLES for label in labels_of(rows)])
+    tables = []
+    for title, rows in TABLES:
+        table = measured(title, rows)
+        print(rendered_table(table, width))
+        print()
+        tables.append(table)
+
+    saved = save(
+        Measurement(
+            benchmark=slug(__file__),
+            run=taken_now(__file__, METHOD),
+            provenance=packages,
+            tables=tables,
+        )
+    )
+    print(f"saved to {saved}", file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

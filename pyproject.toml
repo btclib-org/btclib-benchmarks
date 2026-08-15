@@ -200,7 +200,7 @@ extend-glob = ["CHANGELOG.md", "HISTORY.md", ".pre-commit-config.yaml"]
 extend-ignore-re = ['`[^`]*`']
 
 [tool.coverage.run]
-# `_provenance.py` and the suite, and deliberately not the four benchmark
+# `_provenance.py` and the suite, and deliberately not the five benchmark
 # scripts beside it. What their bodies do is time things: covering a
 # timing function means running it, so a coverage gate over them would
 # make every test run a benchmark -- slow, and worse, it would put a
@@ -212,17 +212,30 @@ extend-ignore-re = ['`[^`]*`']
 # checked on the one property a test can hold them to -- that they load,
 # that their comparands agree -- and measured by a person
 source = ["scripts", "tests"]
-# the four benchmarks themselves. Naming them here rather than leaving
+# the five benchmarks themselves. Naming them here rather than leaving
 # them to fail the gate is the same decision as the `source` comment
 # above, said in the form coverage understands: measured by a person, and
-# checked by a test only on whether they load
+# checked by a test only on whether they load.
+#
+# `_results.py` and `render.py` are here for a different reason, and it is
+# a decision rather than an oversight. Publishing a page is deliberately
+# not coupled to the suite: a run is saved as data and rendered back into
+# markdown by a command a person runs, and the whole value of that is that
+# it needs neither a machine nor a test run. A gate over them would put
+# the rewording of a heading behind the suite, which is the coupling the
+# split was made to remove. What holds them honest instead is that they
+# are the *only* writer of those blocks -- `render.py --check` says
+# whether a page still matches the run it claims to publish, and a page
+# nobody can edit by hand cannot drift from its numbers
 omit = [
     "*/site-packages/*",
+    "scripts/_results.py",
     "scripts/bitcoin_libraries.py",
     "scripts/btclib_two_paths.py",
     "scripts/key_reuse.py",
     "scripts/libsecp256k1_wrappers.py",
     "scripts/pure_python.py",
+    "scripts/render.py",
 ]
 
 [tool.coverage.report]

@@ -62,7 +62,7 @@ def test_importing_a_benchmark_does_not_run_it(name: str) -> None:
 
 @pytest.mark.parametrize("name", BENCHMARKS)
 def test_every_benchmark_offers_the_same_entry_point(name: str) -> None:
-    """`main` and `report_provenance`, so the four are run and read alike."""
+    """`main` and `provenance`, so the five are run and read alike."""
     module = importlib.import_module(name)
     assert callable(module.main)
-    assert callable(module.report_provenance)
+    assert callable(module.provenance)

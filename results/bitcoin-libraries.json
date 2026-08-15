@@ -1,0 +1,482 @@
+{
+  "schema": 1,
+  "benchmark": "bitcoin-libraries",
+  "run": {
+    "when": "2026-08-15T06:24:08+02:00",
+    "timezone": "CEST",
+    "python": "3.13.14",
+    "method": "3 rounds per row, minimum kept; nothing else repeated",
+    "command": "uv run python scripts/bitcoin_libraries.py",
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64",
+    "state": "a working desktop, browser and editor open — not a quiesced machine, which is the condition README.md says to distrust"
+  },
+  "provenance": {
+    "columns": [
+      "package",
+      "version",
+      "released",
+      "arithmetic"
+    ],
+    "rows": [
+      [
+        "btclib",
+        "2026.9",
+        "main@a6988751392b",
+        "libsecp256k1 enhanced"
+      ],
+      [
+        "pycoin",
+        "0.92718.20260405",
+        "2026-04-05",
+        "libsecp256k1 enhanced"
+      ],
+      [
+        "ecdsa",
+        "0.19.2",
+        "2026-03-26",
+        "pure Python"
+      ],
+      [
+        "embit",
+        "0.8.0",
+        "2024-05-30",
+        "libsecp256k1 enhanced"
+      ],
+      [
+        "python-bitcoinlib",
+        "0.12.2",
+        "2023-06-03",
+        "OpenSSL's libcrypto"
+      ],
+      [
+        "buidl",
+        "0.2.36",
+        "2022-02-28",
+        "pure Python"
+      ]
+    ],
+    "notes": []
+  },
+  "timing_note": [
+    "what a timing contains",
+    "  one call per iteration, its answer discarded: no row checks",
+    "  itself, and no comparison is inside a measured loop",
+    "  the answers are checked in tests/vectors_test.py, and where",
+    "  each script builds its fixtures, which is before any clock"
+  ],
+  "tables": [
+    {
+      "kind": "ratios",
+      "title": "1. ECDSA sign (32-byte digest)",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 16.422445820644498,
+          "spread": 0.004209076995161265,
+          "rounds": 3,
+          "calls": 50000
+        },
+        {
+          "label": "btclib_grind",
+          "us_per_call": 54.21136040240526,
+          "spread": 0.002971817247176878,
+          "rounds": 3,
+          "calls": 20000
+        },
+        {
+          "label": "ecdsa",
+          "us_per_call": 282.7725584153086,
+          "spread": 0.005260470181939647,
+          "rounds": 3,
+          "calls": 5000
+        },
+        {
+          "label": "pycoin",
+          "us_per_call": 12.32615000102669,
+          "spread": 0.0011862310595571746,
+          "rounds": 3,
+          "calls": 50000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 29531.261678785086,
+          "spread": 0.0009921405226640534,
+          "rounds": 3,
+          "calls": 50
+        },
+        {
+          "label": "bitcoinlib",
+          "us_per_call": 192.26659898413345,
+          "spread": 0.006259293842652669,
+          "rounds": 3,
+          "calls": 8000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 14.140949184074998,
+          "spread": 0.009836443947970341,
+          "rounds": 3,
+          "calls": 50000
+        },
+        {
+          "label": "embit_grind",
+          "us_per_call": 49.88249165471643,
+          "spread": 0.03735875808509248,
+          "rounds": 3,
+          "calls": 20000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "2. ECDSA verify (32-byte digest)",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 20.10306749958545,
+          "spread": 0.006611719262460625,
+          "rounds": 3,
+          "calls": 50000
+        },
+        {
+          "label": "ecdsa",
+          "us_per_call": 1109.3210416535535,
+          "spread": 0.0014602902394413864,
+          "rounds": 3,
+          "calls": 3000
+        },
+        {
+          "label": "pycoin",
+          "us_per_call": 12.916067503392696,
+          "spread": 0.00043466456282503785,
+          "rounds": 3,
+          "calls": 50000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 60691.990004852414,
+          "spread": 0.0020707569250817404,
+          "rounds": 3,
+          "calls": 25
+        },
+        {
+          "label": "bitcoinlib",
+          "us_per_call": 218.30198814028077,
+          "spread": 0.0016273054519697627,
+          "rounds": 3,
+          "calls": 7000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 23.113052500411868,
+          "spread": 0.0004406246207115938,
+          "rounds": 3,
+          "calls": 50000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "3. BIP340 sign (32-byte message)",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 22.327718338929117,
+          "spread": 0.0012054514417441098,
+          "rounds": 3,
+          "calls": 50000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 106922.53750748932,
+          "spread": 0.0015516877364984971,
+          "rounds": 3,
+          "calls": 20
+        },
+        {
+          "label": "embit",
+          "us_per_call": 21.2536833435297,
+          "spread": 0.0011989289471319164,
+          "rounds": 3,
+          "calls": 50000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "4. BIP340 verify (32-byte message)",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 31.836208342574533,
+          "spread": 0.002435303663978372,
+          "rounds": 3,
+          "calls": 50000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 68884.11832042038,
+          "spread": 0.005949896230834861,
+          "rounds": 3,
+          "calls": 25
+        },
+        {
+          "label": "embit",
+          "us_per_call": 24.279895001091063,
+          "spread": 0.021357828735800055,
+          "rounds": 3,
+          "calls": 50000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "5. BIP32 derive, seed to child, every chain BIP32 publishes",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 63.39394027212014,
+          "spread": 0.007295737622641685,
+          "rounds": 3,
+          "calls": 30000
+        },
+        {
+          "label": "pycoin",
+          "us_per_call": 48.55767083354294,
+          "spread": 0.0042924614973567365,
+          "rounds": 3,
+          "calls": 30000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 87.18688332786162,
+          "spread": 0.001771290949464932,
+          "rounds": 3,
+          "calls": 15000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 104267.75699791808,
+          "spread": 0.07117602616552587,
+          "rounds": 3,
+          "calls": 12
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "6. base58check encode, a P2PKH address from a hash160",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 2.3806831252295524,
+          "spread": 0.004703570286650693,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "pycoin",
+          "us_per_call": 3.699970415327698,
+          "spread": 0.001558177424225038,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 2.1452220855280757,
+          "spread": 0.0017351532676155301,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 2.309325000969693,
+          "spread": 0.0020116806551262467,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "bitcoinlib",
+          "us_per_call": 2.545125000178814,
+          "spread": 0.0037907449715552932,
+          "rounds": 3,
+          "calls": 100000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "7. base58check decode, a hash160 from a P2PKH address",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 2.432363328989595,
+          "spread": 0.0032281736562771446,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "pycoin",
+          "us_per_call": 3.748962499666959,
+          "spread": 0.011312129732808263,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 2.5029929191805422,
+          "spread": 0.004341884263991069,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 3.0212641647085547,
+          "spread": 0.005784072530189643,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "bitcoinlib",
+          "us_per_call": 4.230684998910874,
+          "spread": 0.006108644838623167,
+          "rounds": 3,
+          "calls": 100000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "8. bech32 encode, a witness-v0 address from a 20-byte program",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 8.049186039716005,
+          "spread": 0.009661329116433581,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 26.67429895955138,
+          "spread": 0.0011464766545215,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 11.38596042059362,
+          "spread": 0.010790409075914553,
+          "rounds": 3,
+          "calls": 100000
+        },
+        {
+          "label": "bitcoinlib",
+          "us_per_call": 26.636012500384822,
+          "spread": 0.0021621103996734004,
+          "rounds": 3,
+          "calls": 200000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "9. bech32 decode, a 20-byte program from a witness-v0 address",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 7.055130414664745,
+          "spread": 0.0026740001166409844,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 14.629145000362769,
+          "spread": 0.0004277703815143141,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 10.302125001326203,
+          "spread": 0.002265632315349153,
+          "rounds": 3,
+          "calls": 100000
+        },
+        {
+          "label": "bitcoinlib",
+          "us_per_call": 14.619162499438971,
+          "spread": 0.009266904048218283,
+          "rounds": 3,
+          "calls": 200000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "10. bech32m encode, a witness-v1 address from a 32-byte program",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 13.80069604027085,
+          "spread": 0.012822435839961566,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 40.23079854552634,
+          "spread": 0.007128038117302005,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 17.141999579034746,
+          "spread": 0.001253695117279019,
+          "rounds": 3,
+          "calls": 100000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "11. bech32m decode, a 32-byte program from a witness-v1 address",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 11.718182290205732,
+          "spread": 0.005560305171495639,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 22.019660419318825,
+          "spread": 0.0006560896526133231,
+          "rounds": 3,
+          "calls": 200000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 15.433537079952657,
+          "spread": 0.0022158187258398687,
+          "rounds": 3,
+          "calls": 100000
+        }
+      ]
+    }
+  ]
+}

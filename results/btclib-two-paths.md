@@ -2,8 +2,9 @@
 
 ## This run
 
+<!-- run: begin -->
 ```text
-when    : 2026-08-14 23:39 CEST (21:39 UTC)
+when    : 2026-08-15 06:19 CEST (04:19 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/btclib_two_paths.py
@@ -11,6 +12,7 @@ machine : Apple M5, macOS 26.6 (build 25G72), arm64
 state   : a working desktop, browser and editor open — not a quiesced
           machine, which is the condition README.md says to distrust
 ```
+<!-- run: end -->
 
 ## The output
 
@@ -26,34 +28,58 @@ arithmetic that did not spend it. The operations are not a selection —
 `_libsecp256k1_serves` is the predicate every dispatch site in btclib asks,
 and every operation holding one that a caller would call is below.
 
+<!-- output: begin -->
 ```text
 btclib 2026.9 (bindings 0.8.0.2), measured as μs/call, sorted on the ratio
 
                       libsecp256k1   pure python     ratio
-dsa_sign                    16.546        160.62      9.7x
-bms_sign                    28.170        324.95     11.5x
-ssa_sign                    25.416        323.07     12.7x
-taproot_tweak               17.789        236.33     13.3x
-pubkey_from_prvkey          10.275        149.94     14.6x
-ellswift_decode             9.3297        145.37     15.6x
-generator_mult              8.2929        141.65     17.1x
-pubkey_parse                3.5835        74.935     20.9x
-bms_verify                  24.035        714.60     29.7x
-dsa_recover                 41.546        1325.2     31.9x
-ssa_verify                  20.939        681.12     32.5x
-dsa_verify                  19.907        678.35     34.1x
-dh_shared_secret            14.045        548.47     39.1x
+dsa_sign                    16.161        159.54      9.9x
+bms_sign                    27.411        321.50     11.7x
+ssa_sign                    24.660        317.22     12.9x
+taproot_tweak               17.286        233.02     13.5x
+pubkey_from_prvkey          10.124        147.28     14.5x
+ellswift_decode             7.9600        121.55     15.3x
+generator_mult              8.1439        139.55     17.1x
+pubkey_parse                3.5281        74.171     21.0x
+bms_verify                  23.476        710.76     30.3x
+dsa_recover                 39.615        1306.4     33.0x
+ssa_verify                  20.310        673.10     33.1x
+dsa_verify                  19.429        665.52     34.3x
+dh_shared_secret            13.527        542.42     40.1x
 ```
+<!-- output: end -->
 
 ## What it shows
 
-No ratio is under 1.0x: the bindings win every operation.
-What the column spreads over is the part worth reading. Verification
-separates the two arithmetics further than signing does, in both schemes;
-public-key recovery, which is verification and then some, separates them
-furthest, and bitcoin-message verification next, being a recovery with
-hashing around it. At the narrow end sit signing and ElligatorSwift decoding,
-where one multiplication is surrounded by work the C never does.
+No ratio is under 1.0x: the bindings win every operation. What the column
+spreads over is the part worth reading, and it sorts the table into two
+groups with a gap between them.
+
+The narrow group is every operation whose Python side multiplies the
+generator, or multiplies nothing at all: both signatures, the public key
+from a secret key, the bare generator multiplication, and the taproot
+tweak, which adds one such multiplication to a point. With them sit the
+two operations that are field arithmetic rather than a scalar
+multiplication — parsing a compressed public key, which is a square root,
+and ElligatorSwift decoding. btclib memoizes the generator's multiples,
+so the Python side of that group starts from a table it did not have to
+build.
+
+The wide group is every operation that multiplies a point which is *not*
+the generator: verification in both schemes, public-key recovery,
+bitcoin-message verification — which is a recovery — and Diffie-Hellman.
+There is no table for an arbitrary point and btclib builds none, so
+Python walks a full-width ladder where the C library walks its own. That
+is the same gap [one key, every signature under it][reuse] measures from
+the other side, by asking what the second verification under one key
+costs.
+
+Inside the wide group the ratio is widest where the least other work
+surrounds the multiplication, and Diffie-Hellman is the end of that: one
+such multiplication and nothing else. It is narrowest at bitcoin-message
+verification and public-key recovery, which carry signature parsing and
+hashing that the C pays for too — work in both halves of a ratio pulls it
+towards one.
 
 The whole libsecp256k1 column is timed before the whole Python one, because
 `python_arithmetic_only()` cannot be undone inside a process. The sort is

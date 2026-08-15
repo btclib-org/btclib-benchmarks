@@ -16,25 +16,29 @@ pin rather than repeating one that has quietly stopped being true. Bindings
 recording their own vendored revision at build time would end the recording
 here.
 
+<!-- provenance: begin -->
 ```text
-package           version   released     libsecp256k1 pin        bindings  binary
-btclib-secp256k1  0.8.0.2   2026-08-14   v0.8.0                  cffi      _btclib_secp256k1.cpython-313-darwin.so
-electrum-ecc      0.0.7     2026-02-25   v0.7.1                  ctypes    libsecp256k1.6.dylib
-coincurve         21.0.0    2025-03-08   v0.6.0                  cffi      _libsecp256k1.cpython-313-darwin.so
-secp256k1         0.14.0    2021-11-06   9526874d, pre-v0.1.0    cffi      _libsecp256k1.cpython-313-darwin.so
+package           version  released    libsecp256k1 pin      bindings  binary
+btclib-secp256k1  0.8.0.2  2026-08-14  v0.8.0                cffi      _btclib_secp256k1.cpython-313-darwin.so
+electrum-ecc      0.0.7    2026-02-25  v0.7.1                ctypes    libsecp256k1.6.dylib
+coincurve         21.0.0   2025-03-08  v0.6.0                cffi      _libsecp256k1.cpython-313-darwin.so
+secp256k1         0.14.0   2021-11-06  9526874d, pre-v0.1.0  cffi      _libsecp256k1.cpython-313-darwin.so
 ```
+<!-- provenance: end -->
 
 ## This run
 
+<!-- run: begin -->
 ```text
-when    : 2026-08-14 23:39 CEST (21:39 UTC)
+when    : 2026-08-15 06:19 CEST (04:19 UTC)
 python  : 3.13.14
-method  : five rounds per row, minimum kept; nothing else repeated
+method  : 5 rounds per row, minimum kept; nothing else repeated
 command : uv run python scripts/libsecp256k1_wrappers.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 state   : a working desktop, browser and editor open — not a quiesced
           machine, which is the condition README.md says to distrust
 ```
+<!-- run: end -->
 
 ## The output
 
@@ -48,6 +52,7 @@ the signature too, which is what makes agreement a check against an outside
 answer rather than the four agreeing among themselves. Table 5's tweak
 takes the next vector's secret key as the scalar.
 
+<!-- output: begin -->
 ```text
 what a timing contains
   one call per iteration, its answer discarded: no row checks
@@ -56,40 +61,41 @@ what a timing contains
   each script builds its fixtures, which is before any clock
 
 1. ECDSA sign (32-byte digest)
-                                   μs/call     vs best   spread
-  dsa_sign_secp256k1                 11.38       1.00x    0.9%   (5x20000 calls)
-  dsa_sign_coincurve                 11.66       1.02x    1.3%   (5x20000 calls)
-  dsa_sign_btclib_secp256k1          12.02       1.06x    1.4%   (5x20000 calls)
-  dsa_sign_electrum_ecc              27.45       2.41x    0.7%   (5x20000 calls)
+                                μs/call     vs best   spread
+  dsa_sign_secp256k1              11.17       1.00x    0.5%   (5x20000 calls)
+  dsa_sign_coincurve              11.38       1.02x    0.9%   (5x20000 calls)
+  dsa_sign_btclib_secp256k1       11.90       1.07x    0.5%   (5x20000 calls)
+  dsa_sign_electrum_ecc           27.10       2.43x    0.1%   (5x20000 calls)
 
 2. ECDSA verify (32-byte digest, the public key parsed per call)
-                                   μs/call     vs best   spread
-  dsa_secp256k1                      11.76       1.00x    0.7%   (5x20000 calls)
-  dsa_coincurve                      14.11       1.20x    1.1%   (5x20000 calls)
-  dsa_btclib_secp256k1               14.13       1.20x    0.2%   (5x20000 calls)
-  dsa_electrum_ecc                   16.04       1.36x    0.2%   (5x20000 calls)
+                                μs/call     vs best   spread
+  dsa_secp256k1                   11.71       1.00x    0.1%   (5x20000 calls)
+  dsa_coincurve                   13.97       1.19x    1.1%   (5x20000 calls)
+  dsa_btclib_secp256k1            13.99       1.19x    0.5%   (5x20000 calls)
+  dsa_electrum_ecc                15.86       1.35x    0.5%   (5x20000 calls)
 
 3. BIP340 sign (32-byte message)
-                                   μs/call     vs best   spread
-  ssa_sign_secp256k1                  7.78       1.00x    0.3%   (5x20000 calls)
-  ssa_sign_btclib_secp256k1          15.91       2.05x    0.3%   (5x20000 calls)
-  ssa_sign_coincurve                 27.36       3.52x    0.2%   (5x20000 calls)
-  ssa_sign_electrum_ecc              31.44       4.04x    0.4%   (5x20000 calls)
+                                μs/call     vs best   spread
+  ssa_sign_secp256k1               7.76       1.00x    0.4%   (5x20000 calls)
+  ssa_sign_btclib_secp256k1       15.84       2.04x    0.8%   (5x20000 calls)
+  ssa_sign_coincurve              27.24       3.51x    0.4%   (5x20000 calls)
+  ssa_sign_electrum_ecc           31.24       4.02x    0.4%   (5x20000 calls)
 
 4. BIP340 verify (32-byte message, the public key parsed per call)
-                                   μs/call     vs best   spread
-  ssa_coincurve                      14.54       1.00x    5.1%   (5x20000 calls)
-  ssa_btclib_secp256k1               14.60       1.00x    0.2%   (5x20000 calls)
-  ssa_secp256k1                      15.07       1.04x    0.3%   (5x20000 calls)
-  ssa_electrum_ecc                   18.58       1.28x   11.6%   (5x20000 calls)
+                                μs/call     vs best   spread
+  ssa_coincurve                   14.52       1.00x    0.4%   (5x20000 calls)
+  ssa_btclib_secp256k1            14.56       1.00x    0.4%   (5x20000 calls)
+  ssa_secp256k1                   15.01       1.03x    0.2%   (5x20000 calls)
+  ssa_electrum_ecc                18.45       1.27x    0.1%   (5x20000 calls)
 
 5. public key tweak by a scalar, which is BIP32's step
-                                   μs/call     vs best   spread
-  tweak_coincurve                    10.40       1.00x    0.3%   (5x20000 calls)
-  tweak_btclib_secp256k1             10.57       1.02x    0.3%   (5x20000 calls)
-  tweak_secp256k1                    13.93       1.34x    1.1%   (5x20000 calls)
-  tweak_electrum_ecc                 22.36       2.15x    1.4%   (5x20000 calls)
+                                μs/call     vs best   spread
+  tweak_coincurve                 10.34       1.00x    0.5%   (5x20000 calls)
+  tweak_btclib_secp256k1          10.53       1.02x    0.2%   (5x20000 calls)
+  tweak_secp256k1                 13.73       1.33x    0.1%   (5x20000 calls)
+  tweak_electrum_ecc              22.18       2.15x    0.8%   (5x20000 calls)
 ```
+<!-- output: end -->
 
 ## What it shows
 

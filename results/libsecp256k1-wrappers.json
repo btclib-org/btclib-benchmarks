@@ -1,0 +1,242 @@
+{
+  "schema": 1,
+  "benchmark": "libsecp256k1-wrappers",
+  "run": {
+    "when": "2026-08-15T06:19:50+02:00",
+    "timezone": "CEST",
+    "python": "3.13.14",
+    "method": "5 rounds per row, minimum kept; nothing else repeated",
+    "command": "uv run python scripts/libsecp256k1_wrappers.py",
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64",
+    "state": "a working desktop, browser and editor open — not a quiesced machine, which is the condition README.md says to distrust"
+  },
+  "provenance": {
+    "columns": [
+      "package",
+      "version",
+      "released",
+      "libsecp256k1 pin",
+      "bindings",
+      "binary"
+    ],
+    "rows": [
+      [
+        "btclib-secp256k1",
+        "0.8.0.2",
+        "2026-08-14",
+        "v0.8.0",
+        "cffi",
+        "_btclib_secp256k1.cpython-313-darwin.so"
+      ],
+      [
+        "electrum-ecc",
+        "0.0.7",
+        "2026-02-25",
+        "v0.7.1",
+        "ctypes",
+        "libsecp256k1.6.dylib"
+      ],
+      [
+        "coincurve",
+        "21.0.0",
+        "2025-03-08",
+        "v0.6.0",
+        "cffi",
+        "_libsecp256k1.cpython-313-darwin.so"
+      ],
+      [
+        "secp256k1",
+        "0.14.0",
+        "2021-11-06",
+        "9526874d, pre-v0.1.0",
+        "cffi",
+        "_libsecp256k1.cpython-313-darwin.so"
+      ]
+    ],
+    "notes": []
+  },
+  "timing_note": [
+    "what a timing contains",
+    "  one call per iteration, its answer discarded: no row checks",
+    "  itself, and no comparison is inside a measured loop",
+    "  the answers are checked in tests/vectors_test.py, and where",
+    "  each script builds its fixtures, which is before any clock"
+  ],
+  "tables": [
+    {
+      "kind": "ratios",
+      "title": "1. ECDSA sign (32-byte digest)",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "dsa_sign_coincurve",
+          "us_per_call": 11.382922902703285,
+          "spread": 0.009319702296464172,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "dsa_sign_secp256k1",
+          "us_per_call": 11.17359584895894,
+          "spread": 0.004879060927585277,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "dsa_sign_electrum_ecc",
+          "us_per_call": 27.102408348582685,
+          "spread": 0.0013744940759423674,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "dsa_sign_btclib_secp256k1",
+          "us_per_call": 11.902502097655088,
+          "spread": 0.005290025726241154,
+          "rounds": 5,
+          "calls": 20000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "2. ECDSA verify (32-byte digest, the public key parsed per call)",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "dsa_coincurve",
+          "us_per_call": 13.967041647993028,
+          "spread": 0.011360824607498765,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "dsa_secp256k1",
+          "us_per_call": 11.714583355933428,
+          "spread": 0.0006839760176582388,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "dsa_electrum_ecc",
+          "us_per_call": 15.86326875258237,
+          "spread": 0.00456190034199766,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "dsa_btclib_secp256k1",
+          "us_per_call": 13.988974993117154,
+          "spread": 0.0045999047228473255,
+          "rounds": 5,
+          "calls": 20000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "3. BIP340 sign (32-byte message)",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "ssa_sign_coincurve",
+          "us_per_call": 27.24127295659855,
+          "spread": 0.004009997781507124,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "ssa_sign_secp256k1",
+          "us_per_call": 7.764808356296272,
+          "spread": 0.004305746060725646,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "ssa_sign_electrum_ecc",
+          "us_per_call": 31.238416652195156,
+          "spread": 0.0037028399605922857,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "ssa_sign_btclib_secp256k1",
+          "us_per_call": 15.839114598929882,
+          "spread": 0.008016676345162121,
+          "rounds": 5,
+          "calls": 20000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "4. BIP340 verify (32-byte message, the public key parsed per call)",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "ssa_coincurve",
+          "us_per_call": 14.519262500107288,
+          "spread": 0.004482407577543146,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "ssa_secp256k1",
+          "us_per_call": 15.014899999368936,
+          "spread": 0.0022261223333424063,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "ssa_electrum_ecc",
+          "us_per_call": 18.445935402996838,
+          "spread": 0.0013588137858433491,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "ssa_btclib_secp256k1",
+          "us_per_call": 14.555402100086212,
+          "spread": 0.004451810874885442,
+          "rounds": 5,
+          "calls": 20000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "5. public key tweak by a scalar, which is BIP32's step",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "tweak_coincurve",
+          "us_per_call": 10.336449998430908,
+          "spread": 0.005402803050337024,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "tweak_secp256k1",
+          "us_per_call": 13.725662510842085,
+          "spread": 0.0005333684778396908,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "tweak_electrum_ecc",
+          "us_per_call": 22.176279150880873,
+          "spread": 0.007566925339662411,
+          "rounds": 5,
+          "calls": 20000
+        },
+        {
+          "label": "tweak_btclib_secp256k1",
+          "us_per_call": 10.530314547941089,
+          "spread": 0.002191496639447621,
+          "rounds": 5,
+          "calls": 20000
+        }
+      ]
+    }
+  ]
+}

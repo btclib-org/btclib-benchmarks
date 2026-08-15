@@ -362,6 +362,39 @@ The release notes, which say what a user has to act on, are in
   the process. Both are properties of the import list, and the script's
   docstring now says so.
 
+- **A run is saved as data, and the page is rendered from it.** Each
+  benchmark writes `results/<name>.json` as it finishes — every number as
+  measured, the packages block, and what the run block states — and
+  `scripts/render.py` writes `results/<name>.md` from that file, between
+  the markers the page carries and touching no word of the prose around
+  them. Before this, publishing a run meant a person copying what
+  scrolled past into a page and typing the clock and the machine in
+  beside it, which made the two things one: rewording a heading cost
+  either a fresh measurement, whose numbers are different, or a
+  hand-edited block, whose numbers no run ever printed. It is now two
+  commands, and the second needs no machine.
+
+  Nothing derived is stored. Ratios, savings, break-evens, the sort and
+  the column widths are all computed at render time from the microseconds
+  beside them, so a number in the file is a number a clock produced, and
+  a mistake in a derived column is fixed without measuring again. The
+  widths in particular were hand-set per script and are now taken from
+  the labels, one width per page: a comparand with a longer name widens
+  the column instead of overflowing a number somebody chose.
+
+  `render.py` imports no benchmark, which is the property that makes it
+  cheap — importing one builds every fixture and runs every
+  cross-comparand assertion. Neither it nor `scripts/_results.py` is
+  under the coverage gate, deliberately: a page is written by a command a
+  person runs, and putting the rewording of a heading behind the suite is
+  the coupling this split removes. `render.py --check` is what says a
+  page still matches the run it publishes.
+
+  `results/machine.toml` holds the two lines no process can answer, which
+  machine and what else was running on it. The rest of the run block is
+  taken where the run is: the clock, the interpreter, the command, and
+  the chip and OS build read from the machine itself.
+
 - **Each benchmark prints where its packages came from** before any
   number, `scripts/_provenance.py` being what answers it. A released
   wheel, a git checkout and an editable install satisfy the same

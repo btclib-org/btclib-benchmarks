@@ -132,6 +132,14 @@ They are a record of one run, not a claim about anyone else's hardware:
 what makes them worth publishing is that they are reproducible by one
 command, not that they are authoritative.
 
+Beside each page is the run it publishes, `results/<name>.json`: the
+numbers as they were measured, and everything the page states about how.
+A benchmark writes it, `scripts/render.py` writes the page from it, and
+the two are separate commands on purpose — the prose around a table gets
+rewritten far more often than a machine gets measured, and it must not
+cost a fresh run or a hand-edited number to do it. `CONTRIBUTING.md` has
+both commands.
+
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
 [libraries]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
