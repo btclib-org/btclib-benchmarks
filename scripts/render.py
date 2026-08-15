@@ -5,7 +5,7 @@
 """Write the published pages from the saved runs, measuring nothing.
 
     uv run python scripts/render.py            # every page, from its run
-    uv run python scripts/render.py key-reuse  # one of them
+    uv run python scripts/render.py 05-key-reuse   # one of them
     uv run python scripts/render.py --check    # say what is stale, write none
 
 A benchmark writes `results/<name>.json` when it is run. This reads that
@@ -14,11 +14,11 @@ markers the page carries. Everything else in the page -- the headings,
 the paragraph explaining what a column means, the analysis under the
 numbers -- is prose somebody wrote, and this never touches it.
 
-That separation is the point. Rewording a heading used to mean either
-running the benchmark again, which produces different numbers on a
-machine in a different mood, or editing the block by hand, which produces
-numbers no run ever printed. Now it means editing the prose and running
-this, and the numbers are the ones the last measurement found.
+That separation is the point. Rewording a heading otherwise costs either
+a run of the benchmark, which produces different numbers on a machine in
+a different mood, or an edit to the block by hand, which produces numbers
+no run ever printed. Here it costs the edit and this command, and the
+numbers stay the ones the last measurement found.
 
 ## What is replaced, and what a page without a marker gets
 
@@ -141,7 +141,7 @@ def main(arguments: list[str]) -> int:
     """Render the pages named, or every page that has a saved run.
 
     A name is a benchmark's, and a path to either of its two files is
-    taken as that name: `results/key-reuse.md` is what tab completion
+    taken as that name: `results/05-key-reuse.md` is what tab completion
     offers, and refusing it would be a puzzle rather than a rule.
     """
     check = "--check" in arguments

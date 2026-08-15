@@ -6,9 +6,9 @@
 
 Every row is Python arithmetic and the question is which is quicker at it, so
 no row is a reference line and the ratio is against whichever came out
-fastest. What Python costs against C is `scripts/btclib_two_paths.py`'s
+fastest. What Python costs against C is `scripts/02-btclib-vs-btclib.py`'s
 question; what `pip install <package>` gives is
-`scripts/bitcoin_libraries.py`'s, where the same package names mean something
+`scripts/03-libraries.py`'s, where the same package names mean something
 else -- pycoin is C there and Python here.
 
 ## How each row is held to Python
@@ -65,7 +65,7 @@ Not part of the test suite and not run by CI, as the others are not.
 
 ## What a run leaves behind
 
-The numbers are written to `results/pure-python.json` as this finishes,
+The numbers are written to `results/04-pure-python.json` as this finishes,
 and `scripts/render.py` writes the page beside it from that file
 alone. So the prose around a table is rewritten and re-published
 without a machine and without a number being retyped: measuring and
@@ -97,10 +97,10 @@ from _results import (
     Provenance,
     Ratios,
     Timing,
+    page_of,
     rendered_provenance,
     rendered_table,
     save,
-    slug,
     taken_now,
     width_for,
 )
@@ -131,7 +131,7 @@ def _released(dist_name: str) -> str:
     btclib resolves from its branch until 2026.9 is on PyPI, and a date would
     be a claim about a release that has not happened: what the column says for
     it is the branch and the commit, which is what a reader has to look up to
-    get these rows again. `scripts/bitcoin_libraries.py` prints the same
+    get these rows again. `scripts/03-libraries.py` prints the same
     column by the same rule, over an overlapping set of packages.
     """
     if not (recorded := RELEASE_DATES.get(dist_name)):
@@ -220,7 +220,7 @@ def python_arithmetic_only() -> None:
     such a list forgets. No row added below can reintroduce that.
 
     Called before anything is timed, and after every fixture above is built:
-    those want the bindings, and there is no reason to slow them down.
+    those want libsecp256k1, and there is no reason to slow them down.
     """
     curve._libsecp256k1_available = False
 
@@ -230,7 +230,7 @@ def python_arithmetic_only() -> None:
 # because the name is `Optimizations` in both of them and the fallback is
 # `noop` in both of them: a probe reading names sees nothing to report
 # however loudly a shared object is being called, which is what
-# `bitcoin_libraries.py` was doing before it read modules instead.
+# `03-libraries.py` was doing before it read modules instead.
 PYCOIN_NATIVE_MIXINS = {
     "pycoin.ecdsa.native.secp256k1": "libsecp256k1",
     "pycoin.ecdsa.native.openssl": "OpenSSL",
@@ -244,7 +244,7 @@ def _pycoin_backend() -> str:
     Python; it is read back rather than assumed, a benchmark that says
     "Python" on a row that loaded a shared object being worse than no
     benchmark. There is no public flag to read, so this reads the MRO the
-    generator ended up with, as `bitcoin_libraries.py` does.
+    generator ended up with, as `03-libraries.py` does.
     """
     for base in type(PYCOIN_GENERATOR).__mro__:
         if "noop" in base.__qualname__:
@@ -405,8 +405,8 @@ def benchmark(func: Callable[[], None], calls: int) -> float:
     """Return microseconds per call, `calls` calls of `func`.
 
     A returned number and not a printed one: every row is a ratio against
-    the bindings, which is the column this script exists for, so the
-    reference has to be in hand before anything is printed.
+    the quickest of its table, so the reference has to be in hand before
+    anything is printed.
 
     `calls` is per function rather than shared: the slowest row here is
     four orders of magnitude off the reference, and one count for all of
@@ -634,7 +634,7 @@ def main() -> None:
     """Throw the switch, print a table per operation, and save the run.
 
     `python_arithmetic_only` comes first and nothing here is timed before
-    it: with no reference row left to measure through the bindings, the one
+    it: with no reference row left to measure through libsecp256k1, the one
     ordering this script needs is that the switch precede every timing.
 
     Each table is printed as it is measured, this being a run somebody
@@ -660,7 +660,7 @@ def main() -> None:
 
     saved = save(
         Measurement(
-            benchmark=slug(__file__),
+            benchmark=page_of(__file__),
             run=taken_now(__file__, METHOD),
             provenance=packages,
             tables=tables,

@@ -6,17 +6,17 @@ against the packages they are usefully compared with.
 
 Five benchmarks, each answering a different question:
 
-- **`btclib_two_paths.py`** — btclib against btclib: its pure-Python
+- **`02-btclib-vs-btclib.py`** — btclib against btclib: its pure-Python
   arithmetic against the libsecp256k1 that `btclib-secp256k1` bundles and
   compiles into a cffi extension
-- **`bitcoin_libraries.py`** — btclib as installed, against other Python
+- **`03-libraries.py`** — btclib as installed, against other Python
   bitcoin libraries, over curve operations and the address encodings
-- **`pure_python.py`** — every pure-Python implementation of the same
+- **`04-pure-python.py`** — every pure-Python implementation of the same
   operation, against each other
-- **`libsecp256k1_wrappers.py`** — btclib-secp256k1 against the other
+- **`01-libsecp256k1.py`** — btclib-secp256k1 against the other
   wrappers of the same C library: `coincurve` and `secp256k1-py` through
   cffi, `electrum-ecc` through ctypes
-- **`key_reuse.py`** — what the second signature under the same key
+- **`05-key-reuse.py`** — what the second signature under the same key
   costs: the other four time one verification with a fresh key, and a
   verifier never does
 
@@ -40,12 +40,17 @@ Nothing is installed: the scripts are run from a checkout.
 
 ```shell
 uv sync --locked
-uv run python scripts/bitcoin_libraries.py
+uv run python scripts/03-libraries.py
 ```
 
 Each prints what it resolved — package versions, and which arithmetic
 backend each comparand actually ran — before any number, because a timing
 means nothing without them.
+
+A run also writes itself to `results/<name>.json`, and
+`scripts/render.py` is what turns that into the published page. Two
+commands rather than one, for the reason under "One run of each,
+published" below.
 
 ### The interpreter is 3.13, not 3.14
 
@@ -61,7 +66,7 @@ install time, and what it builds is tagged `py3-none`, the C being
 reached through ctypes rather than linked into an extension.
 
 The `requires-python` floor is 3.11, and that end is set by a comparand
-too: `secp256k1lab` declares it, and `scripts/pure_python.py` imports it
+too: `secp256k1lab` declares it, and `scripts/04-pure-python.py` imports it
 unguarded.
 
 ### Installing the comparands needs a build toolchain
@@ -84,13 +89,15 @@ To time a checkout instead — an unreleased optimization, say — install it
 over the top:
 
 ```shell
-uv run --with-editable /path/to/btclib python scripts/bitcoin_libraries.py
+uv run --with-editable /path/to/btclib python scripts/03-libraries.py
 ```
 
-The scripts print `btclib.__file__` in their setup block, so which of the
-two you measured is on the screen rather than assumed. That check is not
-decoration: an editable install and a released wheel of the same package
-resolve silently, and the wrong one produces a plausible table.
+The packages block names the version, and where an install is not the
+declared one it names that too — `editable: /path/to/btclib` for the
+command above, `sys.path:` for a checkout shadowing an install. So which
+of the two you measured is on the screen rather than assumed, and that is
+not decoration: an editable install and a released wheel of the same
+package resolve silently, and the wrong one produces a plausible table.
 
 ## Reading the output
 
@@ -104,7 +111,7 @@ a person does, on a machine whose state they know.
 
 ### The same C library is not the same binary
 
-`libsecp256k1_wrappers.py` compares four packages that all wrap
+`01-libsecp256k1.py` compares four packages that all wrap
 `bitcoin-core/secp256k1`, which is true of the API and not of what is
 linked: each vendors a revision of its own, and they are not the same
 revision. So that script prints, per row, which one is underneath it and
@@ -127,8 +134,8 @@ ratio against its fastest row, never against btclib's:
 - [the libsecp256k1 wrappers][wrappers]
 - [one key, every signature under it][reuse]
 
-The machine is named in each file, and so is what else was running on it.
-They are a record of one run, not a claim about anyone else's hardware:
+The machine is named in each file. They are a record of one run, not a
+claim about anyone else's hardware:
 what makes them worth publishing is that they are reproducible by one
 command, not that they are authoritative.
 
@@ -140,11 +147,11 @@ rewritten far more often than a machine gets measured, and it must not
 cost a fresh run or a hand-edited number to do it. `CONTRIBUTING.md` has
 both commands.
 
-[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
-[libraries]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
-[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
-[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
+[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
+[libraries]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
+[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
+[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 
 ## Licence
 

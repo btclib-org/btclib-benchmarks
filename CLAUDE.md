@@ -13,7 +13,7 @@ uv sync --locked                            # installs the comparands, and
                                             # compiles two of them
 uv run pytest                               # the suite, gated at 100%
 uv run pre-commit run --all-files           # every lint hook, what CI runs
-uv run python scripts/bitcoin_libraries.py  # a benchmark, by hand
+uv run python scripts/03-libraries.py  # a benchmark, by hand
 uv run python scripts/render.py             # the pages, from the saved runs
 ```
 
@@ -23,15 +23,15 @@ uv run python scripts/render.py             # the pages, from the saved runs
 
 Five benchmarks, one question each:
 
-- `scripts/btclib_two_paths.py` — btclib's bindings path against its own
+- `scripts/02-btclib-vs-btclib.py` — btclib's libsecp256k1 path against its own
   pure-Python arithmetic
-- `scripts/bitcoin_libraries.py` — btclib, bindings on, against other
+- `scripts/03-libraries.py` — btclib, libsecp256k1 on, against other
   Python bitcoin libraries
-- `scripts/pure_python.py` — every pure-Python implementation of one
-  operation, bindings as the reference line
-- `scripts/libsecp256k1_wrappers.py` — btclib_secp256k1 against the other
+- `scripts/04-pure-python.py` — every pure-Python implementation of one
+  operation, libsecp256k1 as the reference line
+- `scripts/01-libsecp256k1.py` — btclib_secp256k1 against the other
   wrappers of the same C library, and which revision of it each vendors
-- `scripts/key_reuse.py` — what a verifier pays per signature under a key
+- `scripts/05-key-reuse.py` — what a verifier pays per signature under a key
   it already has, raw against prepared, on both paths and against
   python-ecdsa's `precompute()`
 
@@ -46,7 +46,7 @@ packages block, and what the run block states. `scripts/render.py` writes
 `results/<name>.md` from that file, replacing only what lies between the
 `<!-- run: begin -->`-style markers and leaving every word of prose
 alone. So a heading is reworded and re-published without a machine, where
-before it cost either a fresh run — different numbers — or an edited
+otherwise it costs either a fresh run — different numbers — or an edited
 block, whose numbers no run ever printed.
 
 Three rules follow, and breaking any of them puts the coupling back:
@@ -59,11 +59,11 @@ Three rules follow, and breaking any of them puts the coupling back:
   clock produced.
 - **Neither module is covered**, and that is the same decision: a page is
   written by a command a person runs, and putting the rewording of a
-  heading behind the suite is what the split removed. `render.py --check`
-  is what says a page still matches its run.
+  heading behind the suite is the coupling this split removes.
+  `render.py --check` is what says a page still matches its run.
 
-`results/machine.toml` holds the two lines no process can answer — which
-machine, and what else was running on it.
+`results/machine.toml` overrides the one line a process may get wrong,
+which machine ran it.
 
 ## Non-obvious facts that will otherwise waste a session
 
@@ -75,7 +75,7 @@ machine, and what else was running on it.
 - **Both ends of the interpreter range are set by a comparand**, not
   chosen. 3.13 is the ceiling: `coincurve` and `secp256k1` publish no
   cp314 wheel and neither builds without `pkg-config`. 3.11 is the
-  floor: `secp256k1lab` declares it and `scripts/pure_python.py` imports
+  floor: `secp256k1lab` declares it and `scripts/04-pure-python.py` imports
   it unguarded. Raising either means checking a package index first.
   Those two comparands and no others hold the ceiling: `electrum-ecc`
   compiles from an sdist on every platform and what it builds is
@@ -87,16 +87,16 @@ machine, and what else was running on it.
   that release lands is the whole of the change.
 - **Every timing lives behind `main()`.** Importing a script must run
   its fixtures and its cross-comparand assertions and time nothing —
-  that is what makes the suite possible. `btclib_two_paths.py` and
-  `pure_python.py` also call `python_arithmetic_only()`, which turns
+  that is what makes the suite possible. `02-btclib-vs-btclib.py` and
+  `04-pure-python.py` also call `python_arithmetic_only()`, which turns
   btclib's dispatch off process-wide and cannot be undone: it belongs
-  inside `main()`, after every row that is meant to reach the bindings.
+  inside `main()`, after every row that is meant to reach libsecp256k1.
   At module level it would leave every later test in the process
-  measuring Python. `libsecp256k1_wrappers.py` does not import btclib at
+  measuring Python. `01-libsecp256k1.py` does not import btclib at
   all any more, and that is deliberate — a table of wrappers has no
   pure-Python row to switch for.
 - **The wrapper rows carry the libsecp256k1 revision each package
-  vendors**, `LIBSECP256K1_PINS` in `libsecp256k1_wrappers.py` holding
+  vendors**, `LIBSECP256K1_PINS` in `01-libsecp256k1.py` holding
   it: three of the four link the library into a cffi extension, where
   nothing at run time can say which revision that was. Each pin is keyed
   by the release it was read from, so an upgraded comparand prints

@@ -1,20 +1,19 @@
 {
   "schema": 1,
-  "benchmark": "btclib-two-paths",
+  "benchmark": "02-btclib-vs-btclib",
   "run": {
     "when": "2026-08-15T06:19:06+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "one run, kept whole — nothing repeated, no outlier discarded",
-    "command": "uv run python scripts/btclib_two_paths.py",
-    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64",
-    "state": "a working desktop, browser and editor open — not a quiesced machine, which is the condition README.md says to distrust"
+    "command": "uv run python scripts/02-btclib-vs-btclib.py",
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
   },
   "provenance": {
     "columns": [],
     "rows": [],
     "notes": [
-      "btclib 2026.9 (bindings 0.8.0.2), measured as μs/call, sorted on the ratio"
+      "btclib 2026.9 (wrapper 0.8.0.2), measured as μs/call, sorted on the ratio"
     ]
   },
   "timing_note": [],

@@ -21,7 +21,7 @@ paragraph each, and none of the six is the same story:
 - **btclib** requires `btclib-secp256k1`, which bundles libsecp256k1 and
   compiles it into a cffi extension at install time, so a wheel from PyPI
   is enhanced without anything further being done to it. Which revision it
-  bundles is in [the bindings table][wrappers].
+  bundles is in [the wrappers table][wrappers].
 - **pycoin** bundles nothing and builds nothing. `pycoin.ecdsa.native` is a
   ctypes loader that asks the machine for a library by name, and a PyPI
   install therefore gets pure Python unless one is already there. Here one
@@ -52,10 +52,8 @@ paragraph each, and none of the six is the same story:
 when    : 2026-08-15 06:24 CEST (04:24 UTC)
 python  : 3.13.14
 method  : 3 rounds per row, minimum kept; nothing else repeated
-command : uv run python scripts/bitcoin_libraries.py
+command : uv run python scripts/03-libraries.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
 ```
 <!-- run: end -->
 
@@ -192,7 +190,7 @@ Two things this output says are worth reading twice:
   the public key — precomputed table and all — and a row verifying against
   it verifies with a table no real key gets, at about half the cost. The
   key here is BIP340's, which has no such table, so the row costs what
-  verification costs. It is the sharpest reason in these four files for
+  verification costs. It is the sharpest reason in these five files for
   taking the input from a specification rather than choosing one.
 
 The encoding tables are the only ones that are not curve work, and they are
@@ -212,22 +210,23 @@ from the backend found, for the reason its paragraph above gives.
 Four other questions are published in `results/`, each with its own
 comparands:
 
-- [the libsecp256k1 bindings][wrappers] — four packages that wrap one C
+- [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C
   library, and which revision of it each vendors
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
-  arithmetic against the bindings measured here
+  arithmetic against the wrappers measured here
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
 
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
-[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
-[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
-[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
+[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
+[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
+[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 
-<!-- The output above is a script's, whose columns are the script's to
-     choose; rewrapping it to 80 would make it something else. The
-     configuration comment below has to open with its own keyword, so the
-     reason for it is here rather than inside it. -->
+<!-- The blocks above are rendered from the saved run beside this file,
+     and their columns are sized from what is in them; rewrapping one to 80
+     would make it something else. The configuration comment below has to
+     open with its own keyword, so the reason for it is here rather than
+     inside it. -->
 <!-- markdownlint-configure-file { "MD013": { "code_blocks": false } } -->

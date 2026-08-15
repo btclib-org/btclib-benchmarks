@@ -19,7 +19,7 @@ git tag, having no release on any index.
 ## Running a benchmark
 
 ```shell
-uv run python scripts/bitcoin_libraries.py
+uv run python scripts/03-libraries.py
 ```
 
 Each script prints what it is about to measure — every package's version
@@ -29,7 +29,7 @@ a table without it cannot be checked.
 To measure a working tree instead of the published release:
 
 ```shell
-uv run --with-editable /path/to/btclib python scripts/bitcoin_libraries.py
+uv run --with-editable /path/to/btclib python scripts/03-libraries.py
 ```
 
 The header then says `editable: /path/to/btclib` where it otherwise says
@@ -43,16 +43,16 @@ interpreter, the machine, the method. Nothing about the page is decided
 there.
 
 ```shell
-uv run python scripts/render.py            # every page, from its saved run
-uv run python scripts/render.py key-reuse  # one of them
-uv run python scripts/render.py --check    # name what is stale, write none
+uv run python scripts/render.py               # every page, from its run
+uv run python scripts/render.py 05-key-reuse  # one of them
+uv run python scripts/render.py --check       # name what is stale, write none
 ```
 
 `render.py` puts the three blocks into the page between the markers it
 carries, and touches nothing else in it. So the prose around the numbers
 — the headings, the paragraph explaining a column, the analysis — is
 edited and re-published without measuring again, which is the whole
-reason the two are separate: a reworded heading used to mean either a
+reason the two are separate: a reworded heading otherwise costs either a
 fresh run, whose numbers are different, or a hand-edited block, whose
 numbers are nobody's.
 
@@ -60,10 +60,10 @@ It reads the saved run and imports no benchmark. That matters more than
 it sounds: importing one derives keys, signs a message per comparand and
 runs every cross-comparand assertion before it will answer anything.
 
-The two lines no process can answer are in `results/machine.toml` —
-which machine, and what else was running on it. Edit that file when
-either stops being true; every run taken afterwards carries the new
-answer, and runs already saved keep the one they were taken under.
+`results/machine.toml` overrides the one line a run may get wrong, which
+machine it was taken on. Edit it when that stops being true; every run
+taken afterwards carries the new answer, and runs already saved keep the
+one they were taken under.
 
 `--check` says whether a page still matches the run it publishes. It is
 not wired into CI, and deliberately: a page is written by a command a
@@ -105,15 +105,21 @@ What it does check is what survives being automated:
 
 - that every measured package answers the vendored vectors, in the
   configuration it is measured in. `tests/vectors_test.py` runs BIP340's
-  own vectors and BIP32's against every implementation this project times,
+  vectors, BIP32's, Wycheproof's ECDSA file and Core's base58 pairs
+  against every implementation this project times,
   btclib included — redundant with btclib's own suite, deliberately, it
   being the one package these tables exist to publish. The negative cases
   are the point: an implementation that accepts a public key off the curve
   or an s past the order passes a round-trip check and fails this one. The
   pure-Python configuration is a subprocess, `PYCOIN_NATIVE` being read at
   import and btclib's dispatch flag being unrestorable.
-- that each row of `btclib_two_paths.py` has a second path at all.
-  `tests/pure_python_path_test.py` blocks every bindings entry point and
+
+  Where a package answers a case differently, the answer is recorded as an
+  expected failure with the reason beside it, never excluded. `xfail_strict`
+  is on, so a release that fixes one fails the suite instead of passing
+  quietly — which is the only way a recorded defect stays current.
+- that each row of `02-btclib-vs-btclib.py` has a second path at all.
+  `tests/pure_python_path_test.py` blocks every libsecp256k1 entry point and
   calls every operation: a row that has kept a foot in C raises instead of
   answering. BIP32 derivation was such a row.
 - that every script *loads*, which runs the fixtures at its top and the
@@ -168,25 +174,25 @@ What it does check is what survives being automated:
   nothing.** btclib and embit grind for a low-r signature by default, and
   `electrum-ecc` offers it; each gets a `grind=False` row, which is the one
   comparable with libraries that sign once, and a row of its default beside
-  it. `btclib_two_paths.py` has no grinding row at all, and that is the same
+  it. `02-btclib-vs-btclib.py` has no grinding row at all, and that is the same
   rule: grinding multiplies both of its paths by the same number of
   attempts, so the ratio it prints does not move, and two rows saying what
   one pair already says are two rows to read.
 - **loop counts are per row** wherever a table mixes Python with C: the
   two differ by orders of magnitude, and one shared count either takes
   minutes or measures the clock's own resolution. A table whose rows are
-  all C can share one count, and `libsecp256k1_wrappers.py` does. Where
+  all C can share one count, and `01-libsecp256k1.py` does. Where
   the counts differ they print beside their rows, sorting putting rows
   three orders of magnitude apart next to each other. A row whose backend
   the script does not decide carries a count *per backend* and picks
   between them at run time, as `pycoin_calls` does in
-  `bitcoin_libraries.py`: one written count is either too small to measure
+  `03-libraries.py`: one written count is either too small to measure
   the C or minutes long against the Python, and which one a machine gets
   is not this project's to choose.
 - **sort on the measurement, and divide by the fastest row**, never by
   btclib's: a column against btclib prints fractions under one for
   everything quicker, which is btclib's score rather than the table's
-  answer. `btclib_two_paths.py` divides each row by the quicker of its own
+  answer. `02-btclib-vs-btclib.py` divides each row by the quicker of its own
   *pair* instead, its rows being one operation through two arithmetics.
 
   An order written by hand is an opinion about the result, and a reader

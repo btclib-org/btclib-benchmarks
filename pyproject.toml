@@ -75,7 +75,7 @@ dependencies = [
     "secp256k1>=0.14.0",
     # on no index at all, so [tool.uv.sources] below takes it from its
     # git tag. It declares >=3.11, and that is where this project's own
-    # floor comes from: scripts/pure_python.py imports it unguarded, so
+    # floor comes from: scripts/04-pure-python.py imports it unguarded, so
     # on 3.10 the module cannot be loaded at all -- which CI found, the
     # marker this used to carry having made it absent rather than
     # unresolvable. A benchmark that will not start says more than one
@@ -173,15 +173,26 @@ xfail_strict = true
 filterwarnings = ["error"]
 
 [tool.codespell]
-skip = ".secrets.baseline,uv.lock"
-# the PyPI package scripts/bitcoin_libraries.py compares against, which is
+# `vectors/` is skipped whole, and the reason is the point of vendoring:
+# those files are byte for byte the copies `vectors/README.md` publishes a
+# digest for, and a spelling fix inside one is a copy that has stopped
+# being the file it claims to be. Wycheproof's has `empyt` in three
+# comments, which codespell corrects and the digest check then rejects --
+# correctly, that being the whole job of the digest. The typo is
+# upstream's to fix
+skip = ".secrets.baseline,uv.lock,vectors/*"
+# the PyPI package scripts/03-libraries.py compares against, which is
 # a real word to codespell by way of "build". It cannot be spelled
 # differently: it is the name on the index
 ignore-words-list = "buidl"
 ignore-regex = '`[^`]*`'
 
 [tool.typos.files]
-extend-exclude = [".secrets.baseline", "uv.lock"]
+# `vectors/` for the reason [tool.codespell] gives above, and here it
+# matters more: this hook runs with --write-changes, so an uncorrected
+# vendored file is one it silently rewrites into a copy whose digest no
+# longer matches the provenance published for it
+extend-exclude = [".secrets.baseline", "uv.lock", "vectors/"]
 
 [tool.typos.default]
 # an unbroken run of 26 characters or more is a key, a signature or a
@@ -222,19 +233,19 @@ source = ["scripts", "tests"]
 # not coupled to the suite: a run is saved as data and rendered back into
 # markdown by a command a person runs, and the whole value of that is that
 # it needs neither a machine nor a test run. A gate over them would put
-# the rewording of a heading behind the suite, which is the coupling the
-# split was made to remove. What holds them honest instead is that they
+# the rewording of a heading behind the suite, which is the coupling this
+# split removes. What holds them honest instead is that they
 # are the *only* writer of those blocks -- `render.py --check` says
 # whether a page still matches the run it claims to publish, and a page
 # nobody can edit by hand cannot drift from its numbers
 omit = [
     "*/site-packages/*",
     "scripts/_results.py",
-    "scripts/bitcoin_libraries.py",
-    "scripts/btclib_two_paths.py",
-    "scripts/key_reuse.py",
-    "scripts/libsecp256k1_wrappers.py",
-    "scripts/pure_python.py",
+    "scripts/03-libraries.py",
+    "scripts/02-btclib-vs-btclib.py",
+    "scripts/05-key-reuse.py",
+    "scripts/01-libsecp256k1.py",
+    "scripts/04-pure-python.py",
     "scripts/render.py",
 ]
 
@@ -306,7 +317,9 @@ preview = true
 explicit-preview-rules = true
 # the selection btclib-org holds its Python to, as bitcoin-core-rpc's own
 # pyproject.toml puts it. PTH is not here, and that is the one deliberate
-# subtraction: btclib selects it, and this project opens no file at all
+# subtraction: btclib selects it, and the handful of files this project
+# opens -- the vendored vectors, a saved run, a page being rendered -- are
+# reached through `pathlib` already, so the rule would have nothing to say
 select = [
     "A",
     "B",

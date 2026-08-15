@@ -7,14 +7,12 @@
 when    : 2026-08-15 06:19 CEST (04:19 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
-command : uv run python scripts/key_reuse.py
+command : uv run python scripts/05-key-reuse.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
 ```
 <!-- run: end -->
 
-What `scripts/key_reuse.py` printed on the machine named above: the same
+What `scripts/05-key-reuse.py` printed on the machine named above: the same
 ECDSA verification, with the public key handed in raw and with it
 prepared, on both of btclib's paths and against `python-ecdsa`. The other
 four benchmarks time one verification with a fresh key; a verifier never
@@ -47,19 +45,19 @@ what a timing contains
   each script builds its fixtures, which is before any clock
 
 ECDSA verify, one key, every signature under it
-                                     μs/call     vs best
-  btclib, bindings, parsed point       17.11        1.0x
-  btclib, bindings, octets             19.70        1.2x
-  python-ecdsa, precomputed           539.83       31.5x
-  btclib, Python, parsed point        618.81       36.2x
-  btclib, Python, octets              715.87       41.8x
-  python-ecdsa                       1090.68       63.7x
+                                         μs/call     vs best
+  btclib, libsecp256k1, parsed point       17.11        1.0x
+  btclib, libsecp256k1, octets             19.70        1.2x
+  python-ecdsa, precomputed               539.83       31.5x
+  btclib, Python, parsed point            618.81       36.2x
+  btclib, Python, octets                  715.87       41.8x
+  python-ecdsa                           1090.68       63.7x
 
 what preparing the key costs, and after how many verifications it pays
-                                     prepare   saves/call   break-even
-  btclib, bindings, parse once          3.54         2.59          1.4
-  btclib, Python, parse once           74.85        97.05          0.8
-  python-ecdsa, precompute()         3331.87       550.85          6.0
+                                         prepare   saves/call   break-even
+  btclib, libsecp256k1, parse once          3.54         2.59          1.4
+  btclib, Python, parse once               74.85        97.05          0.8
+  python-ecdsa, precompute()             3331.87       550.85          6.0
 ```
 <!-- output: end -->
 
@@ -67,7 +65,7 @@ what preparing the key costs, and after how many verifications it pays
 
 **Reuse is not where Python catches the C library, and it is worth
 saying first.** The best prepared Python row is still an order of
-magnitude and more behind the worst unprepared bindings row. Preparing a
+magnitude and more behind the worst unprepared libsecp256k1 row. Preparing a
 key moves each group by a small factor and moves neither into the other:
 the gap is the arithmetic underneath, and no amount of reuse is an
 amount of C. The reason to prepare a key is that it is nearly free, not
@@ -79,7 +77,7 @@ point wherever it takes sec octets, and on the Python path a caller who
 does that gets the decompression back before the first verification is
 over — the break-even is under one call, because the square root the
 parse pays is the same square root the verification would have paid.
-On the bindings path it is a smaller saving on a smaller number and pays
+On the libsecp256k1 path it is a smaller saving on a smaller number and pays
 back inside two. Neither is a new API and neither is documented anywhere
 a caller looks, which is the only reason this table is interesting.
 
@@ -131,22 +129,23 @@ rather than an omission.
 Four other questions are published in `results/`, each with its own
 comparands:
 
-- [the libsecp256k1 bindings][wrappers] — four packages that wrap one C
+- [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C
   library, and which revision of it each vendors
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
-  arithmetic against the bindings measured here
-- [python libraries][libs] — where bindings (if available) are just one
+  arithmetic against the wrappers measured here
+- [python libraries][libs] — where a wrapper, if there is one, is just one
   component of a python library
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
 
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
-[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
-[libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
-[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
+[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
+[libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
+[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 
-<!-- The output above is a script's, whose columns are the script's to
-     choose; rewrapping it to 80 would make it something else. The
-     configuration comment below has to open with its own keyword, so the
-     reason for it is here rather than inside it. -->
+<!-- The blocks above are rendered from the saved run beside this file,
+     and their columns are sized from what is in them; rewrapping one to 80
+     would make it something else. The configuration comment below has to
+     open with its own keyword, so the reason for it is here rather than
+     inside it. -->
 <!-- markdownlint-configure-file { "MD013": { "code_blocks": false } } -->

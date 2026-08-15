@@ -1,9 +1,9 @@
-# The libsecp256k1 bindings benchmarks
+# The libsecp256k1 wrappers
 
 ## The packages downloaded from PyPI
 
 The `libsecp256k1 pin` column is the premise of the table below: four
-bindings of one library, not four libraries — four vendored trees of one
+wrappers of one library, not four libraries — four vendored trees of one
 project, at different revisions. `btclib-secp256k1`'s is the newest upstream
 tag of the four; `secp256k1-py`'s predates upstream's first tagged release.
 
@@ -12,8 +12,8 @@ artifact exports a version symbol, and each package's version attribute
 answers for the package rather than for the library. So each pin below is
 recorded rather than read, keyed to the release it was read from, and prints
 `unrecorded` for any other — an upgraded comparand says it has outgrown its
-pin rather than repeating one that has quietly stopped being true. Bindings
-recording their own vendored revision at build time would end the recording
+pin rather than repeating one that has quietly stopped being true. A wrapper
+recording its own vendored revision at build time would end the recording
 here.
 
 <!-- provenance: begin -->
@@ -30,13 +30,11 @@ secp256k1         0.14.0   2021-11-06  9526874d, pre-v0.1.0  cffi      _libsecp2
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-15 06:19 CEST (04:19 UTC)
+when    : 2026-08-15 07:52 CEST (05:52 UTC)
 python  : 3.13.14
-method  : 5 rounds per row, minimum kept; nothing else repeated
-command : uv run python scripts/libsecp256k1_wrappers.py
+method  : the quickest of the rounds kept; nothing else repeated
+command : uv run python scripts/01-libsecp256k1.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
 ```
 <!-- run: end -->
 
@@ -44,6 +42,11 @@ state   : a working desktop, browser and editor open — not a quiesced
 
 Five tables, sorted fastest first and ratioed against whichever row comes out
 quickest. The numbers are an order of magnitude, never a figure to quote.
+
+What a timing contains is one call per iteration, its answer discarded: no
+row checks itself, and no comparison sits inside a measured loop. The
+answers are checked in `tests/vectors_test.py`, and where this script builds
+its fixtures, which is before any clock starts.
 
 Every call cycles a published input. Tables 1–2 take a key and a message from
 the vector file, but not a signature — none is published for that scheme, so
@@ -54,46 +57,42 @@ takes the next vector's secret key as the scalar.
 
 <!-- output: begin -->
 ```text
-what a timing contains
-  one call per iteration, its answer discarded: no row checks
-  itself, and no comparison is inside a measured loop
-  the answers are checked in tests/vectors_test.py, and where
-  each script builds its fixtures, which is before any clock
+30 rounds per row, 20000 calls each round
 
 1. ECDSA sign (32-byte digest)
-                                μs/call     vs best   spread
-  dsa_sign_secp256k1              11.17       1.00x    0.5%   (5x20000 calls)
-  dsa_sign_coincurve              11.38       1.02x    0.9%   (5x20000 calls)
-  dsa_sign_btclib_secp256k1       11.90       1.07x    0.5%   (5x20000 calls)
-  dsa_sign_electrum_ecc           27.10       2.43x    0.1%   (5x20000 calls)
+                       μs/call        sd     vs best
+  secp256k1              11.22    ± 0.16       1.00x
+  coincurve              11.30    ± 0.07       1.01x
+  btclib_secp256k1       11.99    ± 0.01       1.07x
+  electrum_ecc           27.26    ± 0.53       2.43x
 
 2. ECDSA verify (32-byte digest, the public key parsed per call)
-                                μs/call     vs best   spread
-  dsa_secp256k1                   11.71       1.00x    0.1%   (5x20000 calls)
-  dsa_coincurve                   13.97       1.19x    1.1%   (5x20000 calls)
-  dsa_btclib_secp256k1            13.99       1.19x    0.5%   (5x20000 calls)
-  dsa_electrum_ecc                15.86       1.35x    0.5%   (5x20000 calls)
+                       μs/call        sd     vs best
+  secp256k1              11.73    ± 0.05       1.00x
+  coincurve              14.06    ± 0.07       1.20x
+  btclib_secp256k1       14.08    ± 0.01       1.20x
+  electrum_ecc           15.96    ± 0.05       1.36x
 
 3. BIP340 sign (32-byte message)
-                                μs/call     vs best   spread
-  ssa_sign_secp256k1               7.76       1.00x    0.4%   (5x20000 calls)
-  ssa_sign_btclib_secp256k1       15.84       2.04x    0.8%   (5x20000 calls)
-  ssa_sign_coincurve              27.24       3.51x    0.4%   (5x20000 calls)
-  ssa_sign_electrum_ecc           31.24       4.02x    0.4%   (5x20000 calls)
+                       μs/call        sd     vs best
+  secp256k1               7.80    ± 0.18       1.00x
+  btclib_secp256k1       15.85    ± 0.03       2.03x
+  coincurve              27.31    ± 0.08       3.50x
+  electrum_ecc           31.42    ± 0.41       4.03x
 
 4. BIP340 verify (32-byte message, the public key parsed per call)
-                                μs/call     vs best   spread
-  ssa_coincurve                   14.52       1.00x    0.4%   (5x20000 calls)
-  ssa_btclib_secp256k1            14.56       1.00x    0.4%   (5x20000 calls)
-  ssa_secp256k1                   15.01       1.03x    0.2%   (5x20000 calls)
-  ssa_electrum_ecc                18.45       1.27x    0.1%   (5x20000 calls)
+                       μs/call        sd     vs best
+  coincurve              14.58    ± 0.03       1.00x
+  btclib_secp256k1       14.58    ± 0.03       1.00x
+  secp256k1              15.06    ± 0.01       1.03x
+  electrum_ecc           18.53    ± 0.50       1.27x
 
 5. public key tweak by a scalar, which is BIP32's step
-                                μs/call     vs best   spread
-  tweak_coincurve                 10.34       1.00x    0.5%   (5x20000 calls)
-  tweak_btclib_secp256k1          10.53       1.02x    0.2%   (5x20000 calls)
-  tweak_secp256k1                 13.73       1.33x    0.1%   (5x20000 calls)
-  tweak_electrum_ecc              22.18       2.15x    0.8%   (5x20000 calls)
+                       μs/call        sd     vs best
+  coincurve              10.37    ± 0.02       1.00x
+  btclib_secp256k1       10.56    ± 0.03       1.02x
+  secp256k1              13.83    ± 0.26       1.33x
+  electrum_ecc           22.34    ± 0.21       2.16x
 ```
 <!-- output: end -->
 
@@ -106,9 +105,16 @@ measure is the boundary crossing.
 The ctypes row is last in both verification tables, 2 and 4. The three cffi
 rows are close enough that their order among themselves is not settled by one
 run on a machine like this — which of them reads fastest moves between runs,
-and the `spread` column says how much a single run's own five rounds already
-moved: a row within a percent of the best, with a spread of the same size, is
-not behind it in any durable sense.
+and the `sd` column is how to see that without waiting for another: where two
+rows are a few hundredths apart and each round of each scattered by as much,
+neither is ahead of the other in any durable sense. Table 4 has such a pair,
+and its two are separated by less than either's own scatter.
+
+Read that column as the spread of the rounds rather than as an interval
+around the number beside it. The value is the *quickest* round, deliberately
+— interference only ever adds time, so the fastest of thirty is the one that
+ran with least taken from it — and it therefore sits at the low edge of the
+distribution the deviation describes.
 
 ## What the rows leave out
 
@@ -130,7 +136,7 @@ public key tweaked by a scalar. Three of them do it in one call.
 `electrum-ecc` has no tweak-add on `ECPubkey`, so its row multiplies the
 generator by the scalar and adds the two points: two calls into the C library
 where the others make one. BIP32 proper is in [the libraries table][libs],
-where the comparands are python libraries rather than secp256k1 bindings.
+where the comparands are python libraries rather than secp256k1 wrappers.
 
 ## More benchmarks
 
@@ -138,21 +144,22 @@ Four other questions are published in `results/`, each with its own
 comparands:
 
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
-  arithmetic against the bindings measured here
-- [python libraries][libs] — where bindings (if available) are just one
+  arithmetic against the wrappers measured here
+- [python libraries][libs] — where a wrapper, if there is one, is just one
   component of a python library
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
 
-[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
-[libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
-[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/pure-python.md
-[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
+[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
+[libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
+[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
+[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 
-<!-- The output above is a script's, whose columns are the script's to
-     choose; rewrapping it to 80 would make it something else. The
-     configuration comment below has to open with its own keyword, so the
-     reason for it is here rather than inside it. -->
+<!-- The blocks above are rendered from the saved run beside this file,
+     and their columns are sized from what is in them; rewrapping one to 80
+     would make it something else. The configuration comment below has to
+     open with its own keyword, so the reason for it is here rather than
+     inside it. -->
 <!-- markdownlint-configure-file { "MD013": { "code_blocks": false } } -->

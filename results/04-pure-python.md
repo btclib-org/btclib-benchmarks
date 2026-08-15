@@ -28,10 +28,8 @@ tag, which is still a release somebody cut on a day.
 when    : 2026-08-15 06:19 CEST (04:19 UTC)
 python  : 3.13.14
 method  : one run, kept whole — nothing repeated, no outlier discarded
-command : uv run python scripts/pure_python.py
+command : uv run python scripts/04-pure-python.py
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
-state   : a working desktop, browser and editor open — not a quiesced
-          machine, which is the condition README.md says to distrust
 ```
 <!-- run: end -->
 
@@ -129,29 +127,30 @@ it, where the other script imports it after something else has already put
 libsecp256k1 symbols in the process. Both files print which one they got,
 which is why the pair can be read at all.
 
-[two]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
+[two]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
 
 ## More benchmarks
 
 Four other questions are published in `results/`, each with its own
 comparands:
 
-- [the libsecp256k1 bindings][wrappers] — four packages that wrap one C
+- [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C
   library, and which revision of it each vendors
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
-  arithmetic against the bindings measured here
-- [python libraries][libs] — where bindings (if available) are just one
+  arithmetic against the wrappers measured here
+- [python libraries][libs] — where a wrapper, if there is one, is just one
   component of a python library
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
 
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/libsecp256k1-wrappers.md
-[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/btclib-two-paths.md
-[libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/bitcoin-libraries.md
-[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/key-reuse.md
+[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
+[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
+[libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
+[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 
-<!-- The output above is a script's, whose columns are the script's to
-     choose; rewrapping it to 80 would make it something else. The
-     configuration comment below has to open with its own keyword, so the
-     reason for it is here rather than inside it. -->
+<!-- The blocks above are rendered from the saved run beside this file,
+     and their columns are sized from what is in them; rewrapping one to 80
+     would make it something else. The configuration comment below has to
+     open with its own keyword, so the reason for it is here rather than
+     inside it. -->
 <!-- markdownlint-configure-file { "MD013": { "code_blocks": false } } -->

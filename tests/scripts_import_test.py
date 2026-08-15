@@ -8,9 +8,10 @@ This is the whole of what a test can hold a benchmark to. A measurement
 cannot be asserted -- the number is a property of the machine, not of the
 code -- so what is checked here is the two things that can be:
 
-- the module imports. That covers the fixtures at its top and, in three
-  of the four, a block of assertions comparing every comparand's answer
-  against btclib's before any of them is timed. A table whose rows are
+- the module imports. That covers the fixtures at its top and the block
+  of assertions each of the five builds them with, holding every
+  comparand to what the others answer, or to what a specification
+  publishes, before any of them is timed. A table whose rows are
   computing different things is worth nothing, and importing the module
   is what runs that check.
 - it did not time anything while doing so. The `main()` guard is what
@@ -30,11 +31,11 @@ import time
 import pytest
 
 BENCHMARKS = [
-    "btclib_two_paths",
-    "bitcoin_libraries",
-    "pure_python",
-    "libsecp256k1_wrappers",
-    "key_reuse",
+    "01-libsecp256k1",
+    "02-btclib-vs-btclib",
+    "03-libraries",
+    "04-pure-python",
+    "05-key-reuse",
 ]
 
 # an import does fixture work -- key derivation, a signature per comparand,

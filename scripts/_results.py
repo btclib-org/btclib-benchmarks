@@ -4,18 +4,14 @@
 
 """One run of one benchmark, kept as data rather than as a paste.
 
-A measurement and the page about it are two things, and they were one: a
-script printed a table, and publishing it meant a person copying what
-scrolled past into `results/`. What the page needed and the script did not
-print -- the clock, the machine, what else was running on it -- was typed
-in beside the paste, and correcting a heading afterwards meant either
-measuring again or editing a number by hand, which is the one edit this
-project cannot allow.
-
-So a run is written here instead: one JSON file per benchmark, beside the
-page it feeds, holding everything that page states about it.
-`scripts/render.py` builds the page from that file, so re-publishing is
-free and needs no machine.
+A measurement and the page about it are two different things, and only
+the first of them needs a machine. So a run is kept here as data: one
+JSON file per benchmark, beside the page it feeds, holding every number
+as measured and everything that page states about how -- the clock, the
+interpreter, the machine, what else was running on it.
+`scripts/render.py` builds the page from that file, so rewording a
+heading costs neither a fresh measurement, whose numbers are different,
+nor a block edited by hand, whose numbers no run ever printed.
 
 ## What is stored is what was measured, and no more
 
@@ -33,10 +29,10 @@ together that script's rows land.
 
 ## The layout is computed, so a longer name cannot break a column
 
-Every column is sized from what is in it. The scripts each carried their
-own hand-set widths, which held until a comparand with a longer name
-arrived and pushed one row out of line with the rest -- silently, a
-`<20` being a floor and not a fence.
+Every column is sized from what is in it, and one width serves a whole
+page. A width written into a format string is a floor rather than a
+fence: a comparand whose name outgrows it pushes its own row out of line
+with the others, and nothing anywhere says so.
 
 ## Nothing here imports a benchmark
 
@@ -49,9 +45,9 @@ write text, and that is the whole of what publishing costs.
 from __future__ import annotations
 
 import json
+import math
 import platform
 import subprocess
-import textwrap
 import tomllib
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -70,10 +66,9 @@ SCHEMA = 1
 # measurement that gets taken again
 RESULTS = Path(__file__).resolve().parent.parent / "results"
 
-# the two lines of the run block that nothing in a process can answer.
-# `state` above all: what else was running on the machine is a fact about
-# the room, and the honest place for it is a file its owner edits when it
-# stops being true
+# where a machine says what it is, when the run cannot work it out well
+# enough on its own. Everything else in the run block is taken where the
+# run is
 MACHINE_FILE = RESULTS / "machine.toml"
 
 # two spaces between columns, everywhere. Enough to read as a gap at any
@@ -85,14 +80,20 @@ GAP = 2
 class Timing:
     """One row of a table: a label, and what a call under it cost.
 
-    `spread` and `calls` are optional because not every script has one to
-    report -- a script that times each row once has no spread to state,
-    and printing an absent one as zero would claim a quiet machine.
+    `spread` and `deviation` are two answers to one question, how far the
+    rounds of a row scattered, and a row carries whichever its script
+    measured: the spread is how far the slowest round ran from the
+    quickest, and the deviation is the standard deviation over all of
+    them, which is worth having only where the rounds are many. Both are
+    optional, as `calls` is: a script that times each row once has no
+    dispersion to state, and printing an absent one as zero would claim a
+    quiet machine.
     """
 
     label: str
     us_per_call: float
     spread: float | None = None
+    deviation: float | None = None
     calls: int | None = None
     rounds: int | None = None
 
@@ -199,12 +200,26 @@ class Run:
     method: str
     command: str
     machine: str
-    state: str
+
+
+def page_of(script: str) -> str:
+    """Return the name a benchmark's script, its run and its page share.
+
+    One name for the three, so that none of them can be found without the
+    other two. It begins with a number and holds hyphens, neither of which
+    a module name may -- and neither of which a module name has to: nothing
+    imports these five by an `import` statement, the suite reaching them
+    through `importlib` and a person through `python scripts/<name>.py`.
+    """
+    return Path(script).stem
 
 
 @dataclass(frozen=True)
 class Measurement:
     """A whole run: what ran it, what it found, and what it can be asked.
+
+    `benchmark` names the run's file and the page it feeds, which is the
+    script's own name: `page_of` above is where that is said once.
 
     `timing_note` is the block saying a timed call checks nothing, stored
     with the numbers rather than written by the renderer: a page is a
@@ -272,17 +287,13 @@ def _machine_file() -> dict[str, str]:
     return {key: str(value) for key, value in read.items()}
 
 
-NO_STATE = "unrecorded: results/machine.toml says nothing about this run"
-
-
 def taken_now(script: str, method: str) -> Run:
     """Return the run block for a measurement being taken right now.
 
-    Everything derivable is derived, so that the one line a person
-    maintains is the one nothing could have derived: what else the machine
-    was doing. `machine.toml` may override the detected machine too, a
-    detected line being the best this platform would say rather than the
-    best there is.
+    Everything here is derived, `machine.toml` overriding only the machine
+    itself: a detected line is the best this platform will say rather than
+    the best there is, and a run on somebody else's hardware wants to name
+    whose.
     """
     recorded = _machine_file()
     now = datetime.now().astimezone()
@@ -293,17 +304,7 @@ def taken_now(script: str, method: str) -> Run:
         method=method,
         command=f"uv run python scripts/{Path(script).name}",
         machine=recorded.get("machine") or _detected_machine(),
-        state=recorded.get("state") or NO_STATE,
     )
-
-
-def slug(script: str) -> str:
-    """Return the name a benchmark's run and its page share.
-
-    One name for the script, the saved run and the published page, so that
-    none of the three can be found without the other two.
-    """
-    return Path(script).stem.replace("_", "-")
 
 
 # --- rendering, which both the run and a re-render go through -----------
@@ -350,17 +351,34 @@ def rendered_run(run: Run) -> str:
     """
     when = datetime.fromisoformat(run.when)
     utc = when.astimezone(UTC)
-    lines = [
-        f"when    : {when:%Y-%m-%d %H:%M} {run.timezone} ({utc:%H:%M} UTC)",
-        f"python  : {run.python}",
-        f"method  : {run.method}",
-        f"command : {run.command}",
-        f"machine : {run.machine}",
-    ]
-    state = textwrap.wrap(
-        run.state, width=70, initial_indent="state   : ", subsequent_indent=" " * 10
+    return "\n".join(
+        [
+            f"when    : {when:%Y-%m-%d %H:%M} {run.timezone} ({utc:%H:%M} UTC)",
+            f"python  : {run.python}",
+            f"method  : {run.method}",
+            f"command : {run.command}",
+            f"machine : {run.machine}",
+        ]
     )
-    return "\n".join(lines + state)
+
+
+def labels(names: list[str]) -> list[str]:
+    """Drop the operation from each row's name, the title having said it.
+
+    Every function in a table is named `<operation>_<comparand>`, so the
+    operation is the leading run of underscore-separated words they all
+    share: printing it on every row is the same prefix repeated down a
+    column, and what a reader compares is what is left of the name. Whole
+    words rather than characters, or three rows reading `btclib`, `embit`
+    and `buidl` would lose a `b` to what they happen to share.
+    """
+    split = [name.split("_") for name in names]
+    shared = 0
+    while len({parts[shared] for parts in split}) == 1 and all(
+        len(parts) > shared + 1 for parts in split
+    ):
+        shared += 1
+    return ["_".join(parts[shared:]) for parts in split]
 
 
 def labels_of(tables: Sequence[Table]) -> list[str]:
@@ -398,36 +416,97 @@ def _call_note(row: Timing) -> str:
     return f"   ({counted} calls)"
 
 
-def rendered_ratios(table: Ratios, width: int) -> str:
-    """Return one operation's rows, quickest first, ratioed against the best."""
+def counted_once(tables: Sequence[Table]) -> str:
+    """Say how many calls every row is the average of, where they agree.
+
+    A count repeated down a column is a column of that count, and repeated
+    again in every title is that column turned sideways. So where a whole
+    page shares one it is said above the tables and nowhere else.
+
+    Where the rows differ -- which is every page whose comparands are
+    orders of magnitude apart, a count sized for one measuring nothing on
+    another -- there is nothing to hoist and each row keeps its own.
+    """
+    counts = {
+        (row.rounds, row.calls)
+        for table in tables
+        for row in table.rows
+        if isinstance(row, Timing)
+    }
+    if len(counts) != 1:
+        return ""
+    return counted_calls(*counts.pop())
+
+
+def counted_calls(rounds: int | None, calls: int | None) -> str:
+    """Return the line a page states its call count in, or nothing.
+
+    Taken by a script from its own constants before it has measured
+    anything, and by `counted_once` from the run afterwards, so that what
+    a person watches and what the page carries are the one sentence.
+    """
+    if calls is None:
+        return ""
+    if rounds is None:
+        return f"{calls} calls each row"
+    return f"{rounds} rounds per row, {calls} calls each round"
+
+
+def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
+    """Return one operation's rows, quickest first, ratioed against the best.
+
+    `counted` says the page has already stated the call count above every
+    table, which is what `counted_once` decides.
+    """
     quickest = min(row.us_per_call for row in table.rows)
     spreads = any(row.spread is not None for row in table.rows)
-    heading = f"  {'':<{width}}{'μs/call':>10}{'vs best':>12}"
+    deviations = any(row.deviation is not None for row in table.rows)
+    heading = f"  {'':<{width}}{'μs/call':>10}"
+    if deviations:
+        heading += f"{'sd':>10}"
+    heading += f"{'vs best':>12}"
     lines = [table.title, heading + (f"{'spread':>9}" if spreads else "")]
     for row in sorted(table.rows, key=lambda row: row.us_per_call):
         ratio = row.us_per_call / quickest
         line = f"  {row.label:<{width}}{row.us_per_call:10.2f}"
+        if row.deviation is not None:
+            line += f"{'± ' + format(row.deviation, '.2f'):>10}"
         line += f"{ratio:11.{table.decimals}f}x"
         if row.spread is not None:
             line += f"{row.spread:8.1%}"
-        lines.append((line + _call_note(row)).rstrip())
+        lines.append((line if counted else line + _call_note(row)).rstrip())
     return "\n".join(lines)
 
 
-def rendered_pairs(table: Pairs, width: int) -> str:
-    """Return one row per operation, sorted on what the second column costs.
+def _significant(value: float, digits: int = 3) -> str:
+    """Round to `digits` significant digits, and print without an exponent.
 
-    Five significant digits, which is four more than the machine can be
-    held to and enough that two rows within a percent of each other are
-    still two numbers.
+    `g` is the format that counts significant digits and it reaches for
+    scientific notation as soon as a value outgrows the precision asked
+    for -- which every Python row of the two-paths table does, so half a
+    column would read `1.31e+03`. Rounding first and choosing the decimals
+    afterwards says the same thing in the notation a table wants.
+
+    Three digits: two fewer than the machine can be held to, and enough
+    that two rows a percent apart are still two numbers.
     """
+    if not value:  # pragma: no cover - no operation measures as free
+        return "0"
+    exponent = math.floor(math.log10(abs(value)))
+    decimals = max(0, digits - 1 - exponent)
+    return f"{round(value, digits - 1 - exponent):.{decimals}f}"
+
+
+def rendered_pairs(table: Pairs, width: int) -> str:
+    """Return one row per operation, sorted on what the second column costs."""
     first, second = table.columns
     heading = f"{'':<{width}}{first:>14}{second:>14}{'ratio':>10}"
     lines = [line for line in (table.title, heading) if line]
     for row in sorted(table.rows, key=lambda row: row.values[1] / row.values[0]):
         quick, slow = row.values
         lines.append(
-            f"{row.label:<{width}}{quick:>#14.5g}{slow:>#14.5g}{slow / quick:>9.1f}x"
+            f"{row.label:<{width}}{_significant(quick):>14}"
+            f"{_significant(slow):>14}{slow / quick:>9.1f}x"
         )
     return "\n".join(lines)
 
@@ -447,10 +526,10 @@ def rendered_break_even(table: BreakEven, width: int) -> str:
     return "\n".join(lines)
 
 
-def rendered_table(table: Table, width: int) -> str:
+def rendered_table(table: Table, width: int, *, counted: bool = False) -> str:
     """Return whichever of the three shapes a table is."""
     if isinstance(table, Ratios):
-        return rendered_ratios(table, width)
+        return rendered_ratios(table, width, counted=counted)
     if isinstance(table, Pairs):
         return rendered_pairs(table, width)
     return rendered_break_even(table, width)
@@ -466,7 +545,13 @@ def rendered_output(measurement: Measurement) -> str:
     what the page carries.
     """
     width = width_for(labels_of(measurement.tables))
-    blocks = [rendered_table(table, width) for table in measurement.tables]
+    counted = counted_once(measurement.tables)
+    blocks = [
+        rendered_table(table, width, counted=bool(counted))
+        for table in measurement.tables
+    ]
+    if counted:
+        blocks.insert(0, counted)
     if measurement.timing_note:
         blocks.insert(0, "\n".join(measurement.timing_note))
     return "\n\n".join(blocks)
@@ -489,6 +574,7 @@ def _table_as_json(table: Table) -> dict[str, object]:
                         ("label", row.label),
                         ("us_per_call", row.us_per_call),
                         ("spread", row.spread),
+                        ("deviation", row.deviation),
                         ("rounds", row.rounds),
                         ("calls", row.calls),
                     )
@@ -536,6 +622,11 @@ def _table_from_json(saved: dict[str, object]) -> Table:
                     label=str(row["label"]),
                     us_per_call=float(row["us_per_call"]),
                     spread=None if row.get("spread") is None else float(row["spread"]),
+                    deviation=(
+                        None
+                        if row.get("deviation") is None
+                        else float(row["deviation"])
+                    ),
                     calls=None if row.get("calls") is None else int(row["calls"]),
                     rounds=None if row.get("rounds") is None else int(row["rounds"]),
                 )
@@ -584,7 +675,6 @@ def as_json(measurement: Measurement) -> dict[str, object]:
             "method": run.method,
             "command": run.command,
             "machine": run.machine,
-            "state": run.state,
         },
         "provenance": {
             "columns": measurement.provenance.columns,
