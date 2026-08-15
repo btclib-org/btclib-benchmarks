@@ -987,9 +987,10 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
     `ROUNDS` rounds of `calls` calls each. The minimum is the estimate:
     noise is one-sided -- nothing on this machine makes a call quicker than
     it is -- so the quickest round is the one that ran with least taken from
-    it. The spread is how far the slowest round ran from the quickest, and
-    it is printed rather than hidden because it is the only thing in the
-    output that says whether the machine was quiet while a row was measured.
+    it. The spread is how far the slowest round ran from the quickest, in
+    the same microseconds as the value beside it, and it is printed rather
+    than hidden because it is the only thing in the output that says whether
+    the machine was quiet while a row was measured.
 
     Returned and not printed: the tables below are sorted fastest to
     slowest and each row divides by the quickest, neither of which can be
@@ -1018,7 +1019,7 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
             func()
         rounds.append((time.perf_counter() - start) / calls * 1e6)
     quickest = min(rounds)
-    return quickest, max(rounds) / quickest - 1
+    return quickest, max(rounds) - quickest
 
 
 Rows = tuple[tuple[Callable[[], None], int], ...]

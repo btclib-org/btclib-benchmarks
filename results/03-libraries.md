@@ -5,7 +5,7 @@
 <!-- provenance: begin -->
 ```text
 package            version           released           arithmetic
-btclib             2026.9            main@a6988751392b  libsecp256k1 enhanced
+btclib             2026.9            main@95b03da34a71  libsecp256k1 enhanced
 pycoin             0.92718.20260405  2026-04-05         libsecp256k1 enhanced
 ecdsa              0.19.2            2026-03-26         pure Python
 embit              0.8.0             2024-05-30         libsecp256k1 enhanced
@@ -49,11 +49,9 @@ paragraph each, and none of the six is the same story:
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-15 06:24 CEST (04:24 UTC)
-python  : 3.13.14
-method  : 3 rounds per row, minimum kept; nothing else repeated
-command : uv run python scripts/03-libraries.py
+when    : 2026-08-15 22:10 CEST (20:10 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
+python  : 3.13.14
 ```
 <!-- run: end -->
 
@@ -62,8 +60,10 @@ machine : Apple M5, macOS 26.6 (build 25G72), arm64
 Eleven tables: the curve operations, BIP32 derivation, and the three
 address encodings in both directions. Fastest row first, ratioed against
 whichever row came out quickest, with the spread of a row's own three
-rounds beside it — a row within a percent of the one above it, whose
-spread is the same size, is not behind it in any durable sense.
+rounds beside it — how far its slowest round ran from its quickest, in the
+same microseconds as the value it sits beside. A row whose distance from
+the one above it is no larger than that is not behind it in any durable
+sense.
 
 The inputs are every BIP340 signing vector and every BIP32 chain the
 vendored files publish, cycled one per call; the address rows are the
@@ -72,6 +72,9 @@ vendored, so they call one input.
 
 <!-- output: begin -->
 ```text
+method  : 3 rounds per row, minimum kept; nothing else repeated
+command : uv run python scripts/03-libraries.py
+
 what a timing contains
   one call per iteration, its answer discarded: no row checks
   itself, and no comparison is inside a measured loop
@@ -80,84 +83,84 @@ what a timing contains
 
 1. ECDSA sign (32-byte digest)
                    μs/call     vs best   spread
-  pycoin             12.33        1.0x    0.1%   (3x50000 calls)
-  embit              14.14        1.1x    1.0%   (3x50000 calls)
-  btclib             16.42        1.3x    0.4%   (3x50000 calls)
-  embit_grind        49.88        4.0x    3.7%   (3x20000 calls)
-  btclib_grind       54.21        4.4x    0.3%   (3x20000 calls)
-  bitcoinlib        192.27       15.6x    0.6%   (3x8000 calls)
-  ecdsa             282.77       22.9x    0.5%   (3x5000 calls)
-  buidl           29531.26     2395.8x    0.1%   (3x50 calls)
+  pycoin             12.27        1.0x     0.00   (3x50000 calls)
+  embit              14.12        1.2x     0.14   (3x50000 calls)
+  btclib             17.08        1.4x     0.08   (3x50000 calls)
+  embit_grind        49.84        4.1x     0.01   (3x20000 calls)
+  btclib_grind       56.32        4.6x     0.21   (3x20000 calls)
+  bitcoinlib        191.11       15.6x     0.38   (3x8000 calls)
+  ecdsa             281.68       23.0x     0.49   (3x5000 calls)
+  buidl           29459.19     2401.1x    75.51   (3x50 calls)
 
 2. ECDSA verify (32-byte digest)
                    μs/call     vs best   spread
-  pycoin             12.92        1.0x    0.0%   (3x50000 calls)
-  btclib             20.10        1.6x    0.7%   (3x50000 calls)
-  embit              23.11        1.8x    0.0%   (3x50000 calls)
-  bitcoinlib        218.30       16.9x    0.2%   (3x7000 calls)
-  ecdsa            1109.32       85.9x    0.1%   (3x3000 calls)
-  buidl           60691.99     4699.0x    0.2%   (3x25 calls)
+  pycoin             12.93        1.0x     0.20   (3x50000 calls)
+  btclib             20.88        1.6x     0.05   (3x50000 calls)
+  embit              23.02        1.8x     0.06   (3x50000 calls)
+  bitcoinlib        217.82       16.8x     2.25   (3x7000 calls)
+  ecdsa            1089.04       84.2x    27.97   (3x3000 calls)
+  buidl           60568.13     4682.6x   432.83   (3x25 calls)
 
 3. BIP340 sign (32-byte message)
                    μs/call     vs best   spread
-  embit              21.25        1.0x    0.1%   (3x50000 calls)
-  btclib             22.33        1.1x    0.1%   (3x50000 calls)
-  buidl          106922.54     5030.8x    0.2%   (3x20 calls)
+  embit              21.11        1.0x     0.04   (3x50000 calls)
+  btclib             22.13        1.0x     0.03   (3x50000 calls)
+  buidl          106342.54     5037.8x  1163.91   (3x20 calls)
 
 4. BIP340 verify (32-byte message)
                    μs/call     vs best   spread
-  embit              24.28        1.0x    2.1%   (3x50000 calls)
-  btclib             31.84        1.3x    0.2%   (3x50000 calls)
-  buidl           68884.12     2837.1x    0.6%   (3x25 calls)
+  embit              24.14        1.0x     0.11   (3x50000 calls)
+  btclib             32.90        1.4x     0.07   (3x50000 calls)
+  buidl           68616.94     2842.8x  1498.87   (3x25 calls)
 
 5. BIP32 derive, seed to child, every chain BIP32 publishes
                    μs/call     vs best   spread
-  pycoin             48.56        1.0x    0.4%   (3x30000 calls)
-  btclib             63.39        1.3x    0.7%   (3x30000 calls)
-  embit              87.19        1.8x    0.2%   (3x15000 calls)
-  buidl          104267.76     2147.3x    7.1%   (3x12 calls)
+  pycoin             48.29        1.0x     0.81   (3x30000 calls)
+  btclib             64.89        1.3x     0.33   (3x30000 calls)
+  embit              86.08        1.8x     0.12   (3x15000 calls)
+  buidl          103547.02     2144.1x  4825.52   (3x12 calls)
 
 6. base58check encode, a P2PKH address from a hash160
                    μs/call     vs best   spread
-  embit               2.15        1.0x    0.2%   (3x200000 calls)
-  buidl               2.31        1.1x    0.2%   (3x200000 calls)
-  btclib              2.38        1.1x    0.5%   (3x200000 calls)
-  bitcoinlib          2.55        1.2x    0.4%   (3x100000 calls)
-  pycoin              3.70        1.7x    0.2%   (3x200000 calls)
+  embit               2.14        1.0x     0.01   (3x200000 calls)
+  buidl               2.34        1.1x     0.01   (3x200000 calls)
+  btclib              2.37        1.1x     0.01   (3x200000 calls)
+  bitcoinlib          2.55        1.2x     0.08   (3x100000 calls)
+  pycoin              3.63        1.7x     0.01   (3x200000 calls)
 
 7. base58check decode, a hash160 from a P2PKH address
                    μs/call     vs best   spread
-  btclib              2.43        1.0x    0.3%   (3x200000 calls)
-  embit               2.50        1.0x    0.4%   (3x200000 calls)
-  buidl               3.02        1.2x    0.6%   (3x200000 calls)
-  pycoin              3.75        1.5x    1.1%   (3x200000 calls)
-  bitcoinlib          4.23        1.7x    0.6%   (3x100000 calls)
+  embit               2.42        1.0x     0.05   (3x200000 calls)
+  btclib              2.45        1.0x     0.01   (3x200000 calls)
+  buidl               2.89        1.2x     0.01   (3x200000 calls)
+  pycoin              3.71        1.5x     0.18   (3x200000 calls)
+  bitcoinlib          4.21        1.7x     0.06   (3x100000 calls)
 
 8. bech32 encode, a witness-v0 address from a 20-byte program
                    μs/call     vs best   spread
-  btclib              8.05        1.0x    1.0%   (3x200000 calls)
-  buidl              11.39        1.4x    1.1%   (3x100000 calls)
-  bitcoinlib         26.64        3.3x    0.2%   (3x200000 calls)
-  embit              26.67        3.3x    0.1%   (3x200000 calls)
+  btclib              7.86        1.0x     0.02   (3x200000 calls)
+  buidl              11.26        1.4x     0.01   (3x100000 calls)
+  embit              26.17        3.3x     0.05   (3x200000 calls)
+  bitcoinlib         26.21        3.3x     0.10   (3x200000 calls)
 
 9. bech32 decode, a 20-byte program from a witness-v0 address
                    μs/call     vs best   spread
-  btclib              7.06        1.0x    0.3%   (3x200000 calls)
-  buidl              10.30        1.5x    0.2%   (3x100000 calls)
-  bitcoinlib         14.62        2.1x    0.9%   (3x200000 calls)
-  embit              14.63        2.1x    0.0%   (3x200000 calls)
+  btclib              6.85        1.0x     0.11   (3x200000 calls)
+  buidl              10.32        1.5x     0.22   (3x100000 calls)
+  embit              14.50        2.1x     0.18   (3x200000 calls)
+  bitcoinlib         14.51        2.1x     0.24   (3x200000 calls)
 
 10. bech32m encode, a witness-v1 address from a 32-byte program
                    μs/call     vs best   spread
-  btclib             13.80        1.0x    1.3%   (3x200000 calls)
-  buidl              17.14        1.2x    0.1%   (3x100000 calls)
-  embit              40.23        2.9x    0.7%   (3x200000 calls)
+  btclib             13.27        1.0x     0.06   (3x200000 calls)
+  buidl              17.19        1.3x     0.09   (3x100000 calls)
+  embit              39.53        3.0x     0.26   (3x200000 calls)
 
 11. bech32m decode, a 32-byte program from a witness-v1 address
                    μs/call     vs best   spread
-  btclib             11.72        1.0x    0.6%   (3x200000 calls)
-  buidl              15.43        1.3x    0.2%   (3x100000 calls)
-  embit              22.02        1.9x    0.1%   (3x200000 calls)
+  btclib             11.55        1.0x     0.13   (3x200000 calls)
+  buidl              15.18        1.3x     0.03   (3x100000 calls)
+  embit              21.67        1.9x     0.51   (3x200000 calls)
 ```
 <!-- output: end -->
 
@@ -207,7 +210,7 @@ from the backend found, for the reason its paragraph above gives.
 
 ## More benchmarks
 
-Four other questions are published in `results/`, each with its own
+Four other sets of benchmarks are published in `results/`, each with its own
 comparands:
 
 - [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C

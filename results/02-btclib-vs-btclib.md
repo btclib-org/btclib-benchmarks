@@ -4,11 +4,9 @@
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-15 06:19 CEST (04:19 UTC)
-python  : 3.13.14
-method  : one run, kept whole — nothing repeated, no outlier discarded
-command : uv run python scripts/02-btclib-vs-btclib.py
+when    : 2026-08-15 22:06 CEST (20:06 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
+python  : 3.13.14
 ```
 <!-- run: end -->
 
@@ -28,22 +26,25 @@ and every operation holding one that a caller would call is below.
 
 <!-- output: begin -->
 ```text
-btclib 2026.9 (wrapper 0.8.0.2), measured as μs/call, sorted on the ratio
+btclib 2026.9 (wrapper 0.8.0.3), measured as μs/call, sorted on the ratio
+
+method  : one run, kept whole — nothing repeated, no outlier discarded
+command : uv run python scripts/02-btclib-vs-btclib.py
 
                       libsecp256k1   pure python     ratio
-dsa_sign                      16.2           160      9.9x
-bms_sign                      27.4           322     11.7x
-ssa_sign                      24.7           317     12.9x
-taproot_tweak                 17.3           233     13.5x
-pubkey_from_prvkey            10.1           147     14.5x
-ellswift_decode               7.96           122     15.3x
-generator_mult                8.14           140     17.1x
-pubkey_parse                  3.53          74.2     21.0x
-bms_verify                    23.5           711     30.3x
-dsa_recover                   39.6          1310     33.0x
-ssa_verify                    20.3           673     33.1x
-dsa_verify                    19.4           666     34.3x
-dh_shared_secret              13.5           542     40.1x
+dsa_sign                      17.2           162      9.4x
+bms_sign                      29.2           325     11.1x
+ssa_sign                      25.2           329     13.1x
+pubkey_from_prvkey            11.1           149     13.5x
+taproot_tweak                 17.3           240     13.9x
+generator_mult                8.92           140     15.7x
+pubkey_parse                  4.30          75.7     17.6x
+ellswift_decode               6.17           139     22.6x
+bms_verify                    25.3           695     27.5x
+ssa_verify                    21.3           657     30.9x
+dsa_verify                    20.8           675     32.5x
+dsa_recover                   36.9          1300     35.3x
+dh_shared_secret              12.8           554     43.2x
 ```
 <!-- output: end -->
 
@@ -51,7 +52,7 @@ dh_shared_secret              13.5           542     40.1x
 
 No ratio is under 1.0x: libsecp256k1 wins every operation. What the column
 spreads over is the part worth reading, and it sorts the table into two
-groups with a gap between them.
+groups, divided by what the Python side has to multiply.
 
 The narrow group is every operation whose Python side multiplies the
 generator, or multiplies nothing at all: both signatures, the public key
@@ -75,8 +76,10 @@ costs.
 Inside the wide group the ratio is widest where the least other work
 surrounds the multiplication, and Diffie-Hellman is the end of that: one
 such multiplication and nothing else. It is narrowest at bitcoin-message
-verification and public-key recovery, which carry signature parsing and
-hashing that the C pays for too — work in both halves of a ratio pulls it
+verification, and the row to read that against is public-key recovery,
+which is what bitcoin-message verification does with signature parsing and
+hashing around it. The one with more work in it is the narrower of the
+two, because that work is in both halves of the ratio and pulls it
 towards one.
 
 The whole libsecp256k1 column is timed before the whole Python one, because
@@ -105,7 +108,7 @@ C is the premise.
 
 ## More benchmarks
 
-Four other questions are published in `results/`, each with its own
+Four other sets of benchmarks are published in `results/`, each with its own
 comparands:
 
 - [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C

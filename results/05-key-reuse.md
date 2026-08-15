@@ -4,11 +4,9 @@
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-15 06:19 CEST (04:19 UTC)
-python  : 3.13.14
-method  : one run, kept whole — nothing repeated, no outlier discarded
-command : uv run python scripts/05-key-reuse.py
+when    : 2026-08-15 22:11 CEST (20:11 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
+python  : 3.13.14
 ```
 <!-- run: end -->
 
@@ -35,8 +33,11 @@ to quote.
 <!-- output: begin -->
 ```text
 btclib              : 2026.9
-btclib-secp256k1    : 0.8.0.2
+btclib-secp256k1    : 0.8.0.3
 ecdsa               : 0.19.2
+
+method  : one run, kept whole — nothing repeated, no outlier discarded
+command : uv run python scripts/05-key-reuse.py
 
 what a timing contains
   one call per iteration, its answer discarded: no row checks
@@ -46,18 +47,18 @@ what a timing contains
 
 ECDSA verify, one key, every signature under it
                                          μs/call     vs best
-  btclib, libsecp256k1, parsed point       17.11        1.0x
-  btclib, libsecp256k1, octets             19.70        1.2x
-  python-ecdsa, precomputed               539.83       31.5x
-  btclib, Python, parsed point            618.81       36.2x
-  btclib, Python, octets                  715.87       41.8x
-  python-ecdsa                           1090.68       63.7x
+  btclib, libsecp256k1, parsed point       18.60        1.0x
+  btclib, libsecp256k1, octets             20.97        1.1x
+  python-ecdsa, precomputed               547.77       29.5x
+  btclib, Python, parsed point            590.53       31.8x
+  btclib, Python, octets                  683.05       36.7x
+  python-ecdsa                           1111.93       59.8x
 
 what preparing the key costs, and after how many verifications it pays
                                          prepare   saves/call   break-even
-  btclib, libsecp256k1, parse once          3.54         2.59          1.4
-  btclib, Python, parse once               74.85        97.05          0.8
-  python-ecdsa, precompute()             3331.87       550.85          6.0
+  btclib, libsecp256k1, parse once          4.19         2.37          1.8
+  btclib, Python, parse once               75.69        92.52          0.8
+  python-ecdsa, precompute()             3270.14       564.16          5.8
 ```
 <!-- output: end -->
 
@@ -126,7 +127,7 @@ rather than an omission.
 
 ## More benchmarks
 
-Four other questions are published in `results/`, each with its own
+Four other sets of benchmarks are published in `results/`, each with its own
 comparands:
 
 - [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C

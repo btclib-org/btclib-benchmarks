@@ -2,7 +2,7 @@
   "schema": 1,
   "benchmark": "04-pure-python",
   "run": {
-    "when": "2026-08-15T06:19:59+02:00",
+    "when": "2026-08-15T22:10:56+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "one run, kept whole — nothing repeated, no outlier discarded",
@@ -20,7 +20,7 @@
       [
         "btclib",
         "2026.9",
-        "main@a6988751392b",
+        "main@95b03da34a71",
         "its delegation to btclib-secp256k1's cffi bindings switched off"
       ],
       [
@@ -65,23 +65,23 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 187.05604481510818
+          "us_per_call": 188.42687481082976
         },
         {
           "label": "secp256k1lab",
-          "us_per_call": 913.6237506754696
+          "us_per_call": 919.0445789135993
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 212.92916499078274
+          "us_per_call": 220.20646021701396
         },
         {
           "label": "pycoin",
-          "us_per_call": 5964.229197707027
+          "us_per_call": 5862.554151099175
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 20691.48749578744
+          "us_per_call": 20621.20418995619
         }
       ]
     },
@@ -92,23 +92,23 @@
       "rows": [
         {
           "label": "btclib, one signature",
-          "us_per_call": 161.97083983570337
+          "us_per_call": 164.82250299304724
         },
         {
           "label": "btclib, grinding (default)",
-          "us_per_call": 602.1833512932062
+          "us_per_call": 612.4270497821271
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 282.43958950042725
+          "us_per_call": 291.80417070165277
         },
         {
           "label": "pycoin",
-          "us_per_call": 6139.470846392214
+          "us_per_call": 6014.587497338653
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 29624.212509952486
+          "us_per_call": 29485.504189506173
         }
       ]
     },
@@ -119,19 +119,19 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 817.5183413550258
+          "us_per_call": 800.7758390158415
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 1085.795839317143
+          "us_per_call": 1134.1733392328024
         },
         {
           "label": "pycoin",
-          "us_per_call": 19103.954103775322
+          "us_per_call": 18901.233305223286
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 60612.57082037628
+          "us_per_call": 60552.39578709006
         }
       ]
     },
@@ -142,15 +142,15 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 333.0483241006732
+          "us_per_call": 330.2516834810376
         },
         {
           "label": "secp256k1lab",
-          "us_per_call": 7335.1666843518615
+          "us_per_call": 7360.469158738852
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 109615.20839482546
+          "us_per_call": 108874.08321723342
         }
       ]
     },
@@ -161,15 +161,15 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 690.9658201038837
+          "us_per_call": 662.627499550581
         },
         {
           "label": "secp256k1lab",
-          "us_per_call": 5090.28831962496
+          "us_per_call": 5082.248337566853
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 67653.22911087424
+          "us_per_call": 67038.08750025928
         }
       ]
     }

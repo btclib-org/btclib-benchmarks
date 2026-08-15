@@ -83,11 +83,12 @@ class Timing:
     `spread` and `deviation` are two answers to one question, how far the
     rounds of a row scattered, and a row carries whichever its script
     measured: the spread is how far the slowest round ran from the
-    quickest, and the deviation is the standard deviation over all of
-    them, which is worth having only where the rounds are many. Both are
-    optional, as `calls` is: a script that times each row once has no
-    dispersion to state, and printing an absent one as zero would claim a
-    quiet machine.
+    quickest, in the same microseconds as `us_per_call` so that the two
+    are read against each other without arithmetic, and the deviation is
+    the standard deviation over all of them, which is worth having only
+    where the rounds are many. Both are optional, as `calls` is: a script
+    that times each row once has no dispersion to state, and printing an
+    absent one as zero would claim a quiet machine.
     """
 
     label: str
@@ -343,21 +344,22 @@ def rendered_provenance(provenance: Provenance) -> str:
 
 
 def rendered_run(run: Run) -> str:
-    """Return the block naming the run, which no number in it can.
+    """Return the block naming when and where a run took place.
 
     Local time and UTC both: a run is dated for whoever reads it next, and
     the two answers are the same instant said twice rather than a
-    conversion the reader is left to make.
+    conversion the reader is left to make. `method` and `command` are not
+    here: both are a claim about the numbers below rather than about the
+    moment the clock started, so they open the output block instead, next
+    to what they describe.
     """
     when = datetime.fromisoformat(run.when)
     utc = when.astimezone(UTC)
     return "\n".join(
         [
             f"when    : {when:%Y-%m-%d %H:%M} {run.timezone} ({utc:%H:%M} UTC)",
-            f"python  : {run.python}",
-            f"method  : {run.method}",
-            f"command : {run.command}",
             f"machine : {run.machine}",
+            f"python  : {run.python}",
         ]
     )
 
@@ -473,7 +475,7 @@ def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
             line += f"{'± ' + format(row.deviation, '.2f'):>10}"
         line += f"{ratio:11.{table.decimals}f}x"
         if row.spread is not None:
-            line += f"{row.spread:8.1%}"
+            line += f"{row.spread:9.2f}"
         lines.append((line if counted else line + _call_note(row)).rstrip())
     return "\n".join(lines)
 
@@ -536,14 +538,18 @@ def rendered_table(table: Table, width: int, *, counted: bool = False) -> str:
 
 
 def rendered_output(measurement: Measurement) -> str:
-    """Return the numbers block: what a timing contains, then every table.
+    """Return the numbers block: how they were taken, then every table.
 
-    One blank line between blocks, which is what the run itself prints as
-    each table is measured. The two are the same text by construction --
-    the script prints these very functions' answers, over the width every
-    label in the run gives them -- so what a person watched go past is
-    what the page carries.
+    `method` and `command` open it, ahead of what a timing contains and
+    every table after that: both are a claim about the numbers below them,
+    not about the run block's moment. One blank line between blocks
+    otherwise, which is what the run itself prints as each table is
+    measured. The two are the same text by construction -- the script
+    prints these very functions' answers, over the width every label in
+    the run gives them -- so what a person watched go past is what the
+    page carries.
     """
+    run = measurement.run
     width = width_for(labels_of(measurement.tables))
     counted = counted_once(measurement.tables)
     blocks = [
@@ -554,6 +560,7 @@ def rendered_output(measurement: Measurement) -> str:
         blocks.insert(0, counted)
     if measurement.timing_note:
         blocks.insert(0, "\n".join(measurement.timing_note))
+    blocks.insert(0, f"method  : {run.method}\ncommand : {run.command}")
     return "\n\n".join(blocks)
 
 

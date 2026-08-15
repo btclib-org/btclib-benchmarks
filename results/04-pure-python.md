@@ -5,7 +5,7 @@
 <!-- provenance: begin -->
 ```text
 package       version           released           held to Python by
-btclib        2026.9            main@a6988751392b  its delegation to btclib-secp256k1's cffi bindings switched off
+btclib        2026.9            main@95b03da34a71  its delegation to btclib-secp256k1's cffi bindings switched off
 pycoin        0.92718.20260405  2026-04-05         PYCOIN_NATIVE=none before its import, resolving to pure Python
 ecdsa         0.19.2            2026-03-26         having no compiled backend at all
 secp256k1lab  1.0.0             2025-03-26         having no compiled backend at all
@@ -25,11 +25,9 @@ tag, which is still a release somebody cut on a day.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-15 06:19 CEST (04:19 UTC)
-python  : 3.13.14
-method  : one run, kept whole — nothing repeated, no outlier discarded
-command : uv run python scripts/04-pure-python.py
+when    : 2026-08-15 22:10 CEST (20:10 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
+python  : 3.13.14
 ```
 <!-- run: end -->
 
@@ -47,6 +45,9 @@ fits in 32 bytes.
 
 <!-- output: begin -->
 ```text
+method  : one run, kept whole — nothing repeated, no outlier discarded
+command : uv run python scripts/04-pure-python.py
+
 what a timing contains
   one call per iteration, its answer discarded: no row checks
   itself, and no comparison is inside a measured loop
@@ -55,38 +56,38 @@ what a timing contains
 
 public key from a private key: a multiplication of the generator
                                  μs/call     vs best
-  btclib                          187.06        1.0x
-  python-ecdsa                    212.93        1.1x
-  secp256k1lab                    913.62        4.9x
-  pycoin                         5964.23       31.9x
-  buidl.pecc                    20691.49      110.6x
+  btclib                          188.43        1.0x
+  python-ecdsa                    220.21        1.2x
+  secp256k1lab                    919.04        4.9x
+  pycoin                         5862.55       31.1x
+  buidl.pecc                    20621.20      109.4x
 
 ECDSA sign, over a 32-byte digest
                                  μs/call     vs best
-  btclib, one signature           161.97        1.0x
-  python-ecdsa                    282.44        1.7x
-  btclib, grinding (default)      602.18        3.7x
-  pycoin                         6139.47       37.9x
-  buidl.pecc                    29624.21      182.9x
+  btclib, one signature           164.82        1.0x
+  python-ecdsa                    291.80        1.8x
+  btclib, grinding (default)      612.43        3.7x
+  pycoin                         6014.59       36.5x
+  buidl.pecc                    29485.50      178.9x
 
 ECDSA verify, over a 32-byte digest
                                  μs/call     vs best
-  btclib                          817.52        1.0x
-  python-ecdsa                   1085.80        1.3x
-  pycoin                        19103.95       23.4x
-  buidl.pecc                    60612.57       74.1x
+  btclib                          800.78        1.0x
+  python-ecdsa                   1134.17        1.4x
+  pycoin                        18901.23       23.6x
+  buidl.pecc                    60552.40       75.6x
 
 BIP340 sign, over a 32-byte message
                                  μs/call     vs best
-  btclib                          333.05        1.0x
-  secp256k1lab                   7335.17       22.0x
-  buidl.pecc                   109615.21      329.1x
+  btclib                          330.25        1.0x
+  secp256k1lab                   7360.47       22.3x
+  buidl.pecc                   108874.08      329.7x
 
 BIP340 verify, over a 32-byte message
                                  μs/call     vs best
-  btclib                          690.97        1.0x
-  secp256k1lab                   5090.29        7.4x
-  buidl.pecc                    67653.23       97.9x
+  btclib                          662.63        1.0x
+  secp256k1lab                   5082.25        7.7x
+  buidl.pecc                    67038.09      101.2x
 ```
 <!-- output: end -->
 
@@ -131,7 +132,7 @@ which is why the pair can be read at all.
 
 ## More benchmarks
 
-Four other questions are published in `results/`, each with its own
+Four other sets of benchmarks are published in `results/`, each with its own
 comparands:
 
 - [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C

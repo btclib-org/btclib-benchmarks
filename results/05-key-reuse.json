@@ -2,7 +2,7 @@
   "schema": 1,
   "benchmark": "05-key-reuse",
   "run": {
-    "when": "2026-08-15T06:19:13+02:00",
+    "when": "2026-08-15T22:11:04+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "one run, kept whole — nothing repeated, no outlier discarded",
@@ -14,7 +14,7 @@
     "rows": [],
     "notes": [
       "btclib              : 2026.9",
-      "btclib-secp256k1    : 0.8.0.2",
+      "btclib-secp256k1    : 0.8.0.3",
       "ecdsa               : 0.19.2"
     ]
   },
@@ -33,27 +33,27 @@
       "rows": [
         {
           "label": "btclib, libsecp256k1, octets",
-          "us_per_call": 19.698875001631677
+          "us_per_call": 20.96697085071355
         },
         {
           "label": "btclib, libsecp256k1, parsed point",
-          "us_per_call": 17.111779155675322
+          "us_per_call": 18.599124997854233
         },
         {
           "label": "btclib, Python, octets",
-          "us_per_call": 715.8670839853585
+          "us_per_call": 683.0500839278102
         },
         {
           "label": "btclib, Python, parsed point",
-          "us_per_call": 618.8124157488346
+          "us_per_call": 590.5260839499533
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 1090.675333980471
+          "us_per_call": 1111.9262501597404
         },
         {
           "label": "python-ecdsa, precomputed",
-          "us_per_call": 539.8262501694262
+          "us_per_call": 547.7663320489228
         }
       ]
     },
@@ -63,21 +63,21 @@
       "rows": [
         {
           "label": "btclib, libsecp256k1, parse once",
-          "prepare": 3.5413957899436355,
-          "plain": 19.698875001631677,
-          "prepared": 17.111779155675322
+          "prepare": 4.186968749854714,
+          "plain": 20.96697085071355,
+          "prepared": 18.599124997854233
         },
         {
           "label": "btclib, Python, parse once",
-          "prepare": 74.84945852775127,
-          "plain": 715.8670839853585,
-          "prepared": 618.8124157488346
+          "prepare": 75.69402095396072,
+          "plain": 683.0500839278102,
+          "prepared": 590.5260839499533
         },
         {
           "label": "python-ecdsa, precompute()",
-          "prepare": 3331.86665084213,
-          "plain": 1090.675333980471,
-          "prepared": 539.8262501694262
+          "prepare": 3270.1437128707767,
+          "plain": 1111.9262501597404,
+          "prepared": 547.7663320489228
         }
       ]
     }
