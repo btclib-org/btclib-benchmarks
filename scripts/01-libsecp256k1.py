@@ -39,14 +39,17 @@ serialized the other way. What that costs is the same C function either
 way -- what it says is which of the two encodings the wrapper leaves its
 caller to reach past it for.
 
-## One input per call, and none of them twice
+## One input per call, and no two tables over the same ones
 
-The inputs are drawn from a seed written into this file: as many secret keys
-and messages as a table has calls, so a round is the list exactly once and no
-row measures one input repeated. Every table starts from those same bytes --
-the keys as 32-byte scalars, the public keys derived from them in the
-uncompressed 65-byte form, the ECDSA signatures serialized to DER -- and
-table 6 tweaks each public key by the secret key it came from.
+The inputs are drawn from a seed written into this file: a secret key and a
+message per call, and as many of each as every table together has calls, so
+that each table reads a slice of its own. A round is that slice exactly once,
+no row measures one input repeated, and nothing a table does can be quick
+because the table before it left the same key in a cache.
+
+Every table starts from the same shapes -- the keys as 32-byte scalars, the
+public keys derived from them, the signatures made once here -- and the last
+tweaks each public key by the secret key it came from.
 
 Random rather than published, and that is the point of the seed. Four
 wrappers of one C library compute the same arithmetic by construction, so a
@@ -280,7 +283,17 @@ def provenance() -> Provenance:
 # One input per call and none of them twice: `CALLS` of each, and a round is
 # the list exactly once.
 SEED = b"btclib-benchmarks/01-libsecp256k1"
-CALLS = 20_000
+CALLS = 10_000
+
+# nine tables, and no two of them over the same keys: the stream is
+# `TABLES_HERE * CALLS` long and each table reads its own slice of it, so a
+# key signed in table 1 is not the key verified in table 6 and no row can
+# be quick because something before it warmed a cache with the same bytes.
+# Nine because that is how many tables are declared at the foot of this
+# file -- a count written twice, and the one place this file repeats
+# itself, `TABLES` needing the rows and the rows needing the slices
+TABLES_HERE = 9
+DRAWS = TABLES_HERE * CALLS
 
 
 def _stream(count: int, start: int) -> list[bytes]:
@@ -291,22 +304,28 @@ def _stream(count: int, start: int) -> list[bytes]:
     ]
 
 
+def _slice(table: int, of: list[bytes]) -> list[bytes]:
+    """Return the `CALLS` elements table `table` reads, counting from one."""
+    return of[(table - 1) * CALLS : table * CALLS]
+
+
 # a 32-byte draw is a valid secret key unless it is zero or at least the
 # group order, which the stream will not produce before the sun goes out
-PRVKEYS = _stream(CALLS, 0)
-MESSAGES = _stream(CALLS, CALLS)
+PRVKEYS = _stream(DRAWS, 0)
+MESSAGES = _stream(DRAWS, DRAWS)
 
 # 65 bytes, the uncompressed form every one of the four parses, so that a
 # verify row is handed the same key as every other verify row. The 33-byte
 # form beside it is what tables 4 and 5 price against each other: the same
 # key, one encoding carrying its y and the other making the parser solve
-# for it
+# for it. Taken from the uncompressed bytes rather than derived a second
+# time -- the parity of y and x are both already there
 PUBKEYS = [
     btclib_secp256k1.keys.pubkey_from_prvkey(prvkey, compressed=False)
     for prvkey in PRVKEYS
 ]
 PUBKEYS_COMPRESSED = [
-    btclib_secp256k1.keys.pubkey_from_prvkey(prvkey) for prvkey in PRVKEYS
+    bytes([2 + (pubkey[64] & 1)]) + pubkey[1:33] for pubkey in PUBKEYS
 ]
 
 # BIP340 takes the x-only key, which is the uncompressed key's x: a slice
@@ -321,37 +340,49 @@ AUX = bytes(32)
 # publishes a signature over a key nobody has seen before, so one of the
 # four signs and all four verify the identical bytes -- which is what a
 # comparison of verifiers wants, and one wrapper's output is the reference
-# only in the sense that some bytes had to be chosen
+# only in the sense that some bytes had to be chosen.
+#
+# Only the slices the verify tables read: signing every draw would be four
+# fifths of a minute spent on signatures nothing verifies
 DSA_SIGS = [
     btclib_secp256k1.dsa.sign(msg, prvkey)
-    for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)
+    for msg, prvkey in zip(_slice(6, MESSAGES), _slice(6, PRVKEYS), strict=True)
+]
+DSA_SIGS_COMPACT = [
+    btclib_secp256k1.dsa.sign(msg, prvkey, compact=True)
+    for msg, prvkey in zip(_slice(7, MESSAGES), _slice(7, PRVKEYS), strict=True)
 ]
 SSA_SIGS = [
     btclib_secp256k1.ssa.sign(msg, prvkey, AUX)
-    for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)
+    for msg, prvkey in zip(_slice(8, MESSAGES), _slice(8, PRVKEYS), strict=True)
 ]
 
-# and the same signatures in the other encoding, made rather than converted:
-# tables 2 and 7 are the compact form end to end, and a DER signature parsed
-# back apart in a fixture would be the same bytes by a different route
-DSA_SIGS_COMPACT = [
-    btclib_secp256k1.dsa.sign(msg, prvkey, compact=True)
-    for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)
-]
-
-# one cycle per shape, every one of them bytes: no row is handed an object
+# one cycle per table, every element of it bytes: no row is handed an object
 # another row's package built, so what a constructor costs is inside the
-# call that needs it, where the caller pays it
-DSA_SIGN = cycle(list(zip(PRVKEYS, MESSAGES, strict=True)))
-SSA_SIGN = cycle(list(zip(PRVKEYS, MESSAGES, strict=True)))
-DSA_VERIFY_DER = cycle(list(zip(PUBKEYS, MESSAGES, DSA_SIGS, strict=True)))
-DSA_VERIFY_COMPACT = cycle(list(zip(PUBKEYS, MESSAGES, DSA_SIGS_COMPACT, strict=True)))
-SSA_VERIFY = cycle(list(zip(XONLY, MESSAGES, SSA_SIGS, strict=True)))
-SSA_VERIFY_FULL = cycle(list(zip(PUBKEYS, MESSAGES, SSA_SIGS, strict=True)))
+# call that needs it, where the caller pays it. A cycle is exactly `CALLS`
+# long, so a row's round is its table's slice once through, and the four
+# rows of a table are compared over the same inputs in the same order
+DSA_SIGN_DER = cycle(list(zip(_slice(1, PRVKEYS), _slice(1, MESSAGES), strict=True)))
+DSA_SIGN_COMPACT = cycle(
+    list(zip(_slice(2, PRVKEYS), _slice(2, MESSAGES), strict=True))
+)
+SSA_SIGN = cycle(list(zip(_slice(3, PRVKEYS), _slice(3, MESSAGES), strict=True)))
+PARSE_COMPRESSED = cycle(_slice(4, PUBKEYS_COMPRESSED))
+PARSE_UNCOMPRESSED = cycle(_slice(5, PUBKEYS))
+DSA_VERIFY_DER = cycle(
+    list(zip(_slice(6, PUBKEYS), _slice(6, MESSAGES), DSA_SIGS, strict=True))
+)
+DSA_VERIFY_COMPACT = cycle(
+    list(zip(_slice(7, PUBKEYS), _slice(7, MESSAGES), DSA_SIGS_COMPACT, strict=True))
+)
+SSA_VERIFY = cycle(
+    list(zip(_slice(8, XONLY), _slice(8, MESSAGES), SSA_SIGS, strict=True))
+)
+SSA_VERIFY_FULL = cycle(
+    list(zip(_slice(8, PUBKEYS), _slice(8, MESSAGES), SSA_SIGS, strict=True))
+)
 # each public key tweaked by the secret key it came from
-TWEAK = cycle(list(zip(PUBKEYS, PRVKEYS, strict=True)))
-PARSE_COMPRESSED = cycle(PUBKEYS_COMPRESSED)
-PARSE_UNCOMPRESSED = cycle(PUBKEYS)
+TWEAK = cycle(list(zip(_slice(9, PUBKEYS), _slice(9, PRVKEYS), strict=True)))
 
 
 # When each of these releases was published, read from the index and
@@ -414,7 +445,7 @@ WRAPPERS = (
 
 def dsa_sign_der_coincurve() -> None:
     """Time coincurve's ECDSA signing, over a digest it is told not to hash."""
-    prvkey, msg = next(DSA_SIGN)
+    prvkey, msg = next(DSA_SIGN_DER)
     coincurve.PrivateKey(prvkey).sign(msg, hasher=None)
 
 
@@ -426,7 +457,7 @@ def dsa_sign_der_secp256k1() -> None:
     because a signature nothing could store or send is not the operation
     the other three rows perform.
     """
-    prvkey, msg = next(DSA_SIGN)
+    prvkey, msg = next(DSA_SIGN_DER)
     key = secp256k1.PrivateKey(prvkey, raw=True)
     key.ecdsa_serialize(key.ecdsa_sign(msg, raw=True))
 
@@ -441,7 +472,7 @@ def dsa_sign_der_electrum_ecc() -> None:
     rather than through electrum-ecc's own encoder, which is what the other
     three rows have libsecp256k1 do.
     """
-    prvkey, msg = next(DSA_SIGN)
+    prvkey, msg = next(DSA_SIGN_DER)
     sig = create_string_buffer(64)
     _electrum_lib.secp256k1_ecdsa_sign(_electrum_lib.ctx, sig, msg, prvkey, None, None)
     der = create_string_buffer(72)
@@ -453,7 +484,7 @@ def dsa_sign_der_electrum_ecc() -> None:
 
 def dsa_sign_der_btclib_secp256k1() -> None:
     """Time btclib_secp256k1's ECDSA signing, bytes in and DER out."""
-    prvkey, msg = next(DSA_SIGN)
+    prvkey, msg = next(DSA_SIGN_DER)
     btclib_secp256k1.dsa.sign(msg, prvkey)
 
 
@@ -464,7 +495,7 @@ def dsa_sign_compact_coincurve() -> None:
     compact form is reached through the cffi bindings underneath -- the
     ones that method itself calls, serialized the other way.
     """
-    prvkey, msg = next(DSA_SIGN)
+    prvkey, msg = next(DSA_SIGN_COMPACT)
     sig = _coincurve_ffi.new("secp256k1_ecdsa_signature *")
     _coincurve_lib.secp256k1_ecdsa_sign(
         _coincurve_ctx.ctx, sig, msg, prvkey, _coincurve_ffi.NULL, _coincurve_ffi.NULL
@@ -477,7 +508,7 @@ def dsa_sign_compact_coincurve() -> None:
 
 def dsa_sign_compact_secp256k1() -> None:
     """Time secp256k1-py's ECDSA signing, its signature taken to 64 bytes."""
-    prvkey, msg = next(DSA_SIGN)
+    prvkey, msg = next(DSA_SIGN_COMPACT)
     key = secp256k1.PrivateKey(prvkey, raw=True)
     key.ecdsa_serialize_compact(key.ecdsa_sign(msg, raw=True))
 
@@ -488,7 +519,7 @@ def dsa_sign_compact_electrum_ecc() -> None:
     The ctypes bindings again, for the reason the DER row gives: what
     `ecdsa_sign` adds to them is a verification no caller can decline.
     """
-    prvkey, msg = next(DSA_SIGN)
+    prvkey, msg = next(DSA_SIGN_COMPACT)
     sig = create_string_buffer(64)
     _electrum_lib.secp256k1_ecdsa_sign(_electrum_lib.ctx, sig, msg, prvkey, None, None)
     compact = create_string_buffer(64)
@@ -499,7 +530,7 @@ def dsa_sign_compact_electrum_ecc() -> None:
 
 def dsa_sign_compact_btclib_secp256k1() -> None:
     """Time btclib_secp256k1's ECDSA signing, bytes in and 64 bytes out."""
-    prvkey, msg = next(DSA_SIGN)
+    prvkey, msg = next(DSA_SIGN_COMPACT)
     btclib_secp256k1.dsa.sign(msg, prvkey, compact=True)
 
 
@@ -933,7 +964,7 @@ TABLES = (
 # what the run block claims about how these numbers were taken, said by
 # the script that takes them: `benchmark` above is where the thirty rounds
 # and the minimum are, and the spread column is what a reader checks it by
-METHOD = f"{ROUNDS} rounds per row, minimum kept; nothing else repeated"
+METHOD = f"{counted_calls(ROUNDS, CALLS)}, minimum kept"
 
 
 def main() -> None:
@@ -950,10 +981,6 @@ def main() -> None:
     packages = provenance()
     print(rendered_provenance(packages))
     print()
-    # the call count, once, above every table: `rendered_output` puts it
-    # in the same place when the page is built from the saved run
-    print(counted_calls(ROUNDS, CALLS), end="\n\n")
-
     width = width_for(
         [label for _, rows in TABLES for label in labels([f.__name__ for f in rows])]
     )

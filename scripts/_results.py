@@ -441,17 +441,18 @@ def counted_once(tables: Sequence[Table]) -> str:
 
 
 def counted_calls(rounds: int | None, calls: int | None) -> str:
-    """Return the line a page states its call count in, or nothing.
+    """Return how many calls a row is the average of, for the method line.
 
-    Taken by a script from its own constants before it has measured
-    anything, and by `counted_once` from the run afterwards, so that what
-    a person watches and what the page carries are the one sentence.
+    A script builds its own from its constants, and `counted_once` reads
+    the same answer back out of a finished run, so what a person watched
+    and what the page carries are the one sentence rather than two that
+    have to be kept saying the same thing.
     """
     if calls is None:
         return ""
     if rounds is None:
         return f"{calls} calls each row"
-    return f"{rounds} rounds per row, {calls} calls each round"
+    return f"{calls} calls each round, {rounds} rounds per row"
 
 
 def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
@@ -551,13 +552,13 @@ def rendered_output(measurement: Measurement) -> str:
     """
     run = measurement.run
     width = width_for(labels_of(measurement.tables))
-    counted = counted_once(measurement.tables)
+    # the count is in the method line, so a row that shares it with every
+    # other row of the page says it nowhere: `counted_once` is asked
+    # whether they do, not for a line to print
+    counted = bool(counted_once(measurement.tables))
     blocks = [
-        rendered_table(table, width, counted=bool(counted))
-        for table in measurement.tables
+        rendered_table(table, width, counted=counted) for table in measurement.tables
     ]
-    if counted:
-        blocks.insert(0, counted)
     if measurement.timing_note:
         blocks.insert(0, "\n".join(measurement.timing_note))
     blocks.insert(0, f"method  : {run.method}\ncommand : {run.command}")
