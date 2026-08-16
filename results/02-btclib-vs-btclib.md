@@ -4,7 +4,7 @@
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-16 09:17 CEST (07:17 UTC)
+when    : 2026-08-16 16:32 CEST (14:32 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -47,19 +47,19 @@ method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/02-btclib-vs-btclib.py
 
                       libsecp256k1   pure python     ratio
-dsa_sign                      23.0           184      8.0x
-bms_sign                      32.7           362     11.1x
-pubkey_from_prvkey            14.7           166     11.3x
-ssa_sign                      29.2           363     12.4x
-generator_mult                11.7           156     13.3x
-taproot_tweak                 19.4           264     13.6x
-pubkey_parse_33               5.57          83.7     15.0x
-ellswift_decode               6.87           150     21.9x
-bms_verify                    29.2           775     26.5x
-dsa_verify                    28.7           772     26.9x
-ssa_verify                    24.9           746     30.0x
-dsa_recover                   44.3          1480     33.5x
-dh_shared_secret              17.1           616     36.1x
+dsa_sign                      17.8           162      9.1x
+bms_sign                      29.4           336     11.4x
+ssa_sign                      26.6           326     12.3x
+pubkey_from_prvkey            10.9           160     14.6x
+taproot_tweak                 17.9           262     14.7x
+generator_mult                8.69           146     16.9x
+pubkey_parse_33               4.10          75.3     18.4x
+ellswift_decode               6.28           138     22.0x
+bms_verify                    27.4           702     25.6x
+ssa_verify                    23.3           669     28.7x
+dsa_verify                    22.9           689     30.1x
+dsa_recover                   38.9          1320     33.9x
+dh_shared_secret              15.8           557     35.3x
 ```
 <!-- output: end -->
 
@@ -70,7 +70,8 @@ spreads over is the part worth reading, and it sorts the table into two
 groups, divided by what the Python side has to multiply.
 
 The narrow group is every operation whose Python side multiplies the
-generator: both signatures, the public key from a secret key, the bare
+generator: all three signatures — ECDSA, BIP340 and the bitcoin-message
+one, which signs recoverably — the public key from a secret key, the bare
 generator multiplication, and the taproot tweak, which adds one such
 multiplication to a point. With them sit the two operations that are field
 arithmetic rather than a scalar multiplication — parsing a compressed

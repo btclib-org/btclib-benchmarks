@@ -130,7 +130,7 @@ wheels = [
 [[package]]
 name = "btclib"
 version = "2026.9"
-source = { git = "https://github.com/btclib-org/btclib?branch=main#95b03da34a715dfd5d0f4aa0a6671bd7716d65f3" }
+source = { git = "https://github.com/btclib-org/btclib?branch=main#0abf2fa2bb2ca9639ed0400e3e9c55031ee72622" }
 dependencies = [
     { name = "bitcoin-core-rpc" },
     { name = "btclib-secp256k1" },
@@ -254,7 +254,7 @@ test = [
 [[package]]
 name = "btclib-secp256k1"
 version = "0.8.0.3"
-source = { git = "https://github.com/btclib-org/btclib-secp256k1.git?branch=main#d9933e49e793d4f0292f914b51eaa430247cf25a" }
+source = { git = "https://github.com/btclib-org/btclib-secp256k1.git?branch=main#7c134bc26d01f5d94b9e2db520e627f51032e57b" }
 dependencies = [
     { name = "cffi" },
 ]

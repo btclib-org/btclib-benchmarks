@@ -4,7 +4,7 @@
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-16 09:24 CEST (07:24 UTC)
+when    : 2026-08-16 16:48 CEST (14:48 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -47,18 +47,18 @@ what a timing contains
 
 ECDSA verify, one key, every signature under it
                                          μs/call     vs best
-  btclib, libsecp256k1, parsed point       24.13        1.0x
-  btclib, libsecp256k1, octets             27.90        1.2x
-  python-ecdsa, precomputed               708.35       29.3x
-  btclib, Python, parsed point            734.16       30.4x
-  btclib, Python, octets                  878.22       36.4x
-  python-ecdsa                           1374.45       56.9x
+  btclib, libsecp256k1, parsed point       18.34        1.0x
+  btclib, libsecp256k1, octets             21.03        1.1x
+  python-ecdsa, precomputed               555.27       30.3x
+  btclib, Python, parsed point            580.11       31.6x
+  btclib, Python, octets                  671.40       36.6x
+  python-ecdsa                           1090.94       59.5x
 
 what preparing the key costs, and after how many verifications it pays
                                          prepare   saves/call   break-even
-  btclib, libsecp256k1, parse once          5.19         3.77          1.4
-  btclib, Python, parse once               92.70       144.06          0.6
-  python-ecdsa, precompute()             4046.87       666.10          6.1
+  btclib, libsecp256k1, parse once          3.98         2.69          1.5
+  btclib, Python, parse once               74.77        91.29          0.8
+  python-ecdsa, precompute()             3131.21       535.67          5.8
 ```
 <!-- output: end -->
 

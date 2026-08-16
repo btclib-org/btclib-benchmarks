@@ -24,7 +24,7 @@ what identifies them.
 <!-- provenance: begin -->
 ```text
 package           version  released           libsecp256k1 pin      bindings
-btclib-secp256k1  0.8.0.3  main@d9933e49e793  v0.8.0                cffi
+btclib-secp256k1  0.8.0.3  main@7c134bc26d01  unrecorded            cffi
 electrum-ecc      0.0.7    2026-02-25         v0.7.1                ctypes
 coincurve         21.0.0   2025-03-08         v0.6.0                cffi
 secp256k1         0.14.0   2021-11-06         9526874d, pre-v0.1.0  cffi
@@ -40,7 +40,7 @@ wrappers.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-16 09:09 CEST (07:09 UTC)
+when    : 2026-08-16 16:29 CEST (14:29 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -92,66 +92,66 @@ command : uv run python scripts/01-libsecp256k1.py
 
 1. ECDSA sign (32-byte digest, DER out)
                        μs/call     vs best   spread
-  btclib_secp256k1       12.66       1.00x     2.52
-  secp256k1              26.81       2.12x     2.54
-  coincurve              26.94       2.13x     7.44
-  electrum_ecc           47.81       3.78x     7.75
+  btclib_secp256k1       12.28       1.00x     0.11
+  coincurve              26.40       2.15x     0.72
+  secp256k1              26.68       2.17x     0.33
+  electrum_ecc           47.52       3.87x     0.64
 
 2. ECDSA sign (32-byte digest, 64-byte compact out)
                        μs/call     vs best   spread
-  btclib_secp256k1       12.55       1.00x    14.72
-  secp256k1              26.65       2.12x    26.46
-  electrum_ecc           45.40       3.62x     0.80
+  btclib_secp256k1       12.22       1.00x     0.13
+  secp256k1              26.60       2.18x     0.17
+  electrum_ecc           45.18       3.70x     7.37
   coincurve                 NA
 
 3. BIP340 sign (32-byte message)
                        μs/call     vs best   spread
-  btclib_secp256k1       16.02       1.00x     3.94
-  secp256k1              22.81       1.42x     5.71
-  coincurve              43.45       2.71x     5.74
-  electrum_ecc           48.95       3.06x     0.87
+  btclib_secp256k1       15.92       1.00x     0.15
+  secp256k1              22.64       1.42x     0.90
+  coincurve              43.23       2.72x     1.74
+  electrum_ecc           48.76       3.06x     0.38
 
 4. public key parse (a 33-byte compressed key)
                        μs/call     vs best   spread
-  coincurve               2.39       1.00x     0.06
-  btclib_secp256k1        2.39       1.00x     0.04
-  secp256k1               2.79       1.17x     0.12
-  electrum_ecc            3.30       1.38x     0.15
+  coincurve               2.37       1.00x     0.13
+  btclib_secp256k1        2.39       1.01x     0.04
+  secp256k1               2.78       1.17x     0.04
+  electrum_ecc            3.28       1.38x     0.03
 
 5. public key parse (a 65-byte uncompressed key)
                        μs/call     vs best   spread
-  coincurve               0.25       1.00x     0.04
-  btclib_secp256k1        0.28       1.10x     0.01
-  secp256k1               0.66       2.63x     0.02
-  electrum_ecc            1.17       4.67x     0.04
+  coincurve               0.24       1.00x     0.04
+  btclib_secp256k1        0.28       1.17x     0.04
+  secp256k1               0.64       2.68x     0.02
+  electrum_ecc            1.16       4.85x     0.03
 
 6. ECDSA verify (DER signature, the 65-byte key parsed per call)
                        μs/call     vs best   spread
-  coincurve              13.17       1.00x    30.08
-  btclib_secp256k1       15.06       1.14x     6.03
-  secp256k1              16.33       1.24x    22.00
-  electrum_ecc           19.13       1.45x     1.87
+  coincurve              13.11       1.00x     0.30
+  btclib_secp256k1       13.55       1.03x     0.67
+  secp256k1              13.64       1.04x     0.51
+  electrum_ecc           17.34       1.32x     0.15
 
 7. ECDSA verify (64-byte signature, the 65-byte key parsed per call)
                        μs/call     vs best   spread
-  btclib_secp256k1       14.57       1.00x     2.42
-  secp256k1              14.91       1.02x     0.78
-  electrum_ecc           16.62       1.14x    15.69
+  btclib_secp256k1       13.52       1.00x     0.36
+  secp256k1              13.63       1.01x     0.17
+  electrum_ecc           15.11       1.12x     2.29
   coincurve                 NA
 
 8. BIP340 verify (32-byte message, the public key parsed per call)
                        μs/call     vs best   spread
-  secp256k1              15.53       1.00x    31.37
-  btclib_secp256k1       15.87       1.02x     6.28
-  electrum_ecc           17.28       1.11x    31.63
-  coincurve              23.61       1.52x    30.25
+  secp256k1              13.63       1.00x     0.21
+  coincurve              15.29       1.12x     0.21
+  btclib_secp256k1       15.63       1.15x     0.08
+  electrum_ecc           17.17       1.26x     0.25
 
 9. public key tweak by a scalar, which is BIP32's step
                        μs/call     vs best   spread
-  coincurve              10.33       1.00x    25.13
-  btclib_secp256k1       13.15       1.27x    11.53
-  secp256k1              16.53       1.60x    26.58
-  electrum_ecc           25.83       2.50x     6.83
+  coincurve              10.23       1.00x     0.17
+  btclib_secp256k1       10.85       1.06x     0.18
+  secp256k1              13.74       1.34x     0.27
+  electrum_ecc           22.53       2.20x     3.12
 ```
 <!-- output: end -->
 
@@ -182,9 +182,13 @@ to read the others against. electrum-ecc pays the most for it in both, its
 libsecp256k1 read, and parsing again on every use.
 
 BIP340 signing is the one operation where a keypair has to be built no
-matter what: ECDSA takes the secret key as it is, and Schnorr does not, so
-that table spreads where table 1's four rows are the same C with four
-argument conventions around it.
+matter what: ECDSA takes the secret key as it is, and Schnorr does not.
+That toll is not read across a table — every row of table 3 pays it, so it
+moves them all together — but down a column: the same package signs a
+Schnorr message for more than it signs an ECDSA digest, and the keypair is
+the difference. What spreads a signing table is still the wrapper's
+habits, which is why table 1 spreads as widely as table 3 despite having
+no keypair in it at all.
 
 The tweak table is BIP32's step rather than BIP32: none of these four
 packages implements derivation, and all four expose the primitive it is

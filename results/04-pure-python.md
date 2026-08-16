@@ -5,7 +5,7 @@
 <!-- provenance: begin -->
 ```text
 package       version           released           held to Python by
-btclib        2026.9            main@95b03da34a71  its delegation to btclib-secp256k1's cffi bindings switched off
+btclib        2026.9            main@0abf2fa2bb2c  its delegation to btclib-secp256k1's cffi bindings switched off
 pycoin        0.92718.20260405  2026-04-05         PYCOIN_NATIVE=none before its import, resolving to pure Python
 ecdsa         0.19.2            2026-03-26         having no compiled backend at all
 secp256k1lab  1.0.0             2025-03-26         having no compiled backend at all
@@ -25,7 +25,7 @@ tag, which is still a release somebody cut on a day.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-16 09:24 CEST (07:24 UTC)
+when    : 2026-08-16 16:45 CEST (14:45 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -56,38 +56,38 @@ what a timing contains
 
 public key from a private key: a multiplication of the generator
                                  μs/call     vs best
-  btclib                          361.52        1.0x
-  python-ecdsa                    475.58        1.3x
-  secp256k1lab                   2285.07        6.3x
-  pycoin                        10253.06       28.4x
-  buidl.pecc                    49958.90      138.2x
+  btclib                          185.66        1.0x
+  python-ecdsa                    272.34        1.5x
+  secp256k1lab                   1287.17        6.9x
+  pycoin                         5831.95       31.4x
+  buidl.pecc                    29863.88      160.8x
 
 ECDSA sign, over a 32-byte digest
                                  μs/call     vs best
-  btclib, one signature           255.31        1.0x
-  python-ecdsa                    456.82        1.8x
-  btclib, grinding (default)      474.98        1.9x
-  pycoin                         8861.19       34.7x
-  buidl.pecc                    49594.70      194.3x
+  btclib, one signature           163.19        1.0x
+  python-ecdsa                    288.37        1.8x
+  btclib, grinding (default)      375.71        2.3x
+  pycoin                         5788.66       35.5x
+  buidl.pecc                    29848.35      182.9x
 
 ECDSA verify, over a 32-byte digest
                                  μs/call     vs best
-  btclib                         1339.47        1.0x
-  python-ecdsa                   1889.11        1.4x
-  pycoin                        31088.84       23.2x
-  buidl.pecc                   100741.66       75.2x
+  btclib                          788.22        1.0x
+  python-ecdsa                   1091.37        1.4x
+  pycoin                        17354.60       22.0x
+  buidl.pecc                    59406.60       75.4x
 
 BIP340 sign, over a 32-byte message
                                  μs/call     vs best
-  btclib                          550.02        1.0x
-  secp256k1lab                  12243.75       22.3x
-  buidl.pecc                   161416.51      293.5x
+  btclib                          322.50        1.0x
+  secp256k1lab                   7629.88       23.7x
+  buidl.pecc                   103519.81      321.0x
 
 BIP340 verify, over a 32-byte message
                                  μs/call     vs best
-  btclib                         1027.65        1.0x
-  secp256k1lab                   7819.94        7.6x
-  buidl.pecc                   109936.62      107.0x
+  btclib                          658.73        1.0x
+  secp256k1lab                   5037.21        7.6x
+  buidl.pecc                    71509.70      108.6x
 ```
 <!-- output: end -->
 
@@ -96,9 +96,10 @@ BIP340 verify, over a 32-byte message
 btclib's Python arithmetic leads every table here,
 `python-ecdsa` is second in each one it has a row in, and `buidl.pecc` is
 last in all five by a distance nothing on this machine would reorder. The
-top two are within a small factor of each other in the public key table,
-close enough that a busy machine can put either first — which is the reason
-to read the ratio column and not the order alone.
+top two are closest in the public key table, where btclib and python-ecdsa
+are within a factor rather than an order of magnitude — everywhere else on
+this page the gaps are wide enough that the order is not in question, which
+is why the ratio column is the one to read and not the ranking.
 
 The one place another implementation's number comes out smaller than a
 btclib number is the signing table, and what is above btclib there is
