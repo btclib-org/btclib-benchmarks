@@ -117,6 +117,20 @@ slower, it is more than one of them.
 here because BIP340 is where btclib has fewer pure-Python comparands than for
 ECDSA.
 
+Two of the comparands verify more than they should, and the verification
+rows are where that matters. Run against Wycheproof, whose subject is
+adversarial encodings, `pycoin` accepts BER long-form lengths, lengths
+that are wrong or that overflow a uint64, and signatures with bytes
+appended or taken away; `buidl.pecc` accepts zeros prepended to r and to
+s, a truncated r, and an r larger than any verification should admit, and
+rejects one valid signature where `k*G` has a large x coordinate. The rows
+above are still the cost of verifying a signature a specification
+publishes, which both answer correctly — but a verification row is read as
+a verification, and theirs admits more than the arithmetic does.
+[The libraries table][libs] lists this and the rest of what these packages
+get wrong, `tests/vectors_test.py` records every case as an expected
+failure, and a release that fixes one turns the suite red.
+
 What all of this costs against C is not in this table: that is
 [the two-paths table][two], over btclib's own arithmetic, and [the
 bitcoin-libraries table][libs], over what `pip install` gives.

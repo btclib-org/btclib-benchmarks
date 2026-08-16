@@ -199,11 +199,42 @@ Two things this output says are worth reading twice:
 
 The encoding tables are the only ones that are not curve work, and they are
 where these libraries differ most: pure Python in all five, so what separates
-them is the code. They also hold the one wrong answer in this benchmark.
-`python-bitcoinlib` encodes a witness-v1 program with bech32's checksum
-constant where BIP350 requires bech32m's, and rejects the address BIP350
-publishes, so it has no bech32m row — `tests/vectors_test.py` holds it to
-both halves of that.
+them is the code.
+
+## What these packages get wrong
+
+A row here is a timing and not a verdict, so where a comparand answers a
+published case wrongly this page says so. None of it makes a row
+meaningless — every package times the operation it is asked for, over
+inputs it handles — but a reader comparing them is owed the fact that some
+of them are lax about what they accept.
+
+`python-bitcoinlib` is the one that cannot be timed at all in a table it
+would otherwise appear in. It encodes a witness-v1 program with bech32's
+checksum constant where BIP350 requires bech32m's, and refuses to decode
+the address BIP350 publishes, so it has no bech32m row in either
+direction. `tests/round_trip_test.py` holds it to both halves of that,
+which is also what will fail when a release fixes it.
+
+`pycoin` and `buidl` are lax where a DER decoder should be strict. Run
+against Wycheproof, whose whole subject is adversarial encodings, both
+accept signatures the file rejects: pycoin reads BER long-form lengths
+where DER admits one form, lengths that are wrong or that overflow a
+uint64, and signatures with bytes appended or taken away that still parse;
+buidl reads the same family, plus zeros prepended to r and to s, a
+truncated r, and an r larger than any verification should admit. The one
+that goes the other way is buidl's, which *rejects* a valid signature
+where `k*G` has a large x coordinate.
+
+`buidl` also cannot encode the empty payload that Bitcoin Core publishes
+as the first base58 case: its encoder goes through `int(s.hex(), 16)`,
+which raises on the empty string rather than answering with it.
+
+Every one of these is recorded in `tests/vectors_test.py` as an expected
+failure rather than skipped, so a release that fixes one turns the suite
+red and brings somebody back to this list. What none of them changes is
+the timings above: the signatures and addresses these rows carry are the
+ones a specification publishes, and every package answers those correctly.
 
 The loop counts are per row and print beside their rows, sorting putting rows
 orders of magnitude apart next to each other. pycoin's are picked at run time,
