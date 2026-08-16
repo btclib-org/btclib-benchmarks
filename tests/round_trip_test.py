@@ -82,10 +82,21 @@ def _pycoin(msg: bytes, prvkey: bytes) -> bool:
     """Sign and verify through pycoin, which takes the digest as an integer.
 
     Reduced modulo the order, which is what any implementation does with a
-    digest internally and what pycoin refuses to do for a caller.
+    digest internally and what pycoin refuses to do for a caller. A digest
+    of zero it refuses outright, and BIP340's first vector has a message of
+    zeros: skipped rather than asserted, because what would be recorded is
+    a refusal every implementation is entitled to -- the benchmarks leave
+    the same input out of their ECDSA rows for the same reason.
+
+    Whether the refusal happens at all depends on which backend pycoin
+    found, and that depends on whether anything has loaded libsecp256k1
+    into the process first -- which under `pytest-randomly` is a property
+    of the run. The skip is unconditional so that the outcome is not.
     """
     scalar = int.from_bytes(prvkey, "big")
     digest = int.from_bytes(msg, "big") % PYCOIN_GENERATOR.order()
+    if not digest:
+        pytest.skip("pycoin refuses a zero digest, and this message is zeros")
     signature = PYCOIN_GENERATOR.sign(scalar, digest)
     return bool(PYCOIN_GENERATOR.verify(PYCOIN_GENERATOR * scalar, digest, signature))
 
