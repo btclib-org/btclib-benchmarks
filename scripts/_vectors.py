@@ -205,13 +205,3 @@ def wycheproof() -> list[Wycheproof]:
         for group in published["testGroups"]
         for case in group["tests"]
     ]
-
-
-def verification() -> list[Bip340]:
-    """Return the BIP340 rows a benchmark can time, which are the valid ones.
-
-    The invalid rows belong to the suite: a verification that fails early has
-    not done the work being timed, and mixing the two would make a row's
-    number depend on how many of each it was handed.
-    """
-    return [v for v in bip340() if v.valid and len(v.msg) == 32]
