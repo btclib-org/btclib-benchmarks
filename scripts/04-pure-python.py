@@ -87,6 +87,7 @@ from hashlib import sha256
 from importlib.metadata import version
 from itertools import cycle
 
+import _inputs
 import buidl.pecc
 import ecdsa
 import pycoin.symbols.btc
@@ -104,7 +105,6 @@ from _results import (
     taken_now,
     width_for,
 )
-from _vectors import signing, verification
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
@@ -175,38 +175,56 @@ def provenance() -> Provenance:
 
 PYCOIN_GENERATOR = pycoin.symbols.btc.network.generator
 
-# every published vector, cycled, rather than one input repeated: a row that
-# calls one input a thousand times measures that input. `_vectors` reads
-# BIP340's file and checks its digest, and each row below takes the next of
-# what it publishes per call
-SIGNING = signing()
-VERIFYING = verification()
+# The inputs are `_inputs`': one pool, shared by every benchmark here, built
+# once and read from `.inputs/` afterwards. That module holds the seed, the
+# pool size and the reason for both, and `GENERATION` there is what "new
+# inputs" means.
+#
+# Two hundred is the longest column on this page -- these rows are Python
+# arithmetic and a hundred calls is already tenths of a second -- so that is
+# what the pool is read for. Each package's own fixtures are built only as
+# deep as its own longest row reads, which is the difference between a
+# second of setup and most of a minute: one buidl key is a generator
+# multiplication in Python, and its rows make ten calls. Nothing here
+# asserts -- whether these implementations agree is
+# `tests/round_trip_test.py`'s subject, and BIP340's own answers are
+# `tests/vectors_test.py`'s.
+CALLS = 200
+ECDSA_CALLS = 100
+PYCOIN_CALLS = 20
+BUIDL_CALLS = 10
+BTCLIB_CALLS = 50
 
-SCALARS = [int.from_bytes(v.prvkey, "big") for v in SIGNING]
-PUBKEYS = [pub_keyinfo_from_prv_key(scalar)[0] for scalar in SCALARS]
+MESSAGES = _inputs.messages()[:CALLS]
+PRVKEYS = _inputs.keys()[:CALLS]
+SCALARS = [int.from_bytes(prvkey, "big") for prvkey in PRVKEYS]
+PUBKEYS = _inputs.pubkeys_33()[:CALLS]
+XONLY = _inputs.xonly()[:CALLS]
+
+# BIP340's auxiliary randomness, thirty-two zeros throughout: it is an input
+# to the nonce and not to the arithmetic, so one value keeps every row
+# signing the same way and none of them is quicker for it
+AUX = bytes(32)
 
 # signed here, deterministically, so that every row verifies the same
 # signature rather than one of its own: grind=False takes dsa.sign_'s plain
-# RFC6979 nonce, and each vector's own aux_rand replaces ssa.sign_'s random
-# default -- which is also what makes the BIP340 rows checkable against the
-# specification
+# RFC6979 nonce, and AUX replaces ssa.sign_'s random default.
+#
 # pycoin and buidl take an ECDSA digest as an integer rather than as bytes,
-# and pycoin refuses two values BIP340's messages happen to include: one at or
-# above the group order, and zero. Reducing modulo the order is what every
-# implementation does with a digest internally, so that keeps all of them on
-# one value; the zero leaves the ECDSA cycles, the BIP340 rows keeping it
+# and pycoin refuses a value at or above the group order. Reducing modulo
+# the order is what every implementation does with a digest internally, so
+# that keeps all of them on one value
 ORDER = curve.secp256k1.n
-DSA_VECTORS = [v for v in SIGNING if int.from_bytes(v.msg, "big") % ORDER]
-DSA_SCALARS = [int.from_bytes(v.prvkey, "big") for v in DSA_VECTORS]
-DSA_SIGS = [dsa.sign_(v.msg, v.prvkey, grind=False) for v in DSA_VECTORS]
+DSA_SCALARS = SCALARS
+DSA_SIGS = [
+    dsa.sign_(msg, prvkey, grind=False)
+    for msg, prvkey in zip(MESSAGES[:BTCLIB_CALLS], PRVKEYS[:BTCLIB_CALLS], strict=True)
+]
 DSA_SIG_BYTES = [sig.serialize() for sig in DSA_SIGS]
-
-# against BIP340 before anything is timed. ECDSA has no such line: RFC6979's
-# nonce is btclib's own and no vendored file publishes a signature over these
-# messages, so those rows stay cross-checked between implementations
-for _v, _pubkey in zip(SIGNING, PUBKEYS, strict=True):
-    assert _pubkey[1:] == _v.xonly_pubkey
-    assert ssa.sign_(_v.msg, _v.prvkey, aux=_v.aux).serialize() == _v.sig
+SSA_SIGS = [
+    ssa.sign_(msg, prvkey, aux=AUX).serialize()
+    for msg, prvkey in zip(MESSAGES[:BTCLIB_CALLS], PRVKEYS[:BTCLIB_CALLS], strict=True)
+]
 
 
 def python_arithmetic_only() -> None:
@@ -260,25 +278,25 @@ def _pycoin_backend() -> str:
 
 def pubkey_btclib() -> None:
     """Time the generator multiplication btclib answers a public key with."""
-    scalar, _expected = next(PUBKEY_BTCLIB)
+    scalar = next(PUBKEY_BTCLIB)
     pub_keyinfo_from_prv_key(scalar)[0]
 
 
 def pubkey_lab() -> None:
     """Time secp256k1lab's, which multiplies G through a table of its own."""
-    scalar, _expected = next(PUBKEY_LAB)
+    scalar = next(PUBKEY_LAB)
     (scalar * LAB_G).to_bytes_compressed()
 
 
 def pubkey_buidl() -> None:
     """Time buidl's pure-Python S256Point."""
-    scalar, _expected = next(PUBKEY_BUIDL)
+    scalar = next(PUBKEY_BUIDL)
     buidl.pecc.PrivateKey(scalar).point.sec()
 
 
 def pubkey_ecdsa() -> None:
     """Time python-ecdsa's."""
-    scalar, _expected = next(PUBKEY_ECDSA)
+    scalar = next(PUBKEY_ECDSA)
     ecdsa.SigningKey.from_secret_exponent(
         scalar, curve=ecdsa.SECP256k1
     ).verifying_key.to_string("compressed")
@@ -286,7 +304,7 @@ def pubkey_ecdsa() -> None:
 
 def pubkey_pycoin() -> None:
     """Time pycoin's, its native backends turned off."""
-    scalar, _expected = next(PUBKEY_PYCOIN)
+    scalar = next(PUBKEY_PYCOIN)
     pycoin.symbols.btc.network.keys.private(secret_exponent=scalar).sec()
 
 
@@ -299,7 +317,7 @@ def dsa_sign_btclib() -> None:
     `grind=False`, which is not btclib's default: one signature is what every
     other row in the table produces, and the default is the row below.
     """
-    msg, prvkey, _expected = next(DSA_SIGN_BTCLIB)
+    msg, prvkey = next(DSA_SIGN_BTCLIB)
     dsa.sign_(msg, prvkey, grind=False)
 
 
@@ -313,7 +331,7 @@ def dsa_sign_btclib_grind() -> None:
     signature costs, and what a caller who writes `dsa.sign_(msg, key)` waits
     for.
     """
-    msg, prvkey, _ = next(DSA_SIGN_BTCLIB)
+    msg, prvkey = next(DSA_SIGN_BTCLIB)
     dsa.sign_(msg, prvkey)
 
 
@@ -364,7 +382,7 @@ def dsa_verify_buidl() -> None:
 
 def ssa_sign_btclib() -> None:
     """Time a BIP340 signature through btclib, over the vector's aux_rand."""
-    msg, prvkey, aux, _expected = next(SSA_BTCLIB_SIGN)
+    msg, prvkey, aux = next(SSA_BTCLIB_SIGN)
     ssa.sign_(msg, prvkey, aux=aux).serialize()
 
 
@@ -376,7 +394,7 @@ def ssa_verify_btclib() -> None:
 
 def ssa_sign_lab() -> None:
     """Time a BIP340 signature through secp256k1lab."""
-    msg, prvkey, aux, _expected = next(SSA_LAB_SIGN)
+    msg, prvkey, aux = next(SSA_LAB_SIGN)
     secp256k1lab.bip340.schnorr_sign(msg, prvkey, aux)
 
 
@@ -443,132 +461,58 @@ def measured(title: str, rows: Rows) -> Ratios:
     )
 
 
-# the fixtures the third-party rows sign and verify, built once and
-# checked against btclib's own answers below
-# the fixtures each comparand signs and verifies, one per vector, built once
-# and checked against btclib's answers and BIP340's below
+# the fixtures each comparand signs and verifies, built once from the pool
 ECDSA_KEYS = [
     ecdsa.SigningKey.from_secret_exponent(scalar, curve=ecdsa.SECP256k1)
-    for scalar in DSA_SCALARS
+    for scalar in SCALARS[:ECDSA_CALLS]
 ]
 ECDSA_SIGS = [
-    key.sign_digest_deterministic(v.msg, hashfunc=sha256)
-    for key, v in zip(ECDSA_KEYS, DSA_VECTORS, strict=True)
+    key.sign_digest_deterministic(msg, hashfunc=sha256)
+    for key, msg in zip(ECDSA_KEYS, MESSAGES, strict=False)
 ]
-PYCOIN_DIGESTS = [int.from_bytes(v.msg, "big") % ORDER for v in DSA_VECTORS]
-PYCOIN_POINTS = [PYCOIN_GENERATOR * scalar for scalar in DSA_SCALARS]
+PYCOIN_DIGESTS = [int.from_bytes(msg, "big") % ORDER for msg in MESSAGES]
+PYCOIN_POINTS = [PYCOIN_GENERATOR * scalar for scalar in SCALARS[:PYCOIN_CALLS]]
 PYCOIN_PAIRS = [(point[0], point[1]) for point in PYCOIN_POINTS]
 PYCOIN_SIGS = [
     PYCOIN_GENERATOR.sign(scalar, digest)
-    for scalar, digest in zip(DSA_SCALARS, PYCOIN_DIGESTS, strict=True)
+    for scalar, digest in zip(SCALARS[:PYCOIN_CALLS], PYCOIN_DIGESTS, strict=False)
 ]
-BUIDL_KEYS = [buidl.pecc.PrivateKey(scalar) for scalar in DSA_SCALARS]
+BUIDL_KEYS = [buidl.pecc.PrivateKey(scalar) for scalar in SCALARS[:BUIDL_CALLS]]
 BUIDL_SIGS = [
-    key.sign(digest) for key, digest in zip(BUIDL_KEYS, PYCOIN_DIGESTS, strict=True)
+    key.sign(digest) for key, digest in zip(BUIDL_KEYS, PYCOIN_DIGESTS, strict=False)
 ]
-BUIDL_SSA_KEYS = [buidl.pecc.PrivateKey(scalar) for scalar in SCALARS]
+BUIDL_SSA_KEYS = BUIDL_KEYS
 BUIDL_SSA_SIGS = [
-    key.sign_schnorr(v.msg, v.aux)
-    for key, v in zip(BUIDL_SSA_KEYS, SIGNING, strict=True)
+    key.sign_schnorr(msg, AUX)
+    for key, msg in zip(BUIDL_SSA_KEYS, MESSAGES, strict=False)
 ]
-
-# every row answers what btclib answers, and where BIP340 publishes an answer
-# every row answers that: a table of numbers is worth nothing if one of the
-# implementations in it is computing something else
-for _v, _pubkey, _scalar in zip(SIGNING, PUBKEYS, SCALARS, strict=True):
-    assert (_scalar * LAB_G).to_bytes_compressed() == _pubkey
-    assert buidl.pecc.PrivateKey(_scalar).point.sec() == _pubkey
-    assert (
-        ecdsa.SigningKey.from_secret_exponent(
-            _scalar, curve=ecdsa.SECP256k1
-        ).verifying_key.to_string("compressed")
-        == _pubkey
-    )
-    assert (
-        pycoin.symbols.btc.network.keys.private(secret_exponent=_scalar).sec()
-        == _pubkey
-    )
-    assert secp256k1lab.bip340.schnorr_sign(_v.msg, _v.prvkey, _v.aux) == _v.sig
-    assert secp256k1lab.bip340.schnorr_verify(_v.msg, _v.xonly_pubkey, _v.sig)
-
-for _key, _v, _ssa_sig in zip(BUIDL_SSA_KEYS, SIGNING, BUIDL_SSA_SIGS, strict=True):
-    assert _ssa_sig.serialize() == _v.sig
-    assert _key.point.verify_schnorr(_v.msg, _ssa_sig)
-
-for (
-    _v,
-    _dsa_sig,
-    _ecdsa_key,
-    _ecdsa_sig,
-    _pair,
-    _digest,
-    _pycoin_sig,
-    _buidl_key,
-    _buidl_sig,
-) in zip(
-    DSA_VECTORS,
-    DSA_SIG_BYTES,
-    ECDSA_KEYS,
-    ECDSA_SIGS,
-    PYCOIN_PAIRS,
-    PYCOIN_DIGESTS,
-    PYCOIN_SIGS,
-    BUIDL_KEYS,
-    BUIDL_SIGS,
-    strict=True,
-):
-    assert dsa.verify_(_v.msg, pub_keyinfo_from_prv_key(_v.prvkey)[0], _dsa_sig)
-    assert _ecdsa_key.verifying_key.verify_digest(_ecdsa_sig, _v.msg)
-    assert PYCOIN_GENERATOR.verify(_pair, _digest, _pycoin_sig)
-    assert _buidl_key.point.verify(_digest, _buidl_sig)
 
 # one cycle per row
-PUBKEY_BTCLIB = cycle(list(zip(SCALARS, PUBKEYS, strict=True)))
-PUBKEY_LAB = cycle(list(zip(SCALARS, PUBKEYS, strict=True)))
-PUBKEY_ECDSA = cycle(list(zip(SCALARS, PUBKEYS, strict=True)))
-PUBKEY_PYCOIN = cycle(list(zip(SCALARS, PUBKEYS, strict=True)))
-PUBKEY_BUIDL = cycle(list(zip(SCALARS, PUBKEYS, strict=True)))
-DSA_SIGN_BTCLIB = cycle(
-    [(v.msg, v.prvkey, sig) for v, sig in zip(DSA_VECTORS, DSA_SIGS, strict=True)]
-)
-DSA_VERIFY_BTCLIB = cycle(
-    [
-        (v.msg, pub_keyinfo_from_prv_key(v.prvkey)[0], sig)
-        for v, sig in zip(DSA_VECTORS, DSA_SIG_BYTES, strict=True)
-    ]
-)
-DSA_ECDSA = cycle(
-    [
-        (v.msg, key, sig)
-        for v, key, sig in zip(DSA_VECTORS, ECDSA_KEYS, ECDSA_SIGS, strict=True)
-    ]
-)
+PUBKEY_BTCLIB = cycle(SCALARS)
+PUBKEY_LAB = cycle(SCALARS)
+PUBKEY_ECDSA = cycle(SCALARS)
+PUBKEY_PYCOIN = cycle(SCALARS)
+PUBKEY_BUIDL = cycle(SCALARS)
+DSA_SIGN_BTCLIB = cycle(list(zip(MESSAGES, PRVKEYS, strict=True)))
+DSA_VERIFY_BTCLIB = cycle(list(zip(MESSAGES, PUBKEYS, DSA_SIG_BYTES, strict=False)))
+DSA_ECDSA = cycle(list(zip(MESSAGES, ECDSA_KEYS, ECDSA_SIGS, strict=False)))
 DSA_PYCOIN = cycle(
-    [
-        (scalar, digest, pair, sig)
-        for scalar, digest, pair, sig in zip(
-            DSA_SCALARS, PYCOIN_DIGESTS, PYCOIN_PAIRS, PYCOIN_SIGS, strict=True
-        )
-    ]
+    list(zip(SCALARS, PYCOIN_DIGESTS, PYCOIN_PAIRS, PYCOIN_SIGS, strict=False))
 )
-DSA_BUIDL = cycle(
-    [
-        (key, digest, sig)
-        for key, digest, sig in zip(BUIDL_KEYS, PYCOIN_DIGESTS, BUIDL_SIGS, strict=True)
-    ]
+DSA_BUIDL = cycle(list(zip(BUIDL_KEYS, PYCOIN_DIGESTS, BUIDL_SIGS, strict=False)))
+SSA_BTCLIB_SIGN = cycle(
+    [(msg, prvkey, AUX) for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)]
 )
-SSA_BTCLIB_SIGN = cycle([(v.msg, v.prvkey, v.aux, v.sig) for v in SIGNING])
-SSA_BTCLIB_VERIFY = cycle([(v.msg, v.xonly_pubkey, v.sig) for v in VERIFYING])
-SSA_LAB_SIGN = cycle([(v.msg, v.prvkey, v.aux, v.sig) for v in SIGNING])
-SSA_LAB_VERIFY = cycle([(v.msg, v.xonly_pubkey, v.sig) for v in VERIFYING])
+SSA_BTCLIB_VERIFY = cycle(list(zip(MESSAGES, XONLY, SSA_SIGS, strict=False)))
+SSA_LAB_SIGN = cycle(
+    [(msg, prvkey, AUX) for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)]
+)
+SSA_LAB_VERIFY = cycle(list(zip(MESSAGES, XONLY, SSA_SIGS, strict=False)))
 SSA_BUIDL_SIGN = cycle(
-    [(key, v.msg, v.aux) for key, v in zip(BUIDL_SSA_KEYS, SIGNING, strict=True)]
+    [(key, msg, AUX) for key, msg in zip(BUIDL_SSA_KEYS, MESSAGES, strict=False)]
 )
 SSA_BUIDL_VERIFY = cycle(
-    [
-        (key, v.msg, sig)
-        for key, v, sig in zip(BUIDL_SSA_KEYS, SIGNING, BUIDL_SSA_SIGS, strict=True)
-    ]
+    list(zip(BUIDL_SSA_KEYS, MESSAGES, BUIDL_SSA_SIGS, strict=False))
 )
 
 

@@ -109,6 +109,7 @@ from importlib.util import find_spec
 from itertools import cycle
 from pathlib import Path
 
+import _inputs
 import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
 import bitcoin.wallet as bitcoinlib_wallet
@@ -127,6 +128,7 @@ import buidl.hd
 import buidl.helper
 import buidl.libsec_status
 import buidl.pecc
+import buidl.script
 import ecdsa
 import embit.base58
 import embit.bech32
@@ -149,11 +151,11 @@ from _results import (
     taken_now,
     width_for,
 )
-from _vectors import bip32, signing
+from _vectors import bip32
 from btclib.bip32 import bip32 as btclib_bip32
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
-from btclib.to_pub_key import pub_keyinfo_from_key, pub_keyinfo_from_prv_key
+from btclib.to_pub_key import pub_keyinfo_from_key
 
 # the release each version was published on, recorded because no installed
 # metadata carries it: a wheel's METADATA has a Version and no date, and the
@@ -213,25 +215,50 @@ def provenance() -> Provenance:
     )
 
 
-# every published vector, cycled, rather than one input repeated: a row that
-# calls one input fifty thousand times measures that input. `_vectors` reads
-# BIP340's file and BIP32's, checks their digests and decodes them; each row
-# below takes the next of what they publish per call.
+# The curve inputs are `_inputs`': one pool, shared by every benchmark here,
+# built once and read from `.inputs/` afterwards. That module holds the seed,
+# the pool size and the reason for both, and `GENERATION` there is what "new
+# inputs" means. Nothing in this file asserts: whether these six packages
+# agree is `tests/round_trip_test.py`'s subject and BIP340's own answers are
+# `tests/vectors_test.py`'s.
 #
-# The address encodings are the exception and say so where they are defined:
-# one witness-v0 address and one witness-v1 address are what BIP173 and BIP350
-# publish in a form vendored here, so those rows still call one input.
-SIGNING = signing()
+# Two families keep the vector file, and say so where they are defined: BIP32
+# derivation, whose input is a seed and a path that a specification publishes
+# together, and the address encodings, whose input is the one witness-v0 and
+# one witness-v1 address BIP173 and BIP350 publish. Neither is a random key,
+# and neither is something a pool of keys could stand in for.
+#
+# How deep the curve fixtures go. Not the longest row's fifty thousand: an
+# entry is a key object and a signature in each of six packages, two of
+# which sign in pure Python at tens of milliseconds apiece, so fifty
+# thousand of each would be minutes of setup before a number is printed --
+# and `tests/scripts_import_test.py` budgets an import, an unguarded
+# benchmark being what that budget is watching for.
+#
+# Ten thousand instead, which the longest rows read five times per round.
+# Repeating a key is what the pool is sized to allow -- a second pass over
+# the same one is where an implementation that caches per key shows up as
+# one -- and what it costs is that this page cannot see an effect needing
+# more than ten thousand distinct keys to appear
+CURVE_CALLS = 10_000
+MESSAGES = _inputs.messages()[:CURVE_CALLS]
+PRVKEYS = _inputs.keys()[:CURVE_CALLS]
+PUBKEYS = _inputs.pubkeys_33()[:CURVE_CALLS]
+XONLY = _inputs.xonly()[:CURVE_CALLS]
+
+# BIP340's auxiliary randomness, thirty-two zeros throughout: an input to
+# the nonce rather than to the arithmetic, so one value keeps every row
+# signing the same way and none of them is quicker for it
+AUX = bytes(32)
+
 CHAINS = bip32()
 
 # pycoin and buidl take an ECDSA digest as an integer rather than as bytes,
-# and pycoin refuses a value at or above the group order and refuses zero --
-# BIP340's messages include both. Reducing modulo the order is what any
-# implementation does with a digest internally, so that keeps every row on one
-# value; the zero leaves the ECDSA cycles, and the BIP340 rows keep it
+# and pycoin refuses a value at or above the group order. Reducing modulo the
+# order is what any implementation does with a digest internally, so that
+# keeps every row on one value
 ORDER = curve.secp256k1.n
-DSA_VECTORS = [v for v in SIGNING if int.from_bytes(v.msg, "big") % ORDER]
-DIGESTS = [int.from_bytes(v.msg, "big") % ORDER for v in DSA_VECTORS]
+DIGESTS = [int.from_bytes(msg, "big") % ORDER for msg in MESSAGES]
 
 
 # the two modules a native mixin can come from, and what each one means.
@@ -372,27 +399,43 @@ def _arithmetic_bitcoinlib() -> str:
 
 # --- ECDSA sign and verify ---------------------------------------------
 
+# how deep each package's fixtures go: its own longest row and no further.
+# The rows of this page are three orders of magnitude apart -- buidl's pure
+# Python answers fifty calls where btclib answers fifty thousand -- so one
+# depth for all of them would spend minutes building keys nothing reads
+BITCOINLIB_CALLS = 8_000
+PYECDSA_CALLS = 5_000
+PYECDSA_VERIFY_CALLS = 3_000
+BUIDL_CALLS = 50
+# and buidl's signatures separately from its keys: signing in pure Python
+# costs tens of milliseconds each here, and only the verify rows read a
+# signature -- twenty-five calls, against the fifty its sign row makes
+BUIDL_SIG_CALLS = 25
+
 # grind=False wherever a library offers it, so that the signature a verify row
 # checks is the one its sign row produces, and so that every comparand is
 # handed a signature none of them would have refused
-BTCLIB_PUBKEYS = [pub_keyinfo_from_prv_key(v.prvkey)[0] for v in DSA_VECTORS]
-BTCLIB_DSA_SIGS = [dsa.sign_(v.msg, v.prvkey, grind=False) for v in DSA_VECTORS]
+BTCLIB_PUBKEYS = PUBKEYS
+BTCLIB_DSA_SIGS = [
+    dsa.sign_(msg, prvkey, grind=False)
+    for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)
+]
 
 ECDSA_KEYS = [
     ecdsa.SigningKey.from_secret_exponent(
-        int.from_bytes(v.prvkey, "big"), curve=ecdsa.SECP256k1
+        int.from_bytes(prvkey, "big"), curve=ecdsa.SECP256k1
     )
-    for v in DSA_VECTORS
+    for prvkey in PRVKEYS[:PYECDSA_CALLS]
 ]
 ECDSA_SIGS = [
     key.sign_digest_deterministic(
-        v.msg, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der
+        msg, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der
     )
-    for key, v in zip(ECDSA_KEYS, DSA_VECTORS, strict=True)
+    for key, msg in zip(ECDSA_KEYS[:PYECDSA_VERIFY_CALLS], MESSAGES, strict=False)
 ]
 
 pycoin_generator = pycoin.symbols.btc.network.generator
-PYCOIN_SCALARS = [int.from_bytes(v.prvkey, "big") for v in DSA_VECTORS]
+PYCOIN_SCALARS = [int.from_bytes(prvkey, "big") for prvkey in PRVKEYS]
 PYCOIN_PAIRS = [
     (point[0], point[1])
     for point in (pycoin_generator * scalar for scalar in PYCOIN_SCALARS)
@@ -402,8 +445,11 @@ PYCOIN_SIGS = [
     for scalar, digest in zip(PYCOIN_SCALARS, DIGESTS, strict=True)
 ]
 
-BUIDL_KEYS = [buidl.pecc.PrivateKey(scalar) for scalar in PYCOIN_SCALARS]
-BUIDL_SIGS = [key.sign(digest) for key, digest in zip(BUIDL_KEYS, DIGESTS, strict=True)]
+BUIDL_KEYS = [buidl.pecc.PrivateKey(scalar) for scalar in PYCOIN_SCALARS[:BUIDL_CALLS]]
+BUIDL_SIGS = [
+    key.sign(digest)
+    for key, digest in zip(BUIDL_KEYS[:BUIDL_SIG_CALLS], DIGESTS, strict=False)
+]
 
 
 def _bitcoinlib_key(prvkey: bytes) -> bitcoinlib_key.CECKey:
@@ -414,108 +460,41 @@ def _bitcoinlib_key(prvkey: bytes) -> bitcoinlib_key.CECKey:
     return key
 
 
-BITCOINLIB_KEYS = [_bitcoinlib_key(v.prvkey) for v in DSA_VECTORS]
+BITCOINLIB_KEYS = [_bitcoinlib_key(prvkey) for prvkey in PRVKEYS[:BITCOINLIB_CALLS]]
 BITCOINLIB_PUBKEYS = [
     bitcoinlib_key.CPubKey(key.get_pubkey()) for key in BITCOINLIB_KEYS
 ]
 BITCOINLIB_SIGS = [
-    key.sign(v.msg) for key, v in zip(BITCOINLIB_KEYS, DSA_VECTORS, strict=True)
+    key.sign(msg) for key, msg in zip(BITCOINLIB_KEYS, MESSAGES, strict=False)
 ]
 
-EMBIT_KEYS = [embit.ec.PrivateKey(v.prvkey) for v in DSA_VECTORS]
+EMBIT_KEYS = [embit.ec.PrivateKey(prvkey) for prvkey in PRVKEYS]
 EMBIT_PUBKEYS = [key.get_public_key() for key in EMBIT_KEYS]
 EMBIT_DSA_SIGS = [
-    key.sign(v.msg, grind=False) for key, v in zip(EMBIT_KEYS, DSA_VECTORS, strict=True)
+    key.sign(msg, grind=False) for key, msg in zip(EMBIT_KEYS, MESSAGES, strict=True)
 ]
 
-for (
-    _v,
-    _btclib_pubkey,
-    _btclib_sig,
-    _ecdsa_key,
-    _ecdsa_sig,
-    _pair,
-    _digest,
-    _pycoin_sig,
-    _buidl_key,
-    _buidl_sig,
-    _bitcoinlib_pubkey,
-    _bitcoinlib_sig,
-    _embit_pubkey,
-    _embit_sig,
-) in zip(
-    DSA_VECTORS,
-    BTCLIB_PUBKEYS,
-    BTCLIB_DSA_SIGS,
-    ECDSA_KEYS,
-    ECDSA_SIGS,
-    PYCOIN_PAIRS,
-    DIGESTS,
-    PYCOIN_SIGS,
-    BUIDL_KEYS,
-    BUIDL_SIGS,
-    BITCOINLIB_PUBKEYS,
-    BITCOINLIB_SIGS,
-    EMBIT_PUBKEYS,
-    EMBIT_DSA_SIGS,
-    strict=True,
-):
-    assert dsa.verify_(_v.msg, _btclib_pubkey, _btclib_sig)
-    assert _ecdsa_key.verifying_key.verify_digest(
-        _ecdsa_sig, _v.msg, sigdecode=ecdsa.util.sigdecode_der
-    )
-    assert pycoin_generator.verify(_pair, _digest, _pycoin_sig)
-    assert _buidl_key.point.verify(_digest, _buidl_sig)
-    assert _bitcoinlib_pubkey.verify(_v.msg, _bitcoinlib_sig)
-    assert _embit_pubkey.verify(_embit_sig, _v.msg)
-
 DSA_BTCLIB = cycle(
-    [
-        (v.msg, v.prvkey, pubkey, sig)
-        for v, pubkey, sig in zip(
-            DSA_VECTORS, BTCLIB_PUBKEYS, BTCLIB_DSA_SIGS, strict=True
-        )
-    ]
+    list(zip(MESSAGES, PRVKEYS, BTCLIB_PUBKEYS, BTCLIB_DSA_SIGS, strict=True))
 )
-DSA_ECDSA = cycle(
-    [
-        (v.msg, key, sig)
-        for v, key, sig in zip(DSA_VECTORS, ECDSA_KEYS, ECDSA_SIGS, strict=True)
-    ]
-)
+DSA_ECDSA = cycle(list(zip(MESSAGES, ECDSA_KEYS, ECDSA_SIGS, strict=False)))
 DSA_PYCOIN = cycle(
-    [
-        (scalar, digest, pair, sig)
-        for scalar, digest, pair, sig in zip(
-            PYCOIN_SCALARS, DIGESTS, PYCOIN_PAIRS, PYCOIN_SIGS, strict=True
-        )
-    ]
+    list(zip(PYCOIN_SCALARS, DIGESTS, PYCOIN_PAIRS, PYCOIN_SIGS, strict=True))
 )
-DSA_BUIDL = cycle(
-    [
-        (key, digest, sig)
-        for key, digest, sig in zip(BUIDL_KEYS, DIGESTS, BUIDL_SIGS, strict=True)
-    ]
-)
+DSA_BUIDL = cycle(list(zip(BUIDL_KEYS, DIGESTS, BUIDL_SIGS, strict=False)))
 DSA_BITCOINLIB = cycle(
-    [
-        (v.msg, key, pubkey, sig)
-        for v, key, pubkey, sig in zip(
-            DSA_VECTORS,
+    list(
+        zip(
+            MESSAGES,
             BITCOINLIB_KEYS,
             BITCOINLIB_PUBKEYS,
             BITCOINLIB_SIGS,
-            strict=True,
+            strict=False,
         )
-    ]
+    )
 )
 DSA_EMBIT = cycle(
-    [
-        (v.msg, key, pubkey, sig)
-        for v, key, pubkey, sig in zip(
-            DSA_VECTORS, EMBIT_KEYS, EMBIT_PUBKEYS, EMBIT_DSA_SIGS, strict=True
-        )
-    ]
+    list(zip(MESSAGES, EMBIT_KEYS, EMBIT_PUBKEYS, EMBIT_DSA_SIGS, strict=True))
 )
 
 
@@ -632,68 +611,55 @@ def dsa_verify_embit() -> None:
 
 # --- BIP340 (Schnorr) sign and verify -----------------------------------
 
-# each vector's own aux_rand rather than a random one, which makes both
-# signatures below reproducible and therefore checkable against BIP340 itself.
-# embit's API exposes no aux, so its own signature cannot be pinned and it is
-# held to the vectors the other way, by verifying theirs
-SSA_VECTORS = signing()
-SSA_BTCLIB_KEYS = [(v.msg, v.prvkey, v.aux, v.sig) for v in SSA_VECTORS]
+# one aux_rand for every signature, thirty-two zeros: it is an input to the
+# nonce rather than to the arithmetic, so one value keeps every row signing
+# the same way and none of them is quicker for it. embit's API exposes no
+# aux at all, which is why its signature is its own and the row verifies it
+SSA_BTCLIB_SIGS = [
+    ssa.sign_(msg, prvkey, aux=AUX).serialize()
+    for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)
+]
 SSA_BUIDL_KEYS = [
-    buidl.pecc.PrivateKey(int.from_bytes(v.prvkey, "big")) for v in SSA_VECTORS
+    buidl.pecc.PrivateKey(scalar) for scalar in PYCOIN_SCALARS[:BUIDL_CALLS]
 ]
 SSA_BUIDL_SIGS = [
-    key.sign_schnorr(v.msg, v.aux)
-    for key, v in zip(SSA_BUIDL_KEYS, SSA_VECTORS, strict=True)
+    key.sign_schnorr(msg, AUX)
+    for key, msg in zip(SSA_BUIDL_KEYS[:BUIDL_SIG_CALLS], MESSAGES, strict=False)
 ]
-SSA_EMBIT_KEYS = [embit.ec.PrivateKey(v.prvkey) for v in SSA_VECTORS]
+SSA_EMBIT_KEYS = [embit.ec.PrivateKey(prvkey) for prvkey in PRVKEYS]
 SSA_EMBIT_PUBKEYS = [key.get_public_key() for key in SSA_EMBIT_KEYS]
 SSA_EMBIT_SIGS = [
-    key.schnorr_sign(v.msg) for key, v in zip(SSA_EMBIT_KEYS, SSA_VECTORS, strict=True)
+    key.schnorr_sign(msg) for key, msg in zip(SSA_EMBIT_KEYS, MESSAGES, strict=True)
 ]
 
-for _v, _buidl_key, _buidl_sig, _embit_pubkey, _embit_sig in zip(
-    SSA_VECTORS,
-    SSA_BUIDL_KEYS,
-    SSA_BUIDL_SIGS,
-    SSA_EMBIT_PUBKEYS,
-    SSA_EMBIT_SIGS,
-    strict=True,
-):
-    assert pub_keyinfo_from_prv_key(_v.prvkey)[0][1:] == _v.xonly_pubkey
-    assert ssa.sign_(_v.msg, _v.prvkey, aux=_v.aux).serialize() == _v.sig
-    assert _buidl_sig.serialize() == _v.sig
-    assert _embit_pubkey.schnorr_verify(embit.ec.SchnorrSig.parse(_v.sig), _v.msg)
-    assert ssa.verify_(_v.msg, _v.xonly_pubkey, _v.sig)
-    assert _buidl_key.point.verify_schnorr(_v.msg, _buidl_sig)
-    assert _embit_pubkey.schnorr_verify(_embit_sig, _v.msg)
-
-SSA_BTCLIB = cycle(SSA_BTCLIB_KEYS)
+SSA_BTCLIB = cycle(
+    [(msg, prvkey, AUX) for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)]
+)
+# the x-only key the verification takes, cut in the fixtures rather than
+# derived inside the row: deriving it is a generator multiplication, and
+# every other row of that table verifies against a key it was handed
+SSA_BTCLIB_VERIFY = cycle(list(zip(MESSAGES, XONLY, SSA_BTCLIB_SIGS, strict=True)))
 SSA_BUIDL = cycle(
     [
-        (key, v.msg, v.aux, sig)
-        for key, v, sig in zip(SSA_BUIDL_KEYS, SSA_VECTORS, SSA_BUIDL_SIGS, strict=True)
+        (key, msg, AUX, sig)
+        for key, msg, sig in zip(SSA_BUIDL_KEYS, MESSAGES, SSA_BUIDL_SIGS, strict=False)
     ]
 )
 SSA_EMBIT = cycle(
-    [
-        (key, pubkey, v.msg, sig)
-        for key, pubkey, v, sig in zip(
-            SSA_EMBIT_KEYS, SSA_EMBIT_PUBKEYS, SSA_VECTORS, SSA_EMBIT_SIGS, strict=True
-        )
-    ]
+    list(zip(SSA_EMBIT_KEYS, SSA_EMBIT_PUBKEYS, MESSAGES, SSA_EMBIT_SIGS, strict=True))
 )
 
 
 def ssa_sign_btclib() -> None:
     """Time BIP340 signing through btclib, libsecp256k1 enabled."""
-    msg, prvkey, aux, _ = next(SSA_BTCLIB)
+    msg, prvkey, aux = next(SSA_BTCLIB)
     ssa.sign_(msg, prvkey, aux=aux)
 
 
 def ssa_verify_btclib() -> None:
     """Time BIP340 verification through btclib, libsecp256k1 enabled."""
-    msg, prvkey, _, sig = next(SSA_BTCLIB)
-    ssa.verify_(msg, pub_keyinfo_from_prv_key(prvkey)[0][1:], sig)
+    msg, xonly, sig = next(SSA_BTCLIB_VERIFY)
+    ssa.verify_(msg, xonly, sig)
 
 
 def ssa_sign_buidl() -> None:
@@ -727,7 +693,6 @@ def ssa_verify_embit() -> None:
 # The four libraries spell a hardened step differently, `H` against `'`, and
 # pycoin takes the steps without the leading `m`
 DERIVATIONS = [chain for chain in CHAINS if chain.path != "m"]
-EXPECTED_CHILDREN = [pub_keyinfo_from_key(chain.xpub)[0] for chain in DERIVATIONS]
 
 
 def _btclib_child_pubkey(seed: bytes, path: str) -> bytes:
@@ -751,42 +716,30 @@ def _buidl_child_pubkey(seed: bytes, path: str) -> bytes:
     return bytes(root.traverse(path.replace("H", "'")).pub.point.sec())
 
 
-# the four against each other and all four against what BIP32 publishes for
-# that path: agreeing with one another is what four implementations of the same
-# mistake also do
-for _chain, _expected in zip(DERIVATIONS, EXPECTED_CHILDREN, strict=True):
-    assert (
-        _btclib_child_pubkey(_chain.seed, _chain.path)
-        == _pycoin_child_pubkey(_chain.seed, _chain.path)
-        == _embit_child_pubkey(_chain.seed, _chain.path)
-        == _buidl_child_pubkey(_chain.seed, _chain.path)
-        == _expected
-    )
-
-BIP32 = cycle(list(zip(DERIVATIONS, EXPECTED_CHILDREN, strict=True)))
+BIP32 = cycle(DERIVATIONS)
 
 
 def bip32_derive_btclib() -> None:
     """Time seed-to-child BIP32 derivation through btclib, libsecp256k1 on."""
-    chain, _expected = next(BIP32)
+    chain = next(BIP32)
     _btclib_child_pubkey(chain.seed, chain.path)
 
 
 def bip32_derive_pycoin() -> None:
     """Time seed-to-child BIP32 derivation through pycoin's BIP32Node."""
-    chain, _expected = next(BIP32)
+    chain = next(BIP32)
     _pycoin_child_pubkey(chain.seed, chain.path)
 
 
 def bip32_derive_embit() -> None:
     """Time seed-to-child BIP32 derivation through embit's HDKey."""
-    chain, _expected = next(BIP32)
+    chain = next(BIP32)
     _embit_child_pubkey(chain.seed, chain.path)
 
 
 def bip32_derive_buidl() -> None:
     """Time seed-to-child BIP32 derivation through buidl's HDPrivateKey."""
-    chain, _expected = next(BIP32)
+    chain = next(BIP32)
     _buidl_child_pubkey(chain.seed, chain.path)
 
 
@@ -875,10 +828,8 @@ def bech32_encode_embit() -> None:
 
 
 def bech32_encode_buidl() -> None:
-    """Time buidl's, which takes a serialized witness program."""
-    buidl.bech32.encode_bech32_checksum(
-        b"\x00" + bytes([len(WITNESS_V0)]) + WITNESS_V0, network="mainnet"
-    )
+    """Time buidl's, from the 20-byte program through its own address call."""
+    buidl.script.P2WPKHScriptPubKey(WITNESS_V0).address()
 
 
 def bech32_encode_bitcoinlib() -> None:
@@ -917,10 +868,8 @@ def bech32m_encode_embit() -> None:
 
 
 def bech32m_encode_buidl() -> None:
-    """Time buidl's, from a serialized witness-v1 program."""
-    buidl.bech32.encode_bech32_checksum(
-        b"\x51" + bytes([len(WITNESS_V1)]) + WITNESS_V1, network="mainnet"
-    )
+    """Time buidl's, from the 32-byte program through its own address call."""
+    buidl.script.P2TRScriptPubKey(WITNESS_V1).address()
 
 
 def bech32m_decode_btclib() -> None:
@@ -944,9 +893,8 @@ def bech32m_decode_buidl() -> None:
 # so what it returns for a witness-v1 program is a string no consumer should
 # accept -- and `decode` returns (None, None) for the address BIP350
 # publishes. A row cannot be timed against an answer this project would have
-# to assert is wrong
-assert bitcoin.bech32.encode("bc", 1, WITNESS_V1) != BECH32M_ADDRESS
-assert bitcoin.bech32.decode("bc", BECH32M_ADDRESS) == (None, None)
+# to record as wrong, and `tests/round_trip_test.py` holds it to both
+# directions
 
 # every encoding row is called once before any of them is timed, its own
 # assert holding it to the published address

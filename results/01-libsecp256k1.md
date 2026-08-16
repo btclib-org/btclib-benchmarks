@@ -40,7 +40,7 @@ wrappers.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-16 01:52 CEST (23:52 UTC)
+when    : 2026-08-16 09:09 CEST (07:09 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -92,66 +92,66 @@ command : uv run python scripts/01-libsecp256k1.py
 
 1. ECDSA sign (32-byte digest, DER out)
                        μs/call     vs best   spread
-  btclib_secp256k1       12.70       1.00x     0.11
-  secp256k1              26.67       2.10x     0.38
-  coincurve              26.80       2.11x     0.79
-  electrum_ecc           48.06       3.79x     0.83
+  btclib_secp256k1       12.66       1.00x     2.52
+  secp256k1              26.81       2.12x     2.54
+  coincurve              26.94       2.13x     7.44
+  electrum_ecc           47.81       3.78x     7.75
 
 2. ECDSA sign (32-byte digest, 64-byte compact out)
                        μs/call     vs best   spread
-  btclib_secp256k1       12.57       1.00x     0.63
-  secp256k1              26.74       2.13x    10.12
-  electrum_ecc           45.60       3.63x     0.87
+  btclib_secp256k1       12.55       1.00x    14.72
+  secp256k1              26.65       2.12x    26.46
+  electrum_ecc           45.40       3.62x     0.80
   coincurve                 NA
 
 3. BIP340 sign (32-byte message)
                        μs/call     vs best   spread
-  btclib_secp256k1       16.09       1.00x     0.32
-  secp256k1              22.84       1.42x     0.74
-  coincurve              43.54       2.71x     0.96
-  electrum_ecc           49.23       3.06x     1.03
+  btclib_secp256k1       16.02       1.00x     3.94
+  secp256k1              22.81       1.42x     5.71
+  coincurve              43.45       2.71x     5.74
+  electrum_ecc           48.95       3.06x     0.87
 
 4. public key parse (a 33-byte compressed key)
                        μs/call     vs best   spread
-  coincurve               2.39       1.00x     0.05
-  btclib_secp256k1        2.41       1.01x     0.05
-  secp256k1               2.80       1.17x     0.04
-  electrum_ecc            3.32       1.39x     0.05
+  coincurve               2.39       1.00x     0.06
+  btclib_secp256k1        2.39       1.00x     0.04
+  secp256k1               2.79       1.17x     0.12
+  electrum_ecc            3.30       1.38x     0.15
 
 5. public key parse (a 65-byte uncompressed key)
                        μs/call     vs best   spread
-  coincurve               0.24       1.00x     0.04
-  btclib_secp256k1        0.28       1.19x     0.01
-  secp256k1               0.66       2.77x     0.04
-  electrum_ecc            1.18       4.99x     0.05
+  coincurve               0.25       1.00x     0.04
+  btclib_secp256k1        0.28       1.10x     0.01
+  secp256k1               0.66       2.63x     0.02
+  electrum_ecc            1.17       4.67x     0.04
 
 6. ECDSA verify (DER signature, the 65-byte key parsed per call)
                        μs/call     vs best   spread
-  coincurve              13.23       1.00x     0.20
-  secp256k1              13.77       1.04x     5.72
-  btclib_secp256k1       13.93       1.05x     7.27
-  electrum_ecc           17.53       1.33x     6.59
+  coincurve              13.17       1.00x    30.08
+  btclib_secp256k1       15.06       1.14x     6.03
+  secp256k1              16.33       1.24x    22.00
+  electrum_ecc           19.13       1.45x     1.87
 
 7. ECDSA verify (64-byte signature, the 65-byte key parsed per call)
                        μs/call     vs best   spread
-  secp256k1              13.76       1.00x     9.93
-  btclib_secp256k1       13.87       1.01x     0.44
-  electrum_ecc           15.16       1.10x     0.51
+  btclib_secp256k1       14.57       1.00x     2.42
+  secp256k1              14.91       1.02x     0.78
+  electrum_ecc           16.62       1.14x    15.69
   coincurve                 NA
 
 8. BIP340 verify (32-byte message, the public key parsed per call)
                        μs/call     vs best   spread
-  secp256k1              13.73       1.00x     0.49
-  coincurve              15.41       1.12x     4.85
-  btclib_secp256k1       15.93       1.16x     1.21
-  electrum_ecc           17.31       1.26x     0.10
+  secp256k1              15.53       1.00x    31.37
+  btclib_secp256k1       15.87       1.02x     6.28
+  electrum_ecc           17.28       1.11x    31.63
+  coincurve              23.61       1.52x    30.25
 
 9. public key tweak by a scalar, which is BIP32's step
                        μs/call     vs best   spread
-  coincurve              10.29       1.00x     0.23
-  btclib_secp256k1       11.49       1.12x     0.14
-  secp256k1              13.81       1.34x     0.26
-  electrum_ecc           22.83       2.22x     2.13
+  coincurve              10.33       1.00x    25.13
+  btclib_secp256k1       13.15       1.27x    11.53
+  secp256k1              16.53       1.60x    26.58
+  electrum_ecc           25.83       2.50x     6.83
 ```
 <!-- output: end -->
 

@@ -42,15 +42,17 @@ that filled the gap from the C underneath would hide exactly that.
 
 ## One input per call, and no two tables over the same ones
 
-The inputs are drawn from a seed written into this file: a secret key and a
-message per call, and as many of each as every table together has calls, so
-that each table reads a slice of its own. A round is that slice exactly once,
-no row measures one input repeated, and nothing a table does can be quick
-because the table before it left the same key in a cache.
+The inputs are `scripts/_inputs.py`': one pool, shared by every benchmark in
+this repository, built once from a seed and read from `.inputs/` on every
+run after the first. That module holds the seed and the pool size, and its
+`GENERATION` is what asking for new inputs changes.
 
-Every table starts from the same shapes -- the keys as 32-byte scalars, the
-public keys derived from them, the signatures made once here -- and the last
-tweaks each public key by the secret key it came from.
+Each table reads a slice of that pool as long as one round, so a round is
+its slice exactly once, no row measures one input repeated, and nothing a
+table does can be quick because the table before it left the same key in a
+cache. Every table starts from the same shapes -- the keys as 32-byte
+scalars, the public keys derived from them, the signatures made once here --
+and the last tweaks each public key by the secret key it came from.
 
 Random rather than published, and that is the point of the seed. Four
 wrappers of one C library compute the same arithmetic by construction, so a
@@ -165,10 +167,10 @@ from __future__ import annotations
 import sys
 import time
 from collections.abc import Callable
-from hashlib import sha256
 from importlib.metadata import version
 from itertools import cycle
 
+import _inputs
 import btclib_secp256k1.dsa
 import btclib_secp256k1.keys
 import btclib_secp256k1.ssa
@@ -271,41 +273,29 @@ def provenance() -> Provenance:
     )
 
 
-# The inputs, drawn here and nowhere else: `CALLS` secret keys and as many
-# messages, from one seed, so that a run on another machine is a run over
-# the same bytes. sha256 of the seed and a counter rather than `random`,
-# whose stream is CPython's business and could change under a table nobody
-# re-derived; this one is re-derivable in any language with a hash.
+# The inputs are `_inputs`': one pool, shared by every benchmark here, built
+# once and read from `.inputs/` afterwards. That module holds the seed, the
+# pool size and the reason for both, and `GENERATION` there is what "new
+# inputs" means.
 #
 # Random rather than published. Every wrapper here calls the same C library,
-# so a vector proves nothing about their arithmetic that the other's does
+# so a vector proves nothing about their arithmetic that another input does
 # not, and what a table of them is read for is the boundary crossing. What
 # published vectors are for is correctness, and that is `tests/`: it holds
 # every measured package to BIP340, to Wycheproof and to BIP32, in the
 # configuration this script measures it in, so nothing below asserts.
 #
-# One input per call and none of them twice: `CALLS` of each, and a round is
-# the list exactly once.
-SEED = b"btclib-benchmarks/01-libsecp256k1"
+# `CALLS` per row per round, out of a pool ten times that: a round is a
+# tenth of the pool, and nine tables reading nine consecutive tenths of it
+# leaves no two of them over the same keys -- so a key signed in table 1 is
+# not the key verified in table 6, and no row is quick because something
+# before it warmed a cache with the same bytes.
 CALLS = 10_000
 
-# nine tables, and no two of them over the same keys: the stream is
-# `TABLES_HERE * CALLS` long and each table reads its own slice of it, so a
-# key signed in table 1 is not the key verified in table 6 and no row can
-# be quick because something before it warmed a cache with the same bytes.
-# Nine because that is how many tables are declared at the foot of this
-# file -- a count written twice, and the one place this file repeats
-# itself, `TABLES` needing the rows and the rows needing the slices
+# nine, because that is how many tables are declared at the foot of this
+# file: a count written twice, and the one place this file repeats itself,
+# `TABLES` needing the rows and the rows needing the slices
 TABLES_HERE = 9
-DRAWS = TABLES_HERE * CALLS
-
-
-def _stream(count: int, start: int) -> list[bytes]:
-    """Return `count` 32-byte blocks of the seeded stream, from `start`."""
-    return [
-        sha256(SEED + n.to_bytes(8, "big")).digest()
-        for n in range(start, start + count)
-    ]
 
 
 def _slice(table: int, of: list[bytes]) -> list[bytes]:
@@ -313,28 +303,21 @@ def _slice(table: int, of: list[bytes]) -> list[bytes]:
     return of[(table - 1) * CALLS : table * CALLS]
 
 
-# a 32-byte draw is a valid secret key unless it is zero or at least the
-# group order, which the stream will not produce before the sun goes out
-PRVKEYS = _stream(DRAWS, 0)
-MESSAGES = _stream(DRAWS, DRAWS)
+PRVKEYS = _inputs.keys()
+MESSAGES = _inputs.messages()
 
 # 65 bytes, the uncompressed form every one of the four parses, so that a
 # verify row is handed the same key as every other verify row. The 33-byte
 # form beside it is what tables 4 and 5 price against each other: the same
 # key, one encoding carrying its y and the other making the parser solve
-# for it. Taken from the uncompressed bytes rather than derived a second
-# time -- the parity of y and x are both already there
-PUBKEYS = [
-    btclib_secp256k1.keys.pubkey_from_prvkey(prvkey, compressed=False)
-    for prvkey in PRVKEYS
-]
-PUBKEYS_COMPRESSED = [
-    bytes([2 + (pubkey[64] & 1)]) + pubkey[1:33] for pubkey in PUBKEYS
-]
+# for it -- cut from the uncompressed bytes rather than derived a second
+# time, the parity of y and x being both already there
+PUBKEYS = _inputs.pubkeys_65()
+PUBKEYS_COMPRESSED = _inputs.pubkeys_33()
 
 # BIP340 takes the x-only key, which is the uncompressed key's x: a slice
 # rather than a conversion, and not a parsed object of any package's
-XONLY = [pubkey[1:33] for pubkey in PUBKEYS]
+XONLY = _inputs.xonly()
 
 # aux_rand is 32 zero bytes throughout. secp256k1-py's `schnorr_sign` takes
 # none at all, so a per-call aux would be work one row could not do

@@ -4,7 +4,7 @@
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-15 22:06 CEST (20:06 UTC)
+when    : 2026-08-16 09:17 CEST (07:17 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -17,12 +17,27 @@ every row is btclib called the same way. What differs is which arithmetic
 answers — the libsecp256k1 that btclib-secp256k1 compiles into a cffi
 extension, or the Python of `curves/curve_group.py` with the dispatch off.
 
-Every row cycles the published vectors, taking the next input per call, and no
-row checks what it computed: the answers are `tests/vectors_test.py`'s
-subject, and a comparison inside a timed loop would be time charged to an
-arithmetic that did not spend it. The operations are not a selection —
+The inputs are drawn from a seed written into the script, as [the wrappers
+table][wrappers] draws its own: a secret key and a message per call, and
+each operation reads a slice of that stream long enough for its longest
+column, so no row measures one input repeated. Random rather than
+published, because both columns of a row are btclib computing the same
+answer two ways — a vector proves nothing about either that another input
+would not, and correctness is `tests/vectors_test.py`'s subject, where the
+vectors are run against both paths.
+
+No row checks what it computed, and nothing in this benchmark asserts: a
+comparison inside a timed loop would be time charged to an arithmetic that
+did not spend it. The operations are not a selection —
 `_libsecp256k1_serves` is the predicate every dispatch site in btclib asks,
 and every operation holding one that a caller would call is below.
+
+`pubkey_parse_33` carries its size in its name because the size is what it
+is timing: a compressed key is x alone, so parsing one is a modular square
+root, and that root is the only part of a parse btclib delegates. There is
+no 65-byte row because there would be nothing to compare — the
+uncompressed form hands both coordinates over and is read in Python either
+way, one code path with no dispatch in it.
 
 <!-- output: begin -->
 ```text
@@ -32,19 +47,19 @@ method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/02-btclib-vs-btclib.py
 
                       libsecp256k1   pure python     ratio
-dsa_sign                      17.2           162      9.4x
-bms_sign                      29.2           325     11.1x
-ssa_sign                      25.2           329     13.1x
-pubkey_from_prvkey            11.1           149     13.5x
-taproot_tweak                 17.3           240     13.9x
-generator_mult                8.92           140     15.7x
-pubkey_parse                  4.30          75.7     17.6x
-ellswift_decode               6.17           139     22.6x
-bms_verify                    25.3           695     27.5x
-ssa_verify                    21.3           657     30.9x
-dsa_verify                    20.8           675     32.5x
-dsa_recover                   36.9          1300     35.3x
-dh_shared_secret              12.8           554     43.2x
+dsa_sign                      23.0           184      8.0x
+bms_sign                      32.7           362     11.1x
+pubkey_from_prvkey            14.7           166     11.3x
+ssa_sign                      29.2           363     12.4x
+generator_mult                11.7           156     13.3x
+taproot_tweak                 19.4           264     13.6x
+pubkey_parse_33               5.57          83.7     15.0x
+ellswift_decode               6.87           150     21.9x
+bms_verify                    29.2           775     26.5x
+dsa_verify                    28.7           772     26.9x
+ssa_verify                    24.9           746     30.0x
+dsa_recover                   44.3          1480     33.5x
+dh_shared_secret              17.1           616     36.1x
 ```
 <!-- output: end -->
 
@@ -55,14 +70,13 @@ spreads over is the part worth reading, and it sorts the table into two
 groups, divided by what the Python side has to multiply.
 
 The narrow group is every operation whose Python side multiplies the
-generator, or multiplies nothing at all: both signatures, the public key
-from a secret key, the bare generator multiplication, and the taproot
-tweak, which adds one such multiplication to a point. With them sit the
-two operations that are field arithmetic rather than a scalar
-multiplication — parsing a compressed public key, which is a square root,
-and ElligatorSwift decoding. btclib memoizes the generator's multiples,
-so the Python side of that group starts from a table it did not have to
-build.
+generator: both signatures, the public key from a secret key, the bare
+generator multiplication, and the taproot tweak, which adds one such
+multiplication to a point. With them sit the two operations that are field
+arithmetic rather than a scalar multiplication — parsing a compressed
+public key, which is a square root, and ElligatorSwift decoding. btclib
+memoizes the generator's multiples, so the Python side of that group
+starts from a table it did not have to build.
 
 The wide group is every operation that multiplies a point which is *not*
 the generator: verification in both schemes, public-key recovery,
@@ -75,12 +89,11 @@ costs.
 
 Inside the wide group the ratio is widest where the least other work
 surrounds the multiplication, and Diffie-Hellman is the end of that: one
-such multiplication and nothing else. It is narrowest at bitcoin-message
-verification, and the row to read that against is public-key recovery,
-which is what bitcoin-message verification does with signature parsing and
-hashing around it. The one with more work in it is the narrower of the
-two, because that work is in both halves of the ratio and pulls it
-towards one.
+such multiplication and nothing else. The pair to read against it is
+public-key recovery and bitcoin-message verification, which is that
+recovery with signature parsing and hashing around it: the one with more
+work in it is the narrower of the two, because that work is in both halves
+of the ratio and pulls it towards one.
 
 The whole libsecp256k1 column is timed before the whole Python one, because
 `python_arithmetic_only()` cannot be undone inside a process. The sort is

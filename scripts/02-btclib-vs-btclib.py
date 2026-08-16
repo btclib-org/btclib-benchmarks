@@ -48,25 +48,29 @@ table's two labels are made from the operation's name, `_libsecp256k1` and
 `_pure_python`: every row here is btclib, and every row here is invoked from
 Python.
 
-## The inputs
+## One input per call, and no two operations over the same ones
 
-Every BIP340 signing vector, cycled, `_vectors` reading the file and checking
-its digest. The public keys and BIP340 signatures are checked against what
-the specification publishes; ECDSA's nonce is btclib's own RFC6979, so those
-fixtures are cross-checked between the arithmetics instead.
+The inputs are drawn from a seed written into this file, the way
+`scripts/01-libsecp256k1.py` draws its own: a secret key and a message per
+call, sha256 of the seed and a counter rather than `random`, whose stream is
+CPython's business and could change under a table nobody re-derived. Each
+operation reads a slice of that stream long enough for its own longest
+column, so no row measures one input repeated and nothing an operation does
+can be quick because the one before it left the same key in a cache.
 
-The timings would not move for an arbitrary key -- three valid keys measure
-the same to within the noise of the machine -- but the assertions would, and
-one key would have flattered a row: the public key of 1 is the generator, and
-a pure-Python implementation handed it derives one ladder step rather than a
-full-width scalar's worth.
+Random rather than published, and that is what the seed is for. Both columns
+of a row are btclib computing the same answer two ways, so a vector proves
+nothing here about either that another input would not, and what this page
+is read for -- which arithmetic answered, and what that cost -- is the same
+for every input. It also removes the one way a chosen key could flatter a
+row: the public key of 1 is the generator, and a pure-Python implementation
+handed it derives one ladder step rather than a full-width scalar's worth.
 
-A timed function calls one path and discards what it returns: nothing here
-is a correctness check. `tests/vectors_test.py` is, and it runs the vendored
-vectors against both paths; `tests/pure_python_path_test.py` checks the
-second path exists at all, which is the failure this script cannot see. The
-assertions below run at import, where the fixtures are built, so the suite
-loading this module runs them and no timing carries them.
+A timed function calls one path and discards what it returns, and nothing
+here is a correctness check of any kind. `tests/vectors_test.py` is the one
+that runs the vendored vectors against both paths, and
+`tests/pure_python_path_test.py` checks the second path exists at all, which
+is the failure a timing cannot see.
 
 Not part of the test suite and not run by CI. No third-party dependency
 either.
@@ -88,6 +92,7 @@ from collections.abc import Callable
 from importlib.metadata import version
 from itertools import cycle
 
+import _inputs
 from _provenance import from_a_declared_source, origin_of
 from _results import (
     Measurement,
@@ -101,7 +106,6 @@ from _results import (
     taken_now,
     width_for,
 )
-from _vectors import signing, verification
 from btclib import b58
 from btclib.curves import curve, sec_point
 from btclib.ecc import bms, dh, dsa, ellswift, ssa
@@ -139,85 +143,156 @@ def provenance() -> Provenance:
     return Provenance(columns=[], rows=[], notes=[stated, *odd])
 
 
-# every published vector, cycled, rather than one input repeated: a row that
-# calls one input a hundred thousand times measures that input. `_vectors`
-# reads the file and checks its digest, and each row below takes the next of
-# what it publishes per call
-SIGNING = signing()
-VERIFYING = verification()
+# The inputs are `_inputs`': one pool, shared by every benchmark here, built
+# once and read from `.inputs/` afterwards. That module holds the seed, the
+# pool size and the reason for both, and `GENERATION` there is what "new
+# inputs" means.
+#
+# Random rather than published: both columns of a row are btclib answering
+# the same question two ways, so a vector proves nothing here that another
+# input would not. What vectors are for is correctness, and correctness is
+# `tests/`, which runs them against both paths -- so nothing below asserts.
+#
+# Every operation reads the pool from its own offset, so two operations do
+# not start on the same key, and a column longer than the pool wraps and
+# reads it again -- which is the pool's size doing its job: a second pass
+# over the same keys is where an implementation that caches per key shows
+# up as one.
+_KEYS = _inputs.keys()
+_MESSAGES = _inputs.messages()
+_PUBKEYS_33 = _inputs.pubkeys_33()
+POOL = len(_KEYS)
 
-PRVKEYS = [v.prvkey for v in SIGNING]
-PUBKEYS = [pub_keyinfo_from_prv_key(prvkey)[0] for prvkey in PRVKEYS]
-POINTS = [sec_point.point_from_octets(pubkey) for pubkey in PUBKEYS]
+# where each operation starts reading. Spread across the pool rather than
+# packed, so that operations measured one after another are not walking the
+# same keys in the same order
+_OFFSETS = {
+    name: (index * POOL // 13)
+    for index, name in enumerate(
+        (
+            "pubkey_from_prvkey",
+            "pubkey_parse_33",
+            "generator_mult",
+            "dsa_sign",
+            "dsa_verify",
+            "dsa_recover",
+            "ssa_sign",
+            "ssa_verify",
+            "dh_shared_secret",
+            "bms_sign",
+            "bms_verify",
+            "taproot_tweak",
+            "ellswift_decode",
+        )
+    )
+}
 
-# ECDSA has no published signature to reproduce -- RFC6979's nonce is
-# btclib's own -- so these are signed here, grind=False for one signature.
-# The keys and messages are still the vector file's
-DSA_SIGS = [dsa.sign_(v.msg, v.prvkey, grind=False) for v in SIGNING]
+# how many of the pool each operation prepares. A fixture is only needed for
+# as many calls as the operation's longest column makes, and preparing more
+# would be signing what nothing verifies
+DRAW_SIZES = {
+    "pubkey_from_prvkey": 25_000,
+    "pubkey_parse_33": 50_000,
+    "generator_mult": 25_000,
+    "dsa_sign": 25_000,
+    "dsa_verify": 25_000,
+    "dsa_recover": 10_000,
+    "ssa_sign": 25_000,
+    "ssa_verify": 25_000,
+    "dh_shared_secret": 25_000,
+    "bms_sign": 15_000,
+    "bms_verify": 15_000,
+    "taproot_tweak": 25_000,
+    "ellswift_decode": 25_000,
+}
 
-# Diffie-Hellman needs a counterparty: each key is paired with the next key's
-# point, which keeps every input published and every pair distinct
-COUNTERPARTIES = POINTS[1:] + POINTS[:1]
-# `diffie_hellman` takes the scalar as an integer where the rest of these
-# APIs take bytes, so the cycle carries integers for this row alone
-SCALARS = [int.from_bytes(prvkey, "big") for prvkey in PRVKEYS]
-DH_SECRETS = [
-    dh.diffie_hellman(scalar, point, 32)
-    for scalar, point in zip(SCALARS, COUNTERPARTIES, strict=True)
+
+def _rotated(of: list[bytes], operation: str) -> list[bytes]:
+    """Return one operation's window of the pool, wrapping at the end."""
+    start = _OFFSETS[operation]
+    size = DRAW_SIZES[operation]
+    doubled = of + of
+    return doubled[start : start + size]
+
+
+def _keys(operation: str) -> list[bytes]:
+    """Return the secret keys one operation reads."""
+    return _rotated(_KEYS, operation)
+
+
+def _messages(operation: str) -> list[bytes]:
+    """Return the messages one operation reads."""
+    return _rotated(_MESSAGES, operation)
+
+
+# public keys are derived per operation rather than for the whole stream:
+# a derivation is a generator multiplication, and the operations that need
+# no public key are most of them
+PUBKEYS_33 = _rotated(_PUBKEYS_33, "pubkey_parse_33")
+DSA_VERIFY_KEYS = [pub_keyinfo_from_prv_key(k)[0] for k in _keys("dsa_verify")]
+TAPROOT_KEYS = [pub_keyinfo_from_prv_key(k)[0] for k in _keys("taproot_tweak")]
+ELLSWIFT_KEYS = [pub_keyinfo_from_prv_key(k)[0] for k in _keys("ellswift_decode")]
+BMS_VERIFY_KEYS = [pub_keyinfo_from_prv_key(k)[0] for k in _keys("bms_verify")]
+
+# ECDSA signatures for the rows that verify and recover, made here with
+# grind=False so that each is one signature
+DSA_SIGS = [
+    dsa.sign_(msg, prvkey, grind=False)
+    for msg, prvkey in zip(_messages("dsa_verify"), _keys("dsa_verify"), strict=True)
 ]
+DSA_RECOVER_SIGS = [
+    dsa.sign_(msg, prvkey, grind=False)
+    for msg, prvkey in zip(_messages("dsa_recover"), _keys("dsa_recover"), strict=True)
+]
+SSA_SIGS = [
+    ssa.sign_(msg, prvkey).serialize()
+    for msg, prvkey in zip(_messages("ssa_verify"), _keys("ssa_verify"), strict=True)
+]
+XONLY = [pub_keyinfo_from_prv_key(k)[0][1:] for k in _keys("ssa_verify")]
 
-ADDRESSES = [b58.p2pkh(pubkey) for pubkey in PUBKEYS]
-BMS_SIGS = [bms.sign(v.msg, v.prvkey) for v in SIGNING]
-TAPROOT_PUBKEYS = [taproot.output_pubkey(pubkey)[0] for pubkey in PUBKEYS]
+# Diffie-Hellman needs a counterparty: each key is paired with the point of
+# the next key in its own slice, which keeps every pair distinct
+DH_SCALARS = [int.from_bytes(k, "big") for k in _keys("dh_shared_secret")]
+_DH_POINTS = [
+    sec_point.point_from_octets(pub_keyinfo_from_prv_key(k)[0])
+    for k in _keys("dh_shared_secret")
+]
+COUNTERPARTIES = _DH_POINTS[1:] + _DH_POINTS[:1]
+
+ADDRESSES = [b58.p2pkh(pubkey) for pubkey in BMS_VERIFY_KEYS]
+BMS_SIGS = [
+    bms.sign(msg, prvkey)
+    for msg, prvkey in zip(_messages("bms_verify"), _keys("bms_verify"), strict=True)
+]
 # ElligatorSwift encoding draws a random field element, so an encoded form is
 # a fixture and never a row: decoding one is what is deterministic, and what
 # the dispatch is on
-ELLS = [ellswift.encode_var(pubkey) for pubkey in PUBKEYS]
+ELLS = [ellswift.encode_var(pubkey) for pubkey in ELLSWIFT_KEYS]
 
-# what the specification says, checked before anything is timed. The public
-# keys and the BIP340 signatures are the vector file's own, so a mistake the
-# two paths share cannot survive here, where it would survive the cross-path
-# checks in the rows below
-for _v, _pubkey in zip(SIGNING, PUBKEYS, strict=True):
-    assert _pubkey[1:] == _v.xonly_pubkey
-    assert ssa.sign_(_v.msg, _v.prvkey, aux=_v.aux).serialize() == _v.sig
-for _valid in VERIFYING:
-    assert ssa.verify_(_valid.msg, _valid.xonly_pubkey, _valid.sig)
-
-# one cycle per operation. `itertools.cycle` rather than an index: a C-level
-# iterator, the same cost in every row, and nothing to run off the end of
-PUBKEY_CYCLE = cycle(list(zip(PRVKEYS, PUBKEYS, strict=True)))
-POINT_PARSE_CYCLE = cycle(list(zip(PUBKEYS, POINTS, strict=True)))
-MULT_CYCLE = cycle(list(zip(SCALARS, POINTS, strict=True)))
-DSA_SIGN_CYCLE = cycle(
-    [(v.msg, v.prvkey, sig) for v, sig in zip(SIGNING, DSA_SIGS, strict=True)]
-)
+# one cycle per operation, each exactly its slice long. `itertools.cycle`
+# rather than an index: a C-level iterator, the same cost in every row, and
+# nothing to run off the end of
+PUBKEY_CYCLE = cycle(_keys("pubkey_from_prvkey"))
+PARSE_33_CYCLE = cycle(PUBKEYS_33)
+MULT_CYCLE = cycle([int.from_bytes(k, "big") for k in _keys("generator_mult")])
+DSA_SIGN_CYCLE = cycle(list(zip(_messages("dsa_sign"), _keys("dsa_sign"), strict=True)))
 DSA_VERIFY_CYCLE = cycle(
-    [
-        (v.msg, pubkey, sig)
-        for v, pubkey, sig in zip(SIGNING, PUBKEYS, DSA_SIGS, strict=True)
-    ]
+    list(zip(_messages("dsa_verify"), DSA_VERIFY_KEYS, DSA_SIGS, strict=True))
 )
 DSA_RECOVER_CYCLE = cycle(
-    [
-        (v.msg, sig, point)
-        for v, sig, point in zip(SIGNING, DSA_SIGS, POINTS, strict=True)
-    ]
+    list(zip(_messages("dsa_recover"), DSA_RECOVER_SIGS, strict=True))
 )
-SSA_SIGN_CYCLE = cycle([(v.msg, v.prvkey, v.aux, v.sig) for v in SIGNING])
-SSA_VERIFY_CYCLE = cycle([(v.msg, v.xonly_pubkey, v.sig) for v in VERIFYING])
-DH_CYCLE = cycle(list(zip(SCALARS, COUNTERPARTIES, DH_SECRETS, strict=True)))
-BMS_SIGN_CYCLE = cycle(
-    [(v.msg, v.prvkey, sig) for v, sig in zip(SIGNING, BMS_SIGS, strict=True)]
+SSA_SIGN_CYCLE = cycle(list(zip(_messages("ssa_sign"), _keys("ssa_sign"), strict=True)))
+SSA_VERIFY_CYCLE = cycle(
+    list(zip(_messages("ssa_verify"), XONLY, SSA_SIGS, strict=True))
 )
+DH_CYCLE = cycle(list(zip(DH_SCALARS, COUNTERPARTIES, strict=True)))
+BMS_SIGN_CYCLE = cycle(list(zip(_messages("bms_sign"), _keys("bms_sign"), strict=True)))
 BMS_VERIFY_CYCLE = cycle(
-    [
-        (v.msg, address, sig)
-        for v, address, sig in zip(SIGNING, ADDRESSES, BMS_SIGS, strict=True)
-    ]
+    list(zip(_messages("bms_verify"), ADDRESSES, BMS_SIGS, strict=True))
 )
-TAPROOT_CYCLE = cycle(list(zip(PUBKEYS, TAPROOT_PUBKEYS, strict=True)))
-ELLSWIFT_CYCLE = cycle(list(zip(ELLS, POINTS, strict=True)))
+TAPROOT_CYCLE = cycle(TAPROOT_KEYS)
+ELLSWIFT_CYCLE = cycle(ELLS)
 
 
 def python_arithmetic_only() -> None:
@@ -243,23 +318,26 @@ def pubkey() -> None:
     `generator_mult` below is the multiplication inside this one, without
     the serialization: the two rows together say what each half costs.
     """
-    prvkey, _expected = next(PUBKEY_CYCLE)
-    pub_keyinfo_from_prv_key(prvkey)[0]
+    pub_keyinfo_from_prv_key(next(PUBKEY_CYCLE))[0]
 
 
-def point_parse() -> None:
-    """Time parsing a compressed public key, which recovers y from x.
+def point_parse_33() -> None:
+    """Time parsing a 33-byte compressed public key, which recovers y from x.
 
-    The reverse of what `pubkey_from_prvkey` serializes.
+    The reverse of what `pubkey_from_prvkey` serializes, and the 33 bytes
+    are in the name because the size is the whole of what is being timed:
+    a compressed key carries x alone, so parsing one is a modular square
+    root, and that root is the only part of a parse btclib delegates. The
+    65-byte form hands both coordinates over and is read in Python either
+    way -- one code path, no dispatch, and nothing for a pair of columns
+    to be a ratio of.
     """
-    pubkey_bytes, _expected = next(POINT_PARSE_CYCLE)
-    sec_point.point_from_octets(pubkey_bytes)
+    sec_point.point_from_octets(next(PARSE_33_CYCLE))
 
 
 def mult() -> None:
     """Time the generator multiplication every key derivation is built on."""
-    scalar, _expected = next(MULT_CYCLE)
-    curve.mult(scalar)
+    curve.mult(next(MULT_CYCLE))
 
 
 def dsa_sign() -> None:
@@ -272,7 +350,7 @@ def dsa_sign() -> None:
     so both rows would be multiplied by it and the ratio -- which is what
     this table is read for -- would not move, as measuring it confirms.
     """
-    msg, prvkey, _expected = next(DSA_SIGN_CYCLE)
+    msg, prvkey = next(DSA_SIGN_CYCLE)
     dsa.sign_(msg, prvkey, grind=False)
 
 
@@ -284,14 +362,14 @@ def dsa_verify() -> None:
 
 def dsa_recover() -> None:
     """Time recovering the candidate public keys of an ECDSA signature."""
-    msg, sig, _point = next(DSA_RECOVER_CYCLE)
+    msg, sig = next(DSA_RECOVER_CYCLE)
     dsa.recover_pub_keys_(msg, sig)
 
 
 def ssa_sign() -> None:
-    """Time BIP340 signing, over each vector's own aux_rand."""
-    msg, prvkey, aux, _expected = next(SSA_SIGN_CYCLE)
-    ssa.sign_(msg, prvkey, aux=aux).serialize()
+    """Time BIP340 signing, the auxiliary randomness left to btclib."""
+    msg, prvkey = next(SSA_SIGN_CYCLE)
+    ssa.sign_(msg, prvkey).serialize()
 
 
 def ssa_verify() -> None:
@@ -301,14 +379,14 @@ def ssa_verify() -> None:
 
 
 def dh_shared_secret() -> None:
-    """Time the ECDH shared secret of one vector key with another's point."""
-    scalar, point, _expected = next(DH_CYCLE)
+    """Time the ECDH shared secret of one key with the next key's point."""
+    scalar, point = next(DH_CYCLE)
     dh.diffie_hellman(scalar, point, 32)
 
 
 def bms_sign() -> None:
     """Time signing a bitcoin message, which signs recoverably."""
-    msg, prvkey, _expected = next(BMS_SIGN_CYCLE)
+    msg, prvkey = next(BMS_SIGN_CYCLE)
     bms.sign(msg, prvkey)
 
 
@@ -320,14 +398,12 @@ def bms_verify() -> None:
 
 def taproot_tweak() -> None:
     """Time tweaking a public key into a taproot output key."""
-    pubkey_bytes, _expected = next(TAPROOT_CYCLE)
-    taproot.output_pubkey(pubkey_bytes)[0]
+    taproot.output_pubkey(next(TAPROOT_CYCLE))[0]
 
 
 def ellswift_decode() -> None:
     """Time decoding an ElligatorSwift-encoded public key."""
-    ell, _expected = next(ELLSWIFT_CYCLE)
-    ellswift.decode_var(ell)
+    ellswift.decode_var(next(ELLSWIFT_CYCLE))
 
 
 # every row is called once, through libsecp256k1, before anything is
@@ -335,7 +411,7 @@ def ellswift_decode() -> None:
 # rather than reported
 for _op in (
     pubkey,
-    point_parse,
+    point_parse_33,
     mult,
     dsa_sign,
     dsa_verify,
@@ -387,7 +463,7 @@ def benchmark(func: Callable[[], None], mult_: int) -> float:
 # through both arithmetics is a run somebody will wait for
 OPERATIONS = (
     ("pubkey_from_prvkey", pubkey, 25, 2),
-    ("pubkey_parse", point_parse, 50, 5),
+    ("pubkey_parse_33", point_parse_33, 50, 5),
     ("generator_mult", mult, 25, 2),
     ("dsa_sign", dsa_sign, 25, 2),
     ("dsa_verify", dsa_verify, 25, 1),

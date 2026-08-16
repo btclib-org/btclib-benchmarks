@@ -2,7 +2,7 @@
   "schema": 1,
   "benchmark": "01-libsecp256k1",
   "run": {
-    "when": "2026-08-16T01:52:06+02:00",
+    "when": "2026-08-16T09:09:20+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "10000 calls each round, 30 rounds per row, minimum kept",
@@ -58,29 +58,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 26.79830000270158,
-          "spread": 0.7923832861706614,
+          "us_per_call": 26.936058304272592,
+          "spread": 7.438204204663634,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 26.671291701495647,
-          "spread": 0.37872910033911467,
+          "us_per_call": 26.805766602046788,
+          "spread": 2.540862583555281,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 48.0640625115484,
-          "spread": 0.83019167650491,
+          "us_per_call": 47.81290420796722,
+          "spread": 7.7492207987234,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 12.695370800793171,
-          "spread": 0.11195000261068344,
+          "us_per_call": 12.659383309073746,
+          "spread": 2.5202499935403466,
           "rounds": 30,
           "calls": 10000
         }
@@ -97,22 +97,22 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 26.73784999642521,
-          "spread": 10.116666601970792,
+          "us_per_call": 26.650950009934604,
+          "spread": 26.46372497547418,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 45.59914169367403,
-          "spread": 0.8718416094779968,
+          "us_per_call": 45.39674159605056,
+          "spread": 0.803704303689301,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 12.573800003156066,
-          "spread": 0.6288500037044287,
+          "us_per_call": 12.551254080608487,
+          "spread": 14.720470923930407,
           "rounds": 30,
           "calls": 10000
         }
@@ -125,29 +125,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 43.53993751574308,
-          "spread": 0.9552708826959133,
+          "us_per_call": 43.454633303917944,
+          "spread": 5.735554196871817,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 22.843637503683567,
-          "spread": 0.7396541768684983,
+          "us_per_call": 22.80509159900248,
+          "spread": 5.708645912818611,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 49.233262497000396,
-          "spread": 1.0331042110919952,
+          "us_per_call": 48.95190829411149,
+          "spread": 0.8711125003173947,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 16.09392089303583,
-          "spread": 0.32419159542769194,
+          "us_per_call": 16.016941610723734,
+          "spread": 3.9361167699098587,
           "rounds": 30,
           "calls": 10000
         }
@@ -160,29 +160,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 2.3864374961704016,
-          "spread": 0.05382499657571316,
+          "us_per_call": 2.3874707985669374,
+          "spread": 0.05678751040250063,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 2.804033411666751,
-          "spread": 0.04176660440862179,
+          "us_per_call": 2.7875459054484963,
+          "spread": 0.1234081806614995,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 3.3179374877363443,
-          "spread": 0.05063752178102732,
+          "us_per_call": 3.29739588778466,
+          "spread": 0.1458166167140007,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 2.4065374862402678,
-          "spread": 0.04712922964245081,
+          "us_per_call": 2.3908333852887154,
+          "spread": 0.044983322732150555,
           "rounds": 30,
           "calls": 10000
         }
@@ -195,29 +195,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 0.23691670503467321,
-          "spread": 0.042895786464214325,
+          "us_per_call": 0.25033329147845507,
+          "spread": 0.040066707879304886,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 0.6553165847435594,
-          "spread": 0.036958418786525726,
+          "us_per_call": 0.6591374985873699,
+          "spread": 0.01982920803129673,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 1.1827667010948062,
-          "spread": 0.053279101848602295,
+          "us_per_call": 1.1680415831506252,
+          "spread": 0.03507931251078844,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 0.2826750045642257,
-          "spread": 0.011758296750485897,
+          "us_per_call": 0.2755583031103015,
+          "spread": 0.013862480409443378,
           "rounds": 30,
           "calls": 10000
         }
@@ -230,29 +230,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 13.229658314958215,
-          "spread": 0.19816257990896702,
+          "us_per_call": 13.165041687898338,
+          "spread": 30.080300010740757,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.76701658591628,
-          "spread": 5.7188875041902065,
+          "us_per_call": 16.330287512391806,
+          "spread": 22.000404191203415,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 17.532770801335573,
-          "spread": 6.5861333860084414,
+          "us_per_call": 19.13027500268072,
+          "spread": 1.8733208999037743,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 13.929691701196134,
-          "spread": 7.265995815396309,
+          "us_per_call": 15.058220899663866,
+          "spread": 6.033158302307129,
           "rounds": 30,
           "calls": 10000
         }
@@ -269,22 +269,22 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.762075011618435,
-          "spread": 9.932999988086522,
+          "us_per_call": 14.908841717988253,
+          "spread": 0.7788623683154601,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 15.161316702142358,
-          "spread": 0.5050915991887432,
+          "us_per_call": 16.62081670947373,
+          "spread": 15.687291603535414,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 13.869841606356204,
-          "spread": 0.442016776651144,
+          "us_per_call": 14.566699997521937,
+          "spread": 2.415745798498392,
           "rounds": 30,
           "calls": 10000
         }
@@ -297,29 +297,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 15.407658391632141,
-          "spread": 4.85332910902798,
+          "us_per_call": 23.614887497387826,
+          "spread": 30.249654105864465,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.731525000184774,
-          "spread": 0.4934833850711584,
+          "us_per_call": 15.527812507934867,
+          "spread": 31.36526250746101,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 17.31128329411149,
-          "spread": 0.09790000040084124,
+          "us_per_call": 17.277366598136723,
+          "spread": 31.632445915602148,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 15.931612509302797,
-          "spread": 1.207716693170367,
+          "us_per_call": 15.871550003066657,
+          "spread": 6.2837790930643695,
           "rounds": 30,
           "calls": 10000
         }
@@ -332,29 +332,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 10.287920897826552,
-          "spread": 0.22649988532066345,
+          "us_per_call": 10.3332124883309,
+          "spread": 25.134612526744604,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.81029998883605,
-          "spread": 0.2632040996104479,
+          "us_per_call": 16.52852080296725,
+          "spread": 26.57714590895921,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 22.82581669278443,
-          "spread": 2.1313916193321347,
+          "us_per_call": 25.82873748615384,
+          "spread": 6.830275012180209,
           "rounds": 30,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 11.494224984198809,
-          "spread": 0.1389500219374895,
+          "us_per_call": 13.145545800216496,
+          "spread": 11.532283411361277,
           "rounds": 30,
           "calls": 10000
         }

@@ -38,12 +38,24 @@ BENCHMARKS = [
     "05-key-reuse",
 ]
 
-# an import does fixture work -- key derivation, a signature per comparand,
-# and the cross-checks over them -- so this is not a millisecond. It is,
-# however, two orders of magnitude under the fastest of the timing runs,
-# which take tens of seconds each. Anything near that means the guard is
-# gone
-_IMPORT_BUDGET_SECONDS = 10.0
+# an import does fixture work, and since the five scripts draw from one
+# shared pool that work is no longer a handful of vectors: `03-libraries.py`
+# builds key objects and signatures for six packages, two of which sign in
+# pure Python at tens of milliseconds a signature. What the pool caches --
+# the keys, the messages, the public keys -- is read from disk after the
+# first run; what it cannot cache is a package's own object.
+#
+# So this is tens of seconds rather than milliseconds, and the number is
+# chosen against what it guards rather than against what a quiet machine
+# manages: a benchmark that timed on import would spend minutes, every one
+# of the five timing runs being minutes long. It is deliberately loose,
+# because the machine running this suite may have just run one of those --
+# `03-libraries.py` built its fixtures in thirteen seconds cold and
+# twenty-six warm, and a budget tight enough to catch the difference would
+# be a test that fails for the temperature of a laptop rather than for
+# anything in the code. Anything near a minute means the
+# `if __name__ == "__main__"` guard is gone
+_IMPORT_BUDGET_SECONDS = 60.0
 
 
 @pytest.mark.parametrize("name", BENCHMARKS)

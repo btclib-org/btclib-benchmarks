@@ -18,6 +18,26 @@ git tag, having no release on any index.
 
 ## Running a benchmark
 
+btclib and btclib-secp256k1 resolve from their `main` branches until the
+releases these scripts are written against are on PyPI, and **a branch in
+`uv.lock` is a commit, not a branch**: `uv sync --locked` reinstalls the
+revision the lock names and never looks at what `main` has become. So a
+measurement taken without asking for the upgrade is a measurement of
+whatever was current the day the lock was last written, which is not what a
+page about `main` claims. Ask for it first, every time:
+
+```shell
+uv lock --upgrade-package btclib --upgrade-package btclib-secp256k1
+uv sync --locked
+```
+
+This is not pedantry about freshness. Read the wrong way round it has
+already cost a session: btclib's lock was stale while the wrapper's was
+current, the two commits did not fit together, and the mismatch read
+convincingly as an upstream breakage that did not exist.
+
+Then the benchmark itself:
+
 ```shell
 uv run python scripts/03-libraries.py
 ```
@@ -25,6 +45,16 @@ uv run python scripts/03-libraries.py
 Each script prints what it is about to measure — every package's version
 and where it was imported from — before any number. Read that header:
 a table without it cannot be checked.
+
+**One script at a time, and not in a loop over the five.** Each run
+saturates the machine for minutes, and the next one started immediately
+after measures a hot machine rather than the operation: measured that way,
+the pure-Python columns of `02-btclib-vs-btclib.py` came out up to three
+times their real cost, and a verification through the C library came out
+at twice. The `spread` column is what shows it — a row whose slowest round
+ran far from its quickest was measured on a machine that was busy — so
+read that column before believing an ordering, and give the machine time
+to cool between scripts.
 
 To measure a working tree instead of the published release:
 

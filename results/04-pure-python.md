@@ -25,7 +25,7 @@ tag, which is still a release somebody cut on a day.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-15 22:10 CEST (20:10 UTC)
+when    : 2026-08-16 09:24 CEST (07:24 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -56,38 +56,38 @@ what a timing contains
 
 public key from a private key: a multiplication of the generator
                                  μs/call     vs best
-  btclib                          188.43        1.0x
-  python-ecdsa                    220.21        1.2x
-  secp256k1lab                    919.04        4.9x
-  pycoin                         5862.55       31.1x
-  buidl.pecc                    20621.20      109.4x
+  btclib                          361.52        1.0x
+  python-ecdsa                    475.58        1.3x
+  secp256k1lab                   2285.07        6.3x
+  pycoin                        10253.06       28.4x
+  buidl.pecc                    49958.90      138.2x
 
 ECDSA sign, over a 32-byte digest
                                  μs/call     vs best
-  btclib, one signature           164.82        1.0x
-  python-ecdsa                    291.80        1.8x
-  btclib, grinding (default)      612.43        3.7x
-  pycoin                         6014.59       36.5x
-  buidl.pecc                    29485.50      178.9x
+  btclib, one signature           255.31        1.0x
+  python-ecdsa                    456.82        1.8x
+  btclib, grinding (default)      474.98        1.9x
+  pycoin                         8861.19       34.7x
+  buidl.pecc                    49594.70      194.3x
 
 ECDSA verify, over a 32-byte digest
                                  μs/call     vs best
-  btclib                          800.78        1.0x
-  python-ecdsa                   1134.17        1.4x
-  pycoin                        18901.23       23.6x
-  buidl.pecc                    60552.40       75.6x
+  btclib                         1339.47        1.0x
+  python-ecdsa                   1889.11        1.4x
+  pycoin                        31088.84       23.2x
+  buidl.pecc                   100741.66       75.2x
 
 BIP340 sign, over a 32-byte message
                                  μs/call     vs best
-  btclib                          330.25        1.0x
-  secp256k1lab                   7360.47       22.3x
-  buidl.pecc                   108874.08      329.7x
+  btclib                          550.02        1.0x
+  secp256k1lab                  12243.75       22.3x
+  buidl.pecc                   161416.51      293.5x
 
 BIP340 verify, over a 32-byte message
                                  μs/call     vs best
-  btclib                          662.63        1.0x
-  secp256k1lab                   5082.25        7.7x
-  buidl.pecc                    67038.09      101.2x
+  btclib                         1027.65        1.0x
+  secp256k1lab                   7819.94        7.6x
+  buidl.pecc                   109936.62      107.0x
 ```
 <!-- output: end -->
 
