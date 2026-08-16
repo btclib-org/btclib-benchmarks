@@ -199,7 +199,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "btclib", git = "https://github.com/btclib-org/btclib?branch=main" },
-    { name = "btclib-secp256k1", git = "https://github.com/btclib-org/btclib-secp256k1?branch=main" },
+    { name = "btclib-secp256k1", git = "https://github.com/btclib-org/btclib-secp256k1.git?branch=main" },
     { name = "buidl", specifier = ">=0.2.36" },
     { name = "coincurve", specifier = ">=21.0.0" },
     { name = "ecdsa", specifier = ">=0.19.2" },

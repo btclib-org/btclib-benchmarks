@@ -160,7 +160,7 @@ btclib = { git = "https://github.com/btclib-org/btclib", branch = "main" }
 # wheel, so the branch stands in for the release the floor above names.
 # It builds libsecp256k1 from the submodule it pins, which is what makes
 # the revision column of that table readable at all
-btclib-secp256k1 = { git = "https://github.com/btclib-org/btclib-secp256k1", branch = "main" }
+btclib-secp256k1 = { git = "https://github.com/btclib-org/btclib-secp256k1.git", branch = "main" }
 
 [tool.setuptools]
 # the scripts are the deliverable, and they are modules rather than a
