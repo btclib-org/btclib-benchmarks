@@ -168,6 +168,40 @@ The release notes, which say what a user has to act on, are in
   it reaches the same point as a scalar times the generator plus an
   addition -- two crossings where the others make one.
 
+- **Signing is asked twice in each scheme, the second time under a key the
+  caller is already holding.** Every signing row priced a first signature
+  under a fresh key, and that is the one shape a signing service never runs:
+  it signs again under a key it kept. So each scheme carries a pair, the
+  held table handed the object its own package offers a caller who will sign
+  again -- coincurve's and secp256k1-py's `PrivateKey`, electrum-ecc's
+  `ECPrivkey`, btclib-secp256k1's `ssa.Signer` -- built in the fixtures from
+  the keys the fresh table signs with once, in that table's order. Which is
+  the one place a row is handed anything, and it is a measurement rather than
+  a shortcut: the question is asked of every package at once.
+
+  The two pairs answer different things, which is why the script times both.
+  What a held object stands in for in BIP340 is a keypair, and an API's shape
+  does not say whether a caller got one: two of the four keep a keypair
+  across calls, and two build one inside every call however long the object
+  they were reached through has been alive. ECDSA takes the secret key as it
+  is, so there is no keypair to keep and what the pair prices is a
+  constructor with nothing in it the signature reads -- a public key, an
+  x-only key, a keypair, each derived because the object exists rather than
+  because a signature needs it. btclib-secp256k1 is `NA` in the ECDSA half,
+  its signing call taking the 32 octets a caller already has, and the `NA` is
+  the finding rather than a gap.
+
+  `tests/wrappers_test.py` holds both pairs to the same equality, each
+  package against itself and signed twice through one object: the two tables
+  are a subtraction only while the held call answers the octets the fresh one
+  answers, and an object accumulating state across calls would price
+  something other than a signature from its second call on.
+
+  The BIP340 pair is on the published page and the ECDSA one is not yet: a
+  table reaches a page from a run, and a run is a person's on a machine whose
+  state they know. The rows and the case for them land first, and the page
+  carries the numbers from the next run of it.
+
 - **Every table prints microseconds per call.** `02-btclib-vs-btclib.py` had
   been printing seconds per thousand: a unit that changes between
   benchmarks is a unit a reader converts before comparing two of them. Five
