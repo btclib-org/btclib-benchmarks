@@ -950,6 +950,14 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
     than hidden because it is the only thing in the output that says whether
     the machine was quiet while a row was measured.
 
+    That statistic is what the `spread` key means in a saved run, and this
+    is the page that still writes it: `01-libsecp256k1.py` moved to the
+    distance between two halves' minima and to a key of its own, so the two
+    are told apart by a reader of either file rather than by knowing which
+    script wrote it. The day this page adopts that estimator -- the
+    arithmetic is beside `ROUNDS` above, and #53 is what it waits for -- the
+    key it writes moves with it.
+
     Returned and not printed: the tables below are sorted fastest to
     slowest and each row divides by the quickest, neither of which can be
     done a line at a time -- every number has to be in hand before the
