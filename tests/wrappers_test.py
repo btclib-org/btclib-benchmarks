@@ -345,6 +345,24 @@ SIGN_HELD: dict[str, Callable[[Any, bytes, bytes], bytes]] = {
     "electrum-ecc": lambda key, msg, aux: key.schnorr_sign(msg, aux_rand32=aux),
 }
 
+# the ECDSA half of the same pair, over the three packages that have
+# anything to hold: `btclib_secp256k1.dsa.sign` takes the 32 bytes, so
+# there is no second spelling of it to check one against the other.
+#
+# The object is `BUILD_SIGNER`'s for all three, that being the one type each
+# package offers a caller who will sign again whichever scheme they sign in
+# -- which is what the ECDSA pair of rows turns on: the same constructor,
+# with nothing in it that an ECDSA signature reads. The fresh half is
+# `DSA_SIGNERS_DER`, so what a held call is checked against is the call the
+# fresh row makes and not a second spelling written here
+SIGN_DSA_HELD: dict[str, Callable[[Any, bytes], bytes]] = {
+    "coincurve": lambda key, msg: key.sign(msg, hasher=None),
+    "secp256k1-py": lambda key, msg: key.ecdsa_serialize(key.ecdsa_sign(msg, raw=True)),
+    "electrum-ecc": lambda key, msg: electrum_ecc.ecdsa_der_sig_from_ecdsa_sig64(
+        key.ecdsa_sign(msg, grind_r_value=False)
+    ),
+}
+
 # parse and serialize again, which is the only way to see what a parse read:
 # each wrapper's own constructor and its own encoder, never the bindings
 PARSERS: dict[str, Callable[[bytes, bool], bytes]] = {
@@ -748,6 +766,41 @@ def test_holding_the_key_changes_no_signature(
     # and it is a signature under the right key, which equality alone would
     # not say: three calls that all held the wrong key would agree
     assert btclib_secp256k1.ssa.verify(vector.msg, _uncompressed(vector.prvkey), fresh)
+
+
+@pytest.mark.parametrize("package", sorted(SIGN_DSA_HELD))
+@pytest.mark.parametrize("vector", SIGNING, ids=_ids())
+def test_holding_the_key_changes_no_ecdsa_signature(
+    package: str, vector: _vectors.Signing
+) -> None:
+    """The same equality on the ECDSA side, where the pair prices a constructor.
+
+    Table 13 subtracts from table 11's rows, and the subtraction is of one
+    operation only while the held call answers the octets the fresh one
+    answers. RFC6979 makes that checkable without a vector file: the nonce
+    is a function of the key and the message, so a held object that had kept
+    a scalar wrongly, or drawn from state its constructor left behind, would
+    answer different octets rather than merely slower ones.
+
+    Signed twice through one object for the reason the BIP340 case above
+    gives: the row signs through each held object once per round, so an
+    object accumulating state prices something other than a signature from
+    its second call on.
+
+    Asked of each package against itself, which is also what keeps the one
+    platform where a signer draws the other nonce out of it: both halves of
+    this comparison are that same signer.
+
+    Args:
+        package: the wrapper, which is what the id has to carry.
+        vector: the key and message the pair is measured over.
+    """
+    fresh = DSA_SIGNERS_DER[package](vector.msg, vector.prvkey)
+    held = BUILD_SIGNER[package](vector.prvkey)
+    first = SIGN_DSA_HELD[package](held, vector.msg)
+    assert SIGN_DSA_HELD[package](held, vector.msg) == first == fresh
+    # under the right key, which equality alone would not say
+    assert btclib_secp256k1.dsa.verify(vector.msg, _uncompressed(vector.prvkey), fresh)
 
 
 # --- parsing a public key -----------------------------------------------
