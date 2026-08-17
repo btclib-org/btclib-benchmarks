@@ -21,6 +21,8 @@ uv run pytest                               # the suite, gated at 100%
 uv run pre-commit run --all-files           # every lint hook, what CI runs
 uv run python scripts/03-libraries.py  # a benchmark, by hand
 uv run python scripts/render.py             # the pages, from the saved runs
+uv run python scripts/artifacts.py          # which artifact each comparand
+                                            # install resolved to
 ```
 
 `CONTRIBUTING.md` carries each of these with its reasoning.
@@ -41,9 +43,10 @@ Five benchmarks, one question each:
   it already has, raw against prepared, on both paths and against
   python-ecdsa's `precompute()`
 
-`scripts/_provenance.py` and `scripts/_inputs.py` are the modules the suite
-covers. `scripts/_results.py` and `scripts/render.py` are the other two
-non-benchmarks, and they are outside the gate on purpose — see below.
+`scripts/_provenance.py`, `scripts/_inputs.py` and `scripts/artifacts.py`
+are what the suite covers. `scripts/_results.py` and `scripts/render.py`
+are the other two non-benchmarks, and they are outside the gate on purpose
+— see below.
 
 ## Measuring and publishing are two commands
 

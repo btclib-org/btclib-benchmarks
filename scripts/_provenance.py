@@ -24,6 +24,20 @@ from importlib.metadata import PackageNotFoundError, version
 from importlib.metadata import distribution as _distribution
 from pathlib import Path
 
+# the platform an index will not serve, so a wheel tagged for it was built
+# where it is installed. PEP 600 is what makes that readable: a Linux wheel
+# reaches an index as `manylinux` or `musllinux` and a bare `linux_*` one
+# is refused, so on Linux the tag separates a download from a local build.
+# It separates nothing on macOS or Windows, where a published wheel and one
+# built here are spelled the same, which is why this is a platform and not
+# a rule.
+#
+# Matched against the start of the platform field and not looked for
+# anywhere in the tag, which is what the two accepted spellings end in:
+# `manylinux_2_17_x86_64` contains this word, and a substring test called
+# every downloaded Linux wheel a local build
+NOT_FROM_AN_INDEX = "linux_"
+
 
 def origin_of(dist_name: str) -> str:
     """Say where a distribution came from: an index, a git ref, or a path.
@@ -57,6 +71,75 @@ def origin_of(dist_name: str) -> str:
     if direct.get("dir_info", {}).get("editable"):
         return f"editable: {url.removeprefix('file://')}"
     return f"local: {url.removeprefix('file://')}"
+
+
+def wheel_tags(dist_name: str) -> list[str] | None:
+    """Return the tags of the wheel an install came from, or nothing.
+
+    Every install goes through a wheel, an sdist being built into one
+    first, and the `WHEEL` file it leaves in the metadata directory states
+    what that wheel was built for. So this is the one thing at run time
+    that tells the artifact from the requirement it satisfied.
+
+    `None` is not installed and an empty list is installed with no `WHEEL`
+    to read, which is a distribution laid down by something other than a
+    wheel install. Two facts, and a caller reporting them as one would say
+    a package is missing when what is missing is its metadata.
+    """
+    try:
+        raw = _distribution(dist_name).read_text("WHEEL")
+    except PackageNotFoundError:
+        return None
+    return [
+        line.split(":", 1)[1].strip()
+        for line in (raw or "").splitlines()
+        if line.startswith("Tag:")
+    ]
+
+
+def _built_here(tag: str) -> bool:
+    """Say whether a tag names a platform no index would have served.
+
+    The platform is the tag's last field, and it may be several joined by
+    dots -- a wheel that satisfies a compressed set of them -- so any one
+    of those answering is the whole tag answering.
+    """
+    return any(
+        platform.startswith(NOT_FROM_AN_INDEX)
+        for platform in tag.rsplit("-", 1)[-1].split(".")
+    )
+
+
+def artifact_of(dist_name: str) -> str:
+    """Say which artifact an install resolved to, where the tag can tell.
+
+    `origin_of` above says where a distribution came from and stops there,
+    which for a comparand vendoring a C library is half the answer: an
+    index serves a wheel and an sdist under one version, and the two do
+    not have to carry the same library. `secp256k1` is the case that
+    proves it -- its wheels build against libsecp256k1 v0.6.0 and the only
+    sdist of the same version downloads a pre-v0.1.0 revision, four years
+    older. Which library a machine got is therefore not in the version it
+    reports, and a pin keyed on that version cannot be right for both.
+
+    The wheel's tag can say, on the platform where the question is live. A
+    bare `linux_*` tag is one no index accepts, so a wheel carrying it was
+    built where it is installed; a `manylinux` or `musllinux` one was not.
+    On macOS and Windows the two are spelled alike, so there this reports
+    the tag and stops -- which is why a caller gets a tag and a remark
+    rather than a verdict, and why the revision itself is still not here.
+    Nothing in an installed tree records what a build downloaded, and the
+    pins in `01-libsecp256k1.py` are where that is written down by hand.
+    """
+    tags = wheel_tags(dist_name)
+    if tags is None:
+        return "not installed"
+    if not tags:
+        return "no WHEEL metadata"
+    said = ", ".join(tags)
+    if any(_built_here(tag) for tag in tags):
+        return f"{said}, built where it is installed"
+    return said
 
 
 def _under_install_root(module_file: str) -> bool:

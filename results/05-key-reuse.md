@@ -91,8 +91,8 @@ these files, and it beats the best btclib Python row here. What it buys
 is what btclib drops on every call: the multiplication tables built from
 the key, rebuilt per verification because the set of points btclib
 memoizes is the generator's and nothing else. That is
-[btclib-org/btclib#893][issue], where the same measurement is made from
-the other side — with the key memoized through btclib's own existing
+[ISS 893 (btclib-org/btclib)][issue], where the same measurement is made
+from the other side — with the key memoized through btclib's own existing
 cache, the Python row lands level with `python-ecdsa`'s precomputed one.
 There is no row for it here, because a benchmark row should be something
 a caller can have.

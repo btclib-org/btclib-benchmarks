@@ -470,6 +470,50 @@ The release notes, which say what a user has to act on, are in
   this exists to prevent: not an error, a plausible number for a version
   nobody runs.
 
+- **The dispersion column is headed by the statistic under it.** Two
+  keys were already two statistics — `01-libsecp256k1.py` saves
+  `halves_apart`, the distance between the minima of two halves of a
+  row's rounds, and `03-libraries.py` saves `spread`, the slowest round
+  less the quickest — and both printed under one word. Each page defines
+  its own column in the prose beside its tables, so no reader of one page
+  was misled; a reader comparing the two met the heading before either
+  paragraph. `_results.py` now takes the word from the field the rows
+  carry, which is row knowledge and leaves that module still unable to
+  tell one page from another. `halves` and not `halves_apart`, the column
+  being sized by the values under it and the key being wider than they
+  are.
+
+  The wrappers page regenerated from the run already saved, no
+  measurement taken, which is what the split between measuring and
+  publishing is for. The paragraph that explains how to read the column
+  moved with the heading, and it is the larger half of the change.
+
+- **`render.py --check` says what the script produces and the run does
+  not.** It answers one question, whether a page matches the run saved
+  beside it, and was read as answering a second, whether the page
+  describes the benchmark that exists — the same question only while the
+  saved run is as new as the script. Both drifts are ordinary states here
+  and neither had a name: a person coming back to a page could not tell
+  one measured before a table existed from one whose script has moved on.
+  The check now names the tables each side has and the other has not, in
+  both directions, as lines of its output.
+
+  Not a failure, and not a gate on a measurement, which is the coupling
+  this repository split apart on purpose. The titles are read out of the
+  script's `TABLES` with `ast` and never by importing it — importing a
+  benchmark builds its fixtures and runs its cross-comparand assertions,
+  which is the price this module exists not to pay. Two of the five build
+  their tables inside `main()`, where no literal says what the titles are,
+  and those two get no comparison rather than a wrong one.
+
+- **Two published pages spell a reference the way the guide asks.**
+  `results/05-key-reuse.md` carried `btclib-org/btclib#893` and
+  `results/01-libsecp256k1.md` a bare `#23`, both predating the rule that
+  an issue is `ISS 123`, disambiguated by `owner/repo` once a second
+  repository is in play. Both lines are prose outside the `run:` markers,
+  so no measurement was involved and `render.py --check` stayed green
+  throughout.
+
 ### Packaging and CI
 
 - **The interpreter is 3.13, where the rest of btclib-org pins 3.14.**
@@ -556,5 +600,36 @@ The release notes, which say what a user has to act on, are in
   says which side is current where an older page has not caught up.
   [Two such pages][iss68] are named in an issue rather than reworded here,
   a rule and the pages behind it being two subjects.
+
+- **CI records which artifact each comparand's install resolved to**,
+  `scripts/artifacts.py` printing one line per declared dependency before
+  the suite runs. PEP 610 says where a distribution came from and stops
+  there, and for a comparand vendoring libsecp256k1 that is half the
+  answer: an index serves a wheel and an sdist under one version, and the
+  two need not carry the same library. `secp256k1` is the case that
+  proves it, and it is not hypothetical — `uv.lock` carries no aarch64
+  wheel for it, so on `ubuntu-24.04-arm`, three of the six cells, its
+  library is compiled on the runner from an sdist whose pin is four years
+  older than the one its wheels carry. Those three jobs were asserting
+  the pages' claims against a different binary from the one the pages are
+  measured on, and nothing said which.
+
+  What can say is the wheel each install came from: every install goes
+  through one, an sdist being built into a wheel first, and its `WHEEL`
+  metadata states the tag. A bare `linux_*` platform is one no index
+  accepts, so a wheel carrying it was built where it is installed. The
+  test on that is against the start of the platform field and not the
+  whole tag, `manylinux_2_17_x86_64` ending in the same word — a
+  substring test called every downloaded Linux wheel a local build, and
+  the suite caught it. On macOS and Windows the two are spelled alike, so
+  there the tag is reported and nothing is concluded from it.
+
+  Recorded and not asserted. What an install resolved to is a fact about a
+  machine and a lock rather than a claim this repository is entitled to
+  make: an index gaining a wheel changes every line and breaks nothing.
+  The step reads installed metadata and times nothing, so it is no more a
+  benchmark than the linters are. What it still cannot say is the revision
+  a local build downloaded — nothing in an installed tree records it, and
+  `LIBSECP256K1_PINS` is where that is written down by hand.
 
 [iss68]: https://github.com/btclib-org/btclib-benchmarks/issues/68

@@ -107,6 +107,26 @@ GAP = 2
 # the rest padded to it so that their values line up as a column
 LABEL = 8
 
+# how wide a dispersion column prints, its heading included. The values
+# are formatted to it, so a heading longer than it pushes the heading row
+# out of line with every row under it rather than widening the table --
+# which is why the word below is one chosen to fit rather than the key
+# spelled out
+DISPERSION = 9
+
+# what each dispersion statistic is headed, one word per key. Two keys
+# are two statistics, and until this map they met a reader as one word:
+# both pages printed `spread`, and each had only its own prose to say
+# that the column it defines is not the column the other page defines.
+# A reader comparing the two pages meets the heading first.
+#
+# `halves` and not `halves_apart`, the key being three characters wider
+# than the column and the column being sized by the values under it. The
+# word is short enough to need the prose beside the table, which every
+# page carries anyway: what the map buys is that the two pages no longer
+# spell one statistic the same as the other
+DISPERSION_HEADINGS = {"spread": "spread", "halves_apart": "halves"}
+
 # and how wide such a line may print. The pages hold their prose to 80
 # columns and switch `MD013` off inside fenced code, which they have to: a
 # table is sized from its own content, so a comparand with a long name
@@ -145,11 +165,14 @@ class Timing:
     why an absent one is left out of the saved run rather than written as
     zero, a zero here being a measurement like any other.
 
-    What a table heads the column is the page's word and not this file's.
-    Both print under `spread`, because what a reader needs is the
-    statistic named where the table is, which is the prose beside it; the
-    key is what a machine reads back a release later, and the two are
-    different audiences with different failures.
+    Which of the two a row carries is also what heads the column, through
+    `DISPERSION_HEADINGS`: that is row knowledge rather than page
+    knowledge, so a table is headed by the statistic its own rows hold
+    and this module still learns nothing about which page it is
+    rendering. Before that map both printed under `spread`, on the
+    argument that the definition a reader needs is the prose beside the
+    table -- which is true, and left one word over two statistics for
+    the reader who meets the heading before the paragraph.
     """
 
     label: str
@@ -177,10 +200,23 @@ class Timing:
         """Return the one dispersion in the same units as the value.
 
         Whichever of the two the row carries, for a column that prints
-        either: the difference between them is what the key says and what
-        the page's prose says, and neither is the formatting's business.
+        either: what separates them is the definition, and the key beside
+        this one is what carries that into the heading.
         """
         return self.spread if self.spread is not None else self.halves_apart
+
+    @property
+    def dispersion_key(self) -> str | None:
+        """Name the statistic this row's dispersion is, or nothing.
+
+        The value and its name are asked for separately because they are
+        printed in different places -- a column of numbers and one
+        heading above them -- and a row that measured no dispersion has
+        neither.
+        """
+        if self.spread is not None:
+            return "spread"
+        return "halves_apart" if self.halves_apart is not None else None
 
 
 @dataclass(frozen=True)
@@ -580,16 +616,28 @@ def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
 
     `counted` says the page has already stated the call count above every
     table, which is what `counted_once` decides.
+
+    The dispersion column is headed by the statistic the rows carry, so a
+    table of `halves_apart` and a table of `spread` are two columns with
+    two names. One table cannot hold both: a row states one dispersion at
+    most, and rows of one table stating different ones is a script
+    half-way through changing its estimator, which is refused rather than
+    printed under whichever key was read first.
     """
     timed = [row for row in table.rows if isinstance(row, Timing)]
     quickest = min(row.us_per_call for row in timed)
-    spreads = any(row.dispersion is not None for row in timed)
+    statistics = {row.dispersion_key for row in timed} - {None}
+    if len(statistics) > 1:
+        raise ValueError(f"{table.title}: two statistics under one column")
+    dispersed = statistics.pop() if statistics else None
     deviations = any(row.deviation is not None for row in timed)
     heading = f"  {'':<{width}}{'μs/call':>10}"
     if deviations:
         heading += f"{'sd':>10}"
     heading += f"{'vs best':>12}"
-    lines = [table.title, heading + (f"{'spread':>9}" if spreads else "")]
+    if dispersed:
+        heading += f"{DISPERSION_HEADINGS[dispersed]:>{DISPERSION}}"
+    lines = [table.title, heading]
     for row in sorted(timed, key=lambda row: row.us_per_call):
         ratio = row.us_per_call / quickest
         line = f"  {row.label:<{width}}{row.us_per_call:10.2f}"
@@ -597,7 +645,7 @@ def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
             line += f"{'± ' + format(row.deviation, '.2f'):>10}"
         line += f"{ratio:11.{table.decimals}f}x"
         if row.dispersion is not None:
-            line += f"{row.dispersion:9.2f}"
+            line += f"{row.dispersion:{DISPERSION}.2f}"
         lines.append((line if counted else line + _call_note(row)).rstrip())
     # under the numbers, and with none of the columns that follow one: a
     # row without a measurement has no ratio to state and no scatter
