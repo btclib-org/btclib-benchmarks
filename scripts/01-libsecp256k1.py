@@ -1373,8 +1373,11 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
 # what the run block claims about how these numbers were taken, said by
 # the script that takes them: `benchmark` above is where the rounds and the
 # minimum are, and the spread column is what a reader checks it by
-# kept short enough that the rendered line stays inside 80 columns, the
-# label it is printed under costing ten of them
+# kept inside 80 columns once the label it prints under is counted, which
+# `labelled` in `_results.py` now refuses to publish rather than leaving
+# to whoever edits this string: a comment here cannot see the ten columns
+# that label costs, and the linter reading the page cannot see inside a
+# fenced block
 METHOD = f"{ROUNDS} rounds per row in two halves, minimum kept; calls per table"
 
 

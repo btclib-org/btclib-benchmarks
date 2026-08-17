@@ -67,23 +67,14 @@ WYCHEPROOF = _vectors.wycheproof()
 # signature nothing should accept
 ORDER = secp256k1lab.secp256k1.Scalar.SIZE
 
-# the rows whose message is below the group order, which is every one but a
-# single published vector of thirty-two 0xff octets. RFC6979 derives its
-# nonce through `bits2octets`, which reduces the digest modulo the order,
-# where a caller handing libsecp256k1 the thirty-two octets unreduced draws
-# a different nonce -- so for a digest at or above the order there are two
-# defensible signatures, both of which verify. Three of these wrappers reach
-# the reduced one on every platform this project runs on and secp256k1-py
-# reaches the other on one of them, which `UNREDUCED_ON` below is about.
-#
-# It is only the *agreement* cases this excludes. Every property below --
-# grinding reaching a low r, a signature verifying, a parse round-tripping,
-# and which of the two nonces a wrapper draws -- is asked of that vector
-# like any other
-AGREEING = [vector for vector in SIGNING if int.from_bytes(vector.msg, "big") < ORDER]
-
-# and the one row the split is about, which is what the case below asks of
-# each wrapper on its own rather than of the four together
+# the one published vector whose digest the group order does not contain,
+# thirty-two 0xff octets. RFC6979 derives its nonce through `bits2octets`,
+# which reduces the digest modulo the order, where a caller handing
+# libsecp256k1 the thirty-two octets unreduced draws a different nonce -- so
+# for this one row there are two defensible signatures, both of which
+# verify. Three of these wrappers reach the reduced one on every platform
+# this project runs on and secp256k1-py reaches the other on one of them,
+# which `UNREDUCED_ON` below is about
 ABOVE_THE_ORDER = [
     vector for vector in SIGNING if int.from_bytes(vector.msg, "big") >= ORDER
 ]
@@ -93,11 +84,6 @@ ABOVE_THE_ORDER = [
 # order would turn the case below into a skip, and the page's most
 # interesting property would stop being asked with nothing failing anywhere
 assert ABOVE_THE_ORDER
-
-
-def _agreeing_ids() -> list[str]:
-    """Name the agreement cases for the vectors they came from."""
-    return [f"bip340-{vector.number}" for vector in AGREEING]
 
 
 def _ids() -> list[str]:
@@ -177,6 +163,9 @@ DSA_SIGNERS_DER: dict[str, Callable[[bytes, bytes], bytes]] = {
 # the wheel's behaviour, that being what a published run is measured on.
 UNREDUCED_ON = {"secp256k1-py": ("Linux", "aarch64")}
 
+# said once, because three cases below are expected to fail for it
+UNREDUCED_REASON = "no aarch64 wheel, so this job compiles its own libsecp256k1"
+
 
 def _hands_the_digest_over_unreduced(package: str) -> bool:
     """Return whether this build is the one that skips the reduction."""
@@ -192,11 +181,47 @@ REDUCTION_CASES = [
         package,
         marks=pytest.mark.xfail(
             _hands_the_digest_over_unreduced(package),
-            reason="no aarch64 wheel, so this job compiles its own libsecp256k1",
+            reason=UNREDUCED_REASON,
             strict=True,
         ),
     )
     for package in sorted(DSA_SIGNERS_DER)
+]
+
+
+def _one_of_them_does() -> bool:
+    """Return whether any signer on this platform skips the reduction.
+
+    What an agreement case has to know, where the case above asks each
+    wrapper separately: four wrappers cannot agree on the vector above the
+    order if one of them draws the other nonce, and it is the same one
+    wrapper and the same one platform either way.
+    """
+    return any(map(_hands_the_digest_over_unreduced, DSA_SIGNERS_DER))
+
+
+# every vector, the one above the order included, expected to fail on the
+# one platform where a signer draws the other nonce and to pass on the five
+# where all four draw the same one.
+#
+# It used to be dropped from these cases everywhere, which was as wide as
+# the fact was known: the four agreeing on an Apple M5 and one of them
+# disagreeing somewhere on Linux. Now that #32 has named the wrapper and the
+# platform, the five that agree get the check back over the only vector that
+# has ever produced a disagreement -- which is the one it is most worth
+# having -- and the sixth says so out loud instead of the vector being
+# absent from six jobs to accommodate one
+AGREEMENT_CASES = [
+    pytest.param(
+        vector,
+        id=f"bip340-{vector.number}",
+        marks=pytest.mark.xfail(
+            vector in ABOVE_THE_ORDER and _one_of_them_does(),
+            reason=UNREDUCED_REASON,
+            strict=True,
+        ),
+    )
+    for vector in SIGNING
 ]
 
 DSA_SIGNERS_COMPACT: dict[str, Callable[[bytes, bytes], bytes]] = {
@@ -229,6 +254,25 @@ DSA_GRINDERS_COMPACT: dict[str, Callable[[bytes, bytes], bytes]] = {
         msg, grind_r_value=True
     ),
 }
+
+# the grinders' own agreement cases, and the condition is `False` everywhere
+# this project runs: neither grinder is the wrapper that draws the other
+# nonce. Computed from `DSA_GRINDERS_DER` rather than stated, because a third
+# grinder or a build changing under one of these two would otherwise turn a
+# fact into a red job whose reason lives in a docstring
+GRINDING_CASES = [
+    pytest.param(
+        vector,
+        id=f"bip340-{vector.number}",
+        marks=pytest.mark.xfail(
+            vector in ABOVE_THE_ORDER
+            and any(map(_hands_the_digest_over_unreduced, DSA_GRINDERS_DER)),
+            reason=UNREDUCED_REASON,
+            strict=True,
+        ),
+    )
+    for vector in SIGNING
+]
 
 # every signing shape the benchmark times, as a call taking the one argument
 # the pair of rows differs by. btclib_secp256k1 alone of the four takes it,
@@ -428,7 +472,7 @@ def _low_r(compact: bytes) -> bool:
 # --- ECDSA signing, which no published file covers for these four -------
 
 
-@pytest.mark.parametrize("vector", AGREEING, ids=_agreeing_ids())
+@pytest.mark.parametrize("vector", AGREEMENT_CASES)
 def test_the_four_wrappers_produce_one_der_signature(
     vector: _vectors.Signing,
 ) -> None:
@@ -438,6 +482,12 @@ def test_the_four_wrappers_produce_one_der_signature(
     tested at all without a vector file: the nonce is derived rather than
     drawn, so four correct implementations have one right answer between
     them and any disagreement is a defect in whichever one is alone.
+
+    The vector above the group order is one of the cases here rather than
+    excluded from them: there the four have *two* right answers between them
+    and `AGREEMENT_CASES` expects the failure on the one platform where a
+    signer reaches the second, which leaves this asked over that vector on
+    the five where it holds.
     """
     signatures = {
         package: sign(vector.msg, vector.prvkey)
@@ -446,7 +496,7 @@ def test_the_four_wrappers_produce_one_der_signature(
     assert len(set(signatures.values())) == 1, signatures
 
 
-@pytest.mark.parametrize("vector", AGREEING, ids=_agreeing_ids())
+@pytest.mark.parametrize("vector", AGREEMENT_CASES)
 def test_the_compact_signature_is_the_der_one_without_its_wrapping(
     vector: _vectors.Signing,
 ) -> None:
@@ -455,6 +505,11 @@ def test_the_compact_signature_is_the_der_one_without_its_wrapping(
     Which is what makes the compact tables comparable with the DER ones at
     all -- if the two encodings held different signatures, the pair would
     price two operations rather than one.
+
+    An agreement over three rather than four, coincurve having no compact
+    spelling, and the divergent signer is one of the three -- so this
+    carries the same expected failure as the case above and for the same
+    vector.
     """
     der = DSA_SIGNERS_DER["btclib_secp256k1"](vector.msg, vector.prvkey)
     compact = {
@@ -527,7 +582,7 @@ def test_a_ground_signature_has_the_low_r(vector: _vectors.Signing) -> None:
         assert _low_r(sign(vector.msg, vector.prvkey)), package
 
 
-@pytest.mark.parametrize("vector", AGREEING, ids=_agreeing_ids())
+@pytest.mark.parametrize("vector", GRINDING_CASES)
 def test_the_two_grinding_loops_reach_the_same_signature(
     vector: _vectors.Signing,
 ) -> None:
@@ -537,6 +592,15 @@ def test_the_two_grinding_loops_reach_the_same_signature(
     none -- so this is the one place in this file where two different bodies
     of Python are held to one answer rather than two callers of one C
     function.
+
+    The condition on these cases is `False` on every platform this project
+    runs on, so every vector is asked with nothing expected to fail: the two
+    grinders are btclib_secp256k1 and electrum-ecc and the wrapper that draws
+    the other nonce is neither. The condition is there rather than the
+    sentence because that is a fact about `DSA_GRINDERS_DER` and nothing
+    tied it to them -- add a third grinder, or have one of these two builds
+    change under it, and this expects its own failure instead of becoming a
+    red job whose reason lives in a docstring.
     """
     der = {
         package: sign(vector.msg, vector.prvkey)

@@ -75,6 +75,20 @@ MACHINE_FILE = RESULTS / "machine.toml"
 # width, and the same gap in every table of every page
 GAP = 2
 
+# how wide the label of a labelled line is, `when`, `machine`, `method` and
+# the rest padded to it so that their values line up as a column
+LABEL = 8
+
+# and how wide such a line may print. The pages hold their prose to 80
+# columns and switch `MD013` off inside fenced code, which they have to: a
+# table is sized from its own content, so a comparand with a long name
+# widens a row and no limit can be imposed on it from outside. A labelled
+# line is the opposite case -- its value is a sentence somebody wrote, and
+# nothing but a habit was keeping it inside the width the rest of the file
+# is held to. `labelled` is that habit made into a rule, raising rather
+# than printing a line the page cannot carry
+LINE = 80
+
 
 @dataclass(frozen=True)
 class Timing:
@@ -367,6 +381,25 @@ def rendered_provenance(provenance: Provenance) -> str:
     return "\n".join(lines)
 
 
+def labelled(label: str, value: str) -> str:
+    """Return one `label : value` line, refusing one too wide for the page.
+
+    The renderer is the only code that knows both halves, which is why the
+    check is here rather than beside whichever string it is about: a script
+    writing `method` cannot see the label it will be printed under, and the
+    linter that reads the page cannot see inside a fenced block. So a run
+    fails where the line is built, with the width it came to, rather than
+    publishing a line that runs off the column every other line respects.
+
+    Raises:
+        ValueError: if the line would print wider than `LINE` columns.
+    """
+    line = f"{label:<{LABEL}}: {value}"
+    if len(line) > LINE:
+        raise ValueError(f"{len(line)} columns is wider than {LINE}: {line!r}")
+    return line
+
+
 def rendered_run(run: Run) -> str:
     """Return the block naming when and where a run took place.
 
@@ -381,9 +414,9 @@ def rendered_run(run: Run) -> str:
     utc = when.astimezone(UTC)
     return "\n".join(
         [
-            f"when    : {when:%Y-%m-%d %H:%M} {run.timezone} ({utc:%H:%M} UTC)",
-            f"machine : {run.machine}",
-            f"python  : {run.python}",
+            labelled("when", f"{when:%Y-%m-%d %H:%M} {run.timezone} ({utc:%H:%M} UTC)"),
+            labelled("machine", run.machine),
+            labelled("python", run.python),
         ]
     )
 
@@ -604,7 +637,9 @@ def rendered_method(measurement: Measurement) -> str:
     are one block.
     """
     run = measurement.run
-    lines = [f"method  : {run.method}\ncommand : {run.command}"]
+    lines = [
+        "\n".join([labelled("method", run.method), labelled("command", run.command)])
+    ]
     if measurement.timing_note:
         lines.append("\n".join(measurement.timing_note))
     return "\n\n".join(lines)
