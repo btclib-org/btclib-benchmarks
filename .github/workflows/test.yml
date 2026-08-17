@@ -164,7 +164,9 @@ jobs:
           # opened -- the same argument as printing the listing before
           # judging it, one reader further out. `%0A` is a newline to an
           # annotation, which is otherwise one line, and the tab goes with
-          # it: the columns line up in a log and not in this
+          # it: the columns line up in a log and not in this. A literal `%`
+          # would want `%25` and passes through unescaped, which no name a
+          # matrix builds can contain
           annotate() {
             printf '::error::%s' "$1"
             printf '%s' "$2" | tr '\t' ' ' | awk '{ printf "%%0A%s", $0 }'
