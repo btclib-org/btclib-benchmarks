@@ -496,3 +496,23 @@ The release notes, which say what a user has to act on, are in
   nothing and deleting it is a step someone takes. And issues have a
   second use worth stating: parking a finding noticed while writing or
   reviewing a pull request, so that the pull request stays one subject.
+
+- **CONTRIBUTING.md said everything lands through a pull request and
+  nothing about how.** The cadence was unwritten — one subject per pull
+  request, opened the moment it is written rather than batched with the
+  next or held for the previous one — and so was the review it goes
+  through: given promptly on local evidence, anchored to a sha because a
+  branch moves under a review, ended by an ack and by nothing else. The
+  landing was unwritten too, and it is the half where a mistake is
+  expensive: the checks read after the rebase rather than before, the
+  squash performed locally, the branch deleted by hand, and the checkouts
+  sitting on `main` brought up to date, a stale one being where the next
+  branch gets built on a base that has moved.
+
+  Two rules that only look like details went in with it. A finding noticed
+  beside the subject becomes an issue instead of riding along in the diff,
+  because a diff answering two questions cannot be accepted for either. And
+  an issue or a pull request is written `ISS 123` or `PR 45`, as a link,
+  disambiguated by `owner/repo` once a second repository is in play: a bare
+  `#123` resolves only inside the repository it was written in, and
+  resolves to nothing anywhere else.

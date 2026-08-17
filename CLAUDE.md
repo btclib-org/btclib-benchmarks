@@ -6,6 +6,12 @@ Repository configuration — branch protection, required checks, token
 permissions — is in `REPOSITORY.md`. Read that before changing a workflow
 or a repository setting. Writing a benchmark row does not need it.
 
+How a change gets from an issue to `main` — one subject per pull request,
+opened as soon as it is written, the review it goes through and the
+landing that keeps `main`'s signature the maintainer's — is
+`CONTRIBUTING.md`'s *Pull requests*. Read it before opening one, and
+before reviewing one.
+
 ## Commands
 
 ```shell
