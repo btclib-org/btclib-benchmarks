@@ -68,51 +68,58 @@ jobs:
     if: ${{ always() && !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      # the one job here that reads anything but the tree, and a read
+      # scope: it asks the API what this run's own jobs concluded.
+      # REPOSITORY.md records it beside the others
+      contents: read
+      actions: read
     steps:
       # one required status check in branch protection instead of one per
       # matrix cell, which would have to be re-listed on every change to
       # the matrix. `always()` above is what makes a cancelled or skipped
-      # cell reach this job rather than leave it unrun.
+      # cell reach this job rather than leave it unreported.
       #
-      # Two things this step does that its predecessor did not, and the
-      # first is why the second could be chosen at all.
+      # What this asks is the run, and not `needs.*.result`, which twice
+      # reported a red matrix as `success`: under the outage that had
+      # codeload answer 503 and then 429, a cell died in "Set up job"
+      # with the download of an action abandoned after three attempts,
+      # and the failure never reached the needs context at all.
       #
-      # It prints what it saw, unconditionally and before judging it. This
-      # is the job whose entire purpose is to be trusted, and on 2026-08-17
-      # it reported success while a cell of the matrix had concluded failure
-      # and the run it belongs to had concluded failure -- and it could not
-      # say what `needs` had handed it, so the question had to be
-      # reconstructed from job timestamps. One line of log answers it next
-      # time.
+      # Reading that context more strictly is what this replaces, and is
+      # why strictness was not the answer. The step here before it printed
+      # what it had been handed and demanded `success` of every result,
+      # which covers every shape the context can report and cannot cover a
+      # shape it does not report.
       #
-      # And it fails closed. Its predecessor enumerated the results that are
-      # bad -- failure, cancelled, skipped -- which passes anything the list
-      # does not anticipate, and the list is what left room for the above.
-      # This one demands `success` from every result and refuses everything
-      # else, whatever it turns out to be called.
+      # Nor can the ways a job dies be enumerated instead: a cell pointed
+      # at an action SHA that does not exist dies in the same step and does
+      # arrive as `failure`, and a cell that fails in a step of its own
+      # always did -- which is why the hole stayed hidden until GitHub had
+      # an outage, and why what is asked here is a conclusion the run
+      # reports rather than the route by which the job reached it.
       #
-      # An empty `needs.*.result` is refused too, which is the same argument
-      # one level up: a check that aggregates nothing is not a check that
-      # passed.
-      #
-      # What this cannot promise is that it fixes 2026-08-17. If GitHub
-      # reported the matrix as `success` despite that cell, then no
-      # expression over `needs` can gate it and the aggregate has to read
-      # something else -- the run's own jobs, through the API. Which of the
-      # two it was is what the printing is for, and the next occurrence is
-      # what would settle it.
-      - name: Fail unless every job this check aggregates succeeded
+      # Printed before it is judged, which the step before this one
+      # established and this keeps: the job whose whole purpose is to be
+      # trusted is the one that has to be able to say what it saw. The
+      # outage had to be reconstructed from job timestamps because it
+      # could not.
+      - name: Fail if any job did not succeed
         env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "needs.*.result: ${RESULTS:-<empty>}"
-          if [ -z "$RESULTS" ]; then
-            echo "::error::this check aggregates nothing: needs resolved empty"
+          set -euo pipefail
+          # this job is the one still running, so its own conclusion is
+          # null and the filter below leaves it out
+          jobs=$(gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" \
+            --jq '.jobs[] | "\(.conclusion // "in progress")\t\(.name)"')
+          printf '%s\n' "${jobs}"
+          # awk and not grep: a tab in a grep pattern is one implementation's
+          # extension and a literal "t" in another's, and the runner's is the
+          # second -- where awk's field separator is POSIX
+          bad=$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 != "success" && $1 != "in progress"')
+          if [ -n "${bad}" ]; then
+            echo "::error::at least one test job did not succeed"
             exit 1
           fi
-          for result in $RESULTS; do
-            if [ "$result" != success ]; then
-              echo "::error::a job this check aggregates concluded '$result'"
-              exit 1
-            fi
-          done

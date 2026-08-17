@@ -22,6 +22,22 @@ aggregate means the matrix can gain or lose a cell without anyone
 editing branch protection; naming the cells would mean this list going
 stale the first time it changed.
 
+What that job must not do is decide from `needs.*.result`, which is how
+it was written until an outage showed what that context can miss. With
+codeload answering 503 and then 429, a cell died in "Set up job" with
+the download of an action abandoned after three attempts; the job is red
+in the run, the failure never reached the needs context, and the step
+that fails the gate was skipped. The one required check went green over
+a red matrix, twice.
+
+It is not that every setup failure does this — a cell pointed at an
+action SHA that does not exist dies in the same step and does arrive as
+`failure`, which was worth measuring before writing the fix — and a cell
+that fails in a step of its own always did. That is why the hole stayed
+hidden until GitHub had an outage, and why the fix does not try to
+enumerate the ways a job can die: the job asks the API what this run's
+jobs concluded, and a conclusion is a conclusion however it was reached.
+
 `strict` requires a branch to be up to date with main before it merges.
 
 ## Branch protection
@@ -97,10 +113,13 @@ what it claims gets reported.
 ## Token permissions
 
 Every workflow declares `permissions: contents: read` at the top level,
-and no job here elevates it. Nothing in this repository publishes,
-attests, or writes to the repository itself, so there is no job that
-needs more — which is a smaller surface than the other btclib-org
-repositories have, and the reason there is no `publishing` section here.
+and one job elevates it: `test.yml`'s `test-passed` adds `actions:
+read`, which is what lets it ask the run what its own jobs concluded
+rather than trust the needs context — the reason is under *Required
+checks on main* above. Nothing in this repository publishes, attests, or
+writes to the repository itself, so no job holds a write scope of any
+kind — which is a smaller surface than the other btclib-org repositories
+have, and the reason there is no `publishing` section here.
 
 ## What is not configured, and why
 
