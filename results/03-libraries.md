@@ -61,9 +61,19 @@ The tables are the curve operations, BIP32 derivation, and the three
 address encodings in both directions. Fastest row first, ratioed against
 whichever row came out quickest, with the spread of a row's own three
 rounds beside it — how far its slowest round ran from its quickest, in the
-same microseconds as the value it sits beside. A row whose distance from
-the one above it is no larger than that is not behind it in any durable
-sense.
+same microseconds as the value it sits beside.
+
+Read it as the computer and not as the library — as what else the machine was
+doing while a row was measured, rather than as anything the code under that
+row does. It is the worst of three rounds less the best, so a wide one says
+one round in three caught an interruption and a narrow one says none of them
+did.
+
+It is **not** a separation test. The worst of three samples is a number
+dominated by whichever round happened to go badly, so it moves a great deal
+from run to run while the row's own minimum barely moves at all: whether two
+adjacent rows are really in the order printed is not a question it answers,
+and comparing their gap against it does not make it one.
 
 That is not the statistic the column of the same name carries on [the
 wrappers page][wrappers], and the two are not comparable in either direction.

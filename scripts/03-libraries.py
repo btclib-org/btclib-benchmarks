@@ -927,6 +927,15 @@ for _encoding_row in (
     _encoding_row()
 
 
+# three, and the estimator below is the one that goes with three rather than
+# the one this project would rather have: `scripts/01-libsecp256k1.py` halves
+# its rounds and prints the distance between the two halves' minima. Three do
+# not halve, so adopting that here is `ROUNDS = 4` and nothing else -- two and
+# two, which costs a third of a run.
+#
+# Affordable, and not what is in the way. Changing the estimator means
+# re-measuring this page, and this page cannot be re-measured yet: #53 has the
+# numbers and #23 the reason
 ROUNDS = 3
 
 
