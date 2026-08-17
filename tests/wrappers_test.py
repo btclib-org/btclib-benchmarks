@@ -41,6 +41,7 @@ from __future__ import annotations
 import hashlib
 import platform
 from collections.abc import Callable
+from typing import Any
 
 import _vectors
 import btclib_secp256k1.dsa
@@ -295,6 +296,53 @@ CHECKED_PAIRS: dict[str, Callable[[_vectors.Signing, bool], bytes]] = {
     "ssa": lambda vector, check: btclib_secp256k1.ssa.sign(
         vector.msg, vector.prvkey, vector.aux, verify=check
     ),
+}
+
+# the BIP340 signing pair, as two calls per package: the key handed over as
+# bytes, and the object each package offers a caller who will sign again.
+# What the pair of tables is read as -- the price of holding the key -- is
+# only what it is if the two answer the same octets, and that is the one
+# thing a timing cannot show, both rows being a number either way.
+#
+# secp256k1-py's API takes no aux_rand at all, so its two calls ignore the
+# argument rather than passing it: the pair is each package against itself,
+# which is what makes that legitimate here where a four-way agreement would
+# have made it a defect
+SSA_FRESH: dict[str, Callable[[bytes, bytes, bytes], bytes]] = {
+    "btclib_secp256k1": lambda msg, prvkey, aux: btclib_secp256k1.ssa.sign(
+        msg, prvkey, aux, verify=False
+    ),
+    "coincurve": lambda msg, prvkey, aux: coincurve.PrivateKey(prvkey).sign_schnorr(
+        msg, aux
+    ),
+    "secp256k1-py": lambda msg, prvkey, aux: bytes(
+        secp256k1.PrivateKey(prvkey, raw=True).schnorr_sign(msg, None, raw=True)
+    ),
+    "electrum-ecc": lambda msg, prvkey, aux: electrum_ecc.ECPrivkey(
+        prvkey
+    ).schnorr_sign(msg, aux_rand32=aux),
+}
+
+# and the held shape as two halves, because that is how the benchmark runs
+# it: `_held` builds one object per key in the fixtures and the row signs
+# through it once per round, so a held object signs many times over a run.
+# Writing the held call as one lambda that constructs and signs made the
+# comparison below `f(x) == f(x)` for the three packages whose two spellings
+# are the same characters, and left the one thing the pair could actually
+# get wrong untested for all four -- an object that accumulates state across
+# calls: a nonce cached, a keypair mutated in place, a scalar consumed.
+BUILD_SIGNER: dict[str, Callable[[bytes], object]] = {
+    "btclib_secp256k1": btclib_secp256k1.ssa.Signer,
+    "coincurve": coincurve.PrivateKey,
+    "secp256k1-py": lambda prvkey: secp256k1.PrivateKey(prvkey, raw=True),
+    "electrum-ecc": electrum_ecc.ECPrivkey,
+}
+
+SIGN_HELD: dict[str, Callable[[Any, bytes, bytes], bytes]] = {
+    "btclib_secp256k1": lambda signer, msg, aux: signer.sign(msg, aux, verify=False),
+    "coincurve": lambda key, msg, aux: key.sign_schnorr(msg, aux),
+    "secp256k1-py": lambda key, msg, aux: bytes(key.schnorr_sign(msg, None, raw=True)),
+    "electrum-ecc": lambda key, msg, aux: key.schnorr_sign(msg, aux_rand32=aux),
 }
 
 # parse and serialize again, which is the only way to see what a parse read:
@@ -655,6 +703,51 @@ def test_the_check_costs_a_row_and_changes_no_signature(
         vector: the key, message and aux_rand it is made with.
     """
     assert CHECKED_PAIRS[shape](vector, True) == CHECKED_PAIRS[shape](vector, False)
+
+
+# --- the key a signer holds, which is the other pair of signing rows ----
+
+
+@pytest.mark.parametrize("package", sorted(SSA_FRESH))
+@pytest.mark.parametrize("vector", SIGNING, ids=_ids())
+def test_holding_the_key_changes_no_signature(
+    package: str, vector: _vectors.Signing
+) -> None:
+    """The equality the BIP340 signing pair is read as one operation on.
+
+    One table signs under a key handed over as bytes and the other under
+    the object that package offers for signing again, and the difference
+    between them is read as the price of holding it. That is only what it
+    is if the two answer the same octets: a held object that had drawn a
+    different nonce, or signed under a key derived once and kept wrongly,
+    would be a second operation and the subtraction would be of two
+    different things.
+
+    Signed **twice** through one held object, because that is the shape the
+    benchmark runs and the only shape where the held row can be wrong on its
+    own: `_held` builds one object per key in the fixtures and the row signs
+    through it once per round, so a held object signs many times over a run.
+    An object that accumulated state -- a nonce cached, a keypair mutated in
+    place, a scalar consumed -- would price something other than a signature
+    from its second call on, and a case that built a fresh object per call
+    could not see it. Three of the four spell the two shapes identically, so
+    without this the comparison was a value against itself.
+
+    Asked of each package against itself rather than of the four against
+    each other, because one of them takes no aux_rand and so signs a
+    different signature from the other three by design.
+
+    Args:
+        package: the wrapper, which is what the id has to carry.
+        vector: the key, message and aux_rand the pair is measured over.
+    """
+    fresh = SSA_FRESH[package](vector.msg, vector.prvkey, vector.aux)
+    held = BUILD_SIGNER[package](vector.prvkey)
+    first = SIGN_HELD[package](held, vector.msg, vector.aux)
+    assert SIGN_HELD[package](held, vector.msg, vector.aux) == first == fresh
+    # and it is a signature under the right key, which equality alone would
+    # not say: three calls that all held the wrong key would agree
+    assert btclib_secp256k1.ssa.verify(vector.msg, _uncompressed(vector.prvkey), fresh)
 
 
 # --- parsing a public key -----------------------------------------------

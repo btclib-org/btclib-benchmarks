@@ -4,12 +4,17 @@
 
 """What the second signature under the same key costs, and the hundredth.
 
-The other four benchmarks time one operation once: a key, a message, a
-signature, and a row. That is the right shape for asking what an
-operation costs, and the wrong shape for asking what a verifier pays,
-because a verifier does not verify one signature. A node checks every
+Nearly every row of the other four benchmarks times one operation once: a
+key, a message, a signature, and a row. That is the right shape for asking
+what an operation costs, and the wrong shape for asking what a verifier
+pays, because a verifier does not verify one signature. A node checks every
 input of every transaction, a wallet checks a batch, a message checker
 checks a list -- and does it, over and over, under a key it already has.
+
+The exception is `scripts/01-libsecp256k1.py`'s BIP340 signing pair, which
+asks this same question on the signing side: what the four wrappers charge
+for a second signature under a key a caller is holding. So this page is the
+verifier's half of it rather than the only place the question is put.
 
 Whatever a verification derives from the key alone is the same on the
 second call as on the first. This times what that is worth: the same
