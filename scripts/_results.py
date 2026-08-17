@@ -80,15 +80,22 @@ GAP = 2
 class Timing:
     """One row of a table: a label, and what a call under it cost.
 
-    `spread` and `deviation` are two answers to one question, how far the
-    rounds of a row scattered, and a row carries whichever its script
-    measured: the spread is how far the slowest round ran from the
-    quickest, in the same microseconds as `us_per_call` so that the two
-    are read against each other without arithmetic, and the deviation is
-    the standard deviation over all of them, which is worth having only
-    where the rounds are many. Both are optional, as `calls` is: a script
-    that times each row once has no dispersion to state, and printing an
-    absent one as zero would claim a quiet machine.
+    `spread` and `deviation` are two answers to one question, how much of
+    a row is the machine rather than the operation, and a row carries
+    whichever its script measured. The deviation is the standard deviation
+    over the rounds, which is worth having only where they are many. The
+    spread is in the same microseconds as `us_per_call`, so that the two
+    are read against each other without arithmetic, and what it is beyond
+    that is the measuring script's to define and its docstring's to say:
+    the two scripts that fill this column do not currently agree, one
+    taking the slowest round less the quickest and the other the distance
+    between the minima of two halves of the rounds. So the column carries
+    a number and no definition, and a page states the one its own run
+    used. Both are optional, as `calls` is: a script that times each row
+    once has no dispersion to state, and printing an absent one as zero
+    would claim a quiet machine -- which is why an absent one is left out
+    of the saved run rather than written as zero, a zero here being a
+    measurement like any other.
     """
 
     label: str

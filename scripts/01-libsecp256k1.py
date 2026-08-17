@@ -28,15 +28,14 @@ Signing and verifying are two tables each, one per serialization: DER, which
 is what a transaction carries, and the 64-byte compact form, which is what a
 caller holds. The difference between the two is an encoding rather than an
 arithmetic, so what a pair of them prices is exactly what a serialization
-costs -- and the parse tables do the same for a public key, 33 bytes against
-65: the compressed form makes the parser solve for y, and the uncompressed
-one hands it over.
+costs.
 
 Every operation that takes a public key is a pair over the two
 serializations of one, 65 octets against 33, because that is where the cost
 of a public key lives: the compressed form is an x whose y the parser has
-to solve for, and the uncompressed form carries it. Verification is that
-pair twice over, once per signature encoding, and so is the tweak.
+to solve for, and the uncompressed form carries it. The parse tables are
+that difference on its own, verification is it twice over, once per
+signature encoding, and so is the tweak.
 
 BIP340 verification is a pair for the same reason, over a different
 difference. It verifies against an x-only key, and a caller either holds one
@@ -149,6 +148,21 @@ for, and converting between encodings happens once, in the fixtures. What a
 sign row hands back is bytes in every case: secp256k1-py's `ecdsa_sign` alone
 returns its parsed signature, so its row serializes it to DER, bytes being
 what the other three hand back.
+
+A tweak hands back octets for the same reason, and only one of the four does
+so on its own: `pubkey_tweak_add` answers with a serialized key where
+coincurve and secp256k1-py answer with a key object of theirs and
+electrum-ecc with an `ECPubkey`. Timing each API's own answer would compare a
+tweak-and-serialize against a tweak, which is not one operation, so every row
+ends at octets and pays the call its API makes a caller write to get them --
+`.format()`, `.serialize()`, `get_public_key_bytes()`. Octets rather than the
+objects because a tweak whose result is never serialized is not BIP32's step:
+what derivation does with a child key is store it.
+
+The 33 of them are the same 33 in both tweak tables, the pair varying the key
+that goes *in* and nothing else. Answering each table in the encoding it was
+handed would price two differences at once and leave the pair reading as
+neither.
 
 ## No row is handed an object another row's package built
 
@@ -956,15 +970,19 @@ def ssa_verify_derived_btclib_secp256k1() -> None:
 
 
 def tweak_coincurve() -> None:
-    """Time coincurve's public key tweak, which returns a new PublicKey."""
+    """Time coincurve's public key tweak, taken to the 33 octets of a key."""
     pubkey, tweak = next(TWEAK)
-    coincurve.PublicKey(pubkey).add(tweak)
+    coincurve.PublicKey(pubkey).add(tweak).format(compressed=True)
 
 
 def tweak_secp256k1() -> None:
-    """Time secp256k1-py's public key tweak, in place on a parsed key."""
+    """Time secp256k1-py's public key tweak, taken to 33 octets.
+
+    Its `tweak_add` works in place on the parsed key and answers with it,
+    so the serialization is a second call where two of the four make one.
+    """
     pubkey, tweak = next(TWEAK)
-    secp256k1.PublicKey(pubkey, raw=True).tweak_add(tweak)
+    secp256k1.PublicKey(pubkey, raw=True).tweak_add(tweak).serialize(compressed=True)
 
 
 def tweak_electrum_ecc() -> None:
@@ -973,31 +991,31 @@ def tweak_electrum_ecc() -> None:
     There is no tweak-add on `ECPubkey`: a scalar times the generator and a
     point addition is how the same tweak is reached, both libsecp256k1 calls.
     Two crossings where the others make one is the difference this table
-    exists to show.
+    exists to show, and the serialization at the end is a third.
     """
     pubkey, tweak = next(TWEAK)
     (
         electrum_ecc.ECPubkey(pubkey)
         + int.from_bytes(tweak, "big") * electrum_ecc.GENERATOR
-    )
+    ).get_public_key_bytes(compressed=True)
 
 
 def tweak_btclib_secp256k1() -> None:
     """Time btclib_secp256k1's public key tweak, bytes in and bytes out."""
     pubkey, tweak = next(TWEAK)
-    btclib_secp256k1.keys.pubkey_tweak_add(pubkey, tweak)
+    btclib_secp256k1.keys.pubkey_tweak_add(pubkey, tweak, compressed=True)
 
 
 def tweak_33_coincurve() -> None:
-    """Time coincurve's tweak over the compressed key."""
+    """Time coincurve's tweak over the compressed key, 33 octets out."""
     pubkey, tweak = next(TWEAK_33)
-    coincurve.PublicKey(pubkey).add(tweak)
+    coincurve.PublicKey(pubkey).add(tweak).format(compressed=True)
 
 
 def tweak_33_secp256k1() -> None:
-    """Time secp256k1-py's tweak over the compressed key."""
+    """Time secp256k1-py's tweak over the compressed key, 33 octets out."""
     pubkey, tweak = next(TWEAK_33)
-    secp256k1.PublicKey(pubkey, raw=True).tweak_add(tweak)
+    secp256k1.PublicKey(pubkey, raw=True).tweak_add(tweak).serialize(compressed=True)
 
 
 def tweak_33_electrum_ecc() -> None:
@@ -1006,13 +1024,13 @@ def tweak_33_electrum_ecc() -> None:
     (
         electrum_ecc.ECPubkey(pubkey)
         + int.from_bytes(tweak, "big") * electrum_ecc.GENERATOR
-    )
+    ).get_public_key_bytes(compressed=True)
 
 
 def tweak_33_btclib_secp256k1() -> None:
-    """Time btclib_secp256k1's tweak over the compressed key."""
+    """Time btclib_secp256k1's tweak over the compressed key, 33 octets out."""
     pubkey, tweak = next(TWEAK_33)
-    btclib_secp256k1.keys.pubkey_tweak_add(pubkey, tweak)
+    btclib_secp256k1.keys.pubkey_tweak_add(pubkey, tweak, compressed=True)
 
 
 DSA_SIGN_DER_ROWS = (
@@ -1118,22 +1136,31 @@ for _row in (
 # those rounds is the number. The two constants answer different questions
 # and were chosen by measuring, not by taste.
 #
-# `CALLS` sets how long one round lasts, and that is what decides whether
-# the `spread` beside a row means anything: measured on this machine, a
-# round under twenty-five milliseconds reports a spread of tens of percent
-# on an operation whose minimum is steady to one, the scheduler's noise
-# having nowhere to average out. Above that it settles. So the count is
-# per table rather than shared -- the operations on this page are two
-# orders of magnitude apart in cost, and one count for all of them would
-# leave the parse tables measuring the clock.
+# `CALLS` sets how long one round lasts, and that is what a round's
+# minimum is worth: a round short enough to catch one scheduling slice
+# carries it whole, where a long one leaves the interruption a smaller
+# share of what it is dividing. The counts below were chosen by measuring
+# that against the column as it was then -- a maximum minus a minimum,
+# where a round under twenty-five milliseconds scattered by tens of
+# percent on an operation whose minimum was steady to one -- and that
+# measurement no longer describes the column, which is now a difference of
+# two minima. The direction it argued for is unchanged and the reasoning
+# under `ROUNDS` below is now the reasoning for both: more calls make each
+# half's minimum better, so the counts stand and the number that chose
+# them does not.
+#
+# What is certainly still true is why the count is per table rather than
+# shared: the operations on this page are two orders of magnitude apart in
+# cost, and one count for all of them would leave the parse tables
+# measuring the clock.
 #
 # `ROUNDS` buys chances at a quiet round, and the minimum converges almost
-# at once: three rounds and a hundred agree to within a percent. What more
-# rounds do buy is a worse `spread`, that column being a maximum minus a
-# minimum and so growing with the number of samples -- the same row read
-# 1.2% over thirty rounds reads 77% over a hundred. Ten is where the
-# minimum has settled and the column still reports the machine rather than
-# the sample count.
+# at once: three rounds and a hundred agree to within a percent. More of
+# them cost minutes and buy little, and they no longer cost the `spread`
+# anything either -- each half's minimum is the better for having more
+# rounds behind it, so the two halves sit closer, where a maximum minus a
+# minimum grew with every sample taken. Ten is where the minimum has
+# settled, and it is even, which the halves want.
 DEFAULT_CALLS = 10_000
 
 # the two parse tables, whose operations are the cheapest on the page: a
@@ -1154,14 +1181,42 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
     so the quickest round is the one that ran with least taken from it, and a
     mean would carry every interruption into the number.
 
-    The spread is how far the slowest round ran from the quickest, in the
-    same microseconds as the value beside it, and it is printed rather than
-    hidden because it is the only thing in the output that says whether the
-    machine was quiet while a row was measured. Read it as the scatter of
-    the rounds and not as an interval around that value: the value is the
-    quickest of them and therefore sits at the low edge of what the spread
-    describes, which is the price of an estimator that refuses to average
-    in a machine's bad moments.
+    The spread is how far that estimate moved when the row was measured
+    twice, which is what the rounds are halved for: the column is the
+    distance between the two halves' minima. That is the one question the
+    column is read for -- whether a gap between two adjacent rows is a gap
+    this run settled -- and it answers it in the same microseconds as the
+    value beside it, so the two are read against each other without
+    arithmetic. Contiguous halves rather than alternate rounds, because the
+    rows of a table are measured minutes apart and a machine that drifts
+    over a row's rounds will drift over a table's rows.
+
+    The column is quantized and lands on a lattice, which is worth knowing
+    before reading a small value on it: a round is measured to one tick of
+    `perf_counter` -- about 42 nanoseconds here -- and divided by the call
+    count, so every spread this script prints is a whole number of ticks
+    divided by that count. Zero is one of the lattice's points and means
+    the two halves' minima fell inside one tick. It is not an unmeasured
+    row: `_results.py` leaves an absent spread out of the saved run rather
+    than writing it as zero.
+
+    Two halves seconds apart say nothing about two runs a day apart, and the
+    page says so where the column is explained: a row can move by more than
+    any spread on it between one run and the next, which is why these
+    tables are read as an order of magnitude and by ratio.
+
+    What the column must not be is the slowest round less the quickest. That
+    is an extreme-value statistic over ten samples, so it has enormous
+    variance by construction and reports the worst interruption a row
+    happened to catch rather than anything about the package: measured on
+    this machine, the same four signing rows timed twice in one process
+    printed minima agreeing to a hundredth of a microsecond and maxima
+    disagreeing by a factor of forty. Nor is the garbage collector the
+    mechanism, which was checked rather than assumed -- `gc.get_stats()`
+    reported zero collections in every generation across those rounds, and
+    the wilder of the two runs was the one taken under `gc.disable()`. More
+    rounds make a maximum worse and both halves' minima better, which is the
+    other reason this column is not that one.
     """
     # perf_counter and not time(): the wall clock can step backwards under an
     # NTP correction, and a benchmark is the one place that shows up as a
@@ -1172,8 +1227,11 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
         for _ in range(calls):
             func()
         rounds.append((time.perf_counter() - start) / calls * 1e6)
-    quickest = min(rounds)
-    return quickest, max(rounds) - quickest
+    # halved on what the loop above actually produced rather than on
+    # `ROUNDS`, the two being the same number until somebody changes one
+    half = len(rounds) // 2
+    first, second = min(rounds[:half]), min(rounds[half:])
+    return min(first, second), abs(first - second)
 
 
 def measured(
@@ -1310,9 +1368,11 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
 )
 
 # what the run block claims about how these numbers were taken, said by
-# the script that takes them: `benchmark` above is where the thirty rounds
-# and the minimum are, and the spread column is what a reader checks it by
-METHOD = f"{ROUNDS} rounds per row, minimum kept; the call count is per table"
+# the script that takes them: `benchmark` above is where the rounds and the
+# minimum are, and the spread column is what a reader checks it by
+# kept short enough that the rendered line stays inside 80 columns, the
+# label it is printed under costing ten of them
+METHOD = f"{ROUNDS} rounds per row in two halves, minimum kept; calls per table"
 
 
 def main() -> None:

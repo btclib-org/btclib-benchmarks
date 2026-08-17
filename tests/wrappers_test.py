@@ -259,11 +259,14 @@ SSA_VERIFIERS_FULL: dict[str, Callable[[bytes, bytes, bytes], bool]] = {
     ).schnorr_verify(sig, msg),
 }
 
-# tweak-add, answered as the 33 octets every wrapper can serialize to.
-# electrum-ecc has no tweak-add and composes one, which is what its
-# benchmark row does and therefore what is checked here
+# tweak-add, answered as the 33 octets every wrapper can serialize to, which
+# is where the benchmark's tweak rows end too: these are those four calls
+# rather than variants of them, the serialization included. electrum-ecc has
+# no tweak-add and composes one, which is likewise what its row does
 TWEAKERS: dict[str, Callable[[bytes, bytes], bytes]] = {
-    "btclib_secp256k1": btclib_secp256k1.keys.pubkey_tweak_add,
+    "btclib_secp256k1": lambda pubkey, tweak: btclib_secp256k1.keys.pubkey_tweak_add(
+        pubkey, tweak, compressed=True
+    ),
     "coincurve": lambda pubkey, tweak: (
         coincurve.PublicKey(pubkey).add(tweak).format(compressed=True)
     ),
