@@ -436,6 +436,39 @@ repos:
   # dependency to begin with, so nothing there needs that override
   - repo: local
     hooks:
+      # `render.py --check` says a published page still matches the run it
+      # claims to publish, and it is the whole of what holds `_results.py`
+      # and `render.py` honest -- the stated reason both sit outside the
+      # coverage gate. It was in CONTRIBUTING.md and in no gate, so the one
+      # thing standing between a page and the numbers it claims was whoever
+      # remembered to type it.
+      #
+      # Here rather than in a workflow because the lint workflow runs this
+      # very file: one entry gates a commit and CI at once.
+      #
+      # `--check` and never the write. Rendering in CI would be the coupling
+      # the split between measuring and publishing exists to remove, a
+      # heading's rewording put behind a machine. This reads five JSON files
+      # and five markdown files, imports no benchmark, compiles no comparand,
+      # takes no measurement and writes nothing -- the same category as
+      # asking a formatter whether the file it would write is the file that
+      # is there, which several hooks above already are.
+      #
+      # `language: python` with no dependencies because it needs none:
+      # `render.py`, `_results.py` and `_provenance.py` are stdlib only. So
+      # it runs on pre-commit.ci as well, where `uv` is absent and `mypy` is
+      # skipped for exactly that reason.
+      #
+      # `always_run` rather than a `files` pattern: a page goes stale from an
+      # edit to its markdown, to its saved run, or to the renderer, and a
+      # pattern narrow enough to name those is a pattern that stops matching
+      # one day -- which is the hazard the top of this file is about.
+      - id: render-check
+        name: render.py --check (each page matches its saved run)
+        entry: python scripts/render.py --check
+        language: python
+        pass_filenames: false
+        always_run: true
       - id: mypy
         name: mypy (strict, in the project environment)
         entry: >

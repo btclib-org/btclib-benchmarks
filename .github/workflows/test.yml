@@ -72,12 +72,47 @@ jobs:
       # one required status check in branch protection instead of one per
       # matrix cell, which would have to be re-listed on every change to
       # the matrix. `always()` above is what makes a cancelled or skipped
-      # cell fail this job rather than silently satisfy it
-      - name: Fail if any job did not succeed
-        if: >-
-          contains(needs.*.result, 'failure')
-          || contains(needs.*.result, 'cancelled')
-          || contains(needs.*.result, 'skipped')
+      # cell reach this job rather than leave it unrun.
+      #
+      # Two things this step does that its predecessor did not, and the
+      # first is why the second could be chosen at all.
+      #
+      # It prints what it saw, unconditionally and before judging it. This
+      # is the job whose entire purpose is to be trusted, and on 2026-08-17
+      # it reported success while a cell of the matrix had concluded failure
+      # and the run it belongs to had concluded failure -- and it could not
+      # say what `needs` had handed it, so the question had to be
+      # reconstructed from job timestamps. One line of log answers it next
+      # time.
+      #
+      # And it fails closed. Its predecessor enumerated the results that are
+      # bad -- failure, cancelled, skipped -- which passes anything the list
+      # does not anticipate, and the list is what left room for the above.
+      # This one demands `success` from every result and refuses everything
+      # else, whatever it turns out to be called.
+      #
+      # An empty `needs.*.result` is refused too, which is the same argument
+      # one level up: a check that aggregates nothing is not a check that
+      # passed.
+      #
+      # What this cannot promise is that it fixes 2026-08-17. If GitHub
+      # reported the matrix as `success` despite that cell, then no
+      # expression over `needs` can gate it and the aggregate has to read
+      # something else -- the run's own jobs, through the API. Which of the
+      # two it was is what the printing is for, and the next occurrence is
+      # what would settle it.
+      - name: Fail unless every job this check aggregates succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
-          echo "::error::at least one test job did not succeed"
-          exit 1
+          echo "needs.*.result: ${RESULTS:-<empty>}"
+          if [ -z "$RESULTS" ]; then
+            echo "::error::this check aggregates nothing: needs resolved empty"
+            exit 1
+          fi
+          for result in $RESULTS; do
+            if [ "$result" != success ]; then
+              echo "::error::a job this check aggregates concluded '$result'"
+              exit 1
+            fi
+          done
