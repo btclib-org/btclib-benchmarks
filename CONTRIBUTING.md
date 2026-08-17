@@ -258,6 +258,12 @@ repository it was written in, and in anything read outside the forge it
 resolves to nothing. Where several are in flight the topic goes in beside
 the number, a list of bare numbers being what gets confused.
 
+One exemption, and it is mechanical: a pull request's closing keyword is
+the forge's own syntax, `Closes #64`, bare and in the same repository, or
+it closes nothing. Where a page written earlier still spells a reference
+the other way, this paragraph is what is current and the page is what has
+not caught up.
+
 ## Pull requests
 
 `main` is the only branch, and everything lands through a pull request.
@@ -309,7 +315,7 @@ free to move under a review:
   requested, or an ack naming that sha;
 - the author accepts what is reasonable, declines the rest with a reason
   in the thread, and pushes the answer without waiting for CI;
-- the reviewer resolves the threads it opened, that being what says a
+- the reviewer resolves the threads they opened, that being what says a
   finding is closed, and re-reviews the delta rather than the branch.
 
 An ack is formal, and it is what ends the loop: nothing else does, and the

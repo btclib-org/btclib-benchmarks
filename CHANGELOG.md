@@ -516,3 +516,11 @@ The release notes, which say what a user has to act on, are in
   disambiguated by `owner/repo` once a second repository is in play: a bare
   `#123` resolves only inside the repository it was written in, and
   resolves to nothing anywhere else.
+
+  The rule carries its one mechanical exemption — a pull request's closing
+  keyword is the forge's syntax, bare, or it closes nothing — and says
+  which side is current where an older page has not caught up.
+  [Two such pages][iss68] are named in an issue rather than reworded here,
+  a rule and the pages behind it being two subjects.
+
+[iss68]: https://github.com/btclib-org/btclib-benchmarks/issues/68
