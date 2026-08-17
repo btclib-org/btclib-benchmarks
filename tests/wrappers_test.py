@@ -39,6 +39,7 @@ it was broken.
 from __future__ import annotations
 
 import hashlib
+import platform
 from collections.abc import Callable
 
 import _vectors
@@ -69,16 +70,29 @@ ORDER = secp256k1lab.secp256k1.Scalar.SIZE
 # the rows whose message is below the group order, which is every one but a
 # single published vector of thirty-two 0xff octets. RFC6979 derives its
 # nonce through `bits2octets`, which reduces the digest modulo the order,
-# where libsecp256k1's `nonce_function_rfc6979` is handed the thirty-two
-# octets unreduced -- so for a digest at or above the order there are two
-# defensible nonces and no single right signature. Both verify, and which one
-# a wrapper reaches was observed to depend on the platform: the four agree on
-# an Apple M5 and one of them disagrees on Linux.
+# where a caller handing libsecp256k1 the thirty-two octets unreduced draws
+# a different nonce -- so for a digest at or above the order there are two
+# defensible signatures, both of which verify. Three of these wrappers reach
+# the reduced one on every platform this project runs on and secp256k1-py
+# reaches the other on one of them, which `UNREDUCED_ON` below is about.
 #
 # It is only the *agreement* cases this excludes. Every property below --
-# grinding reaching a low r, a signature verifying, a parse round-tripping --
-# is asked of that vector like any other
+# grinding reaching a low r, a signature verifying, a parse round-tripping,
+# and which of the two nonces a wrapper draws -- is asked of that vector
+# like any other
 AGREEING = [vector for vector in SIGNING if int.from_bytes(vector.msg, "big") < ORDER]
+
+# and the one row the split is about, which is what the case below asks of
+# each wrapper on its own rather than of the four together
+ABOVE_THE_ORDER = [
+    vector for vector in SIGNING if int.from_bytes(vector.msg, "big") >= ORDER
+]
+
+# a count nothing else checks, and the one that would go quiet rather than
+# red: a vendored file that stopped publishing a digest at or above the
+# order would turn the case below into a skip, and the page's most
+# interesting property would stop being asked with nothing failing anywhere
+assert ABOVE_THE_ORDER
 
 
 def _agreeing_ids() -> list[str]:
@@ -89,6 +103,11 @@ def _agreeing_ids() -> list[str]:
 def _ids() -> list[str]:
     """Name each case for the vector it came from."""
     return [f"bip340-{vector.number}" for vector in SIGNING]
+
+
+def _above_the_order_ids() -> list[str]:
+    """Name the one case whose digest the group order does not contain."""
+    return [f"bip340-{vector.number}" for vector in ABOVE_THE_ORDER]
 
 
 # --- secp256k1-py, whose API takes two calls where the others take one ---
@@ -142,6 +161,43 @@ DSA_SIGNERS_DER: dict[str, Callable[[bytes, bytes], bytes]] = {
         electrum_ecc.ECPrivkey(prvkey).ecdsa_sign(msg, grind_r_value=False)
     ),
 }
+
+# The one wrapper that derives its nonce from the digest as it was handed
+# over, and the one platform of the four this project runs on where it does.
+# Found by running the case below rather than reasoned about: it is
+# secp256k1-py on Linux aarch64, and the same package on Linux x86_64 and on
+# macOS arm64 reduces like the other three.
+#
+# Which library that build ended up with is the part nothing here can read,
+# and it is the reason `LIBSECP256K1_PINS` exists: `uv.lock` carries a macOS
+# arm64 wheel for this package, a manylinux x86_64 one and a manylinux i686
+# one, and no aarch64 wheel at all -- so that job is the only one of the six
+# installing a comparand it compiled rather than one somebody shipped, which
+# is the candidate the pin cannot confirm. What the benchmark publishes is
+# the wheel's behaviour, that being what a published run is measured on.
+UNREDUCED_ON = {"secp256k1-py": ("Linux", "aarch64")}
+
+
+def _hands_the_digest_over_unreduced(package: str) -> bool:
+    """Return whether this build is the one that skips the reduction."""
+    return UNREDUCED_ON.get(package) == (platform.system(), platform.machine())
+
+
+# xfail rather than an exclusion, and strict, which `xfail_strict` makes it
+# in any case: the day that job installs a wheel, or compiles a library that
+# reduces like every other, this passes where it is expected to fail and
+# somebody comes back to the comment above
+REDUCTION_CASES = [
+    pytest.param(
+        package,
+        marks=pytest.mark.xfail(
+            _hands_the_digest_over_unreduced(package),
+            reason="no aarch64 wheel, so this job compiles its own libsecp256k1",
+            strict=True,
+        ),
+    )
+    for package in sorted(DSA_SIGNERS_DER)
+]
 
 DSA_SIGNERS_COMPACT: dict[str, Callable[[bytes, bytes], bytes]] = {
     "btclib_secp256k1": lambda msg, prvkey: btclib_secp256k1.dsa.sign(
@@ -404,6 +460,37 @@ def test_the_compact_signature_is_the_der_one_without_its_wrapping(
     }
     assert len(set(compact.values())) == 1, compact
     assert btclib_secp256k1.dsa.to_compact(der) == compact["btclib_secp256k1"]
+
+
+@pytest.mark.parametrize("package", REDUCTION_CASES)
+@pytest.mark.parametrize("vector", ABOVE_THE_ORDER, ids=_above_the_order_ids())
+def test_the_nonce_does_not_depend_on_reducing_the_digest(
+    package: str, vector: _vectors.Signing
+) -> None:
+    """Each wrapper asked on its own, rather than the four asked together.
+
+    Two signatures exist for a digest at or above the group order because
+    RFC 6979 derives the nonce from `bits2octets(h1)`, which reduces it,
+    and a caller handing libsecp256k1 the octets unreduced draws the other.
+    Asking the four to agree cannot say which of them does what -- it says
+    one is alone and truncates the four signatures before naming it -- so
+    what is asked here is a wrapper against itself: hand it the digest, hand
+    it the digest already reduced, and a wrapper that skips the reduction
+    answers twice.
+
+    That is a question with a per-package answer, and answering it is what
+    turned the platform split from an exclusion into a recorded fact.
+    Whether the build a job installs was compiled there or shipped is a
+    thing no wrapper can be asked, so the `xfail` above is keyed to the
+    platform: it is the observation, not the mechanism.
+
+    Args:
+        package: the wrapper, which is what the id has to carry.
+        vector: the one published digest at or above the group order.
+    """
+    reduced = (int.from_bytes(vector.msg, "big") % ORDER).to_bytes(32, "big")
+    sign = DSA_SIGNERS_DER[package]
+    assert sign(vector.msg, vector.prvkey) == sign(reduced, vector.prvkey)
 
 
 @pytest.mark.parametrize("vector", SIGNING, ids=_ids())
