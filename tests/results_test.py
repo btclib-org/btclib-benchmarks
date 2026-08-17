@@ -23,11 +23,11 @@ caught by nothing at all -- widening it changes no rendering, only what is
 refused.
 
 `Timing` is the second, and what it refuses is a row stating two dispersions.
-Delete those two lines and nothing anywhere goes red: the row renders as
-whichever field the property reads first, under a column whose page states one
-definition, which is the failure two keys for two statistics exist to prevent.
-Two cases, because a row arrives two ways -- built by a script, or read from a
-saved run, the second being the only way a file has.
+Delete those two lines and nothing but the cases below goes red: the row renders
+as whichever field the property reads first, under a column whose page states
+one definition, which is the failure two keys for two statistics exist to
+prevent. Two cases, because a row arrives two ways -- built by a script, or read
+from a saved run, the second being the only way a file has.
 
 What is asserted throughout is the boundary and not the rendering, so this puts
 no page behind the suite: `labelled` is a pure function of a label and a
