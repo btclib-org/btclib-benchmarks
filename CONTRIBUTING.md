@@ -251,6 +251,20 @@ what makes a file reviewable. History belongs in CHANGELOG.md.
 Markdown wraps at 80 columns, tables included; a line holding nothing but
 an unbreakable URL is exempt.
 
+An issue is referred to as `ISS 123` and a pull request as `PR 45`, the
+token itself being a link to it, and disambiguated by `owner/repo` as soon
+as a second repository is in play. A bare `#123` resolves only inside the
+repository it was written in, and in anything read outside the forge it
+resolves to nothing. Where several are in flight the topic goes in beside
+the number, a list of bare numbers being what gets confused.
+
+One exemption, and it is mechanical: a pull request's closing keyword is
+read by the forge rather than by a person, so it takes the forge's own
+reference — `Closes #64` — which is what every body here carries. Where a
+page written earlier still spells a reference
+the other way, this paragraph is what is current and the page is what has
+not caught up.
+
 ## Pull requests
 
 `main` is the only branch, and everything lands through a pull request.
@@ -259,3 +273,75 @@ is a local run that was not done.
 
 CHANGELOG.md gets an entry for anything a reader would notice.
 HISTORY.md moves only for something a user has to *act* on.
+
+### One subject, opened as soon as it is written
+
+A pull request answers one question. Issues that share a subject are one
+pull request, closing each of them; issues that do not are one pull
+request each, however small either of them is.
+
+It is opened the moment it is written and verified — not held for the
+previous one to be reviewed or to land, and not batched with the next. A
+batch arrives as one reviewing job with several subjects, which is the
+shape that costs the most to read; a finished pull request held back is
+review that could have started and did not. Both have been done here, and
+the second was an over-correction of the first.
+
+Working this way stacks branches, which is fine and costs one rule: a
+child whose base was amended is moved with the old base named,
+
+```shell
+git rebase --onto <new-base> <old-base-sha> <child>
+```
+
+because a plain rebase replays the base's old commit inside the child, and
+the forge then shows the base's old text as additions with nothing red
+anywhere — the suite passes in both worlds. Read the child's diff
+afterwards rather than trusting the rebase, and retarget each child onto
+`main` as its parent lands.
+
+### The review
+
+A review is given promptly and on local evidence. It does not wait for CI,
+does not report a check as a finding, and does not discuss a run at all:
+whether CI is green is the author's business, once, at landing time.
+
+The exchange is anchored to a sha rather than to a branch, a branch being
+free to move under a review:
+
+- the author hands off by naming the sha pushed and the evidence run
+  against it, then leaves that head alone;
+- the reviewer answers with findings — where, what is wrong, how they know
+  it, and whether each is blocking — and exactly one verdict: changes
+  requested, or an ack naming that sha;
+- the author accepts what is reasonable, declines the rest with a reason
+  in the thread, and pushes the answer without waiting for CI;
+- the reviewer resolves the threads they opened, that being what says a
+  finding is closed, and re-reviews the delta rather than the branch.
+
+An ack is formal, and it is what ends the loop: nothing else does, and the
+author does not supply their own. A disagreement that survives a second
+exchange goes to the maintainer instead of into a third round.
+
+A finding that lies beside the subject becomes an issue rather than a
+commit in the diff, and rather than a comment the author cannot act on: a
+diff answering two questions cannot be accepted for either. Name the issue
+where it came up, so nothing reads as dropped. What does not qualify is
+anything the diff itself introduces, breaks or leaves half-done.
+
+### Landing it
+
+CI is read once, and this is where. Rebase onto `main`'s tip, push that
+head so the checks run on the tree that will land, and only then wait for
+them: checks read before a rebase describe a tree nobody is landing. A
+rebase that moved nothing but the base leaves the ack standing; one that
+resolved a conflict does not, that resolution being a change no reviewer
+has seen.
+
+Then a local squash fast-forwarded onto `main`, never a button on the
+forge, which would sign the commit with the forge's own key; the signature
+verified afterwards; the branch deleted, the fast-forward not being a merge
+the forge cleans up after; and every checkout sitting on `main` brought up
+to date, that being where the next session starts from and a stale one
+being where a branch gets built on a base that has moved. `REPOSITORY.md`
+carries the procedure in full, and why the branch protections permit it.
