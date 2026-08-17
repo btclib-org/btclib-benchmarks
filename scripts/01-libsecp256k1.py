@@ -164,7 +164,7 @@ that goes *in* and nothing else. Answering each table in the encoding it was
 handed would price two differences at once and leave the pair reading as
 neither.
 
-## No row is handed an object another row's package built, bar one table
+## No row is handed an object another row's package built, bar two tables
 
 Every row starts from the same bytes, so whatever an API builds before it can
 work -- secp256k1-py's `PrivateKey`, coincurve's, a `secp256k1_keypair` --
@@ -173,14 +173,15 @@ holding a constructed key for one package and not for the others would price
 that package's signature at what its second signature under the same key
 costs, which is a different question from the one every row is being asked.
 
-The BIP340 signing pair is where that different question gets asked, and it
-is asked of all four at once, which is what keeps it a measurement. Table 13
-signs under a key each row is handed as bytes; table 14 signs under the
+The two signing pairs are where that different question gets asked, and each
+asks it of every package at once, which is what keeps it a measurement. Table
+14 signs under a key each row is handed as bytes; table 15 signs under the
 object each package offers a caller who will sign again -- coincurve's and
 secp256k1-py's `PrivateKey`, electrum-ecc's `ECPrivkey`, btclib_secp256k1's
-`ssa.Signer` -- built in the fixtures from table 13's own keys, in table 13's
+`ssa.Signer` -- built in the fixtures from table 14's own keys, in table 14's
 order. So the pair prices holding the key and nothing else, and no package is
-handed something another package was not.
+handed something another package was not. Table 13 is the same question asked
+of table 11's ECDSA rows, over table 11's keys and in its order.
 
 What the pair finds is that holding a key and holding what a signature is
 made from are two different things, and an API's shape does not say which one
@@ -216,10 +217,25 @@ it.
 
 It is a toll BIP340 charges and ECDSA does not: signing a message with
 Schnorr starts from a keypair, where ECDSA takes the secret key as it is.
-Said of the keypair rather than of the rows, because two of the four build
-one for ECDSA as well -- coincurve's `PrivateKey` and secp256k1-py's derive
-a public key to exist, so those two rows were paying for the same
-multiplication under another name before BIP340 asked for it.
+Which is the whole of what makes table 13 a different finding rather than
+the same one in another scheme. Two of the four build a key object for ECDSA
+as well -- coincurve's `PrivateKey` derives a public key and an x-only one,
+secp256k1-py's derives a public key and the keypair its BIP340 row saves --
+and an ECDSA signature reads none of it. So what the ECDSA pair prices is a
+constructor with nothing of the signature in it, where the BIP340 pair prices
+work the signature would otherwise have to do again.
+
+What is left in a held ECDSA row is the signature and whatever else that
+package does on every call regardless of what it was handed: nothing, for two
+of the three, and for electrum-ecc the check `ecdsa_sign` makes, which parses
+a `secp256k1_pubkey` out of the coordinates its `ECPubkey` holds each time it
+is asked.
+
+btclib_secp256k1 is `NA` there, and that is the finding rather than a gap:
+`dsa.sign` takes the 32 bytes, so a caller who will sign again holds what a
+caller who will sign once holds, and its row in table 11 is already the held
+shape. A row under another title calling the same function on the same slice
+would print a number the table above it carries.
 
 ## "The same C library" is a claim about the API, not about the binary
 
@@ -477,29 +493,30 @@ DSA_SIGN_COMPACT = cycle(
 SSA_SIGN = cycle(list(zip(_slice(3, PRVKEYS), _slice(3, MESSAGES), strict=True)))
 
 
-def _held(build: Callable[[bytes], _Held]) -> cycle[tuple[_Held, bytes]]:
-    """Return table 3's keys as objects each package holds, and its messages.
+def _held(part: int, build: Callable[[bytes], _Held]) -> cycle[tuple[_Held, bytes]]:
+    """Return one slice's keys as objects a package holds, and its messages.
 
-    The one place in this benchmark where a row is handed an object its
+    The two places in this benchmark where a row is handed an object its
     package built, and the exception is the measurement rather than a
-    shortcut taken: what this pair prices is holding the key, so the held
-    object has to exist before the clock starts or there is nothing to
-    price. Table 3's slice exactly, in table 3's order, so the pair differs
-    by the holding and by nothing else.
+    shortcut taken: what a held table prices is holding the key, so the
+    held object has to exist before the clock starts or there is nothing to
+    price. The slice its own fresh table signs, in that table's order, so
+    the pair differs by the holding and by nothing else -- `part` is
+    therefore the fresh table's slice and never one of its own.
 
     One object per key rather than one for the slice, because a round is
     the slice once through: a single held key reused ten thousand times
     would measure one key's second signature ten thousand times over,
     which is a cache and not a benchmark.
     """
-    keys = [build(prvkey) for prvkey in _slice(3, PRVKEYS)]
-    return cycle(list(zip(keys, _slice(3, MESSAGES), strict=True)))
+    keys = [build(prvkey) for prvkey in _slice(part, PRVKEYS)]
+    return cycle(list(zip(keys, _slice(part, MESSAGES), strict=True)))
 
 
 # Each package's own answer to "sign repeatedly under this key", built from
-# the same keys table 3 signs with once. Two of the four save the keypair
-# this way and two do not, which is what the pair of tables is for and is a
-# reading of each package's source rather than an assumption:
+# the same keys the BIP340 signing table signs with once. Two of the four
+# save the keypair this way and two do not, which is what the pair of tables
+# is for and is a reading of each package's source rather than an assumption:
 #
 # - `btclib_secp256k1.ssa.Signer` holds a `secp256k1_keypair` across calls
 #   and wipes it when told to, `ssa.sign` building and wiping one per call;
@@ -513,10 +530,21 @@ def _held(build: Callable[[bytes], _Held]) -> cycle[tuple[_Held, bytes]]:
 # The last two are in the table because that is the finding: a held key
 # object is not a held keypair, and which one a package gives you is not
 # something its API's shape tells a caller
-SSA_HELD_COINCURVE = _held(coincurve.PrivateKey)
-SSA_HELD_SECP256K1 = _held(lambda prvkey: secp256k1.PrivateKey(prvkey, raw=True))
-SSA_HELD_ELECTRUM_ECC = _held(electrum_ecc.ECPrivkey)
-SSA_HELD_BTCLIB_SECP256K1 = _held(btclib_secp256k1.ssa.Signer)
+SSA_HELD_COINCURVE = _held(3, coincurve.PrivateKey)
+SSA_HELD_SECP256K1 = _held(3, lambda prvkey: secp256k1.PrivateKey(prvkey, raw=True))
+SSA_HELD_ELECTRUM_ECC = _held(3, electrum_ecc.ECPrivkey)
+SSA_HELD_BTCLIB_SECP256K1 = _held(3, btclib_secp256k1.ssa.Signer)
+
+# and the same three types again over the DER signing table's own slice,
+# where what a caller holds is all a constructor has left to save: ECDSA
+# takes the secret key as it is, so none of these objects is standing in
+# for a keypair the way the BIP340 rows above are. Three and not four --
+# `btclib_secp256k1.dsa.sign` takes the 32 bytes, and a caller holding a
+# key holds those, which is why that row is `NA` there rather than a
+# repeat of the number it already prints in the fresh table
+DSA_HELD_COINCURVE = _held(1, coincurve.PrivateKey)
+DSA_HELD_SECP256K1 = _held(1, lambda prvkey: secp256k1.PrivateKey(prvkey, raw=True))
+DSA_HELD_ELECTRUM_ECC = _held(1, electrum_ecc.ECPrivkey)
 PARSE_COMPRESSED = cycle(_slice(4, PUBKEYS_COMPRESSED))
 PARSE_UNCOMPRESSED = cycle(_slice(5, PUBKEYS))
 # ECDSA verification is four tables, one per pair of encodings: the
@@ -602,7 +630,7 @@ RELEASE_DATES = {
 # word, and a pin has to stop being claimed when the build it was read
 # from is no longer the one installed.
 LIBSECP256K1_PINS = {
-    "btclib-secp256k1": ("main@68657e14c47c", "v0.8.0"),
+    "btclib-secp256k1": ("main@52f913e706f8", "v0.8.0"),
     "coincurve": ("2025-03-08", "v0.6.0"),
     "secp256k1": ("2021-11-06", "9526874d, pre-v0.1.0"),
     "electrum-ecc": ("2026-02-25", "v0.7.1"),
@@ -789,6 +817,48 @@ def dsa_sign_compact_btclib_secp256k1_checked() -> None:
     """
     prvkey, msg = next(DSA_SIGN_COMPACT)
     btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, verify=True)
+
+
+def dsa_held_coincurve() -> None:
+    """Time coincurve's ECDSA signing under a `PrivateKey` held already.
+
+    `sign` reads `self.secret` and nothing the constructor derived, so what
+    holding the object saves here is the whole of that constructor: a
+    `PublicKey` and a `PublicKeyXOnly`, each a generator multiplication, and
+    neither of them read by an ECDSA signature. The DER serialization stays
+    inside the call, as it is in the fresh row.
+    """
+    key, msg = next(DSA_HELD_COINCURVE)
+    key.sign(msg, hasher=None)
+
+
+def dsa_held_secp256k1() -> None:
+    """Time secp256k1-py's ECDSA signing under a `PrivateKey` held already.
+
+    `ecdsa_sign` reads `self.private_key`, so the constructor's public key
+    and the `secp256k1_keypair` beside it are what the held object saves --
+    the same keypair its BIP340 row saves, which ECDSA never asked for. The
+    serialization to DER is the second call its API makes a caller write,
+    and it is inside the timing here as it is in the fresh row.
+    """
+    key, msg = next(DSA_HELD_SECP256K1)
+    key.ecdsa_serialize(key.ecdsa_sign(msg, raw=True))
+
+
+def dsa_held_electrum_ecc() -> None:
+    """Time electrum-ecc's ECDSA signing under an `ECPrivkey` held already.
+
+    Its constructor multiplies the generator by the secret, serializes the
+    point and parses it back into the `ECPubkey` it inherits from, and that
+    is what a held object saves. What it does not save is the check:
+    `ecdsa_sign` verifies what it made on every call, and `ecdsa_verify`
+    parses a `secp256k1_pubkey` out of the held coordinates each time it is
+    asked. `grind_r_value=False`, one signature, as in the fresh row.
+    """
+    key, msg = next(DSA_HELD_ELECTRUM_ECC)
+    electrum_ecc.ecdsa_der_sig_from_ecdsa_sig64(
+        key.ecdsa_sign(msg, grind_r_value=False)
+    )
 
 
 def ssa_sign_coincurve() -> None:
@@ -1206,6 +1276,11 @@ DSA_SIGN_COMPACT_ROWS = (
     dsa_sign_compact_btclib_secp256k1_checked,
     dsa_sign_compact_btclib_secp256k1_grind,
 )
+DSA_HELD_ROWS = (
+    dsa_held_coincurve,
+    dsa_held_secp256k1,
+    dsa_held_electrum_ecc,
+)
 SSA_SIGN_ROWS = (
     ssa_sign_coincurve,
     ssa_sign_secp256k1,
@@ -1281,6 +1356,7 @@ TWEAK_ROWS = (
 for _row in (
     DSA_SIGN_DER_ROWS
     + DSA_SIGN_COMPACT_ROWS
+    + DSA_HELD_ROWS
     + SSA_SIGN_ROWS
     + SSA_HELD_ROWS
     + PARSE_COMPRESSED_ROWS
@@ -1432,7 +1508,10 @@ def measured(
     the rows that print `NA`. Reaching past one of them into the C it
     wraps would produce a number, and the number would not be the
     package's: what a reader comparing wrappers asks is what each one
-    offers.
+    offers. A package with nothing to hold is `NA` in a table asking what
+    holding saves for the same reason, and the alternative there is worse
+    than a gap: its ordinary signing call under another title prints a
+    second copy of a number the page already carries.
 
     Which row is being timed goes to stderr as it starts, and is overwritten
     by the next: a run is minutes of silence otherwise, and a reader who
@@ -1477,7 +1556,9 @@ def measured(
 # read against the ECDSA one above it.
 #
 # Within a pair the cheaper encoding leads, so the pair reads as what the
-# shorter one costs rather than as what the longer one saves
+# shorter one costs rather than as what the longer one saves, and the fresh
+# key leads the held one: a held table read first is a saving before there
+# is anything for it to be a saving from
 TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], ...] = (
     (
         "1. public key parse (a 65-byte uncompressed key)",
@@ -1529,16 +1610,27 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
     ),
     ("9. public key tweak by a scalar, a 65-byte key", TWEAK_ROWS, (), "tweak"),
     ("10. public key tweak by a scalar, a 33-byte key", TWEAK_33_ROWS, (), "tweak"),
-    ("11. ECDSA sign (32-byte digest, DER out)", DSA_SIGN_DER_ROWS, (), "dsa-sign"),
     (
-        "12. ECDSA sign (32-byte digest, 64-byte compact out)",
+        "11. ECDSA sign (32-byte digest, DER out, a fresh key)",
+        DSA_SIGN_DER_ROWS,
+        (),
+        "dsa-sign",
+    ),
+    (
+        "12. ECDSA sign (32-byte digest, 64-byte compact out, a fresh key)",
         DSA_SIGN_COMPACT_ROWS,
         ("coincurve",),
         "dsa-sign",
     ),
-    ("13. BIP340 sign (32-byte message, a fresh key)", SSA_SIGN_ROWS, (), "ssa-sign"),
     (
-        "14. BIP340 sign (32-byte message, the key held already)",
+        "13. ECDSA sign (32-byte digest, DER out, the key held already)",
+        DSA_HELD_ROWS,
+        ("btclib_secp256k1",),
+        "dsa-sign",
+    ),
+    ("14. BIP340 sign (32-byte message, a fresh key)", SSA_SIGN_ROWS, (), "ssa-sign"),
+    (
+        "15. BIP340 sign (32-byte message, the key held already)",
         SSA_HELD_ROWS,
         (),
         "ssa-sign",
