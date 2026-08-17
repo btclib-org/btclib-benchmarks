@@ -121,6 +121,21 @@ jobs:
       # the run is running, the listing is not describing the run this step
       # is running in, and a check that aggregates nothing is not a check
       # that passed.
+      #
+      # All of which holds while the run is this workflow's own, and stops
+      # holding under `workflow_call`. A called workflow's jobs run inside
+      # the caller's run, so `GITHUB_RUN_ID` is the caller's and the listing
+      # would be every job of it, including those of any sibling workflow it
+      # called: a sibling still running makes this red for a reason nobody
+      # here can act on, and the remedy above -- add it to `needs` -- is not
+      # available, `needs` reaching nothing outside its own workflow. It is
+      # the shape this repository grows the day it gets a release workflow
+      # calling this one and `lint.yml` side by side, and it wants deciding
+      # then rather than papering over now: the gate belongs to whoever owns
+      # the run, so either the caller carries it or that trigger goes. The
+      # same surprise in another spelling is recorded in `lint.yml` beside
+      # its concurrency group: `github.workflow` under a call is the
+      # caller's name, which is why both groups are named literally.
       - name: Fail unless every other job of this run succeeded
         env:
           GH_TOKEN: ${{ github.token }}
@@ -143,13 +158,32 @@ jobs:
             awk -F'\t' '$1 == "unfinished"' | wc -l | tr -d ' ')
           # both are reported before exiting rather than the first one
           # reached: a gate that says what it saw says all of it
+          #
+          # and each annotation names the rows it is about, because an
+          # annotation is what the checks page shows without the log being
+          # opened -- the same argument as printing the listing before
+          # judging it, one reader further out. `%0A` is a newline to an
+          # annotation, which is otherwise one line, and the tab goes with
+          # it: the columns line up in a log and not in this. A literal `%`
+          # would want `%25` and passes through unescaped, which no name a
+          # matrix builds can contain
+          annotate() {
+            printf '::error::%s' "$1"
+            printf '%s' "$2" | tr '\t' ' ' | awk '{ printf "%%0A%s", $0 }'
+            printf '\n'
+          }
           verdict=0
           if [ -n "${bad}" ]; then
-            echo "::error::at least one job of this run did not succeed"
+            annotate "these jobs of the run did not succeed:" "${bad}"
             verdict=1
           fi
           if [ "${unfinished}" -ne 1 ]; then
-            echo "::error::this check should be the run's one unfinished job; ${unfinished} are"
+            # no colon on this one, and rows after it only if there are any:
+            # nothing unfinished is the case that says nothing, and a colon
+            # would promise a list
+            annotate \
+              "this check should be the run's one unfinished job; ${unfinished} are" \
+              "$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 == "unfinished"')"
             verdict=1
           fi
           exit "${verdict}"
