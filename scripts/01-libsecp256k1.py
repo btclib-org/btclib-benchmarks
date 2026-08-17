@@ -1256,8 +1256,9 @@ def measured(
     decimal prints 1.0x for the whole column.
 
     `group` is the operation the table belongs to, which the page carries
-    as a section of its own: six operations, thirteen tables, and the
-    renderer puts each table under the heading its group names.
+    as a section of its own: the renderer puts each table under the heading
+    its group names, and whether a group holds one table or four is
+    something the page shows.
 
     `missing` names the packages whose API has no such call, and they are
     the rows that print `NA`. Reaching past one of them into the C it
@@ -1296,8 +1297,8 @@ def measured(
 
 
 # every table of this benchmark, declared rather than called: the label
-# column is one width for the whole page, which is a fact about all thirteen
-# tables and cannot be known while the first is being measured.
+# column is one width for the whole page, which is a fact about every table
+# on it and cannot be known while the first is being measured.
 #
 # The order is the page's argument rather than the operations' importance:
 # the parse pair comes first because every verification and every tweak

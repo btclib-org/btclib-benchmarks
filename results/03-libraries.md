@@ -57,7 +57,7 @@ python  : 3.13.14
 
 ## The benchmarks
 
-Eleven tables: the curve operations, BIP32 derivation, and the three
+The tables are the curve operations, BIP32 derivation, and the three
 address encodings in both directions. Fastest row first, ratioed against
 whichever row came out quickest, with the spread of a row's own three
 rounds beside it — how far its slowest round ran from its quickest, in the

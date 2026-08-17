@@ -48,9 +48,9 @@ python  : 3.13.14
 
 ## The benchmarks
 
-Thirteen tables over six operations, each sorted fastest first and ratioed
-against whichever of its rows came out quickest. The numbers are an order of
-magnitude, never a figure to quote.
+The tables below are grouped by operation, each sorted fastest first and
+ratioed against whichever of its rows came out quickest. The numbers are an
+order of magnitude, never a figure to quote.
 
 What a timing contains is one call per iteration and its answer thrown away.
 Nothing is compared, verified or asserted anywhere in this benchmark —
@@ -73,13 +73,13 @@ the same arithmetic by construction: a vector proves nothing here that
 another input would not, and what this page is read for is the boundary
 crossing.
 
-Most of the thirteen are one operation asked twice, differing by an encoding
-rather than by any arithmetic, so what a pair prices is the encoding. Two
-encodings run through the page. A signature is DER or the 64-byte compact
-form, which splits signing in two and verification in two. A public key is
-33 octets or 65, which splits the parse in two, verification in two again,
-and the tweak in two. The members of a pair share their inputs down to the
-byte: the same keys, the same signatures, one serialization of each.
+Most of them are one operation asked twice, differing by an encoding rather
+than by any arithmetic, so what a pair prices is the encoding. Two encodings
+run through the page. A signature is DER or the 64-byte compact form, which
+splits signing in two and verification in two. A public key is 33 octets or
+65, which splits the parse in two, verification in two again, and the tweak
+in two. The members of a pair share their inputs down to the byte: the same
+keys, the same signatures, one serialization of each.
 
 Only what a package offers is measured. Where its own API has no such call
 the row reads `NA` — coincurve signs and verifies ECDSA in DER alone, so it
