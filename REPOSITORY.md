@@ -15,12 +15,21 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 ```
 
 Two contexts, and the second is an aggregate rather than a matrix cell.
-`test.yml`'s `test-passed` job needs every other job of that workflow and
-fails when any of them did not succeed — `cancelled` and `skipped`
-included, which is what `always()` in its `if:` is for. Naming the
-aggregate means the matrix can gain or lose a cell without anyone
-editing branch protection; naming the cells would mean this list going
-stale the first time it changed.
+`test.yml`'s `test-passed` job runs last and demands `success` of every
+job the run reports, `always()` in its `if:` being what makes a red cell
+reach it rather than leave it unreported. Naming the aggregate means the
+matrix can gain or lose a cell without anyone editing branch protection;
+naming the cells would mean this list going stale the first time it
+changed.
+
+What it judges is therefore not what `needs` waits for, and the two are
+the same set only while that workflow has two jobs. So the rule is that
+whatever the gate can see it has to wait for: it allows exactly one
+unfinished job, which is itself, and a job of the run outside its
+`needs` turns it red until it is added there. Counted rather than
+excluded by name, a name being what goes stale when this job is renamed
+— and refused when nothing is unfinished at all, because a listing with
+no job running is not describing the run the gate is running in.
 
 What that job must not do is decide from `needs.*.result`, which is how
 it was written until an outage showed what that context can miss. With

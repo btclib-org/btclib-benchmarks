@@ -64,6 +64,12 @@ jobs:
 
   test-passed:
     name: "test: every job passed"
+    # what this list does now is order this job last, and nothing else:
+    # what the step below judges is every job the run reports, which is a
+    # different set that happens to coincide while this workflow has two
+    # jobs. So the rule the gate depends on is that whatever it can see it
+    # has to wait for -- a job added outside this list is judged without
+    # being waited for, and turns the gate red until it is added here
     needs: [suite]
     if: ${{ always() && !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
@@ -104,22 +110,46 @@ jobs:
       # trusted is the one that has to be able to say what it saw. The
       # outage had to be reconstructed from job timestamps because it
       # could not.
-      - name: Fail if any job did not succeed
+      #
+      # What it demands of that listing is two things rather than one,
+      # because a job with no conclusion yet is not the same fact as this
+      # job. Leaving an unfinished job out by name would go stale the day
+      # this one is renamed, so it is counted instead: exactly one job of
+      # the run may be unfinished, and it is this one. A second job that
+      # has not finished is then waited for by being refused rather than
+      # accepted, and none unfinished at all is refused too -- if no job of
+      # the run is running, the listing is not describing the run this step
+      # is running in, and a check that aggregates nothing is not a check
+      # that passed.
+      - name: Fail unless every other job of this run succeeded
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # this job is the one still running, so its own conclusion is
-          # null and the filter below leaves it out
+          # `.status` beside the conclusion so that an unfinished job says
+          # which kind it is: queued and running are one word to `.conclusion`
+          # and two facts to a reader of the log
           jobs=$(gh api --paginate \
             "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" \
-            --jq '.jobs[] | "\(.conclusion // "in progress")\t\(.name)"')
+            --jq '.jobs[] | "\(.conclusion // "unfinished")\t\(.status)\t\(.name)"')
           printf '%s\n' "${jobs}"
           # awk and not grep: a tab in a grep pattern is one implementation's
           # extension and a literal "t" in another's, and the runner's is the
-          # second -- where awk's field separator is POSIX
-          bad=$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 != "success" && $1 != "in progress"')
+          # second -- where awk's field separator is POSIX. Which is also
+          # why the count below is an awk filter piped to `wc` rather than
+          # `grep -c`
+          bad=$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 != "success" && $1 != "unfinished"')
+          unfinished=$(printf '%s\n' "${jobs}" |
+            awk -F'\t' '$1 == "unfinished"' | wc -l | tr -d ' ')
+          # both are reported before exiting rather than the first one
+          # reached: a gate that says what it saw says all of it
+          verdict=0
           if [ -n "${bad}" ]; then
-            echo "::error::at least one test job did not succeed"
-            exit 1
+            echo "::error::at least one job of this run did not succeed"
+            verdict=1
           fi
+          if [ "${unfinished}" -ne 1 ]; then
+            echo "::error::this check should be the run's one unfinished job; ${unfinished} are"
+            verdict=1
+          fi
+          exit "${verdict}"
