@@ -1320,7 +1320,7 @@ for _row in (
 #
 # `ROUNDS` buys chances at a quiet round, and the minimum converges almost
 # at once: three rounds and a hundred agree to within a percent. More of
-# them cost minutes and buy little, and they no longer cost the `spread`
+# them cost minutes and buy little, and they no longer cost the column
 # anything either -- each half's minimum is the better for having more
 # rounds behind it, so the two halves sit closer, where a maximum minus a
 # minimum grew with every sample taken. Ten is where the minimum has
@@ -1338,16 +1338,16 @@ ROUNDS = 10
 
 
 def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
-    """Return the quickest round's microseconds per call, and the spread.
+    """Return the quickest round's microseconds per call, and the halves' gap.
 
     `ROUNDS` rounds of `calls` calls each. The minimum is the estimate: noise
     is one-sided -- nothing on this machine makes a call quicker than it is --
     so the quickest round is the one that ran with least taken from it, and a
     mean would carry every interruption into the number.
 
-    The spread is how far that estimate moved when the row was measured
-    twice, which is what the rounds are halved for: the column is the
-    distance between the two halves' minima. That is the one question the
+    The second number is how far that estimate moved when the row was
+    measured twice, which is what the rounds are halved for: the column is
+    the distance between the two halves' minima. That is the one question the
     column is read for -- whether a gap between two adjacent rows is a gap
     this run settled -- and it answers it in the same microseconds as the
     value beside it, so the two are read against each other without
@@ -1355,13 +1355,20 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
     rows of a table are measured minutes apart and a machine that drifts
     over a row's rounds will drift over a table's rows.
 
+    It is saved as `halves_apart` and not as `spread`, which is the key
+    `03-libraries.py` writes for the statistic this one is deliberately not:
+    a definition living in this docstring is not carried by the file, so the
+    two statistics are two keys and a saved number means what its key says.
+    `_results.py`'s `SCHEMA` has the reasoning, that being where a format
+    decision belongs.
+
     The column is quantized and lands on a lattice, which is worth knowing
     before reading a small value on it: a round is measured to one tick of
     `perf_counter` -- about 42 nanoseconds here -- and divided by the call
-    count, so every spread this script prints is a whole number of ticks
+    count, so every value this column carries is a whole number of ticks
     divided by that count. Zero is one of the lattice's points and means
     the two halves' minima fell inside one tick. It is not an unmeasured
-    row: `_results.py` leaves an absent spread out of the saved run rather
+    row: `_results.py` leaves an absent one out of the saved run rather
     than writing it as zero.
 
     Two halves seconds apart say nothing about two runs a day apart, and the
@@ -1441,12 +1448,12 @@ def measured(
             file=sys.stderr,
         )
         calls = CALLS_PER_TABLE.get(int(title.split(".", maxsplit=1)[0]), DEFAULT_CALLS)
-        value, spread = benchmark(func, calls)
+        value, apart = benchmark(func, calls)
         timings.append(
             Timing(
                 label=label,
                 us_per_call=value,
-                spread=spread,
+                halves_apart=apart,
                 calls=calls,
                 rounds=ROUNDS,
             )

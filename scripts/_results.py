@@ -59,6 +59,34 @@ from _provenance import WHAT_A_TIMING_CONTAINS
 # what `render.py` refuses to read rather than misread. A saved run is a
 # file this project writes and reads back a release apart, so the one
 # thing it must not do is answer plausibly to a shape it does not know
+#
+# What it promises is the shape, and not what a value under a known key
+# means -- a distinction it has already had to make the hard way. #31
+# redefined the `spread` value, from the slowest round less the quickest
+# to the distance between two halves' minima, and left the key, the type
+# and this number alone; what stopped a file from rendering with its
+# column meaning something the page no longer described was that the only
+# file carrying the key was rewritten in the same commit, which is
+# scheduling rather than a guarantee.
+#
+# Bumping was the wrong repair and is still the wrong repair. It refuses
+# the run files a change never touched, and re-saving those to carry a new
+# number is a write of measurements no clock produced, which is the rule
+# the split between measuring and publishing rests on. So the discipline
+# is per key: a value whose definition changes is written under a new
+# name, and the two statistics this project measures are two keys. That
+# costs the run files without one nothing, and it is what makes a number
+# in a saved run mean what its key says rather than what the script that
+# wrote it happened to compute.
+#
+# What it does not buy is a loud failure, and the reason is worth having
+# written down: both keys are keys some script still writes, so a run file
+# saved before the rename parses and renders, and what a reader gets is
+# the statistic its key names under a heading the page explains as the
+# other one. Only the numbers not matching the page catches that, which
+# `render.py --check` does. Refusing it outright would mean this module
+# knowing which statistic each page publishes, and a renderer that knows
+# one page from another is the coupling this file exists to avoid. #36
 SCHEMA = 1
 
 # where a run is saved and where the page it feeds lives, which are one
@@ -94,30 +122,65 @@ LINE = 80
 class Timing:
     """One row of a table: a label, and what a call under it cost.
 
-    `spread` and `deviation` are two answers to one question, how much of
-    a row is the machine rather than the operation, and a row carries
-    whichever its script measured. The deviation is the standard deviation
-    over the rounds, which is worth having only where they are many. The
-    spread is in the same microseconds as `us_per_call`, so that the two
-    are read against each other without arithmetic, and what it is beyond
-    that is the measuring script's to define and its docstring's to say:
-    the two scripts that fill this column do not currently agree, one
-    taking the slowest round less the quickest and the other the distance
-    between the minima of two halves of the rounds. So the column carries
-    a number and no definition, and a page states the one its own run
-    used. Both are optional, as `calls` is: a script that times each row
-    once has no dispersion to state, and printing an absent one as zero
-    would claim a quiet machine -- which is why an absent one is left out
-    of the saved run rather than written as zero, a zero here being a
-    measurement like any other.
+    Three of the fields answer one question, how much of a row is the
+    machine rather than the operation, and a row carries whichever its
+    script measured. `deviation` is the standard deviation over the
+    rounds, which is worth having only where they are many. `spread` is
+    the slowest round less the quickest, and `halves_apart` the distance
+    between the minima of two halves of the rounds; both are in the same
+    microseconds as `us_per_call`, so that they are read against the value
+    beside them without arithmetic.
+
+    Those last two are two keys because they are two statistics, which is
+    `SCHEMA`'s discipline above and is what one key could not do: a
+    definition stated in the measuring script's docstring is not carried
+    by the file, so a number saved under a shared name meant whichever of
+    the two the script that wrote it happened to compute. Under a name of
+    its own it means one thing, and a script that changes its estimator
+    again renames rather than redefines.
+
+    All three are optional, as `calls` is, and a row may carry only one:
+    a script that times each row once has no dispersion to state, and
+    printing an absent one as zero would claim a quiet machine -- which is
+    why an absent one is left out of the saved run rather than written as
+    zero, a zero here being a measurement like any other.
+
+    What a table heads the column is the page's word and not this file's.
+    Both print under `spread`, because what a reader needs is the
+    statistic named where the table is, which is the prose beside it; the
+    key is what a machine reads back a release later, and the two are
+    different audiences with different failures.
     """
 
     label: str
     us_per_call: float
     spread: float | None = None
+    halves_apart: float | None = None
     deviation: float | None = None
     calls: int | None = None
     rounds: int | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a row that states two of one thing.
+
+        Two dispersions on one row is not a row this project measures: it
+        is a script filling the field it used to fill and the one it moved
+        to, and the renderer would print whichever it read first. Which is
+        the same failure the two keys are here to prevent, arriving from
+        inside rather than from a file.
+        """
+        if self.spread is not None and self.halves_apart is not None:
+            raise ValueError(f"{self.label} states two dispersions")
+
+    @property
+    def dispersion(self) -> float | None:
+        """Return the one dispersion in the same units as the value.
+
+        Whichever of the two the row carries, for a column that prints
+        either: the difference between them is what the key says and what
+        the page's prose says, and neither is the formatting's business.
+        """
+        return self.spread if self.spread is not None else self.halves_apart
 
 
 @dataclass(frozen=True)
@@ -520,7 +583,7 @@ def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
     """
     timed = [row for row in table.rows if isinstance(row, Timing)]
     quickest = min(row.us_per_call for row in timed)
-    spreads = any(row.spread is not None for row in timed)
+    spreads = any(row.dispersion is not None for row in timed)
     deviations = any(row.deviation is not None for row in timed)
     heading = f"  {'':<{width}}{'μs/call':>10}"
     if deviations:
@@ -533,8 +596,8 @@ def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
         if row.deviation is not None:
             line += f"{'± ' + format(row.deviation, '.2f'):>10}"
         line += f"{ratio:11.{table.decimals}f}x"
-        if row.spread is not None:
-            line += f"{row.spread:9.2f}"
+        if row.dispersion is not None:
+            line += f"{row.dispersion:9.2f}"
         lines.append((line if counted else line + _call_note(row)).rstrip())
     # under the numbers, and with none of the columns that follow one: a
     # row without a measurement has no ratio to state and no scatter
@@ -691,6 +754,7 @@ def _table_as_json(table: Table) -> dict[str, object]:
                         ("label", row.label),
                         ("us_per_call", row.us_per_call),
                         ("spread", row.spread),
+                        ("halves_apart", row.halves_apart),
                         ("deviation", row.deviation),
                         ("rounds", row.rounds),
                         ("calls", row.calls),
@@ -745,6 +809,11 @@ def _table_from_json(saved: dict[str, object]) -> Table:
                     label=str(row["label"]),
                     us_per_call=float(row["us_per_call"]),
                     spread=None if row.get("spread") is None else float(row["spread"]),
+                    halves_apart=(
+                        None
+                        if row.get("halves_apart") is None
+                        else float(row["halves_apart"])
+                    ),
                     deviation=(
                         None
                         if row.get("deviation") is None
