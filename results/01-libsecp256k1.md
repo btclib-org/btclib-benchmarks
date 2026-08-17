@@ -203,6 +203,19 @@ electrum-ecc is the exception, and pays a real amount for DER. Its
 caller's side of the boundary. The gap between its two rows is that
 conversion, and it is the same order as a public key's square root.
 
+What that conversion also does is the one place on this page where reading
+across the signature encoding changes an answer rather than a time. It is not
+a decoder: it parses, normalizes s and serializes again, so the malleable half
+of a signature arrives at `ecdsa_verify` as the low half and is accepted —
+where the same signature handed to the same method as 64 octets is refused,
+that method enforcing the low half by default. So for this one package the two
+rows are not one operation in two encodings, and a reader subtracting them is
+subtracting a policy along with a parse. Of the other three, two refuse the
+malleable half in both encodings and coincurve refuses it in the only encoding
+it has, tables 5 and 6 printing it `NA`. `tests/wrappers_test.py` states all of
+that as cases, over the malleable pair and over an r or an s outside the group,
+which is the range check the compact form has no length field to make.
+
 Read across the key encoding and the parse pair reappears. Verification under
 a 33-byte key is dearer than under the same key in 65 octets, in both
 signature encodings, by close to what tables 1 and 2 charge for exactly that

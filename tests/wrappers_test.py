@@ -21,6 +21,15 @@ can be stated without a second implementation -- a ground signature has a low
 r, a parse round-trips, the tweak does not depend on how the key was
 serialized -- it is stated.
 
+Adversarial encodings are the gap that closes last, and only for DER.
+Wycheproof's bitcoin file is where they come from and its subject is a
+length field, so a case whose point is a BER long form has no compact form
+to hand a verifier. What the compact rows get instead is built here, from a
+signature that is valid: r or s zero, either at the group order or above it,
+and the malleable half of the pair -- the ways 64 octets are wrong that
+flipping a bit does not reach. The last of them is where the four stop
+agreeing, and the disagreement is between one package's own two rows.
+
 Every case goes through the same package API the benchmark times. Reaching
 into the cffi or ctypes bindings underneath would test libsecp256k1, which is
 not what a row of that page is about, and would pass while the wrapper around
@@ -51,6 +60,12 @@ SIGNING = _vectors.signing()
 # the arithmetic under it -- the cases that separate a parser from a verifier
 WYCHEPROOF = _vectors.wycheproof()
 
+# the group order, taken from the one comparand that spells it as a number
+# rather than as a compiled constant. Two cases below turn on it: a digest at
+# or above it has two defensible nonces, and an r or an s at or above it is a
+# signature nothing should accept
+ORDER = secp256k1lab.secp256k1.Scalar.SIZE
+
 # the rows whose message is below the group order, which is every one but a
 # single published vector of thirty-two 0xff octets. RFC6979 derives its
 # nonce through `bits2octets`, which reduces the digest modulo the order,
@@ -63,11 +78,7 @@ WYCHEPROOF = _vectors.wycheproof()
 # It is only the *agreement* cases this excludes. Every property below --
 # grinding reaching a low r, a signature verifying, a parse round-tripping --
 # is asked of that vector like any other
-AGREEING = [
-    vector
-    for vector in SIGNING
-    if int.from_bytes(vector.msg, "big") < secp256k1lab.secp256k1.Scalar.SIZE
-]
+AGREEING = [vector for vector in SIGNING if int.from_bytes(vector.msg, "big") < ORDER]
 
 
 def _agreeing_ids() -> list[str]:
@@ -224,6 +235,17 @@ DSA_VERIFIERS_COMPACT: dict[str, Callable[[bytes, bytes, bytes], bool]] = {
     ),
 }
 
+# the wrapper whose DER row and compact row are not the same operation, which
+# is what the case below records. `ecdsa_sig64_from_der_sig` is not a decoder:
+# it parses, calls `secp256k1_ecdsa_signature_normalize` and serializes again,
+# so the malleable half of a signature reaches `ecdsa_verify` as the low half
+# and is accepted -- while the same signature handed over as 64 octets goes
+# through no such call and is refused, `enforce_low_s` being that method's
+# default. `vectors_test.py` records the acceptance as `LOW_S_IS_THE_CALLER_S`
+# over the DER file; from 64 octets the same package answers the other way,
+# and the page presents its two rows as one operation in two encodings
+NORMALIZES_ON_THE_WAY_IN = ("electrum-ecc",)
+
 # BIP340 verification handed the full public key rather than its x, which is
 # the pair the page reads as one gap. coincurve has no such spelling: its
 # x-only type is the only one carrying `verify`
@@ -265,6 +287,70 @@ def _uncompressed(prvkey: bytes) -> bytes:
 def _compressed(prvkey: bytes) -> bytes:
     """Return the 33-octet public key."""
     return btclib_secp256k1.keys.pubkey_from_prvkey(prvkey, compressed=True)
+
+
+def _answer(
+    verify: Callable[[bytes, bytes, bytes], bool],
+    msg: bytes,
+    pubkey: bytes,
+    sig: bytes,
+) -> bool:
+    """Return a verifier's verdict, a refusal spelled either way being False.
+
+    These four packages do not agree on how to decline: handed an r above
+    the group order, btclib_secp256k1 raises `ValueError`, secp256k1-py's
+    deserializer trips an `assert`, and electrum-ecc returns `False` from a
+    length check of its own. All three are the same verdict, and the octets
+    that provoke each spelling are not the same on every platform either --
+    which is why every case below reads the verdict through here rather than
+    asserting the shape of the refusal.
+    """
+    try:
+        return bool(verify(msg, pubkey, sig))
+    except Exception:  # noqa: BLE001 - any refusal is a rejection
+        return False
+
+
+def _sig64(r: int, s: int) -> bytes:
+    """Return the 64 octets of r and s, whatever the two are worth."""
+    return r.to_bytes(32, "big") + s.to_bytes(32, "big")
+
+
+def _out_of_range(signature: bytes) -> dict[str, bytes]:
+    """Return the ways 64 octets are wrong without a single bit being flipped.
+
+    DER carries a length before each integer, so a value out of range is a
+    parse error there and Wycheproof publishes hundreds of the shape. The
+    compact form carries r and s and nothing else, so the same value is a
+    range check a wrapper performs or does not, and no published file has a
+    compact case to hand over: these are built from a signature that is
+    valid, one field at a time, so that whatever a verifier refuses them for
+    is the field and not the encoding.
+    """
+    r = int.from_bytes(signature[:32], "big")
+    s = int.from_bytes(signature[32:], "big")
+    return {
+        "r zero": _sig64(0, s),
+        "s zero": _sig64(r, 0),
+        "both zero": _sig64(0, 0),
+        "r at the order": _sig64(ORDER, s),
+        "s at the order": _sig64(r, ORDER),
+        "r above the order": _sig64(2**256 - 1, s),
+        "s above the order": _sig64(r, 2**256 - 1),
+    }
+
+
+def _malleable(signature: bytes) -> bytes:
+    """Return the other signature of the malleable pair, s taken to n - s.
+
+    Both are signatures of the same message under the same key, ECDSA being
+    indifferent to which; bitcoin is not, and libsecp256k1 signs the low
+    half only. So this is the one adversarial case here whose arithmetic is
+    correct, and refusing it is a policy rather than a verdict.
+    """
+    r = int.from_bytes(signature[:32], "big")
+    s = int.from_bytes(signature[32:], "big")
+    return _sig64(r, ORDER - s)
 
 
 def _low_r(compact: bytes) -> bool:
@@ -457,16 +543,9 @@ def test_a_compressed_key_answers_wycheproof_as_the_uncompressed_one_does(
     """
     digest = hashlib.sha256(case.msg).digest()
     verify = DSA_VERIFIERS_DER[package]
-    try:
-        expected = verify(digest, case.pubkey, case.sig)
-    except Exception:  # noqa: BLE001 - any refusal is a rejection
-        expected = False
     compressed = PARSERS[package](case.pubkey, True)
-    try:
-        answer = verify(digest, compressed, case.sig)
-    except Exception:  # noqa: BLE001 - any refusal is a rejection
-        answer = False
-    assert answer == expected
+    expected = _answer(verify, digest, case.pubkey, case.sig)
+    assert _answer(verify, digest, compressed, case.sig) == expected
 
 
 @pytest.mark.parametrize("vector", SIGNING, ids=_ids())
@@ -480,6 +559,9 @@ def test_a_compact_signature_verifies_and_a_tampered_one_does_not(
     made rather than published -- accept the signature, reject the same
     signature with one octet of s changed -- and it is run under both
     serializations of the key, those being two more benchmark tables.
+
+    The wrong values that are wrong for a reason rather than by a bit are
+    the two cases below this one.
     """
     signature = DSA_SIGNERS_COMPACT["btclib_secp256k1"](vector.msg, vector.prvkey)
     # a flipped octet of s, which every wrapper can parse and none should
@@ -495,11 +577,98 @@ def test_a_compact_signature_verifies_and_a_tampered_one_does_not(
         for package, verify in DSA_VERIFIERS_COMPACT.items():
             assert verify(vector.msg, pubkey, signature), package
             for sig in wrong:
-                try:
-                    answer = verify(vector.msg, pubkey, sig)
-                except Exception:  # noqa: BLE001 - any refusal is a rejection
-                    answer = False
-                assert not answer, package
+                assert not _answer(verify, vector.msg, pubkey, sig), package
+
+
+@pytest.mark.parametrize("vector", SIGNING, ids=_ids())
+def test_64_octets_outside_the_group_are_refused_by_every_compact_verifier(
+    vector: _vectors.Signing,
+) -> None:
+    """The range check the compact encoding has no length field to make.
+
+    Seven values that a DER parser would have refused before any arithmetic
+    began, handed over in the one encoding where they parse: r or s zero,
+    both zero, either at the group order, either at the largest number 32
+    octets hold. What is asserted is the verdict alone, three wrappers of
+    one library having to answer alike -- they do not agree on the spelling,
+    two of the three raising where the third returns False, and that
+    difference is `_answer`'s subject rather than this case's.
+
+    Three and not four: coincurve has no compact `ecdsa_verify`, which is
+    why tables 5 and 6 print it `NA` and why the name says verifier rather
+    than wrapper.
+
+    What keeps a case of nothing but refusals from being vacuous is the
+    positive verdict two cases up, asserted over these same vectors, keys
+    and verifiers: these octets are refused where the ones they were built
+    from are accepted.
+    """
+    signature = DSA_SIGNERS_COMPACT["btclib_secp256k1"](vector.msg, vector.prvkey)
+    for pubkey in (_uncompressed(vector.prvkey), _compressed(vector.prvkey)):
+        for case, sig in _out_of_range(signature).items():
+            for package, verify in DSA_VERIFIERS_COMPACT.items():
+                assert not _answer(verify, vector.msg, pubkey, sig), (package, case)
+
+
+@pytest.mark.parametrize("vector", SIGNING, ids=_ids())
+def test_the_malleable_half_is_refused_from_64_octets(
+    vector: _vectors.Signing,
+) -> None:
+    """The one adversarial case whose arithmetic is right, and it is refused.
+
+    ECDSA admits both s and n - s; bitcoin admits the low one, and
+    libsecp256k1 signs it -- which the assertion below states rather than
+    assumes, the case being built by subtracting from a signature this suite
+    made. All three compact verifiers refuse the other half, so the low-s
+    rule is under these rows and not a policy a caller is left to apply.
+
+    Nothing here would notice if `_malleable` were wrong. An endianness slip
+    or a subtraction on the wrong modulus produces octets every verifier
+    refuses, and this case would pass while its own first sentence stopped
+    being true. What establishes that these octets are a *signature* is the
+    case below: electrum-ecc accepts them through DER, and it would not
+    accept something that did not verify. So the two are one statement in
+    two halves, and narrowing the second one silently unmakes this one.
+    """
+    signature = DSA_SIGNERS_COMPACT["btclib_secp256k1"](vector.msg, vector.prvkey)
+    assert 2 * int.from_bytes(signature[32:], "big") < ORDER
+    for pubkey in (_uncompressed(vector.prvkey), _compressed(vector.prvkey)):
+        for package, verify in DSA_VERIFIERS_COMPACT.items():
+            assert not _answer(verify, vector.msg, pubkey, _malleable(signature)), (
+                package
+            )
+
+
+@pytest.mark.parametrize("vector", SIGNING, ids=_ids())
+def test_one_wrapper_reads_der_and_64_octets_differently(
+    vector: _vectors.Signing,
+) -> None:
+    """The DER pair and the compact pair are one operation, bar one row.
+
+    The same malleable signature the case above hands over as 64 octets,
+    handed over in DER instead. Two of the four answer as they did there;
+    coincurve refuses it here and was never asked there, having no compact
+    verification to be asked through; and the fourth accepts it, because
+    what it calls a DER decoder normalizes s as it goes -- so its DER row
+    and its compact row differ by a policy and not only by an encoding,
+    which is the one thing the page's reading of that pair does not allow
+    for.
+
+    That acceptance is also what says the octets above are a signature at
+    all rather than a construction that went wrong: this wrapper verifies
+    them, and refusing them is therefore a policy the others apply and not
+    an arithmetic they caught.
+
+    Stated as an assertion rather than left to a reader: it is a property of
+    a comparand's API, so a release that changes it should fail here and
+    bring somebody back to `NORMALIZES_ON_THE_WAY_IN`.
+    """
+    signature = DSA_SIGNERS_COMPACT["btclib_secp256k1"](vector.msg, vector.prvkey)
+    der = btclib_secp256k1.dsa.to_der(_malleable(signature))
+    for pubkey in (_uncompressed(vector.prvkey), _compressed(vector.prvkey)):
+        for package, verify in DSA_VERIFIERS_DER.items():
+            accepted = _answer(verify, vector.msg, pubkey, der)
+            assert accepted == (package in NORMALIZES_ON_THE_WAY_IN), package
 
 
 @pytest.mark.parametrize("vector", SIGNING, ids=_ids())
