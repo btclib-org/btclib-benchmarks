@@ -259,8 +259,9 @@ resolves to nothing. Where several are in flight the topic goes in beside
 the number, a list of bare numbers being what gets confused.
 
 One exemption, and it is mechanical: a pull request's closing keyword is
-the forge's own syntax, `Closes #64`, bare and in the same repository, or
-it closes nothing. Where a page written earlier still spells a reference
+read by the forge rather than by a person, so it takes the forge's own
+reference — `Closes #64` — which is what every body here carries. Where a
+page written earlier still spells a reference
 the other way, this paragraph is what is current and the page is what has
 not caught up.
 
