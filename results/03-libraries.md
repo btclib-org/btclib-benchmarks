@@ -65,6 +65,15 @@ same microseconds as the value it sits beside. A row whose distance from
 the one above it is no larger than that is not behind it in any durable
 sense.
 
+That is not the statistic the column of the same name carries on [the
+wrappers page][wrappers], and the two are not comparable in either direction.
+This one is a maximum less a minimum, so it grows as rounds are added and
+reports the worst interruption a row happened to catch. That one is the
+distance between the minima of two halves of the rounds, so it shrinks as
+rounds are added and reports whether the row agreed with itself. Both are
+in microseconds and neither is an error bar; a small number here and a
+small number there do not mean the same thing.
+
 The inputs are every BIP340 signing vector and every BIP32 chain the
 vendored files publish, cycled one per call; the address rows are the
 exception, one witness-v0 and one witness-v1 address being what is

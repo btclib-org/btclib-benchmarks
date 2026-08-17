@@ -174,8 +174,11 @@ that package's signature at what its second signature under the same key
 costs, which is a different question from the one every row is being asked.
 
 It is a toll BIP340 charges and ECDSA does not: signing a message with
-Schnorr starts from a keypair, where ECDSA takes the secret key as it is,
-and that is why table 2 spreads wider than table 1.
+Schnorr starts from a keypair, where ECDSA takes the secret key as it is.
+Said of the keypair rather than of the rows, because two of the four build
+one for ECDSA as well -- coincurve's `PrivateKey` and secp256k1-py's derive
+a public key to exist, so those two rows were paying for the same
+multiplication under another name before BIP340 asked for it.
 
 ## "The same C library" is a claim about the API, not about the binary
 

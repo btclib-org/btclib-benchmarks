@@ -133,6 +133,12 @@ erratic thing. Neither column says anything about the *variability* of an
 operation, and none of these operations has any: they are the same arithmetic
 every call, and what varies is the machine around them.
 
+A maximum less a minimum is, however, still what the column of this name
+carries on [the libraries page][libs], which has not been re-measured under
+the change. So the two columns answer different questions and are not
+comparable in either direction: this one shrinks as rounds are added and that
+one grows. Both pages say so where they introduce the column.
+
 ### Public key parse
 
 <!-- tables: parse: begin -->
@@ -204,23 +210,37 @@ tweak rows are where that second parse is paid.
 ```
 <!-- tables: dsa-verify: end -->
 
-Four tables, one per combination of the two encodings. Read across the
-signature encoding and, for three of the four, nothing happens at all: DER
-and the 64-byte form differ by a header libsecp256k1 reads once, and the rows
-land on the same number to the second decimal. That is the expected answer,
-and it is worth having measured — the compact form is often described as the
-cheap one, and for a wrapper that parses either in C it is not.
+Four tables, one per combination of the two encodings. Three packages can be
+read across the signature encoding at all — coincurve is not one of them, its
+API carrying no compact `ecdsa_verify`, which is what tables 5 and 6 print
+`NA` for — and one of the three is the exception the next paragraph is about.
+So the reading is over two: for btclib-secp256k1 and secp256k1-py, DER and the
+64-byte form differ by a header libsecp256k1 reads once, and a package's two
+rows sit closer together than any gap the ratio column exists to show. That is
+the expected answer, and it is worth having measured — the compact form is
+often described as the cheap one, and for a wrapper that parses either in C it
+is not.
 
 electrum-ecc is the exception, and pays a real amount for DER. Its
 `ecdsa_verify` takes the 64-byte form and nothing else, so its DER row calls
-`ecdsa_sig64_from_der_sig` first — a conversion written in Python, on the
-caller's side of the boundary. The gap between its two rows is that
-conversion, and it is the same order as a public key's square root.
+`ecdsa_sig64_from_der_sig` first, on the caller's side of the boundary. That
+is not a decoder and it is not one crossing. It is two helpers, and the second
+undoes what the first has just finished doing: the DER is parsed, normalized
+and serialized to the 64 octets the row wants, those octets are turned into
+two Python integers and back into the same 64 octets, and the result is
+parsed, normalized and serialized once more. **Six** libsecp256k1 calls and
+four 64-byte buffers stand between the row's input and the verification the
+other rows spend their time on.
 
-What that conversion also does is the one place on this page where reading
-across the signature encoding changes an answer rather than a time. It is not
-a decoder: it parses, normalizes s and serializes again, so the malleable half
-of a signature arrives at `ecdsa_verify` as the low half and is accepted —
+The gap between electrum-ecc's two rows is all of that, and it is the same
+order as a public key's square root — so a reader subtracting them is not
+performing the subtraction another package's two rows invite.
+
+The first of the two normalizations is also the one place on this page where
+reading across the signature encoding changes an answer rather than a time.
+The second cannot change anything, s being low by the time it runs.
+Normalizing means the malleable half of a signature arrives at `ecdsa_verify`
+as the low half and is accepted —
 where the same signature handed to the same method as 64 octets is refused,
 that method enforcing the low half by default. So for this one package the two
 rows are not one operation in two encodings, and a reader subtracting them is
@@ -348,9 +368,10 @@ python libraries rather than secp256k1 wrappers.
 ```
 <!-- tables: dsa-sign: end -->
 
-Signing parses no public key, so nothing above carries over and these tables
-spread far wider than any verification table does. What spreads them is not
-arithmetic: every row calls one C library to make one signature.
+Signing parses no public key, so nothing above carries over and the rows of
+these tables sit far further apart than any verification table's do. What
+separates them is not arithmetic: every row calls one C library to make one
+signature.
 
 Two habits do it. Two of the four sign only through a key object of their own
 — coincurve's `PrivateKey` and secp256k1-py's — and building one derives the
@@ -373,8 +394,9 @@ object costs, and it agrees closely with the difference the same two rows show
 in every other table on this page. The checked row against electrum-ecc's
 leaves what remains of electrum-ecc's own overhead once the check is on both
 sides — much less than the ordinary rows suggest, and in the compact table
-less again, the DER row paying for a conversion its own module writes in
-Python.
+less again, the DER row paying for the six-crossing conversion its own module
+orchestrates. What that module writes in Python is the orchestration; the work
+is libsecp256k1's, six times over, which is the verify section above.
 
 **What the check costs is not the same in the two schemes**, and the ECDSA
 tables are the expensive half. Verifying needs the public key and signing did
@@ -445,9 +467,9 @@ The checked row is the one coincurve's is comparable with, `sign_schnorr`
 verifying and offering nothing that stops it; the unchecked row is
 secp256k1-py's comparand.
 
-What spreads a signing table is therefore the wrapper's habits and not the
-keypair, which is why the ECDSA table above spreads more widely than this one
-while having no keypair in it at all.
+What separates the rows of a signing table is therefore the wrapper's habits
+and not the keypair, which is why the rows of the ECDSA tables above cover a
+wider range than this one's while having no keypair in them at all.
 
 ## What the rows leave out
 

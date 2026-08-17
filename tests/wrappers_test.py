@@ -293,9 +293,12 @@ DSA_VERIFIERS_COMPACT: dict[str, Callable[[bytes, bytes, bytes], bool]] = {
 
 # the wrapper whose DER row and compact row are not the same operation, which
 # is what the case below records. `ecdsa_sig64_from_der_sig` is not a decoder:
-# it parses, calls `secp256k1_ecdsa_signature_normalize` and serializes again,
-# so the malleable half of a signature reaches `ecdsa_verify` as the low half
-# and is accepted -- while the same signature handed over as 64 octets goes
+# it is two helpers making six libsecp256k1 calls, the second undoing what the
+# first produced -- parse, normalize, serialize to 64 octets, then those octets
+# to two Python integers and back, then parse, normalize and serialize again.
+# The *first* of the two normalizations is the one that moves s, so the
+# malleable half of a signature reaches `ecdsa_verify` as the low half and is
+# accepted -- while the same signature handed over as 64 octets goes
 # through no such call and is refused, `enforce_low_s` being that method's
 # default. `vectors_test.py` records the acceptance as `LOW_S_IS_THE_CALLER_S`
 # over the DER file; from 64 octets the same package answers the other way,
