@@ -64,6 +64,31 @@ rather than for the default: electrum-ecc grinds unless a caller passes
 `grind_r_value=False`, btclib_secp256k1 does not grind unless a caller passes
 `grind=True`. Which default is the better one is not a timing's question.
 
+Checking the signature before answering with it is the other row of its kind,
+and it is not one package's peculiarity: electrum-ecc verifies inside
+`ecdsa_sign` and inside `schnorr_sign`, coincurve inside `sign_schnorr`, and
+neither offers a way to decline it, so for those rows the check is simply part
+of what signing there costs. secp256k1-py does it nowhere. btclib_secp256k1 is
+the only one of the four that both does it and takes `verify=False`, which is
+why it is the only one that can be a pair.
+
+What that pair is for is that no single row of it compares with all three of
+the others. The checked row is the operation electrum-ecc performs in both its
+ECDSA rows and coincurve in its BIP340 one; the unchecked row is the operation
+coincurve performs in ECDSA and secp256k1-py in both. Printing one of the two
+and calling it btclib_secp256k1's signing time would make one of those
+comparisons wrong, and which one would depend on which row was printed.
+
+The grinding rows hold the check off on both sides, because a pair prices one
+difference: btclib_secp256k1's grinding pair prices the loop, and
+electrum-ecc's prices the loop with the check present in both its rows, that
+API offering nothing else. So the two grinding ratios are comparable while the
+rows they are ratios of differ by a check. There is no fourth row grinding
+with the check on, and that is a measurement rather than an omission: the
+check runs once, on the signature the loop settled on, so what it costs adds
+to the grinding row instead of multiplying with it -- a row that would print
+the sum of two the table already carries.
+
 Not every API spells both. `coincurve` signs and verifies in DER alone, so
 its rows in the compact tables are `NA`; `electrum-ecc` signs in the compact
 form and carries its own converter to DER, so both of its rows are its own
@@ -471,7 +496,7 @@ RELEASE_DATES = {
 # word, and a pin has to stop being claimed when the build it was read
 # from is no longer the one installed.
 LIBSECP256K1_PINS = {
-    "btclib-secp256k1": ("main@75cbb44b1ba8", "v0.8.0"),
+    "btclib-secp256k1": ("main@68657e14c47c", "v0.8.0"),
     "coincurve": ("2025-03-08", "v0.6.0"),
     "secp256k1": ("2021-11-06", "9526874d, pre-v0.1.0"),
     "electrum-ecc": ("2026-02-25", "v0.7.1"),
@@ -524,9 +549,35 @@ def dsa_sign_der_electrum_ecc() -> None:
 
 
 def dsa_sign_der_btclib_secp256k1() -> None:
-    """Time btclib_secp256k1's ECDSA signing, bytes in and DER out."""
+    """Time btclib_secp256k1's ECDSA signing, bytes in and DER out.
+
+    `verify=False`, which is one signature and nothing else: the row this
+    is comparable with is coincurve's above it and secp256k1-py's, neither
+    of which checks what it made. The package's own default is the other
+    way round, so this passes the argument rather than relying on it --
+    the row states what it timed, and a default that moved would move a
+    number without moving a word.
+    """
     prvkey, msg = next(DSA_SIGN_DER)
-    btclib_secp256k1.dsa.sign(msg, prvkey)
+    btclib_secp256k1.dsa.sign(msg, prvkey, verify=False)
+
+
+def dsa_sign_der_btclib_secp256k1_checked() -> None:
+    """Time the same signature with the check the package defaults to.
+
+    `verify=True`: the signature is verified under the public key of the
+    key that made it before it is answered with, which costs that
+    verification and the point multiplication the public key takes --
+    ECDSA needing it for neither of the two things signing does, where
+    BIP340 has it already. What the pair prices is exactly that.
+
+    This is the row electrum-ecc's is comparable with, its `ecdsa_sign`
+    performing the same check and offering no way to decline it. The
+    signature is the same octets either way, which is why the two rows
+    are one operation asked twice rather than two operations.
+    """
+    prvkey, msg = next(DSA_SIGN_DER)
+    btclib_secp256k1.dsa.sign(msg, prvkey, verify=True)
 
 
 def dsa_sign_compact_secp256k1() -> None:
@@ -591,9 +642,14 @@ def dsa_sign_der_btclib_secp256k1_grind() -> None:
     Core's `CKey::Sign` scheme, a counter mixed into the nonce and signed
     again until r's high bit is clear, so the signature is the one any
     other implementation of that scheme would reach.
+
+    `verify=False` here as in the row this is a pair with, so what the
+    pair prices is the loop: the check runs once whatever the loop did,
+    and holding it off on both sides is what keeps the grinding the only
+    difference between them.
     """
     prvkey, msg = next(DSA_SIGN_DER)
-    btclib_secp256k1.dsa.sign(msg, prvkey, grind=True)
+    btclib_secp256k1.dsa.sign(msg, prvkey, grind=True, verify=False)
 
 
 def dsa_sign_compact_btclib_secp256k1_grind() -> None:
@@ -605,13 +661,28 @@ def dsa_sign_compact_btclib_secp256k1_grind() -> None:
     what that costs in each encoding.
     """
     prvkey, msg = next(DSA_SIGN_COMPACT)
-    btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, grind=True)
+    btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, grind=True, verify=False)
 
 
 def dsa_sign_compact_btclib_secp256k1() -> None:
-    """Time btclib_secp256k1's ECDSA signing, bytes in and 64 bytes out."""
+    """Time btclib_secp256k1's ECDSA signing, bytes in and 64 bytes out.
+
+    `verify=False`, as the DER row above says.
+    """
     prvkey, msg = next(DSA_SIGN_COMPACT)
-    btclib_secp256k1.dsa.sign(msg, prvkey, compact=True)
+    btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, verify=False)
+
+
+def dsa_sign_compact_btclib_secp256k1_checked() -> None:
+    """Time the same signature checked, in the form the same call answers in.
+
+    The compact half of the pair the DER table carries, and it prices the
+    same check: what is verified is the signature rather than its
+    encoding, so this row and its DER twin differ by a serialization and
+    by nothing the check does.
+    """
+    prvkey, msg = next(DSA_SIGN_COMPACT)
+    btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, verify=True)
 
 
 def ssa_sign_coincurve() -> None:
@@ -654,9 +725,29 @@ def ssa_sign_btclib_secp256k1() -> None:
     Each call builds the keypair, signs, and overwrites the keypair before
     returning: the price of an API that holds no secret longer than the
     call that needed it.
+
+    `verify=False`, which leaves secp256k1-py's row above as the one this
+    is comparable with: BIP340's *Default Signing* ends with the check,
+    and of the four only this package lets a caller stop short of it.
     """
     prvkey, msg = next(SSA_SIGN)
-    btclib_secp256k1.ssa.sign(msg, prvkey, AUX)
+    btclib_secp256k1.ssa.sign(msg, prvkey, AUX, verify=False)
+
+
+def ssa_sign_btclib_secp256k1_checked() -> None:
+    """Time the same BIP340 signature with BIP340's own last step done.
+
+    `verify=True`, and the pair with the row above is what that step
+    costs. It is the cheaper of the two checks this page prices, and the
+    reason is the keypair: BIP340 needs the public key to sign at all, so
+    the point is already in hand where ECDSA has to derive it.
+
+    This is the row coincurve's and electrum-ecc's are comparable with,
+    both of them verifying inside the signing call and neither offering
+    the argument that would stop it.
+    """
+    prvkey, msg = next(SSA_SIGN)
+    btclib_secp256k1.ssa.sign(msg, prvkey, AUX, verify=True)
 
 
 def parse_compressed_coincurve() -> None:
@@ -930,6 +1021,7 @@ DSA_SIGN_DER_ROWS = (
     dsa_sign_der_electrum_ecc,
     dsa_sign_der_electrum_ecc_grind,
     dsa_sign_der_btclib_secp256k1,
+    dsa_sign_der_btclib_secp256k1_checked,
     dsa_sign_der_btclib_secp256k1_grind,
 )
 DSA_SIGN_COMPACT_ROWS = (
@@ -937,6 +1029,7 @@ DSA_SIGN_COMPACT_ROWS = (
     dsa_sign_compact_electrum_ecc,
     dsa_sign_compact_electrum_ecc_grind,
     dsa_sign_compact_btclib_secp256k1,
+    dsa_sign_compact_btclib_secp256k1_checked,
     dsa_sign_compact_btclib_secp256k1_grind,
 )
 SSA_SIGN_ROWS = (
@@ -944,6 +1037,7 @@ SSA_SIGN_ROWS = (
     ssa_sign_secp256k1,
     ssa_sign_electrum_ecc,
     ssa_sign_btclib_secp256k1,
+    ssa_sign_btclib_secp256k1_checked,
 )
 PARSE_COMPRESSED_ROWS = (
     parse_compressed_coincurve,

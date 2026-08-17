@@ -115,8 +115,14 @@ def _secp256k1_py_verify_compact(msg: bytes, pubkey: bytes, sig: bytes) -> bool:
 # --- what each wrapper is asked, one entry per package ------------------
 
 
+# `verify=False` wherever btclib_secp256k1 signs here, because that is what
+# the benchmark's row passes and this module exists to check what the
+# benchmark times. What the argument is worth is a case of its own below,
+# and it is the case the pair of rows depends on
 DSA_SIGNERS_DER: dict[str, Callable[[bytes, bytes], bytes]] = {
-    "btclib_secp256k1": btclib_secp256k1.dsa.sign,
+    "btclib_secp256k1": lambda msg, prvkey: btclib_secp256k1.dsa.sign(
+        msg, prvkey, verify=False
+    ),
     "coincurve": lambda msg, prvkey: coincurve.PrivateKey(prvkey).sign(
         msg, hasher=None
     ),
@@ -128,7 +134,7 @@ DSA_SIGNERS_DER: dict[str, Callable[[bytes, bytes], bytes]] = {
 
 DSA_SIGNERS_COMPACT: dict[str, Callable[[bytes, bytes], bytes]] = {
     "btclib_secp256k1": lambda msg, prvkey: btclib_secp256k1.dsa.sign(
-        msg, prvkey, compact=True
+        msg, prvkey, compact=True, verify=False
     ),
     "secp256k1-py": _secp256k1_py_sign_compact,
     "electrum-ecc": lambda msg, prvkey: electrum_ecc.ECPrivkey(prvkey).ecdsa_sign(
@@ -141,7 +147,7 @@ DSA_SIGNERS_COMPACT: dict[str, Callable[[bytes, bytes], bytes]] = {
 # only against the property
 DSA_GRINDERS_DER: dict[str, Callable[[bytes, bytes], bytes]] = {
     "btclib_secp256k1": lambda msg, prvkey: btclib_secp256k1.dsa.sign(
-        msg, prvkey, grind=True
+        msg, prvkey, grind=True, verify=False
     ),
     "electrum-ecc": lambda msg, prvkey: electrum_ecc.ecdsa_der_sig_from_ecdsa_sig64(
         electrum_ecc.ECPrivkey(prvkey).ecdsa_sign(msg, grind_r_value=True)
@@ -150,7 +156,7 @@ DSA_GRINDERS_DER: dict[str, Callable[[bytes, bytes], bytes]] = {
 
 DSA_GRINDERS_COMPACT: dict[str, Callable[[bytes, bytes], bytes]] = {
     "btclib_secp256k1": lambda msg, prvkey: btclib_secp256k1.dsa.sign(
-        msg, prvkey, compact=True, grind=True
+        msg, prvkey, compact=True, grind=True, verify=False
     ),
     "electrum-ecc": lambda msg, prvkey: electrum_ecc.ECPrivkey(prvkey).ecdsa_sign(
         msg, grind_r_value=True
@@ -162,6 +168,24 @@ DSA_GRINDERS_COMPACT: dict[str, Callable[[bytes, bytes], bytes]] = {
 # so what is stated below is a property rather than an agreement -- and the
 # BIP340 entry passes the vector's aux_rand, without which two calls draw
 # two nonces and answer two signatures for a reason that is not the check
+CHECKED_PAIRS: dict[str, Callable[[_vectors.Signing, bool], bytes]] = {
+    "dsa der": lambda vector, check: btclib_secp256k1.dsa.sign(
+        vector.msg, vector.prvkey, verify=check
+    ),
+    "dsa compact": lambda vector, check: btclib_secp256k1.dsa.sign(
+        vector.msg, vector.prvkey, compact=True, verify=check
+    ),
+    "dsa der grind": lambda vector, check: btclib_secp256k1.dsa.sign(
+        vector.msg, vector.prvkey, grind=True, verify=check
+    ),
+    "dsa compact grind": lambda vector, check: btclib_secp256k1.dsa.sign(
+        vector.msg, vector.prvkey, compact=True, grind=True, verify=check
+    ),
+    "ssa": lambda vector, check: btclib_secp256k1.ssa.sign(
+        vector.msg, vector.prvkey, vector.aux, verify=check
+    ),
+}
+
 # parse and serialize again, which is the only way to see what a parse read:
 # each wrapper's own constructor and its own encoder, never the bindings
 PARSERS: dict[str, Callable[[bytes, bool], bytes]] = {
@@ -363,6 +387,31 @@ def test_grinding_changes_nothing_where_r_was_already_low(
 
 
 # --- the check a signer makes before answering --------------------------
+
+
+@pytest.mark.parametrize("shape", sorted(CHECKED_PAIRS))
+@pytest.mark.parametrize("vector", SIGNING, ids=_ids())
+def test_the_check_costs_a_row_and_changes_no_signature(
+    shape: str, vector: _vectors.Signing
+) -> None:
+    """The equality each pair of signing rows is read as one operation on.
+
+    `verify=True` asks the package to verify what it just made before
+    answering with it, and `verify=False` stops short: the pair of rows the
+    page carries is that difference and is read as the price of the check.
+    Which is only what it is if the two answer the same octets -- a check
+    that changed a signature would be a second operation, and the
+    subtraction would be of two different things.
+
+    A timing cannot show it, both rows being a number either way, so it is
+    stated here for every shape that page times: both ECDSA encodings, both
+    of them ground, and BIP340.
+
+    Args:
+        shape: the signing call, for the test id.
+        vector: the key, message and aux_rand it is made with.
+    """
+    assert CHECKED_PAIRS[shape](vector, True) == CHECKED_PAIRS[shape](vector, False)
 
 
 # --- parsing a public key -----------------------------------------------

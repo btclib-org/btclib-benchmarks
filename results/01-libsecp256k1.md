@@ -24,7 +24,7 @@ what identifies them.
 <!-- provenance: begin -->
 ```text
 package           version  released           libsecp256k1 pin      bindings
-btclib-secp256k1  0.8.0.3  main@75cbb44b1ba8  v0.8.0                cffi
+btclib-secp256k1  0.8.0.3  main@68657e14c47c  v0.8.0                cffi
 electrum-ecc      0.0.7    2026-02-25         v0.7.1                ctypes
 coincurve         21.0.0   2025-03-08         v0.6.0                cffi
 secp256k1         0.14.0   2021-11-06         9526874d, pre-v0.1.0  cffi
@@ -40,7 +40,7 @@ wrappers.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-17 08:38 CEST (06:38 UTC)
+when    : 2026-08-17 12:17 CEST (10:17 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -124,18 +124,18 @@ is what the other column carries.
 <!-- tables: parse: begin -->
 ```text
 1. public key parse (a 65-byte uncompressed key)
-                             μs/call     vs best   spread
-  btclib_secp256k1              0.22       1.00x     0.00   (10x400,000 calls)
-  coincurve                     0.23       1.08x     0.01   (10x400,000 calls)
-  secp256k1                     0.65       3.02x     0.07   (10x400,000 calls)
-  electrum_ecc                  1.17       5.41x     0.08   (10x400,000 calls)
+                               μs/call     vs best   spread
+  btclib_secp256k1                0.22       1.00x     0.01   (10x400,000 calls)
+  coincurve                       0.24       1.07x     0.01   (10x400,000 calls)
+  secp256k1                       0.64       2.85x     0.02   (10x400,000 calls)
+  electrum_ecc                    1.17       5.20x     0.02   (10x400,000 calls)
 
 2. public key parse (a 33-byte compressed key)
-                             μs/call     vs best   spread
-  btclib_secp256k1              2.28       1.00x     0.03   (10x100,000 calls)
-  coincurve                     2.33       1.02x     0.03   (10x100,000 calls)
-  secp256k1                     2.77       1.21x     0.09   (10x100,000 calls)
-  electrum_ecc                  3.25       1.42x     0.17   (10x100,000 calls)
+                               μs/call     vs best   spread
+  btclib_secp256k1                2.35       1.00x     0.08   (10x100,000 calls)
+  coincurve                       2.38       1.01x     0.02   (10x100,000 calls)
+  secp256k1                       2.77       1.18x     0.19   (10x100,000 calls)
+  electrum_ecc                    3.32       1.41x     0.49   (10x100,000 calls)
 ```
 <!-- tables: parse: end -->
 
@@ -161,32 +161,32 @@ tweak rows are where that second parse is paid.
 <!-- tables: dsa-verify: begin -->
 ```text
 3. ECDSA verify (DER signature, a 65-byte key parsed per call)
-                             μs/call     vs best   spread
-  btclib_secp256k1             12.99       1.00x     0.68   (10x10,000 calls)
-  coincurve                    13.10       1.01x     0.71   (10x10,000 calls)
-  secp256k1                    13.61       1.05x     0.69   (10x10,000 calls)
-  electrum_ecc                 17.31       1.33x     0.46   (10x10,000 calls)
+                               μs/call     vs best   spread
+  btclib_secp256k1               13.14       1.00x     1.10   (10x10,000 calls)
+  coincurve                      13.48       1.03x     0.59   (10x10,000 calls)
+  secp256k1                      14.01       1.07x     0.32   (10x10,000 calls)
+  electrum_ecc                   17.58       1.34x     0.44   (10x10,000 calls)
 
 4. ECDSA verify (DER signature, a 33-byte key parsed per call)
-                             μs/call     vs best   spread
-  btclib_secp256k1             15.09       1.00x     0.37   (10x10,000 calls)
-  coincurve                    15.25       1.01x     0.19   (10x10,000 calls)
-  secp256k1                    15.74       1.04x     0.18   (10x10,000 calls)
-  electrum_ecc                 19.41       1.29x     0.14   (10x10,000 calls)
+                               μs/call     vs best   spread
+  btclib_secp256k1               15.17       1.00x     2.11   (10x10,000 calls)
+  coincurve                      15.32       1.01x     2.99   (10x10,000 calls)
+  secp256k1                      15.95       1.05x     9.29   (10x10,000 calls)
+  electrum_ecc                   19.62       1.29x     0.39   (10x10,000 calls)
 
 5. ECDSA verify (64-byte signature, a 65-byte key parsed per call)
-                             μs/call     vs best   spread
-  btclib_secp256k1             13.04       1.00x     6.13   (10x10,000 calls)
-  secp256k1                    13.61       1.04x     0.31   (10x10,000 calls)
-  electrum_ecc                 15.12       1.16x     1.16   (10x10,000 calls)
-  coincurve                       NA
+                               μs/call     vs best   spread
+  btclib_secp256k1               13.08       1.00x     0.32   (10x10,000 calls)
+  secp256k1                      13.87       1.06x     0.61   (10x10,000 calls)
+  electrum_ecc                   15.25       1.17x     0.59   (10x10,000 calls)
+  coincurve                         NA
 
 6. ECDSA verify (64-byte signature, a 33-byte key parsed per call)
-                             μs/call     vs best   spread
-  btclib_secp256k1             15.09       1.00x     0.14   (10x10,000 calls)
-  secp256k1                    15.80       1.05x     0.19   (10x10,000 calls)
-  electrum_ecc                 17.20       1.14x     0.14   (10x10,000 calls)
-  coincurve                       NA
+                               μs/call     vs best   spread
+  btclib_secp256k1               15.22       1.00x     0.15   (10x10,000 calls)
+  secp256k1                      15.85       1.04x     0.73   (10x10,000 calls)
+  electrum_ecc                   17.38       1.14x     0.20   (10x10,000 calls)
+  coincurve                         NA
 ```
 <!-- tables: dsa-verify: end -->
 
@@ -218,18 +218,18 @@ a caller do around the call, not the verification itself.
 <!-- tables: ssa-verify: begin -->
 ```text
 7. BIP340 verify (a 65-byte key handed in, the x-only one taken from it)
-                             μs/call     vs best   spread
-  btclib_secp256k1             13.39       1.00x     0.21   (10x10,000 calls)
-  secp256k1                    13.65       1.02x     0.22   (10x10,000 calls)
-  electrum_ecc                 17.20       1.28x     2.52   (10x10,000 calls)
-  coincurve                       NA
+                               μs/call     vs best   spread
+  btclib_secp256k1               13.42       1.00x     0.22   (10x10,000 calls)
+  secp256k1                      13.69       1.02x     3.74   (10x10,000 calls)
+  electrum_ecc                   17.30       1.29x     0.12   (10x10,000 calls)
+  coincurve                         NA
 
 8. BIP340 verify (the x-only key handed in, parsed per call)
-                             μs/call     vs best   spread
-  btclib_secp256k1             15.16       1.00x     0.13   (10x10,000 calls)
-  coincurve                    15.30       1.01x     0.16   (10x10,000 calls)
-  secp256k1                    15.73       1.04x     0.19   (10x10,000 calls)
-  electrum_ecc                 19.21       1.27x     0.23   (10x10,000 calls)
+                               μs/call     vs best   spread
+  btclib_secp256k1               15.28       1.00x     0.14   (10x10,000 calls)
+  coincurve                      15.36       1.01x     0.39   (10x10,000 calls)
+  secp256k1                      15.86       1.04x     0.20   (10x10,000 calls)
+  electrum_ecc                   19.42       1.27x     0.16   (10x10,000 calls)
 ```
 <!-- tables: ssa-verify: end -->
 
@@ -254,18 +254,18 @@ spelling: `PublicKeyXOnly` is the only type of its that carries a Schnorr
 <!-- tables: tweak: begin -->
 ```text
 9. public key tweak by a scalar, a 65-byte key
-                             μs/call     vs best   spread
-  btclib_secp256k1             10.13       1.00x     0.08   (10x10,000 calls)
-  coincurve                    10.24       1.01x     1.37   (10x10,000 calls)
-  secp256k1                    13.74       1.36x     3.02   (10x10,000 calls)
-  electrum_ecc                 22.75       2.25x     2.19   (10x10,000 calls)
+                               μs/call     vs best   spread
+  btclib_secp256k1               10.16       1.00x     0.73   (10x10,000 calls)
+  coincurve                      10.25       1.01x     0.21   (10x10,000 calls)
+  secp256k1                      13.84       1.36x     0.09   (10x10,000 calls)
+  electrum_ecc                   22.71       2.24x     1.10   (10x10,000 calls)
 
 10. public key tweak by a scalar, a 33-byte key
-                             μs/call     vs best   spread
-  btclib_secp256k1             12.30       1.00x     0.21   (10x10,000 calls)
-  coincurve                    12.40       1.01x     0.66   (10x10,000 calls)
-  secp256k1                    16.07       1.31x     0.42   (10x10,000 calls)
-  electrum_ecc                 25.12       2.04x     2.81   (10x10,000 calls)
+                               μs/call     vs best   spread
+  btclib_secp256k1               12.26       1.00x     0.31   (10x10,000 calls)
+  coincurve                      12.50       1.02x     0.28   (10x10,000 calls)
+  secp256k1                      16.11       1.31x     0.53   (10x10,000 calls)
+  electrum_ecc                   25.08       2.05x     0.76   (10x10,000 calls)
 ```
 <!-- tables: tweak: end -->
 
@@ -290,64 +290,92 @@ python libraries rather than secp256k1 wrappers.
 <!-- tables: dsa-sign: begin -->
 ```text
 11. ECDSA sign (32-byte digest, DER out)
-                             μs/call     vs best   spread
-  btclib_secp256k1             12.01       1.00x     2.55   (10x10,000 calls)
-  btclib_secp256k1_grind       24.19       2.01x     0.07   (10x10,000 calls)
-  secp256k1                    26.75       2.23x     2.39   (10x10,000 calls)
-  coincurve                    26.86       2.24x     0.33   (10x10,000 calls)
-  electrum_ecc                 47.97       3.99x    12.09   (10x10,000 calls)
-  electrum_ecc_grind           60.72       5.06x     2.01   (10x10,000 calls)
+                               μs/call     vs best   spread
+  btclib_secp256k1               12.09       1.00x     0.84   (10x10,000 calls)
+  btclib_secp256k1_grind         24.14       2.00x     4.67   (10x10,000 calls)
+  secp256k1                      26.97       2.23x     6.87   (10x10,000 calls)
+  coincurve                      26.97       2.23x     0.21   (10x10,000 calls)
+  btclib_secp256k1_checked       32.54       2.69x     0.99   (10x10,000 calls)
+  electrum_ecc                   47.97       3.97x     0.52   (10x10,000 calls)
+  electrum_ecc_grind             60.88       5.03x     1.62   (10x10,000 calls)
 
 12. ECDSA sign (32-byte digest, 64-byte compact out)
-                             μs/call     vs best   spread
-  btclib_secp256k1             11.97       1.00x     0.26   (10x10,000 calls)
-  btclib_secp256k1_grind       24.14       2.02x     0.41   (10x10,000 calls)
-  secp256k1                    26.74       2.23x     1.19   (10x10,000 calls)
-  electrum_ecc                 45.67       3.82x     6.69   (10x10,000 calls)
-  electrum_ecc_grind           58.36       4.88x    19.12   (10x10,000 calls)
-  coincurve                       NA
+                               μs/call     vs best   spread
+  btclib_secp256k1               11.89       1.00x     0.16   (10x10,000 calls)
+  btclib_secp256k1_grind         24.25       2.04x     0.10   (10x10,000 calls)
+  secp256k1                      26.59       2.24x     2.36   (10x10,000 calls)
+  btclib_secp256k1_checked       32.38       2.72x     0.91   (10x10,000 calls)
+  electrum_ecc                   45.40       3.82x     0.70   (10x10,000 calls)
+  electrum_ecc_grind             58.32       4.90x     9.79   (10x10,000 calls)
+  coincurve                         NA
 ```
 <!-- tables: dsa-sign: end -->
 
-Signing parses no public key, so nothing above carries over and the tables
+Signing parses no public key, so nothing above carries over and these tables
 spread far wider than any verification table does. What spreads them is not
 arithmetic: every row calls one C library to make one signature.
 
-Two of the four sign only through a key object of their own — coincurve's
-`PrivateKey` and secp256k1-py's — and building one derives the public key,
-work a signature does not need and a caller cannot decline. Two others verify
-the signature they just made before handing it back — coincurve's
-`sign_schnorr`, electrum-ecc's `schnorr_sign` and its `ecdsa_sign` — which is
-a verification's worth of time inside a signature's row, and again no caller
-can decline it. btclib-secp256k1 leads because it does neither.
+Two habits do it. Two of the four sign only through a key object of their own
+— coincurve's `PrivateKey` and secp256k1-py's — and building one derives the
+public key, work a signature does not need and a caller cannot decline. And
+three of them verify the signature they just made before handing it back:
+electrum-ecc inside `ecdsa_sign`, coincurve inside `sign_schnorr`, and
+btclib-secp256k1 by default. Only the last of the three takes an argument that
+stops it, which is why it is the one with two rows here.
 
-The grinding rows turn that from an explanation into a measurement, and they
-are the most useful thing in these two tables. A grinding row is the ordinary
-row with about one extra signature in it, half of all draws needing none and
-the tail paying for the rest. So the *difference* between a package's two
-rows is one signature, isolated — and that difference comes out nearly the
-same for both packages, in both encodings, while their ordinary rows are far
-apart.
+**No single row of that pair compares with all three of the others**, and that
+is what the pair is for. The unchecked row is the operation coincurve performs
+in ECDSA and secp256k1-py in both schemes; the checked row is the operation
+electrum-ecc performs in both its ECDSA rows. Printing one of the two and
+calling it btclib-secp256k1's signing time would make one of those comparisons
+wrong, and which one would depend on which row was printed.
 
-Which says that electrum-ecc's ECDSA row is mostly not signing: what
-separates it from btclib-secp256k1's is the key object and the
-self-verification, both paid once whatever the loop does, and not slower
-arithmetic. It also says the two grinding loops themselves cost about the
-same, which is what should happen to two Python loops around the same C call.
-Read the ratio column instead and none of this is visible: btclib-secp256k1
-doubles because its ordinary row is nearly all signature, and electrum-ecc
-grows by a fraction because its ordinary row is nearly all something else.
+Read that way the tables stop being a ranking and start being a subtraction.
+The unchecked row against coincurve's and secp256k1-py's leaves what their key
+object costs, and it agrees closely with the difference the same two rows show
+in every other table on this page. The checked row against electrum-ecc's
+leaves what remains of electrum-ecc's own overhead once the check is on both
+sides — much less than the ordinary rows suggest, and in the compact table
+less again, the DER row paying for a conversion its own module writes in
+Python.
+
+**What the check costs is not the same in the two schemes**, and the ECDSA
+tables are the expensive half. Verifying needs the public key and signing did
+not, so the check has to derive one first: the gap between the checked and
+unchecked rows here is a verification plus that derivation, and it is larger
+than the same gap in the BIP340 table by about a generator multiplication.
+That multiplication is not on this page — [the two-paths table][two-paths]
+times it — but its size is what the difference between the two schemes'
+checks comes to. Which makes this the one row on the page that prices a
+default rather than an operation — the argument exists, and a caller who does
+not pass it pays for a proof that libsecp256k1 already gave.
+
+The grinding rows hold the check off on **both** sides, and they have to.
+A pair prices one difference: btclib-secp256k1's grinding pair prices the
+loop, electrum-ecc's prices the loop with the check present in both of its
+rows, and each ratio is therefore about grinding alone. So the two ratios are
+comparable while the rows they are ratios of are not. A grinding row is the
+ordinary row with about one extra signature in it, half of all draws needing
+none and the tail paying for the rest — and that difference comes out nearly
+the same for both packages, in both encodings, which is what should happen to
+two Python loops around the same C call.
+
+Read the ratio column for any of this and none of it is visible. The ratio is
+against the fastest row in the table, so btclib-secp256k1's grinding row
+doubles because its base is nearly all signature, and electrum-ecc's grows by
+a fraction because its base is nearly all something else.
 
 ### BIP340 sign
 
 <!-- tables: ssa-sign: begin -->
 ```text
 13. BIP340 sign (32-byte message)
-                             μs/call     vs best   spread
-  btclib_secp256k1             15.77       1.00x     0.24   (10x10,000 calls)
-  secp256k1                    22.81       1.45x     0.08   (10x10,000 calls)
-  coincurve                    43.31       2.75x     0.40   (10x10,000 calls)
-  electrum_ecc                 48.81       3.10x     2.28   (10x10,000 calls)
+                               μs/call     vs best   spread
+  btclib_secp256k1               15.88       1.00x     0.70   (10x10,000 calls)
+  secp256k1                      22.89       1.44x     0.12   (10x10,000 calls)
+  btclib_secp256k1_checked       29.46       1.86x     0.85   (10x10,000 calls)
+  coincurve                      43.24       2.72x     1.07   (10x10,000 calls)
+  electrum_ecc                   49.25       3.10x     0.60   (10x10,000 calls)
 ```
 <!-- tables: ssa-sign: end -->
 
@@ -362,6 +390,23 @@ secp256k1-py is the exception, and it is one because its ECDSA row was
 already paying a toll of its own: the key object it signs through derives the
 public key too, which is the same work under a different name. Where a
 package pays for a keypair twice, asking for BIP340 costs it nothing extra.
+
+**The check is cheaper here than in ECDSA, and the keypair is why.** Schnorr
+needs the public key to sign at all, so verifying afterwards has the point
+already in hand where ECDSA has to go and get it. What is left is a bare
+verification, and it comes out close to what this page's own BIP340 verify
+table charges for one — which is the arithmetic agreeing with itself across
+two operations that were measured independently.
+
+It is also the one place where the check is what a specification asks for.
+BIP340's *Default Signing* ends with a verification, so the checked row is the
+scheme performed as written and the unchecked row is the shortcut. ECDSA
+carries no such step, which is the whole reason one default cannot be right
+for both.
+
+The checked row is the one coincurve's is comparable with, `sign_schnorr`
+verifying and offering nothing that stops it; the unchecked row is
+secp256k1-py's comparand.
 
 What spreads a signing table is therefore the wrapper's habits and not the
 keypair, which is why the ECDSA table above spreads more widely than this one
