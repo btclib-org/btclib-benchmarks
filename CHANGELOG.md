@@ -505,7 +505,7 @@ The release notes, which say what a user has to act on, are in
   branch moves under a review, ended by an ack and by nothing else. The
   landing was unwritten too, and it is the half where a mistake is
   expensive: the checks read after the rebase rather than before, the
-  squash performed locally, the branch deleted by hand, and the checkouts
+  squash performed locally, the branch confirmed gone, and the checkouts
   sitting on `main` brought up to date, a stale one being where the next
   branch gets built on a base that has moved.
 

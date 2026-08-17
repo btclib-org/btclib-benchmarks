@@ -340,8 +340,9 @@ has seen.
 
 Then a local squash fast-forwarded onto `main`, never a button on the
 forge, which would sign the commit with the forge's own key; the signature
-verified afterwards; the branch deleted, the fast-forward not being a merge
-the forge cleans up after; and every checkout sitting on `main` brought up
+verified afterwards; the branch gone, which the forge does itself here even
+for a fast-forward, so it is read rather than assumed either way; and every
+checkout sitting on `main` brought up
 to date, that being where the next session starts from and a stale one
 being where a branch gets built on a base that has moved. `REPOSITORY.md`
 carries the procedure in full, and why the branch protections permit it.
