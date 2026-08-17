@@ -251,3 +251,106 @@ def test_what_a_timing_contains_says_a_timing_holds_no_check() -> None:
     said = "\n".join(_provenance.WHAT_A_TIMING_CONTAINS)
     assert "tests/vectors_test.py" in said
     assert Path("tests/vectors_test.py").is_file()
+
+
+class _FakeWheel:
+    """A distribution whose `WHEEL` file is whatever a test hands it."""
+
+    def __init__(self, wheel: str | None) -> None:
+        self.wheel = wheel
+
+    def read_text(self, filename: str) -> str | None:
+        """Answer `WHEEL` and nothing else, as importlib does."""
+        assert filename == "WHEEL"
+        return self.wheel
+
+
+@pytest.fixture
+def fake_wheel(monkeypatch: pytest.MonkeyPatch) -> Callable[[str | None], None]:
+    """Return a function installing a fake `WHEEL` file to read."""
+
+    def install(wheel: str | None) -> None:
+        monkeypatch.setattr(_provenance, "_distribution", lambda _: _FakeWheel(wheel))
+
+    return install
+
+
+def test_an_index_wheel_is_reported_as_its_tag_and_nothing_more(
+    fake_wheel: Callable[[str | None], None],
+) -> None:
+    """A manylinux tag came from an index, so there is nothing to remark on.
+
+    The report is what a reader has to act on and nothing else, which for
+    a downloaded wheel is the tag: whoever published it built it, and the
+    revision it vendors is the one recorded against its version.
+    """
+    fake_wheel("Wheel-Version: 1.0\nTag: cp313-cp313-manylinux_2_17_x86_64\n")
+    assert _provenance.artifact_of("anything") == "cp313-cp313-manylinux_2_17_x86_64"
+
+
+def test_a_bare_linux_tag_says_the_wheel_was_built_where_it_is_installed(
+    fake_wheel: Callable[[str | None], None],
+) -> None:
+    """The case the whole function exists for, and it is three of six CI jobs.
+
+    No index accepts a bare `linux_*` wheel, so one installed here was
+    built here -- which for a comparand vendoring libsecp256k1 means the
+    revision its sdist downloads rather than the one its wheels carry.
+    """
+    fake_wheel("Wheel-Version: 1.0\nTag: cp311-cp311-linux_aarch64\n")
+    said = _provenance.artifact_of("secp256k1")
+    assert said == "cp311-cp311-linux_aarch64, built where it is installed"
+
+
+def test_the_two_spellings_an_index_accepts_are_not_read_as_local_builds(
+    fake_wheel: Callable[[str | None], None],
+) -> None:
+    """Both accepted Linux spellings end in the word a local build starts with.
+
+    `manylinux_2_17_x86_64` and `musllinux_1_2_aarch64` contain `linux_`,
+    so a substring test called every downloaded Linux wheel a build on the
+    runner -- which is the answer for three CI jobs and the wrong answer
+    for the other three.
+    """
+    for platform in ("manylinux_2_17_x86_64", "musllinux_1_2_aarch64"):
+        fake_wheel(f"Tag: cp313-cp313-{platform}\n")
+        assert _provenance.artifact_of("anything") == f"cp313-cp313-{platform}"
+
+
+def test_a_tag_naming_a_compressed_set_of_platforms_is_read_field_by_field(
+    fake_wheel: Callable[[str | None], None],
+) -> None:
+    """A platform field may be several joined by dots, and any one answers."""
+    fake_wheel("Tag: cp313-cp313-manylinux1_x86_64.linux_x86_64\n")
+    assert _provenance.artifact_of("anything").endswith("built where it is installed")
+
+
+def test_a_wheel_of_several_tags_reports_all_of_them(
+    fake_wheel: Callable[[str | None], None],
+) -> None:
+    """A fat wheel satisfies several tags, and no one of them is the answer."""
+    fake_wheel("Tag: cp38-abi3-macosx_10_12_x86_64\nTag: cp38-abi3-macosx_11_0_arm64\n")
+    assert _provenance.wheel_tags("anything") == [
+        "cp38-abi3-macosx_10_12_x86_64",
+        "cp38-abi3-macosx_11_0_arm64",
+    ]
+
+
+def test_an_install_with_no_wheel_metadata_is_not_reported_as_missing(
+    fake_wheel: Callable[[str | None], None],
+) -> None:
+    """Installed with no `WHEEL` and not installed at all are two facts.
+
+    Collapsing them would have this say a comparand is absent when what is
+    absent is one metadata file, which is a different thing to go looking
+    for.
+    """
+    fake_wheel(None)
+    assert _provenance.wheel_tags("anything") == []
+    assert _provenance.artifact_of("anything") == "no WHEEL metadata"
+
+
+def test_an_uninstalled_distribution_has_no_tags_rather_than_none_readable() -> None:
+    """`None` is the answer for a name nothing installed, and it is not `[]`."""
+    assert _provenance.wheel_tags("no-such-distribution-anywhere") is None
+    assert _provenance.artifact_of("no-such-distribution-anywhere") == "not installed"

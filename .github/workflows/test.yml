@@ -59,6 +59,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y pkg-config libtool autoconf automake
 
+      # which of an index's two artifacts each comparand's install resolved
+      # to, printed before the assertions that are about to be made against
+      # it. `uv.lock` carries no aarch64 wheel for `secp256k1`, so on
+      # `ubuntu-24.04-arm` -- three of these six cells -- its libsecp256k1
+      # is compiled on the runner, and the sdist that builds it downloads a
+      # revision four years older than the one its wheels carry. Those
+      # three jobs therefore assert the pages' claims against a different
+      # binary from the one the pages are measured on, and the tag this
+      # prints is what says so instead of leaving the next aarch64-only
+      # divergence to be blamed on the wrapper.
+      #
+      # Recorded and not asserted, which is the line this stays on the
+      # right side of: it reads installed metadata and times nothing, so it
+      # is neither a benchmark nor a claim that goes red the day an index
+      # gains a wheel and the answer legitimately changes
+      - name: Record which artifact each comparand's install resolved to
+        run: |
+          uv run --locked --no-default-groups --group test \
+            python scripts/artifacts.py
+
       - name: Run pytest
         run: uv run --locked --no-default-groups --group test pytest
 

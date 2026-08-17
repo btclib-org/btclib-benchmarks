@@ -41,15 +41,34 @@ cross-comparand assertion before it will answer a question. That is the
 right price for a measurement and an absurd one for a heading, so nothing
 here can pay it: this reads JSON and writes markdown, and the only module
 it shares with a benchmark is the one that defines the shape of a run.
+
+It does read a benchmark's *source*, which is a different thing and is
+what `table_drift` below is for. A page and its run agreeing says nothing
+about the script having stayed the same, and both drifts are ordinary
+states here -- a table added to a script is published when somebody next
+runs it, which may be much later. So the tables each side names are
+compared as text, and what only one side has is said rather than failed.
 """
 
 from __future__ import annotations
 
+import ast
 import sys
 from pathlib import Path
 
 import _results
 from _results import RESULTS, Measurement
+
+# where the benchmarks are, this file sitting beside them. Read as text
+# and never imported, which is the paragraph above
+SCRIPTS = Path(__file__).resolve().parent
+
+# the tuple a benchmark declares its tables in, each entry opening with
+# the title as a literal string. Three of the five carry one; the other
+# two build their tables inside `main()`, where nothing readable without
+# running them says what the titles are -- so those two get no comparison
+# rather than a wrong one
+DECLARED_TABLES = "TABLES"
 
 # a region is named once, opened and closed with the same name: a page
 # says which blocks it holds and this puts them there. The name is in
@@ -142,19 +161,88 @@ def rendered_page(page: str, measurement: Measurement) -> str:
     return "\n".join(lines)
 
 
-def publish(benchmark: str, *, check: bool) -> bool:
-    """Write one page from its saved run; return whether it had changed.
+def declared_titles(benchmark: str) -> list[str] | None:
+    """Return the titles a script declares its tables under, or nothing.
+
+    Parsed rather than imported, which is the whole of why this is
+    possible: a title is a literal string in the script's `TABLES` tuple,
+    and `ast` reads a literal without running the module that holds it.
+    Nothing else about a table is readable this way -- the rows are names
+    bound elsewhere in the file -- and nothing else is wanted.
+
+    `None` and not an empty list for a script with no such tuple. The two
+    are different facts: a page whose script declares nothing readable
+    cannot be compared, and saying it declares no tables would report
+    every table of its run as one the script has dropped.
+    """
+    source = SCRIPTS / f"{benchmark}.py"
+    if not source.is_file():  # pragma: no cover - a run has a script
+        return None
+    for node in ast.parse(source.read_text(encoding="utf-8")).body:
+        named: list[ast.expr]
+        if isinstance(node, ast.AnnAssign):
+            named, assigned = [node.target], node.value
+        elif isinstance(node, ast.Assign):
+            named, assigned = node.targets, node.value
+        else:
+            continue
+        if not any(
+            isinstance(name, ast.Name) and name.id == DECLARED_TABLES for name in named
+        ):
+            continue
+        if not isinstance(assigned, ast.Tuple | ast.List):
+            return None
+        return [
+            entry.elts[0].value
+            for entry in assigned.elts
+            if isinstance(entry, ast.Tuple | ast.List)
+            and entry.elts
+            and isinstance(entry.elts[0], ast.Constant)
+            and isinstance(entry.elts[0].value, str)
+        ]
+    return None
+
+
+def table_drift(benchmark: str, measurement: Measurement) -> list[str]:
+    """Say which tables the script and the saved run do not both have.
+
+    Both directions, because they are the two states a person coming back
+    to a page cannot otherwise tell apart: a table the script produces and
+    the run does not carry is a page measured before that table existed,
+    and a table the run carries and the script does not is a page whose
+    script has moved on. `--check` answers neither by itself -- a page can
+    match its run exactly and be either -- and that is what this adds to
+    its output.
+
+    Lines and not a verdict. Publishing is deliberately not gated on a
+    measurement, so a page waiting for its next run is not a failure; what
+    it was, until this, is unremarked.
+    """
+    declared = declared_titles(benchmark)
+    if declared is None:
+        return []
+    saved = [table.title for table in measurement.tables]
+    return [
+        *(f"  no run of: {title}" for title in declared if title not in saved),
+        *(f"  no longer produced: {title}" for title in saved if title not in declared),
+    ]
+
+
+def publish(benchmark: str, *, check: bool) -> tuple[bool, list[str]]:
+    """Write one page from its saved run; say what it had changed, and drifted.
 
     Returned rather than announced here, so that `--check` and a real
     render are the same walk over the same pages and cannot disagree
-    about what is stale.
+    about what is stale -- which is why the drift lines come back the same
+    way rather than being printed only under `--check`.
     """
     page = RESULTS / f"{benchmark}.md"
     was = page.read_text(encoding="utf-8")
-    now = rendered_page(was, _results.load(benchmark))
+    measurement = _results.load(benchmark)
+    now = rendered_page(was, measurement)
     if now != was and not check:
         page.write_text(now, encoding="utf-8")
-    return now != was
+    return now != was, table_drift(benchmark, measurement)
 
 
 def main(arguments: list[str]) -> int:
@@ -169,11 +257,13 @@ def main(arguments: list[str]) -> int:
     benchmarks = named or sorted(path.stem for path in RESULTS.glob("*.json"))
     stale = []
     for benchmark in benchmarks:
-        changed = publish(benchmark, check=check)
+        changed, drifted = publish(benchmark, check=check)
         if changed:
             stale.append(benchmark)
         said = ("stale" if check else "written") if changed else "up to date"
         print(f"{benchmark:<24}{said}")
+        for line in drifted:
+            print(line)
     if stale and check:
         print(f"\n{len(stale)} page(s) do not match their saved run", file=sys.stderr)
         return 1

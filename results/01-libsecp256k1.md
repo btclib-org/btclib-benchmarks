@@ -115,22 +115,23 @@ Two habits of reading apply throughout. A pair of tables is read by
 subtracting, not by dividing — the ratio column is against the fastest row in
 its own table, so one difference shows up as a large ratio where the base row
 is small and a small one where it is not. And where two rows are close enough
-that a round or two could reorder them, the `spread` column is how to see it
-without waiting for another run: a gap smaller than the spread behind either
+that a round or two could reorder them, the `halves` column is how to see it
+without waiting for another run: a gap smaller than the distance behind either
 row is not a gap this run settled, and which of the two prints first is then
 a property of the run rather than of the packages.
 
-The spread is that comparison and nothing more. The rounds behind a row are
-split in half and the column is how far the two halves' minima sat apart, so
-what it states is this run's agreement with itself. A row whose spread is a
-large fraction of its neighbour's lead has not been separated from that
-neighbour by this run; a row whose spread is near zero has in effect been
-measured twice and agreed.
+The column is that comparison and nothing more. The rounds behind a row are
+split in half and the column is how far the two halves' minima sat apart —
+which is what its heading is short for, and what the saved run keys as
+`halves_apart` — so what it states is this run's agreement with itself. A row
+whose distance is a large fraction of its neighbour's lead has not been
+separated from that neighbour by this run; a row whose distance is near zero
+has in effect been measured twice and agreed.
 
 Agreement with another run is what it does not state. The two halves are
 seconds apart and a table's rows are minutes apart, so what the column catches
 is the machine's noise and not its drift — the same row measured again on
-another day can differ by more than any spread on this page. That is the
+another day can differ by more than any distance on this page. That is the
 reason the numbers here are an order of magnitude rather than a figure to
 quote, and the reason a ratio is read instead of a difference.
 
@@ -142,25 +143,26 @@ erratic thing. Neither column says anything about the *variability* of an
 operation, and none of these operations has any: they are the same arithmetic
 every call, and what varies is the machine around them.
 
-A maximum less a minimum is, however, still what the column of this name
-carries on [the libraries page][libs], which has not been re-measured under
-the change. So the two columns answer different questions and are not
-comparable in either direction: this one shrinks as rounds are added and that
-one grows. Both pages say so where they introduce the column.
+A maximum less a minimum is, however, still what [the libraries page][libs]
+prints, under `spread`, that page not having been re-measured under the
+change. The two headings are what now says the two columns are not one
+number: they answer different questions and are not comparable in either
+direction, this one shrinking as rounds are added and that one growing. Both
+pages define the column they print where they introduce it.
 
 ### Public key parse
 
 <!-- tables: parse: begin -->
 ```text
 1. public key parse (a 65-byte uncompressed key)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1                0.23       1.00x     0.00   (10x400,000 calls)
   coincurve                       0.24       1.04x     0.01   (10x400,000 calls)
   secp256k1                       0.65       2.80x     0.00   (10x400,000 calls)
   electrum_ecc                    1.20       5.19x     0.00   (10x400,000 calls)
 
 2. public key parse (a 33-byte compressed key)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1                2.32       1.00x     0.00   (10x100,000 calls)
   coincurve                       2.35       1.02x     0.01   (10x100,000 calls)
   secp256k1                       2.76       1.19x     0.02   (10x100,000 calls)
@@ -190,28 +192,28 @@ tweak rows are where that second parse is paid.
 <!-- tables: dsa-verify: begin -->
 ```text
 3. ECDSA verify (DER signature, a 65-byte key parsed per call)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               13.07       1.00x     0.05   (10x10,000 calls)
   coincurve                      13.15       1.01x     0.00   (10x10,000 calls)
   secp256k1                      13.64       1.04x     0.00   (10x10,000 calls)
   electrum_ecc                   17.44       1.33x     0.01   (10x10,000 calls)
 
 4. ECDSA verify (DER signature, a 33-byte key parsed per call)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               15.15       1.00x     0.02   (10x10,000 calls)
   coincurve                      15.42       1.02x     0.02   (10x10,000 calls)
   secp256k1                      15.93       1.05x     0.08   (10x10,000 calls)
   electrum_ecc                   19.60       1.29x     0.02   (10x10,000 calls)
 
 5. ECDSA verify (64-byte signature, a 65-byte key parsed per call)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               13.07       1.00x     0.05   (10x10,000 calls)
   secp256k1                      13.63       1.04x     0.01   (10x10,000 calls)
   electrum_ecc                   15.15       1.16x     0.03   (10x10,000 calls)
   coincurve                         NA
 
 6. ECDSA verify (64-byte signature, a 33-byte key parsed per call)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               15.17       1.00x     0.04   (10x10,000 calls)
   secp256k1                      15.82       1.04x     0.01   (10x10,000 calls)
   electrum_ecc                   17.33       1.14x     0.02   (10x10,000 calls)
@@ -274,14 +276,14 @@ a caller do around the call, not the verification itself.
 <!-- tables: ssa-verify: begin -->
 ```text
 7. BIP340 verify (a 65-byte key handed in, the x-only one taken from it)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               13.36       1.00x     0.27   (10x10,000 calls)
   secp256k1                      13.63       1.02x     0.06   (10x10,000 calls)
   electrum_ecc                   17.23       1.29x     0.03   (10x10,000 calls)
   coincurve                         NA
 
 8. BIP340 verify (the x-only key handed in, parsed per call)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               15.28       1.00x     0.03   (10x10,000 calls)
   coincurve                      15.63       1.02x     0.08   (10x10,000 calls)
   secp256k1                      16.12       1.05x     0.09   (10x10,000 calls)
@@ -310,14 +312,14 @@ spelling: `PublicKeyXOnly` is the only type of its that carries a Schnorr
 <!-- tables: tweak: begin -->
 ```text
 9. public key tweak by a scalar, a 65-byte key
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               10.15       1.00x     0.02   (10x10,000 calls)
   coincurve                      10.69       1.05x     0.01   (10x10,000 calls)
   secp256k1                      14.31       1.41x     0.00   (10x10,000 calls)
   electrum_ecc                   23.13       2.28x     0.18   (10x10,000 calls)
 
 10. public key tweak by a scalar, a 33-byte key
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               12.27       1.00x     0.01   (10x10,000 calls)
   coincurve                      12.83       1.05x     0.02   (10x10,000 calls)
   secp256k1                      16.47       1.34x     0.01   (10x10,000 calls)
@@ -356,7 +358,7 @@ python libraries rather than secp256k1 wrappers.
 <!-- tables: dsa-sign: begin -->
 ```text
 11. ECDSA sign (32-byte digest, DER out)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               12.12       1.00x     0.01   (10x10,000 calls)
   btclib_secp256k1_grind         24.49       2.02x     0.02   (10x10,000 calls)
   secp256k1                      26.78       2.21x     0.27   (10x10,000 calls)
@@ -366,7 +368,7 @@ python libraries rather than secp256k1 wrappers.
   electrum_ecc_grind             60.70       5.01x     0.08   (10x10,000 calls)
 
 12. ECDSA sign (32-byte digest, 64-byte compact out)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               11.98       1.00x     0.03   (10x10,000 calls)
   btclib_secp256k1_grind         24.31       2.03x     0.07   (10x10,000 calls)
   secp256k1                      26.63       2.22x     0.01   (10x10,000 calls)
@@ -438,7 +440,7 @@ a fraction because its base is nearly all something else.
 <!-- tables: ssa-sign: begin -->
 ```text
 13. BIP340 sign (32-byte message, a fresh key)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   btclib_secp256k1               15.88       1.00x     0.21   (10x10,000 calls)
   secp256k1                      22.73       1.43x     0.16   (10x10,000 calls)
   btclib_secp256k1_checked       29.45       1.85x     0.06   (10x10,000 calls)
@@ -446,7 +448,7 @@ a fraction because its base is nearly all something else.
   electrum_ecc                   49.12       3.09x     0.13   (10x10,000 calls)
 
 14. BIP340 sign (32-byte message, the key held already)
-                               μs/call     vs best   spread
+                               μs/call     vs best   halves
   secp256k1                       7.89       1.00x     0.01   (10x10,000 calls)
   btclib_secp256k1                8.29       1.05x     0.01   (10x10,000 calls)
   btclib_secp256k1_checked       21.76       2.76x     0.06   (10x10,000 calls)
@@ -553,7 +555,7 @@ runs is the other one.
 The btclib pages do not carry this pair. `btclib.ecc.ssa.Signer` delegates to
 the one timed here, but btclib exposes no way to decline the check its fast
 path now makes, so a held row there would price one policy and have nothing to
-be a pair with. That is [#23][i23]'s question and it is btclib's to answer
+be a pair with. That is [ISS 23][i23]'s question and it is btclib's to answer
 first.
 
 ## What the rows leave out

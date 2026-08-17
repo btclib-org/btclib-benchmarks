@@ -1449,8 +1449,8 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
 
     Two halves seconds apart say nothing about two runs a day apart, and the
     page says so where the column is explained: a row can move by more than
-    any spread on it between one run and the next, which is why these
-    tables are read as an order of magnitude and by ratio.
+    any distance printed beside it between one run and the next, which is
+    why these tables are read as an order of magnitude and by ratio.
 
     What the column must not be is the slowest round less the quickest. That
     is an extreme-value statistic over ten samples, so it has enormous
@@ -1639,7 +1639,7 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
 
 # what the run block claims about how these numbers were taken, said by
 # the script that takes them: `benchmark` above is where the rounds and the
-# minimum are, and the spread column is what a reader checks it by
+# minimum are, and the `halves` column is what a reader checks it by
 # kept inside 80 columns once the label it prints under is counted, which
 # `labelled` in `_results.py` now refuses to publish rather than leaving
 # to whoever edits this string: a comment here cannot see the ten columns

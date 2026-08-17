@@ -96,6 +96,26 @@ It reads the saved run and imports no benchmark. That matters more than
 it sounds: importing one derives keys, signs a message per comparand and
 runs every cross-comparand assertion before it will answer anything.
 
+## Which artifact an install resolved to, which is a third command
+
+```shell
+uv run python scripts/artifacts.py    # one line per comparand
+```
+
+A page's provenance block says what version was measured and whether it
+came from an index or a branch. What no version can say is which of an
+index's two artifacts answered, and for a comparand that vendors
+libsecp256k1 the wheel and the sdist of one version need not carry the
+same library — so this prints the tags of the wheel each install came
+from, a bare `linux_*` one being a tag no index serves and therefore a
+build made where it is installed.
+
+CI runs it before the suite, on every cell, which is where it earns its
+place: `uv.lock` carries no aarch64 wheel for one comparand, so three of
+the six jobs assert the pages' claims against a library compiled on the
+runner. It records and asserts nothing — an index gaining a wheel changes
+every line it prints and breaks nothing.
+
 `results/machine.toml` overrides the one line a run may get wrong, which
 machine it was taken on. Edit it when that stops being true; every run
 taken afterwards carries the new answer, and runs already saved keep the
