@@ -4,7 +4,7 @@
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-16 16:48 CEST (14:48 UTC)
+when    : 2026-08-16 23:47 CEST (21:47 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -28,7 +28,7 @@ prepare pays as well, so a column of differences must not carry it.
 One run, kept whole. The numbers are an order of magnitude, never a figure
 to quote.
 
-## The output
+## The benchmarks
 
 <!-- output: begin -->
 ```text
@@ -47,33 +47,35 @@ what a timing contains
 
 ECDSA verify, one key, every signature under it
                                          μs/call     vs best
-  btclib, libsecp256k1, parsed point       18.34        1.0x
-  btclib, libsecp256k1, octets             21.03        1.1x
-  python-ecdsa, precomputed               555.27       30.3x
-  btclib, Python, parsed point            580.11       31.6x
-  btclib, Python, octets                  671.40       36.6x
-  python-ecdsa                           1090.94       59.5x
+  btclib, libsecp256k1, parsed point       17.27        1.0x
+  btclib, libsecp256k1, octets             19.89        1.2x
+  python-ecdsa, precomputed               550.03       31.8x
+  btclib, Python, parsed point            579.15       33.5x
+  btclib, Python, octets                  671.88       38.9x
+  python-ecdsa                           1091.18       63.2x
 
 what preparing the key costs, and after how many verifications it pays
                                          prepare   saves/call   break-even
-  btclib, libsecp256k1, parse once          3.98         2.69          1.5
-  btclib, Python, parse once               74.77        91.29          0.8
-  python-ecdsa, precompute()             3131.21       535.67          5.8
+  btclib, libsecp256k1, parse once          3.45         2.62          1.3
+  btclib, Python, parse once               73.54        92.73          0.8
+  python-ecdsa, precompute()             3088.92       541.14          5.7
 ```
 <!-- output: end -->
 
-## What it shows
+## Results
 
-**Reuse is not where Python catches the C library, and it is worth
-saying first.** The best prepared Python row is still an order of
+### Reuse is not where Python catches the C library
+
+The best prepared Python row is still an order of
 magnitude and more behind the worst unprepared libsecp256k1 row. Preparing a
 key moves each group by a small factor and moves neither into the other:
 the gap is the arithmetic underneath, and no amount of reuse is an
 amount of C. The reason to prepare a key is that it is nearly free, not
 that it changes which implementation is fastest.
 
-**Parsing once is the saving btclib already offers, and it pays back
-almost immediately.** `assert_as_valid_` takes the public key as a parsed
+### Parsing once is a saving btclib already offers
+
+It pays back almost immediately. `assert_as_valid_` takes the public key as a parsed
 point wherever it takes sec octets, and on the Python path a caller who
 does that gets the decompression back before the first verification is
 over — the break-even is under one call, because the square root the
@@ -82,7 +84,8 @@ On the libsecp256k1 path it is a smaller saving on a smaller number and pays
 back inside two. Neither is a new API and neither is documented anywhere
 a caller looks, which is the only reason this table is interesting.
 
-**Past that, btclib has nothing to prepare and `python-ecdsa` does.**
+### Past that, btclib has nothing to prepare and `python-ecdsa` does
+
 Its precomputed row is the fastest pure-Python verification in any of
 these files, and it beats the best btclib Python row here. What it buys
 is what btclib drops on every call: the multiplication tables built from
@@ -94,7 +97,9 @@ cache, the Python row lands level with `python-ecdsa`'s precomputed one.
 There is no row for it here, because a benchmark row should be something
 a caller can have.
 
-**The caller who most needs `precompute()` cannot call it.** On `ecdsa`
+### The caller who most needs `precompute()` cannot call it
+
+On `ecdsa`
 0.19.2 the method raises `AssertionError` on a key built by
 `from_string` — it hands the point to `PointJacobi.from_affine`, which
 does not carry the curve order over, and the precomputation asserts on

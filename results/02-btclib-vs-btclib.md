@@ -4,13 +4,13 @@
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-16 16:32 CEST (14:32 UTC)
+when    : 2026-08-16 23:22 CEST (21:22 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
 <!-- run: end -->
 
-## The output
+## The benchmarks
 
 Not btclib against btclib-secp256k1: `pip install btclib` installs both, and
 every row is btclib called the same way. What differs is which arithmetic
@@ -47,29 +47,31 @@ method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/02-btclib-vs-btclib.py
 
                       libsecp256k1   pure python     ratio
-dsa_sign                      17.8           162      9.1x
-bms_sign                      29.4           336     11.4x
-ssa_sign                      26.6           326     12.3x
-pubkey_from_prvkey            10.9           160     14.6x
-taproot_tweak                 17.9           262     14.7x
-generator_mult                8.69           146     16.9x
-pubkey_parse_33               4.10          75.3     18.4x
-ellswift_decode               6.28           138     22.0x
-bms_verify                    27.4           702     25.6x
-ssa_verify                    23.3           669     28.7x
-dsa_verify                    22.9           689     30.1x
-dsa_recover                   38.9          1320     33.9x
-dh_shared_secret              15.8           557     35.3x
+dsa_sign                      15.2           161     10.5x
+bms_sign                      27.8           331     11.9x
+ssa_sign                      25.7           322     12.5x
+pubkey_from_prvkey            10.4           149     14.4x
+taproot_tweak                 15.6           234     15.0x
+generator_mult                8.23           141     17.1x
+pubkey_parse_33               3.50          74.6     21.4x
+ellswift_decode               5.51           132     24.0x
+bms_verify                    24.7           700     28.3x
+ssa_verify                    21.3           659     31.0x
+dsa_verify                    20.0           676     33.8x
+dsa_recover                   36.0          1300     36.1x
+dh_shared_secret              14.4           548     38.1x
 ```
 <!-- output: end -->
 
-## What it shows
+## Results
 
 No ratio is under 1.0x: libsecp256k1 wins every operation. What the column
 spreads over is the part worth reading, and it sorts the table into two
 groups, divided by what the Python side has to multiply.
 
-The narrow group is every operation whose Python side multiplies the
+### The narrow group: multiplying the generator
+
+Every operation whose Python side multiplies the
 generator: all three signatures — ECDSA, BIP340 and the bitcoin-message
 one, which signs recoverably — the public key from a secret key, the bare
 generator multiplication, and the taproot tweak, which adds one such
@@ -79,8 +81,10 @@ public key, which is a square root, and ElligatorSwift decoding. btclib
 memoizes the generator's multiples, so the Python side of that group
 starts from a table it did not have to build.
 
-The wide group is every operation that multiplies a point which is *not*
-the generator: verification in both schemes, public-key recovery,
+### The wide group: multiplying an arbitrary point
+
+Every operation that multiplies a point which is *not* the
+generator: verification in both schemes, public-key recovery,
 bitcoin-message verification — which is a recovery — and Diffie-Hellman.
 There is no table for an arbitrary point and btclib builds none, so
 Python walks a full-width ladder where the C library walks its own. That
@@ -88,13 +92,15 @@ is the same gap [one key, every signature under it][reuse] measures from
 the other side, by asking what the second verification under one key
 costs.
 
-Inside the wide group the ratio is widest where the least other work
+Inside this group the ratio is widest where the least other work
 surrounds the multiplication, and Diffie-Hellman is the end of that: one
 such multiplication and nothing else. The pair to read against it is
 public-key recovery and bitcoin-message verification, which is that
 recovery with signature parsing and hashing around it: the one with more
 work in it is the narrower of the two, because that work is in both halves
 of the ratio and pulls it towards one.
+
+### What the table cannot be read for
 
 The whole libsecp256k1 column is timed before the whole Python one, because
 `python_arithmetic_only()` cannot be undone inside a process. The sort is

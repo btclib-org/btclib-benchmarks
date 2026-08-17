@@ -130,6 +130,7 @@ class Ratios:
     title: str
     rows: list[Timing | Unavailable]
     decimals: int = 1
+    group: str = ""
 
 
 @dataclass(frozen=True)
@@ -153,6 +154,7 @@ class Pairs:
     title: str
     columns: tuple[str, str]
     rows: list[Pair]
+    group: str = ""
 
 
 @dataclass(frozen=True)
@@ -177,6 +179,7 @@ class BreakEven:
 
     title: str
     rows: list[Preparation]
+    group: str = ""
 
 
 Table = Ratios | Pairs | BreakEven
@@ -428,7 +431,7 @@ def _call_note(row: Timing) -> str:
     """
     if row.calls is None:
         return ""
-    counted = f"{row.rounds}x{row.calls}" if row.rounds else f"{row.calls}"
+    counted = f"{row.rounds}x{row.calls:,}" if row.rounds else f"{row.calls:,}"
     return f"   ({counted} calls)"
 
 
@@ -465,8 +468,8 @@ def counted_calls(rounds: int | None, calls: int | None) -> str:
     if calls is None:
         return ""
     if rounds is None:
-        return f"{calls} calls each row"
-    return f"{calls} calls each round, {rounds} rounds per row"
+        return f"{calls:,} calls each row"
+    return f"{calls:,} calls each round, {rounds} rounds per row"
 
 
 def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
@@ -572,7 +575,6 @@ def rendered_output(measurement: Measurement) -> str:
     the run gives them -- so what a person watched go past is what the
     page carries.
     """
-    run = measurement.run
     width = width_for(labels_of(measurement.tables))
     # the count is in the method line, so a row that shares it with every
     # other row of the page says it nowhere: `counted_once` is asked
@@ -581,10 +583,50 @@ def rendered_output(measurement: Measurement) -> str:
     blocks = [
         rendered_table(table, width, counted=counted) for table in measurement.tables
     ]
-    if measurement.timing_note:
-        blocks.insert(0, "\n".join(measurement.timing_note))
-    blocks.insert(0, f"method  : {run.method}\ncommand : {run.command}")
+    blocks.insert(0, rendered_method(measurement))
     return "\n\n".join(blocks)
+
+
+def rendered_method(measurement: Measurement) -> str:
+    """Return how the numbers were taken, and what a timed call contained.
+
+    Its own block because a page may carry its tables in one piece or in
+    several: a claim about every number below it has to sit above all of
+    them, and a page split by operation has no single "below" for it to
+    open. `rendered_output` puts it back at the front for the pages that
+    are one block.
+    """
+    run = measurement.run
+    lines = [f"method  : {run.method}\ncommand : {run.command}"]
+    if measurement.timing_note:
+        lines.append("\n".join(measurement.timing_note))
+    return "\n\n".join(lines)
+
+
+def rendered_group(measurement: Measurement, group: str) -> str:
+    """Return the tables of one group, over the width the whole page uses.
+
+    The width is taken from every label in the run and not from this
+    group's: a page split into six blocks is still one page, and a column
+    that moved between two of them would read as a change in the numbers.
+    """
+    width = width_for(labels_of(measurement.tables))
+    counted = bool(counted_once(measurement.tables))
+    tables = [table for table in measurement.tables if table.group == group]
+    if not tables:
+        raise ValueError(f"no table is in the group {group!r}")
+    return "\n\n".join(
+        rendered_table(table, width, counted=counted) for table in tables
+    )
+
+
+def groups_of(measurement: Measurement) -> list[str]:
+    """Return the groups the run declares, in the order its tables are in."""
+    seen: list[str] = []
+    for table in measurement.tables:
+        if table.group and table.group not in seen:
+            seen.append(table.group)
+    return seen
 
 
 # --- the file itself ----------------------------------------------------
@@ -596,6 +638,7 @@ def _table_as_json(table: Table) -> dict[str, object]:
         return {
             "kind": "ratios",
             "title": table.title,
+            "group": table.group,
             "decimals": table.decimals,
             "rows": [
                 {"label": row.label, "unavailable": True}
@@ -619,6 +662,7 @@ def _table_as_json(table: Table) -> dict[str, object]:
         return {
             "kind": "pairs",
             "title": table.title,
+            "group": table.group,
             "columns": list(table.columns),
             "rows": [
                 {"label": row.label, "values": list(row.values)} for row in table.rows
@@ -627,6 +671,7 @@ def _table_as_json(table: Table) -> dict[str, object]:
     return {
         "kind": "break-even",
         "title": table.title,
+        "group": table.group,
         "rows": [
             {
                 "label": row.label,
@@ -643,11 +688,13 @@ def _table_from_json(saved: dict[str, object]) -> Table:
     """Return the table one saved mapping describes."""
     kind = saved["kind"]
     title = str(saved["title"])
+    group = str(saved.get("group") or "")
     rows = saved["rows"]
     assert isinstance(rows, list)
     if kind == "ratios":
         return Ratios(
             title=title,
+            group=group,
             decimals=int(str(saved["decimals"])),
             rows=[
                 Unavailable(label=str(row["label"]))
@@ -672,6 +719,7 @@ def _table_from_json(saved: dict[str, object]) -> Table:
         assert isinstance(columns, list)
         return Pairs(
             title=title,
+            group=group,
             columns=(str(columns[0]), str(columns[1])),
             rows=[
                 Pair(
@@ -684,6 +732,7 @@ def _table_from_json(saved: dict[str, object]) -> Table:
     assert kind == "break-even"
     return BreakEven(
         title=title,
+        group=group,
         rows=[
             Preparation(
                 label=str(row["label"]),

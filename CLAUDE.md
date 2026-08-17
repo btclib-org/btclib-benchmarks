@@ -35,8 +35,8 @@ Five benchmarks, one question each:
   it already has, raw against prepared, on both paths and against
   python-ecdsa's `precompute()`
 
-`scripts/_provenance.py` is the only module the suite covers.
-`scripts/_results.py` and `scripts/render.py` are the other two
+`scripts/_provenance.py` and `scripts/_inputs.py` are the modules the suite
+covers. `scripts/_results.py` and `scripts/render.py` are the other two
 non-benchmarks, and they are outside the gate on purpose — see below.
 
 ## Measuring and publishing are two commands

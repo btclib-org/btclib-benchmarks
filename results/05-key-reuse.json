@@ -2,7 +2,7 @@
   "schema": 1,
   "benchmark": "05-key-reuse",
   "run": {
-    "when": "2026-08-16T16:48:21+02:00",
+    "when": "2026-08-16T23:47:53+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "one run, kept whole — nothing repeated, no outlier discarded",
@@ -33,27 +33,27 @@
       "rows": [
         {
           "label": "btclib, libsecp256k1, octets",
-          "us_per_call": 21.030918741598725
+          "us_per_call": 19.891120854299515
         },
         {
           "label": "btclib, libsecp256k1, parsed point",
-          "us_per_call": 18.34023540141061
+          "us_per_call": 17.269708355888724
         },
         {
           "label": "btclib, Python, octets",
-          "us_per_call": 671.3950815610588
+          "us_per_call": 671.880915760994
         },
         {
           "label": "btclib, Python, parsed point",
-          "us_per_call": 580.1099999807775
+          "us_per_call": 579.1510818526149
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 1090.9417499788105
+          "us_per_call": 1091.1761680617929
         },
         {
           "label": "python-ecdsa, precomputed",
-          "us_per_call": 555.2700841799378
+          "us_per_call": 550.0329178757966
         }
       ]
     },
@@ -63,21 +63,21 @@
       "rows": [
         {
           "label": "btclib, libsecp256k1, parse once",
-          "prepare": 3.980727109592408,
-          "plain": 21.030918741598725,
-          "prepared": 18.34023540141061
+          "prepare": 3.4490708028897643,
+          "plain": 19.891120854299515,
+          "prepared": 17.269708355888724
         },
         {
           "label": "btclib, Python, parse once",
-          "prepare": 74.76837502326816,
-          "plain": 671.3950815610588,
-          "prepared": 580.1099999807775
+          "prepare": 73.5433540539816,
+          "plain": 671.880915760994,
+          "prepared": 579.1510818526149
         },
         {
           "label": "python-ecdsa, precompute()",
-          "prepare": 3131.2103499658406,
-          "plain": 1090.9417499788105,
-          "prepared": 555.2700841799378
+          "prepare": 3088.918828871101,
+          "plain": 1091.1761680617929,
+          "prepared": 550.0329178757966
         }
       ]
     }

@@ -2,10 +2,10 @@
   "schema": 1,
   "benchmark": "01-libsecp256k1",
   "run": {
-    "when": "2026-08-16T16:29:01+02:00",
+    "when": "2026-08-17T08:38:51+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
-    "method": "10000 calls each round, 30 rounds per row, minimum kept",
+    "method": "10 rounds per row, minimum kept; the call count is per table",
     "command": "uv run python scripts/01-libsecp256k1.py",
     "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
   },
@@ -21,8 +21,8 @@
       [
         "btclib-secp256k1",
         "0.8.0.3",
-        "main@7c134bc26d01",
-        "unrecorded",
+        "main@75cbb44b1ba8",
+        "v0.8.0",
         "cffi"
       ],
       [
@@ -53,42 +53,152 @@
   "tables": [
     {
       "kind": "ratios",
-      "title": "1. ECDSA sign (32-byte digest, DER out)",
+      "title": "1. public key parse (a 65-byte uncompressed key)",
+      "group": "parse",
       "decimals": 2,
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 26.395933306775987,
-          "spread": 0.7159333908930421,
-          "rounds": 30,
+          "us_per_call": 0.2343074994860217,
+          "spread": 0.006394270458258661,
+          "rounds": 10,
+          "calls": 400000
+        },
+        {
+          "label": "secp256k1",
+          "us_per_call": 0.6545904150698334,
+          "spread": 0.06977822980843484,
+          "rounds": 10,
+          "calls": 400000
+        },
+        {
+          "label": "electrum_ecc",
+          "us_per_call": 1.171049895347096,
+          "spread": 0.08054698002524674,
+          "rounds": 10,
+          "calls": 400000
+        },
+        {
+          "label": "btclib_secp256k1",
+          "us_per_call": 0.21655145974364132,
+          "spread": 0.0023132277419790626,
+          "rounds": 10,
+          "calls": 400000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "2. public key parse (a 33-byte compressed key)",
+      "group": "parse",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "coincurve",
+          "us_per_call": 2.3297779099084437,
+          "spread": 0.026652500964701176,
+          "rounds": 10,
+          "calls": 100000
+        },
+        {
+          "label": "secp256k1",
+          "us_per_call": 2.7728575002402067,
+          "spread": 0.09002167033031583,
+          "rounds": 10,
+          "calls": 100000
+        },
+        {
+          "label": "electrum_ecc",
+          "us_per_call": 3.2542075007222593,
+          "spread": 0.16779999947175384,
+          "rounds": 10,
+          "calls": 100000
+        },
+        {
+          "label": "btclib_secp256k1",
+          "us_per_call": 2.284752910491079,
+          "spread": 0.02724250080063939,
+          "rounds": 10,
+          "calls": 100000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "3. ECDSA verify (DER signature, a 65-byte key parsed per call)",
+      "group": "dsa-verify",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "coincurve",
+          "us_per_call": 13.099970808252692,
+          "spread": 0.7148749893531203,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 26.675216620787978,
-          "spread": 0.3266749903559685,
-          "rounds": 30,
+          "us_per_call": 13.610666687600315,
+          "spread": 0.6907125236466527,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 47.51985420007259,
-          "spread": 0.6440832978114486,
-          "rounds": 30,
+          "us_per_call": 17.31475000269711,
+          "spread": 0.46326247975230217,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 12.280695792287588,
-          "spread": 0.10704582091420889,
-          "rounds": 30,
+          "us_per_call": 12.990187504328787,
+          "spread": 0.6762749748304486,
+          "rounds": 10,
           "calls": 10000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "2. ECDSA sign (32-byte digest, 64-byte compact out)",
+      "title": "4. ECDSA verify (DER signature, a 33-byte key parsed per call)",
+      "group": "dsa-verify",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "coincurve",
+          "us_per_call": 15.250833285972476,
+          "spread": 0.19366671331226648,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "secp256k1",
+          "us_per_call": 15.741520794108508,
+          "spread": 0.17772091086954056,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "electrum_ecc",
+          "us_per_call": 19.411858287639916,
+          "spread": 0.1446917187422514,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "btclib_secp256k1",
+          "us_per_call": 15.093158395029604,
+          "spread": 0.36715830210596323,
+          "rounds": 10,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "5. ECDSA verify (64-byte signature, a 65-byte key parsed per call)",
+      "group": "dsa-verify",
       "decimals": 2,
       "rows": [
         {
@@ -97,170 +207,31 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 26.604729215614498,
-          "spread": 0.17412917222827673,
-          "rounds": 30,
+          "us_per_call": 13.612020784057677,
+          "spread": 0.3110084217041731,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 45.18350420985371,
-          "spread": 7.372170803137124,
-          "rounds": 30,
+          "us_per_call": 15.124804200604558,
+          "spread": 1.1607791995629668,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 12.21711658872664,
-          "spread": 0.13103762175887823,
-          "rounds": 30,
+          "us_per_call": 13.044512504711747,
+          "spread": 6.12788328435272,
+          "rounds": 10,
           "calls": 10000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "3. BIP340 sign (32-byte message)",
-      "decimals": 2,
-      "rows": [
-        {
-          "label": "coincurve",
-          "us_per_call": 43.23177500627935,
-          "spread": 1.7401207936927676,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "secp256k1",
-          "us_per_call": 22.640395793132484,
-          "spread": 0.8955084020271897,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "electrum_ecc",
-          "us_per_call": 48.75908331014216,
-          "spread": 0.38212917279452085,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "btclib_secp256k1",
-          "us_per_call": 15.92293328139931,
-          "spread": 0.14643752947449684,
-          "rounds": 30,
-          "calls": 10000
-        }
-      ]
-    },
-    {
-      "kind": "ratios",
-      "title": "4. public key parse (a 33-byte compressed key)",
-      "decimals": 2,
-      "rows": [
-        {
-          "label": "coincurve",
-          "us_per_call": 2.373129199258983,
-          "spread": 0.13091671280562878,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "secp256k1",
-          "us_per_call": 2.7762165991589427,
-          "spread": 0.03966260701417923,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "electrum_ecc",
-          "us_per_call": 3.281324985437095,
-          "spread": 0.0346209155395627,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "btclib_secp256k1",
-          "us_per_call": 2.388487500138581,
-          "spread": 0.038820807822048664,
-          "rounds": 30,
-          "calls": 10000
-        }
-      ]
-    },
-    {
-      "kind": "ratios",
-      "title": "5. public key parse (a 65-byte uncompressed key)",
-      "decimals": 2,
-      "rows": [
-        {
-          "label": "coincurve",
-          "us_per_call": 0.2401249948889017,
-          "spread": 0.0433583976700902,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "secp256k1",
-          "us_per_call": 0.6435667164623737,
-          "spread": 0.01720828004181385,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "electrum_ecc",
-          "us_per_call": 1.1645915918052197,
-          "spread": 0.02677501179277897,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "btclib_secp256k1",
-          "us_per_call": 0.28112498112022877,
-          "spread": 0.03765420988202095,
-          "rounds": 30,
-          "calls": 10000
-        }
-      ]
-    },
-    {
-      "kind": "ratios",
-      "title": "6. ECDSA verify (DER signature, the 65-byte key parsed per call)",
-      "decimals": 2,
-      "rows": [
-        {
-          "label": "coincurve",
-          "us_per_call": 13.109241588972509,
-          "spread": 0.302975089289248,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "secp256k1",
-          "us_per_call": 13.643808313645422,
-          "spread": 0.51381248049438,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "electrum_ecc",
-          "us_per_call": 17.33551248908043,
-          "spread": 0.14924169518053532,
-          "rounds": 30,
-          "calls": 10000
-        },
-        {
-          "label": "btclib_secp256k1",
-          "us_per_call": 13.548237504437566,
-          "spread": 0.66982910502702,
-          "rounds": 30,
-          "calls": 10000
-        }
-      ]
-    },
-    {
-      "kind": "ratios",
-      "title": "7. ECDSA verify (64-byte signature, the 65-byte key parsed per call)",
+      "title": "6. ECDSA verify (64-byte signature, a 33-byte key parsed per call)",
+      "group": "dsa-verify",
       "decimals": 2,
       "rows": [
         {
@@ -269,93 +240,297 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.630079198628664,
-          "spread": 0.17297491431236267,
-          "rounds": 30,
+          "us_per_call": 15.79751670360565,
+          "spread": 0.18703739624470828,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 15.109916706569493,
-          "spread": 2.2929499857127666,
-          "rounds": 30,
+          "us_per_call": 17.195875011384487,
+          "spread": 0.13528328854590654,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 13.522341684438288,
-          "spread": 0.356637523509562,
-          "rounds": 30,
+          "us_per_call": 15.091087482869625,
+          "spread": 0.13541250955313444,
+          "rounds": 10,
           "calls": 10000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "8. BIP340 verify (32-byte message, the public key parsed per call)",
+      "title": "7. BIP340 verify (a 65-byte key handed in, the x-only one taken from it)",
+      "group": "ssa-verify",
       "decimals": 2,
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 15.285725006833673,
-          "spread": 0.21426668390631676,
-          "rounds": 30,
-          "calls": 10000
+          "unavailable": true
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.62996669486165,
-          "spread": 0.2052083145827055,
-          "rounds": 30,
+          "us_per_call": 13.649741583503783,
+          "spread": 0.22159169893711805,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 17.168649984523654,
-          "spread": 0.2548334188759327,
-          "rounds": 30,
+          "us_per_call": 17.195620900020003,
+          "spread": 2.521024877205491,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 15.6343457987532,
-          "spread": 0.07872499991208315,
-          "rounds": 30,
+          "us_per_call": 13.39077081065625,
+          "spread": 0.2084375824779272,
+          "rounds": 10,
           "calls": 10000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "9. public key tweak by a scalar, which is BIP32's step",
+      "title": "8. BIP340 verify (the x-only key handed in, parsed per call)",
+      "group": "ssa-verify",
       "decimals": 2,
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 10.231541586108506,
-          "spread": 0.1677459105849266,
-          "rounds": 30,
+          "us_per_call": 15.301216696389021,
+          "spread": 0.16225832514464678,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.735658279620111,
-          "spread": 0.27333751786500216,
-          "rounds": 30,
+          "us_per_call": 15.733024990186095,
+          "spread": 0.18700000364333214,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 22.534720902331173,
-          "spread": 3.122791601344943,
-          "rounds": 30,
+          "us_per_call": 19.208333315327764,
+          "spread": 0.23155419621616602,
+          "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 10.852983314543962,
-          "spread": 0.17726249061524868,
-          "rounds": 30,
+          "us_per_call": 15.156124997884035,
+          "spread": 0.13011659029871048,
+          "rounds": 10,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "9. public key tweak by a scalar, a 65-byte key",
+      "group": "tweak",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "coincurve",
+          "us_per_call": 10.235562501475215,
+          "spread": 1.3745540985837579,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "secp256k1",
+          "us_per_call": 13.735629105940461,
+          "spread": 3.0181500827893615,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "electrum_ecc",
+          "us_per_call": 22.75392091833055,
+          "spread": 2.1864331793040037,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "btclib_secp256k1",
+          "us_per_call": 10.128679103218019,
+          "spread": 0.08197091519832611,
+          "rounds": 10,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "10. public key tweak by a scalar, a 33-byte key",
+      "group": "tweak",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "coincurve",
+          "us_per_call": 12.402733298949897,
+          "spread": 0.6620042026042938,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "secp256k1",
+          "us_per_call": 16.072870907373726,
+          "spread": 0.4249498946592212,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "electrum_ecc",
+          "us_per_call": 25.11962081771344,
+          "spread": 2.8121832758188248,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "btclib_secp256k1",
+          "us_per_call": 12.302999990060925,
+          "spread": 0.211320910602808,
+          "rounds": 10,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "11. ECDSA sign (32-byte digest, DER out)",
+      "group": "dsa-sign",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "coincurve",
+          "us_per_call": 26.86060410924256,
+          "spread": 0.3342999843880534,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "secp256k1",
+          "us_per_call": 26.750812493264675,
+          "spread": 2.3935083067044616,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "electrum_ecc",
+          "us_per_call": 47.97373749315739,
+          "spread": 12.09463330451399,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "electrum_ecc_grind",
+          "us_per_call": 60.720900003798306,
+          "spread": 2.012220909819014,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "btclib_secp256k1",
+          "us_per_call": 12.009508302435279,
+          "spread": 2.549208397977054,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "btclib_secp256k1_grind",
+          "us_per_call": 24.193154205568135,
+          "spread": 0.07484578527510166,
+          "rounds": 10,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "12. ECDSA sign (32-byte digest, 64-byte compact out)",
+      "group": "dsa-sign",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "coincurve",
+          "unavailable": true
+        },
+        {
+          "label": "secp256k1",
+          "us_per_call": 26.73513749614358,
+          "spread": 1.1877874843776226,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "electrum_ecc",
+          "us_per_call": 45.66806249786168,
+          "spread": 6.689420808106661,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "electrum_ecc_grind",
+          "us_per_call": 58.36228330153972,
+          "spread": 19.118924997746944,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "btclib_secp256k1",
+          "us_per_call": 11.969362501986325,
+          "spread": 0.2588625065982342,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "btclib_secp256k1_grind",
+          "us_per_call": 24.144500005058944,
+          "spread": 0.4086375003680587,
+          "rounds": 10,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "13. BIP340 sign (32-byte message)",
+      "group": "ssa-sign",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "coincurve",
+          "us_per_call": 43.30658339895308,
+          "spread": 0.40000411681830883,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "secp256k1",
+          "us_per_call": 22.809962509199977,
+          "spread": 0.08489168249070644,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "electrum_ecc",
+          "us_per_call": 48.80900830030441,
+          "spread": 2.2763583809137344,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "btclib_secp256k1",
+          "us_per_call": 15.769329108297825,
+          "spread": 0.24074590764939785,
+          "rounds": 10,
           "calls": 10000
         }
       ]

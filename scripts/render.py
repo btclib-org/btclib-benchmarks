@@ -55,7 +55,14 @@ from _results import RESULTS, Measurement
 # says which blocks it holds and this puts them there. The name is in
 # both markers so that a page missing an end marker is a mistake with a
 # line number rather than a file quietly truncated at the next one
-REGIONS = ("provenance", "run", "output")
+REGIONS = ("provenance", "run", "output", "method")
+
+# a page may carry its tables in one `output` region or split them into one
+# region per operation, named for the group the run tags each table with.
+# The split page carries `method` too, that block being a claim about every
+# number on the page and having no single block to sit above once the
+# tables are six of them
+TABLES_PREFIX = "tables: "
 
 
 def _fenced(block: str) -> list[str]:
@@ -77,13 +84,19 @@ def blocks(measurement: Measurement, has_own_provenance: bool) -> dict[str, list
     """
     provenance = _results.rendered_provenance(measurement.provenance)
     output = _results.rendered_output(measurement)
-    return {
+    filled = {
         "provenance": _fenced(provenance),
         "run": _fenced(_results.rendered_run(measurement.run)),
+        "method": _fenced(_results.rendered_method(measurement)),
         "output": _fenced(
             output if has_own_provenance else f"{provenance}\n\n{output}"
         ),
     }
+    for group in _results.groups_of(measurement):
+        filled[f"{TABLES_PREFIX}{group}"] = _fenced(
+            _results.rendered_group(measurement, group)
+        )
+    return filled
 
 
 def _region_bounds(lines: list[str], name: str) -> tuple[int, int] | None:
@@ -107,9 +120,16 @@ def _region_bounds(lines: list[str], name: str) -> tuple[int, int] | None:
 def rendered_page(page: str, measurement: Measurement) -> str:
     """Return the page with every region it declares filled from the run."""
     lines = page.split("\n")
-    bounds = {name: _region_bounds(lines, name) for name in REGIONS}
-    if bounds["run"] is None or bounds["output"] is None:
-        raise ValueError("a page needs a run region and an output region")
+    names = [
+        *REGIONS,
+        *(f"{TABLES_PREFIX}{g}" for g in _results.groups_of(measurement)),
+    ]
+    bounds = {name: _region_bounds(lines, name) for name in names}
+    split = [name for name in names if name.startswith(TABLES_PREFIX) and bounds[name]]
+    if bounds["run"] is None or (bounds["output"] is None and not split):
+        raise ValueError("a page needs a run region, and output or table regions")
+    if split and len(split) != len(_results.groups_of(measurement)):
+        raise ValueError("a split page carries a region for every group of the run")
     filled = blocks(measurement, has_own_provenance=bounds["provenance"] is not None)
     # last region first, so that replacing one does not move the next
     for name, where in sorted(
