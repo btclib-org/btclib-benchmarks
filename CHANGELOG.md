@@ -470,3 +470,29 @@ The release notes, which say what a user has to act on, are in
   measuring is done by a person, on a machine whose state they know. A
   shared runner disagrees with a laptop by more than most of the
   differences being reported.
+
+- **REPOSITORY.md documented a merge that could not carry the
+  maintainer's signature.** It said the maintainer merges their own pull
+  request with `gh pr merge --squash --admin`, which asks GitHub to write
+  the commit and sign it with its own web-flow key — the very thing the
+  next section but one warns about. What lands is a local squash,
+  fast-forwarded onto `main`, and the file now says so beside what
+  `enforce_admins: false` actually costs: that push bypasses the required
+  checks, the required review and the resolution of review threads, so all
+  three are honoured by the procedure rather than by the forge, and the
+  procedure is written down instead of remembered. `required_signatures`
+  is named with them, as the one whose bypass was not tested and will not
+  be: the test is pushing an unsigned commit to `main`, so what holds the
+  signature is reading the commit before the push.
+
+  What lands is the branch's *tip*, and a branch of more than one commit is
+  squashed and force-pushed before it: GitHub closes a pull request as
+  merged when its head ref becomes reachable from the base, not when some
+  commit with the same tree does. A squash left behind locally would land
+  the change and leave the pull request open.
+
+  Two smaller claims went with it. `delete_branch_on_merge` does not fire
+  for a fast-forward push, so a branch left standing is evidence of
+  nothing and deleting it is a step someone takes. And issues have a
+  second use worth stating: parking a finding noticed while writing or
+  reviewing a pull request, so that the pull request stays one subject.

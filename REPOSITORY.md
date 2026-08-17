@@ -65,16 +65,51 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 #  "force":false,"linear":true,"reviews":1}
 ```
 
-`main` is the only branch, and nothing is pushed to it directly.
+`main` is the only branch, and no change reaches it except through a pull
+request. One push to it is not a change: the fast-forward that lands a
+pull request already written and reviewed, below.
 
 `enforce_admins` is false, and that is the one entry here that is a
 compromise rather than a rule: this repository has one maintainer, so a
 required review cannot be satisfied in the ordinary way. The rule stays
-on — it is what a second contributor would meet — and the maintainer
-merges their own pull request with `gh pr merge --squash --admin`, after
-the checks above have gone green. What that buys over simply turning the
-requirement off is that the checks are still required of everyone,
-including him.
+on — it is what a second contributor would meet — and what lands is the
+branch's own tip, fast-forwarded:
+
+```shell
+git fetch origin && git rebase origin/main
+# more than one commit? squash first, and move the branch with it:
+#   git reset --soft origin/main && git commit
+#   git push --force-with-lease origin <branch>
+git push origin <branch-tip-sha>:refs/heads/main
+```
+
+The squash has to move the branch as well as the working tree, and that is
+not tidiness: GitHub closes a pull request as merged when its *head ref*
+becomes reachable from the base, not when some commit with the same tree
+does. A squash left behind locally lands the change and leaves the pull
+request open, and pushing the unsquashed branch lands more than one commit
+on `main`, which *Merge methods* below says never happens. Fast-forwarding
+the tip is what satisfies both.
+
+Not `gh pr merge`, and not the forge's button either. Both write the commit
+themselves and sign it with GitHub's own key, so the commit on `main` would
+not be the maintainer's — *Signed commits* below is the whole of that
+reason.
+
+What `enforce_admins: false` costs is that this push bypasses the rules
+above it: the required checks, `strict` included, the required review, and
+the resolution of review threads. None of the three is enforced against
+the one account that lands anything, so each is honoured by the procedure
+instead — the checks read on the head that is about to land, an ack
+recorded on the pull request against that sha, the threads resolved by
+whoever opened them. What that buys over turning the requirements off is
+that they are still required of everyone else, and that what replaces them
+here is written down rather than remembered.
+
+Whether the same `false` exempts the push from `required_signatures` below
+has not been tested, and will not be: the test is pushing an unsigned
+commit to `main`. So the signature is not left to it either — the commit is
+read before it is pushed, which is the next section.
 
 ## Signed commits
 
@@ -84,11 +119,18 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection\
 # true
 ```
 
-An unsigned commit is refused by the push rather than noticed later.
-Note what this cannot cover: a squash performed by GitHub's web button is
-signed by GitHub's own web-flow key, not by the maintainer's, and shows
-as verified by GitHub. That is a property of the merge, not something to
-paper over.
+An unsigned commit is refused by the push rather than noticed later — of
+everyone the protections are enforced against, which by the section above
+is everyone but the maintainer. What holds for that account is reading the
+commit before pushing it, `git log -1 --format='%G? %GS'`, an `N` being a
+defect to fix rather than to explain.
+
+Note what none of this can cover: a squash performed by GitHub's web button —
+or by `gh pr merge`, which asks the same endpoint — is signed by GitHub's
+own web-flow key, not by the maintainer's, and shows as verified by
+GitHub. That is a property of the merge rather than something to paper
+over, and it is why the procedure above lands a commit that already
+exists instead of asking the forge to write one.
 
 ## Merge methods
 
@@ -103,8 +145,15 @@ gh api repos/btclib-org/btclib-benchmarks \
 
 Squash only, which is what `required_linear_history` above already
 implies and this makes unambiguous in the UI: one pull request is one
-commit on main. The head branch is deleted by the merge, so a branch
-still present after one is a merge that did not happen.
+commit on main. Auto-merge is allowed and unused, for the reason the
+previous sections give — it would have the forge write the commit.
+
+`delete_branch_on_merge` deletes the head branch of a pull request merged
+*through* the pull request, which the fast-forward above is not: GitHub
+closes the pull request and leaves the branch standing, so deleting it is
+a step of the procedure rather than something the setting does. A branch
+still present is therefore evidence of nothing; what the pull request says
+about itself is.
 
 ## Features that are off
 
@@ -117,7 +166,9 @@ gh api repos/btclib-org/btclib-benchmarks \
 A wiki is a second place for documentation to go stale, and this
 repository's documentation is in the tree beside what it describes.
 Issues stay on: they are where a benchmark that has stopped measuring
-what it claims gets reported.
+what it claims gets reported, and where a finding noticed while writing or
+reviewing a pull request is parked so that the pull request stays one
+subject.
 
 ## Token permissions
 
