@@ -604,6 +604,48 @@ The release notes, which say what a user has to act on, are in
   a package's two signature encodings are adjacent tables and the same
   signature under the two key encodings is one table apart.
 
+- **Two rows of the wrappers page were comparing unlike things, and both now
+  say so by measuring it.** The derivation table timed coincurve's
+  `from_valid_secret`, an entry point whose own docstring says it avoids
+  input checks, beside a btclib-secp256k1 call that makes them — so the
+  difference between them was printed as though it were the derivation. The
+  row is `from_secret` now, which validates, and the unchecked spelling
+  stays beside it under a name that says what it skips.
+
+  What it skips is not the scalar's range: libsecp256k1 answers that from the
+  value and every row here leaves it to the library. It is the length. The C
+  call takes a bare pointer and reads 32 octets from it whatever the caller
+  passed, so a secret of 20 octets derives a public key from twelve octets of
+  whatever sat beside it in memory — and a different key as its neighbours
+  change, which is what checking the length buys. Read in order the three
+  rows say what the page could not say before: btclib-secp256k1 sits between
+  coincurve's two, its own check costing it less than coincurve's costs
+  coincurve.
+
+  The BIP340 signing tables had the mirror of that. Three of the four are
+  handed the auxiliary randomness BIP340's *Default Signing* mixes into the
+  nonce; secp256k1-py's `schnorr_sign` passes `NULL` and its own source
+  carries a note that the randomness is recommended. That was in the prose as
+  an API's shape and nowhere as a cost. Its rows say `_noaux` now, and
+  coincurve — the one package that spells both — carries a row of each in the
+  fresh table, so the recommendation is priced where a reader meets it. Once,
+  not twice: the difference is the same either side of a keypair.
+
+  A cost stated in prose is a number no run re-derives, which is why both of
+  these are rows.
+
+  Both flags are on every row of the signing tables again, `nogrind` and
+  `noverify` included, and the BIP340 tables carry `aux` beside `verify` for
+  the same reason: a reader comparing two rows should read the same two
+  questions answered on both, rather than one row's suffix against another's
+  silence. Where a package's answer is a choice as well — secp256k1-py's
+  parsed signature — the answer's flag closes the name, so a label reads as
+  what the call did and then what it handed back.
+
+  The ECDSA signing titles say which end of the call each key is at, in the
+  order the call meets them: the digest, the key handed in or held already,
+  and what comes out.
+
 ### Packaging and CI
 
 - **The interpreter is 3.13, where the rest of btclib-org pins 3.14.**

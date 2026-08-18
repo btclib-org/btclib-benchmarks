@@ -56,8 +56,9 @@ is the *expensive* case, because x-only is an x and a y that has to be
 recovered, where 65 octets carry the y already. Which of the two an
 API asks for is not uniform -- coincurve takes the x-only key and nothing
 else, secp256k1-py and electrum-ecc build their key object from a full one --
-so before this pair existed one table was quietly timing both conventions at
-once.
+so one table for the operation would be one table timing two conventions at
+once, and which convention a row was in would be the package's rather than
+the table's.
 
 Low-r grinding is a row rather than a table, as it is in the libraries page:
 two of the four offer it, so what an ECDSA signing table carries is those two
@@ -549,6 +550,10 @@ DSA_SIGN_COMPACT = cycle(
     list(zip(_slice(2, PRVKEYS), _slice(2, MESSAGES), strict=True))
 )
 SSA_SIGN = cycle(list(zip(_slice(3, PRVKEYS), _slice(3, MESSAGES), strict=True)))
+# and the same slice again for the row that signs with no auxiliary
+# randomness, which is one row rather than two: what it prices is the
+# same either side of a keypair, so the held table has nothing to add
+SSA_SIGN_NOAUX = cycle(list(zip(_slice(3, PRVKEYS), _slice(3, MESSAGES), strict=True)))
 
 
 def _held(part: int, build: Callable[[bytes], _Held]) -> cycle[tuple[_Held, bytes]]:
@@ -674,6 +679,8 @@ TWEAK_33_OBJECT = cycle(
 # these either shares a slice with a reason of its own or the pool grows
 DERIVE_65 = cycle(_slice(10, PRVKEYS))
 DERIVE_33 = cycle(_slice(10, PRVKEYS))
+DERIVE_65_UNCHECKED = cycle(_slice(10, PRVKEYS))
+DERIVE_33_UNCHECKED = cycle(_slice(10, PRVKEYS))
 
 
 # When each of these builds was published, read from the index -- where
@@ -778,13 +785,13 @@ WRAPPERS = (
 )
 
 
-def dsa_sign_der_coincurve() -> None:
+def dsa_sign_der_coincurve_nogrind_noverify() -> None:
     """Time coincurve's ECDSA signing, over a digest it is told not to hash."""
     prvkey, msg = next(DSA_SIGN_DER)
     coincurve.PrivateKey(prvkey).sign(msg, hasher=None)
 
 
-def dsa_sign_der_secp256k1() -> None:
+def dsa_sign_der_secp256k1_nogrind_noverify_octets() -> None:
     """Time secp256k1-py's ECDSA signing, its parsed signature taken to DER.
 
     `ecdsa_sign` returns the parsed signature and no bytes, alone of the
@@ -797,7 +804,7 @@ def dsa_sign_der_secp256k1() -> None:
     key.ecdsa_serialize(key.ecdsa_sign(msg, raw=True))
 
 
-def dsa_sign_der_secp256k1_object() -> None:
+def dsa_sign_der_secp256k1_nogrind_noverify_object() -> None:
     """Time secp256k1-py's signing stopped at the parsed signature it answers.
 
     `ecdsa_sign` returns a signature object and no bytes, alone of the four,
@@ -814,7 +821,7 @@ def dsa_sign_der_secp256k1_object() -> None:
     secp256k1.PrivateKey(prvkey, raw=True).ecdsa_sign(msg, raw=True)
 
 
-def dsa_sign_compact_secp256k1_object() -> None:
+def dsa_sign_compact_secp256k1_nogrind_noverify_object() -> None:
     """Time the same parsed signature, in the table whose answer is 64 octets.
 
     Here to be subtracted from the row above it, which serializes to the
@@ -825,7 +832,7 @@ def dsa_sign_compact_secp256k1_object() -> None:
     secp256k1.PrivateKey(prvkey, raw=True).ecdsa_sign(msg, raw=True)
 
 
-def dsa_sign_der_electrum_ecc_verify() -> None:
+def dsa_sign_der_electrum_ecc_nogrind_verify() -> None:
     """Time electrum-ecc's ECDSA signing, DER through its own encoder.
 
     `ecdsa_sign` answers in 64 bytes, so DER is `ecdsa_der_sig_from_
@@ -841,7 +848,7 @@ def dsa_sign_der_electrum_ecc_verify() -> None:
     )
 
 
-def dsa_sign_der_btclib_secp256k1() -> None:
+def dsa_sign_der_btclib_secp256k1_nogrind_noverify() -> None:
     """Time btclib_secp256k1's ECDSA signing, bytes in and DER out.
 
     `verify=False`, which is one signature and nothing else: the row this
@@ -855,7 +862,7 @@ def dsa_sign_der_btclib_secp256k1() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, verify=False)
 
 
-def dsa_sign_der_btclib_secp256k1_verify() -> None:
+def dsa_sign_der_btclib_secp256k1_nogrind_verify() -> None:
     """Time the same signature with the check the package defaults to.
 
     `verify=True`: the signature is verified under the public key of the
@@ -873,14 +880,14 @@ def dsa_sign_der_btclib_secp256k1_verify() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, verify=True)
 
 
-def dsa_sign_compact_secp256k1() -> None:
+def dsa_sign_compact_secp256k1_nogrind_noverify_octets() -> None:
     """Time secp256k1-py's ECDSA signing, its signature taken to 64 bytes."""
     prvkey, msg = next(DSA_SIGN_COMPACT)
     key = secp256k1.PrivateKey(prvkey, raw=True)
     key.ecdsa_serialize_compact(key.ecdsa_sign(msg, raw=True))
 
 
-def dsa_sign_compact_electrum_ecc_verify() -> None:
+def dsa_sign_compact_electrum_ecc_nogrind_verify() -> None:
     """Time electrum-ecc's ECDSA signing, in the 64 bytes its API answers in.
 
     One signature rather than a ground one, and the verification
@@ -924,7 +931,7 @@ def dsa_sign_compact_electrum_ecc_grind_verify() -> None:
     electrum_ecc.ECPrivkey(prvkey).ecdsa_sign(msg, grind_r_value=True)
 
 
-def dsa_sign_der_btclib_secp256k1_grind() -> None:
+def dsa_sign_der_btclib_secp256k1_grind_noverify() -> None:
     """Time btclib_secp256k1's ECDSA signing with low-r grinding asked for.
 
     `grind=True` rather than a default, which is the difference from the
@@ -945,7 +952,7 @@ def dsa_sign_der_btclib_secp256k1_grind() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, grind=True, verify=False)
 
 
-def dsa_sign_compact_btclib_secp256k1_grind() -> None:
+def dsa_sign_compact_btclib_secp256k1_grind_noverify() -> None:
     """Time the same grinding signature, answered in 64 octets.
 
     `compact=True` is the serialization asked of the same call, not a
@@ -957,7 +964,7 @@ def dsa_sign_compact_btclib_secp256k1_grind() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, grind=True, verify=False)
 
 
-def dsa_sign_compact_btclib_secp256k1() -> None:
+def dsa_sign_compact_btclib_secp256k1_nogrind_noverify() -> None:
     """Time btclib_secp256k1's ECDSA signing, bytes in and 64 bytes out.
 
     `verify=False`, as the DER row above says.
@@ -966,7 +973,7 @@ def dsa_sign_compact_btclib_secp256k1() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, verify=False)
 
 
-def dsa_sign_compact_btclib_secp256k1_verify() -> None:
+def dsa_sign_compact_btclib_secp256k1_nogrind_verify() -> None:
     """Time the same signature checked, in the form the same call answers in.
 
     The compact half of the pair the DER table carries, and it prices the
@@ -981,12 +988,11 @@ def dsa_sign_compact_btclib_secp256k1_verify() -> None:
 def dsa_sign_der_btclib_secp256k1_grind_verify() -> None:
     """Time the fourth combination, the loop and the check both on.
 
-    The one row of this table a caller reaches by passing both arguments,
-    and the one the page argued for a while it did not have: the check runs
-    once, on the signature the loop settled on, so what it costs adds to
-    the grinding row rather than multiplying with it. That is a claim about
-    two rows, and a claim about two rows is worth measuring rather than
-    stating -- this row is where the sum can be read against the addition.
+    The one row of this table a caller reaches by passing both arguments.
+    The check runs once, on the signature the loop settled on, so what it
+    costs adds to the grinding row rather than multiplying with it -- and
+    that is a claim about two rows, which is why it is a row rather than a
+    sentence: the sum is read here against the addition beside it.
     """
     prvkey, msg = next(DSA_SIGN_DER)
     btclib_secp256k1.dsa.sign(msg, prvkey, grind=True, verify=True)
@@ -1002,7 +1008,7 @@ def dsa_sign_compact_btclib_secp256k1_grind_verify() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, grind=True, verify=True)
 
 
-def dsa_held_coincurve() -> None:
+def dsa_held_coincurve_nogrind_noverify() -> None:
     """Time coincurve's ECDSA signing under a `PrivateKey` held already.
 
     `sign` reads `self.secret` and nothing the constructor derived, so what
@@ -1015,7 +1021,7 @@ def dsa_held_coincurve() -> None:
     key.sign(msg, hasher=None)
 
 
-def dsa_held_secp256k1() -> None:
+def dsa_held_secp256k1_nogrind_noverify_octets() -> None:
     """Time secp256k1-py's ECDSA signing under a `PrivateKey` held already.
 
     `ecdsa_sign` reads `self.private_key`, so the constructor's public key
@@ -1028,7 +1034,7 @@ def dsa_held_secp256k1() -> None:
     key.ecdsa_serialize(key.ecdsa_sign(msg, raw=True))
 
 
-def dsa_held_electrum_ecc_verify() -> None:
+def dsa_held_electrum_ecc_nogrind_verify() -> None:
     """Time electrum-ecc's ECDSA signing under an `ECPrivkey` held already.
 
     Its constructor multiplies the generator by the secret, serializes the
@@ -1044,7 +1050,7 @@ def dsa_held_electrum_ecc_verify() -> None:
     )
 
 
-def ssa_sign_coincurve_verify() -> None:
+def ssa_sign_coincurve_aux_verify() -> None:
     """Time coincurve's BIP340 signing, the keypair and the check included.
 
     `sign_schnorr` builds the keypair fresh every call, its API caching
@@ -1055,7 +1061,24 @@ def ssa_sign_coincurve_verify() -> None:
     coincurve.PrivateKey(prvkey).sign_schnorr(msg, AUX)
 
 
-def ssa_sign_secp256k1() -> None:
+def ssa_sign_coincurve_noaux_verify() -> None:
+    """Time coincurve's BIP340 signature with the auxiliary randomness off.
+
+    `aux_randomness=None` is `NULL` to libsecp256k1, which BIP340 permits
+    and its *Default Signing* does not do: the nonce is then the hash of
+    the secret and the message alone, with nothing to blind it. coincurve
+    is the only one of the four that spells both, so the pair with its row
+    above is what the recommendation costs -- and it is the row
+    secp256k1-py's is comparable with, that API passing `NULL` always.
+    """
+    prvkey, msg = next(SSA_SIGN_NOAUX)
+    # the annotation says `bytes` and the docstring beside it says None is
+    # how a caller asks for no randomness, the empty bytes being how one
+    # asks for fresh: the type is narrower than the API it describes
+    coincurve.PrivateKey(prvkey).sign_schnorr(msg, None)  # type: ignore[arg-type]
+
+
+def ssa_sign_secp256k1_noaux_noverify() -> None:
     """Time secp256k1-py's BIP340 signing, its keypair built per call.
 
     `schnorr_sign` takes no key but the one its `PrivateKey` constructor
@@ -1067,7 +1090,7 @@ def ssa_sign_secp256k1() -> None:
     secp256k1.PrivateKey(prvkey, raw=True).schnorr_sign(msg, None, raw=True)
 
 
-def ssa_sign_electrum_ecc_verify() -> None:
+def ssa_sign_electrum_ecc_aux_verify() -> None:
     """Time electrum-ecc's BIP340 signing, the keypair and the check included.
 
     `schnorr_sign` builds the keypair fresh every call and verifies the
@@ -1078,7 +1101,7 @@ def ssa_sign_electrum_ecc_verify() -> None:
     electrum_ecc.ECPrivkey(prvkey).schnorr_sign(msg, aux_rand32=AUX)
 
 
-def ssa_sign_btclib_secp256k1() -> None:
+def ssa_sign_btclib_secp256k1_aux_noverify() -> None:
     """Time btclib_secp256k1's BIP340 signing, bytes in and 64 bytes out.
 
     Each call builds the keypair, signs, and overwrites the keypair before
@@ -1093,7 +1116,7 @@ def ssa_sign_btclib_secp256k1() -> None:
     btclib_secp256k1.ssa.sign(msg, prvkey, AUX, verify=False)
 
 
-def ssa_sign_btclib_secp256k1_verify() -> None:
+def ssa_sign_btclib_secp256k1_aux_verify() -> None:
     """Time the same BIP340 signature with BIP340's own last step done.
 
     `verify=True`, and the pair with the row above is what that step
@@ -1109,7 +1132,7 @@ def ssa_sign_btclib_secp256k1_verify() -> None:
     btclib_secp256k1.ssa.sign(msg, prvkey, AUX, verify=True)
 
 
-def dsa_held_btclib_secp256k1_verify() -> None:
+def dsa_held_btclib_secp256k1_nogrind_verify() -> None:
     """Time the checked signature under a public key the caller already has.
 
     `pubkey=` is what the other three rows hold inside their key object: the
@@ -1128,7 +1151,7 @@ def dsa_held_btclib_secp256k1_verify() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, verify=True, pubkey=pubkey)
 
 
-def ssa_held_coincurve_verify() -> None:
+def ssa_held_coincurve_aux_verify() -> None:
     """Time coincurve's BIP340 signing under a `PrivateKey` held already.
 
     Holding one saves the constructor and nothing more: `sign_schnorr`
@@ -1141,7 +1164,7 @@ def ssa_held_coincurve_verify() -> None:
     key.sign_schnorr(msg, AUX)
 
 
-def ssa_held_secp256k1() -> None:
+def ssa_held_secp256k1_noaux_noverify() -> None:
     """Time secp256k1-py's BIP340 signing under a `PrivateKey` held already.
 
     `self.keypair` is built by the constructor and `schnorr_sign` takes no
@@ -1153,7 +1176,7 @@ def ssa_held_secp256k1() -> None:
     key.schnorr_sign(msg, None, raw=True)
 
 
-def ssa_held_electrum_ecc_verify() -> None:
+def ssa_held_electrum_ecc_aux_verify() -> None:
     """Time electrum-ecc's BIP340 signing under an `ECPrivkey` held already.
 
     `schnorr_sign` builds the keypair from the held scalar on every call,
@@ -1164,7 +1187,7 @@ def ssa_held_electrum_ecc_verify() -> None:
     key.schnorr_sign(msg, aux_rand32=AUX)
 
 
-def ssa_held_btclib_secp256k1() -> None:
+def ssa_held_btclib_secp256k1_aux_noverify() -> None:
     """Time btclib_secp256k1's BIP340 signing under a held `ssa.Signer`.
 
     The keypair is the `Signer`'s and lives across calls, where `ssa.sign`
@@ -1180,7 +1203,7 @@ def ssa_held_btclib_secp256k1() -> None:
     signer.sign(msg, AUX, verify=False)
 
 
-def ssa_held_btclib_secp256k1_verify() -> None:
+def ssa_held_btclib_secp256k1_aux_verify() -> None:
     """Time the held signer with BIP340's own last step done.
 
     `verify=True`. The row coincurve's and electrum-ecc's held rows are
@@ -1518,11 +1541,30 @@ def tweak_33_btclib_secp256k1_octets() -> None:
 def derive_65_coincurve() -> None:
     """Time coincurve's derivation, taken to the 65 octets of a key.
 
-    `from_valid_secret` and not `PrivateKey(...).public_key`: the row is the
+    `from_secret` and not `PrivateKey(...).public_key`: the row is the
     derivation and nothing else, where the constructor would carry the very
-    Python object this table exists to be subtracted from.
+    Python object this table exists to be subtracted from. It validates the
+    secret, which is what makes it the row btclib_secp256k1's is comparable
+    with -- `from_valid_secret` does not, and is the row beside it.
     """
     prvkey = next(DERIVE_65)
+    coincurve.PublicKey.from_secret(prvkey).format(compressed=False)
+
+
+def derive_65_coincurve_unchecked() -> None:
+    """Time the same derivation through the entry point that checks nothing.
+
+    `from_valid_secret` says in its own docstring that it avoids input
+    checks, and the pair with the row above prices them. What they buy is
+    not a scalar's range -- libsecp256k1 answers that from the value, and
+    every row here leaves it to the library -- but the length: the C call
+    takes a bare pointer and reads 32 octets from it whatever the caller
+    passed, so 20 octets of secret derive a public key from twelve octets
+    of whatever sat next to them in memory. Handed the same short secret,
+    this spelling answers a key, and answers a different one as its
+    neighbours change.
+    """
+    prvkey = next(DERIVE_65_UNCHECKED)
     coincurve.PublicKey.from_valid_secret(prvkey).format(compressed=False)
 
 
@@ -1558,11 +1600,17 @@ def derive_65_btclib_secp256k1() -> None:
 def derive_33_coincurve() -> None:
     """Time coincurve's derivation, taken to the 33 octets of a key.
 
-    `from_valid_secret` and not `PrivateKey(...).public_key`: the row is the
-    derivation and nothing else, where the constructor would carry the very
-    Python object this table exists to be subtracted from.
+    `from_secret`, as the uncompressed row above says: the spelling that
+    validates its argument, which is the one this table's other rows are
+    comparable with.
     """
     prvkey = next(DERIVE_33)
+    coincurve.PublicKey.from_secret(prvkey).format(compressed=True)
+
+
+def derive_33_coincurve_unchecked() -> None:
+    """Time the unchecked spelling, in the compressed half of the pair."""
+    prvkey = next(DERIVE_33_UNCHECKED)
     coincurve.PublicKey.from_valid_secret(prvkey).format(compressed=True)
 
 
@@ -1597,56 +1645,59 @@ def derive_33_btclib_secp256k1() -> None:
 
 DERIVE_65_ROWS = (
     derive_65_coincurve,
+    derive_65_coincurve_unchecked,
     derive_65_secp256k1,
     derive_65_electrum_ecc,
     derive_65_btclib_secp256k1,
 )
 DERIVE_33_ROWS = (
     derive_33_coincurve,
+    derive_33_coincurve_unchecked,
     derive_33_secp256k1,
     derive_33_electrum_ecc,
     derive_33_btclib_secp256k1,
 )
 DSA_SIGN_DER_ROWS = (
-    dsa_sign_der_coincurve,
-    dsa_sign_der_secp256k1,
-    dsa_sign_der_secp256k1_object,
-    dsa_sign_der_electrum_ecc_verify,
+    dsa_sign_der_coincurve_nogrind_noverify,
+    dsa_sign_der_secp256k1_nogrind_noverify_octets,
+    dsa_sign_der_secp256k1_nogrind_noverify_object,
+    dsa_sign_der_electrum_ecc_nogrind_verify,
     dsa_sign_der_electrum_ecc_grind_verify,
-    dsa_sign_der_btclib_secp256k1,
-    dsa_sign_der_btclib_secp256k1_verify,
-    dsa_sign_der_btclib_secp256k1_grind,
+    dsa_sign_der_btclib_secp256k1_nogrind_noverify,
+    dsa_sign_der_btclib_secp256k1_nogrind_verify,
+    dsa_sign_der_btclib_secp256k1_grind_noverify,
     dsa_sign_der_btclib_secp256k1_grind_verify,
 )
 DSA_SIGN_COMPACT_ROWS = (
-    dsa_sign_compact_secp256k1,
-    dsa_sign_compact_secp256k1_object,
-    dsa_sign_compact_electrum_ecc_verify,
+    dsa_sign_compact_secp256k1_nogrind_noverify_octets,
+    dsa_sign_compact_secp256k1_nogrind_noverify_object,
+    dsa_sign_compact_electrum_ecc_nogrind_verify,
     dsa_sign_compact_electrum_ecc_grind_verify,
-    dsa_sign_compact_btclib_secp256k1,
-    dsa_sign_compact_btclib_secp256k1_verify,
-    dsa_sign_compact_btclib_secp256k1_grind,
+    dsa_sign_compact_btclib_secp256k1_nogrind_noverify,
+    dsa_sign_compact_btclib_secp256k1_nogrind_verify,
+    dsa_sign_compact_btclib_secp256k1_grind_noverify,
     dsa_sign_compact_btclib_secp256k1_grind_verify,
 )
 DSA_HELD_ROWS = (
-    dsa_held_coincurve,
-    dsa_held_secp256k1,
-    dsa_held_electrum_ecc_verify,
-    dsa_held_btclib_secp256k1_verify,
+    dsa_held_coincurve_nogrind_noverify,
+    dsa_held_secp256k1_nogrind_noverify_octets,
+    dsa_held_electrum_ecc_nogrind_verify,
+    dsa_held_btclib_secp256k1_nogrind_verify,
 )
 SSA_SIGN_ROWS = (
-    ssa_sign_coincurve_verify,
-    ssa_sign_secp256k1,
-    ssa_sign_electrum_ecc_verify,
-    ssa_sign_btclib_secp256k1,
-    ssa_sign_btclib_secp256k1_verify,
+    ssa_sign_coincurve_aux_verify,
+    ssa_sign_secp256k1_noaux_noverify,
+    ssa_sign_coincurve_noaux_verify,
+    ssa_sign_electrum_ecc_aux_verify,
+    ssa_sign_btclib_secp256k1_aux_noverify,
+    ssa_sign_btclib_secp256k1_aux_verify,
 )
 SSA_HELD_ROWS = (
-    ssa_held_coincurve_verify,
-    ssa_held_secp256k1,
-    ssa_held_electrum_ecc_verify,
-    ssa_held_btclib_secp256k1,
-    ssa_held_btclib_secp256k1_verify,
+    ssa_held_coincurve_aux_verify,
+    ssa_held_secp256k1_noaux_noverify,
+    ssa_held_electrum_ecc_aux_verify,
+    ssa_held_btclib_secp256k1_aux_noverify,
+    ssa_held_btclib_secp256k1_aux_verify,
 )
 PARSE_COMPRESSED_ROWS = (
     parse_compressed_coincurve,
@@ -1970,7 +2021,7 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
     (
         "7. ECDSA verify (64-byte signature, a 65-byte uncompressed key parsed per call)",
         DSA_VERIFY_COMPACT_ROWS,
-        ("coincurve",),
+        ("coincurve_nogrind_noverify",),
         "dsa-verify",
     ),
     (
@@ -1982,7 +2033,7 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
     (
         "9. ECDSA verify (64-byte signature, a 33-byte compressed key parsed per call)",
         DSA_VERIFY_COMPACT_33_ROWS,
-        ("coincurve",),
+        ("coincurve_nogrind_noverify",),
         "dsa-verify",
     ),
     (
@@ -1994,7 +2045,7 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
     (
         "11. BIP340 verify (a 65-byte uncompressed key handed in, x-only taken from it)",
         SSA_VERIFY_DERIVED_ROWS,
-        ("coincurve",),
+        ("coincurve_nogrind_noverify",),
         "ssa-verify",
     ),
     (
@@ -2004,21 +2055,21 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
         "ssa-verify",
     ),
     (
-        "13. ECDSA sign (32-byte digest, DER out, a fresh key)",
+        "13. ECDSA sign (32-byte digest, a fresh private key handed in, DER out)",
         DSA_SIGN_DER_ROWS,
         (),
         "dsa-sign",
     ),
     (
-        "14. ECDSA sign (32-byte digest, 64-byte compact out, a fresh key)",
+        "14. ECDSA sign (32-byte digest, a fresh private key handed in, 64 octets out)",
         DSA_SIGN_COMPACT_ROWS,
-        ("coincurve",),
+        ("coincurve_nogrind_noverify",),
         "dsa-sign",
     ),
     (
-        "15. ECDSA sign (32-byte digest, DER out, the public key held already)",
+        "15. ECDSA sign (32-byte digest, the public key held already, DER out)",
         DSA_HELD_ROWS,
-        ("btclib_secp256k1",),
+        ("btclib_secp256k1_nogrind_noverify",),
         "dsa-sign",
     ),
     ("16. BIP340 sign (32-byte message, a fresh key)", SSA_SIGN_ROWS, (), "ssa-sign"),
