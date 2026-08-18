@@ -634,6 +634,22 @@ The release notes, which say what a user has to act on, are in
   A cost stated in prose is a number no run re-derives, which is why both of
   these are rows.
 
+  The held ECDSA table carries btclib-secp256k1 twice, where it used to
+  carry it once and print `NA` beside it. The unchecked row is the one the
+  other packages' unchecked rows compare with, and it is the same call the
+  fresh table makes — `dsa.sign` takes the 32 octets, so a caller who will
+  sign again holds what a caller signing once holds. Reading it out of the
+  fresh table left a comparison spanning two titles; here the two rows
+  landing together is what says the holding bought nothing, in the table
+  whose subject that is.
+
+  Three `NA` rows were carrying signing flags they had no business with —
+  the two compact ECDSA verifications and BIP340 from a full public key,
+  each of which prints coincurve as `NA`. A verification neither grinds nor
+  declines a check, so those rows name the package and nothing else. For the
+  same reason the held table's secp256k1-py row drops `octets`: with no
+  `object` row beside it there is nothing for the suffix to tell apart.
+
   Both flags are on every row of the signing tables again, `nogrind` and
   `noverify` included, and the BIP340 tables carry `aux` beside `verify` for
   the same reason: a reader comparing two rows should read the same two

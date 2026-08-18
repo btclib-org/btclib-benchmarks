@@ -245,16 +245,20 @@ constructor with nothing of the signature in it, where the BIP340 pair prices
 work the signature would otherwise have to do again.
 
 What is left in a held ECDSA row is the signature and whatever else that
-package does on every call regardless of what it was handed: nothing, for two
-of the three, and for electrum-ecc the check `ecdsa_sign` makes, which parses
-a `secp256k1_pubkey` out of the coordinates its `ECPubkey` holds each time it
-is asked.
+package does on every call regardless of what it was handed: nothing, for the
+unchecked rows, and for the checked ones the verification -- electrum-ecc's
+`ecdsa_sign` parsing a `secp256k1_pubkey` out of the coordinates its
+`ECPubkey` holds each time it is asked, btclib_secp256k1's taking the one it
+was handed.
 
-btclib_secp256k1 is `NA` there, and that is the finding rather than a gap:
-`dsa.sign` takes the 32 bytes, so a caller who will sign again holds what a
-caller who will sign once holds, and its row in table 13 is already the held
-shape. A row under another title calling the same function on the same slice
-would print a number the table above it carries.
+btclib_secp256k1 has two rows there and holds something in only one of them.
+`dsa.sign` takes the 32 bytes, so an unchecked signature has nothing for a
+caller to hold and that row is its fresh row again -- it is in the table
+because it is what the other packages' unchecked rows compare with, and the
+two landing together is what says the holding bought nothing. The checked row
+is the one that holds: `pubkey=` takes the public key the check would
+otherwise derive per call, which is what the other three keep inside their
+key object.
 
 ## "The same C library" is a claim about the API, not about the binary
 
@@ -603,14 +607,15 @@ SSA_HELD_BTCLIB_SECP256K1 = _held(3, btclib_secp256k1.ssa.Signer)
 # takes the secret key as it is, so none of these objects is standing in
 # for a keypair the way the BIP340 rows above are.
 #
-# btclib_secp256k1 has no key object, and the fourth cycle is what it holds
-# instead. A plain signature has nothing to hold -- `dsa.sign` takes the 32
-# octets, which is what a caller holding a key already holds, and that row
-# is `NA` for that reason rather than for want of a spelling. A checked one
-# does: the check verifies under a public key, `sign` derives one when a
-# caller passes none, and `pubkey=` is where a caller who has it puts it.
-# So what the other three hold inside an object -- the derived public key --
-# this row holds as the 65 octets that are this package's key.
+# btclib_secp256k1 has no key object, and its two rows here are what that
+# comes to. A plain signature has nothing to hold -- `dsa.sign` takes the 32
+# octets, which is what a caller holding a key already holds -- so its
+# unchecked row is its fresh row again, and the two agreeing is what says
+# the holding bought nothing. Its checked row does hold something: the check
+# verifies under a public key, `sign` derives one when a caller passes none,
+# and `pubkey=` is where a caller who has it puts it. So what the other
+# three hold inside an object -- the derived public key -- that row holds as
+# the 65 octets that are this package's key.
 #
 # The public keys are the pool's own, in the pool's order, so the one handed
 # in belongs to the secret beside it. Nothing asserts that here because the
@@ -1021,7 +1026,7 @@ def dsa_held_coincurve_nogrind_noverify() -> None:
     key.sign(msg, hasher=None)
 
 
-def dsa_held_secp256k1_nogrind_noverify_octets() -> None:
+def dsa_held_secp256k1_nogrind_noverify() -> None:
     """Time secp256k1-py's ECDSA signing under a `PrivateKey` held already.
 
     `ecdsa_sign` reads `self.private_key`, so the constructor's public key
@@ -1064,12 +1069,20 @@ def ssa_sign_coincurve_aux_verify() -> None:
 def ssa_sign_coincurve_noaux_verify() -> None:
     """Time coincurve's BIP340 signature with the auxiliary randomness off.
 
-    `aux_randomness=None` is `NULL` to libsecp256k1, which BIP340 permits
-    and its *Default Signing* does not do: the nonce is then the hash of
-    the secret and the message alone, with nothing to blind it. coincurve
-    is the only one of the four that spells both, so the pair with its row
-    above is what the recommendation costs -- and it is the row
-    secp256k1-py's is comparable with, that API passing `NULL` always.
+    `aux_randomness=None` is `NULL` to libsecp256k1, and it is the spelling
+    BIP340 recommends against: *Default Signing* mixes the randomness into
+    the nonce, and without it the nonce is the hash of the secret and the
+    message alone, with nothing blinding it against a side channel reading
+    the secret back out. The row is here to price that recommendation and
+    not to suggest it -- coincurve is the only one of the four that spells
+    both, and it is the row secp256k1-py's is comparable with, that API
+    passing `NULL` always.
+
+    btclib_secp256k1 has no such row because it has no such spelling:
+    `ssa.sign` takes the caller's 32 octets or draws 32 fresh ones, so a
+    BIP340 signature there is always blinded. Its ECDSA signing is the
+    other way round, `dsa.sign` passing `NULL` where a caller gives
+    nothing, ECDSA's nonce being RFC6979's and the entropy an extra.
     """
     prvkey, msg = next(SSA_SIGN_NOAUX)
     # the annotation says `bytes` and the docstring beside it says None is
@@ -1083,8 +1096,13 @@ def ssa_sign_secp256k1_noaux_noverify() -> None:
 
     `schnorr_sign` takes no key but the one its `PrivateKey` constructor
     already holds, so the constructor is inside the timing: the keypair
-    every row builds, built where this API makes a caller build it. It
-    takes no aux_rand either, alone of the four.
+    every row builds, built where this API makes a caller build it.
+
+    It passes `NULL` for the auxiliary randomness, alone of the four and
+    with no argument that would change it, which is the spelling BIP340
+    recommends against -- its own source says so, a `FIXME` beside the call
+    noting that the randomness is recommended. That is what `noaux` in the
+    label is, and coincurve's pair of rows is where its cost is read.
     """
     prvkey, msg = next(SSA_SIGN)
     secp256k1.PrivateKey(prvkey, raw=True).schnorr_sign(msg, None, raw=True)
@@ -1130,6 +1148,25 @@ def ssa_sign_btclib_secp256k1_aux_verify() -> None:
     """
     prvkey, msg = next(SSA_SIGN)
     btclib_secp256k1.ssa.sign(msg, prvkey, AUX, verify=True)
+
+
+def dsa_held_btclib_secp256k1_nogrind_noverify() -> None:
+    """Time the unchecked signature under a key a caller already holds.
+
+    Which is the same call its fresh row makes, and that is the finding
+    rather than a repetition: `dsa.sign` takes the 32 octets, so what a
+    caller holds before signing again is what a caller signing once holds,
+    and this table has nothing to hand it that it did not have. The row is
+    here because it is the one the other packages' unchecked rows compare
+    with, and comparing what a package holds is what this table is for --
+    read out of the fresh table instead, it would be a comparison across
+    two titles.
+
+    Its number is therefore the fresh row's, over this table's slice, and
+    the two agreeing is what says the holding bought nothing.
+    """
+    prvkey, msg, _pubkey = next(DSA_HELD_BTCLIB_SECP256K1)
+    btclib_secp256k1.dsa.sign(msg, prvkey, verify=False)
 
 
 def dsa_held_btclib_secp256k1_nogrind_verify() -> None:
@@ -1680,8 +1717,9 @@ DSA_SIGN_COMPACT_ROWS = (
 )
 DSA_HELD_ROWS = (
     dsa_held_coincurve_nogrind_noverify,
-    dsa_held_secp256k1_nogrind_noverify_octets,
+    dsa_held_secp256k1_nogrind_noverify,
     dsa_held_electrum_ecc_nogrind_verify,
+    dsa_held_btclib_secp256k1_nogrind_noverify,
     dsa_held_btclib_secp256k1_nogrind_verify,
 )
 SSA_SIGN_ROWS = (
@@ -2021,7 +2059,7 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
     (
         "7. ECDSA verify (64-byte signature, a 65-byte uncompressed key parsed per call)",
         DSA_VERIFY_COMPACT_ROWS,
-        ("coincurve_nogrind_noverify",),
+        ("coincurve",),
         "dsa-verify",
     ),
     (
@@ -2033,7 +2071,7 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
     (
         "9. ECDSA verify (64-byte signature, a 33-byte compressed key parsed per call)",
         DSA_VERIFY_COMPACT_33_ROWS,
-        ("coincurve_nogrind_noverify",),
+        ("coincurve",),
         "dsa-verify",
     ),
     (
@@ -2045,7 +2083,7 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
     (
         "11. BIP340 verify (a 65-byte uncompressed key handed in, x-only taken from it)",
         SSA_VERIFY_DERIVED_ROWS,
-        ("coincurve_nogrind_noverify",),
+        ("coincurve",),
         "ssa-verify",
     ),
     (
@@ -2069,7 +2107,7 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
     (
         "15. ECDSA sign (32-byte digest, the public key held already, DER out)",
         DSA_HELD_ROWS,
-        ("btclib_secp256k1_nogrind_noverify",),
+        (),
         "dsa-sign",
     ),
     ("16. BIP340 sign (32-byte message, a fresh key)", SSA_SIGN_ROWS, (), "ssa-sign"),
