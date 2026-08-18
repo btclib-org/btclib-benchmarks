@@ -43,6 +43,26 @@ ECDSA twice, once per row: one signature, which is what the other
 implementations produce, and its own default beside it, which grinds until r
 fits in 32 bytes.
 
+**btclib's three signing rows were measured before its signing had a check**,
+and on this page that check is Python. btclib verifies the signature it has
+just made before answering with it, by default, on this arm as much as on the
+one the switch turns off — a fallback answering a different question from the
+arm it stands in for would be two libraries wearing one name. So the ECDSA
+verify row below is what the two ECDSA signing rows are missing, and the
+BIP340 verify row what the BIP340 one is.
+
+Nowhere else in this project is that check so large a share of what it
+protects, and the tables below say why between them: verifying multiplies an
+arbitrary point as well as the generator, where signing multiplies the
+generator alone and starts from a table btclib has already built. Which makes
+this the page where one row cannot carry the default. btclib would fall behind
+the implementations that verify nothing and read as arithmetic that had grown
+slower, when what changed is that its row had become a different operation from
+the ones beside it. [The wrappers table][wrappers] met that with a pair, and
+this page wants the same one when it is next measured: an unchecked row is what
+compares with the four others, and a checked row beside it is what the
+guarantee costs. [ISS 55][i55] is that decision, and [ISS 23][i23] the run.
+
 <!-- output: begin -->
 ```text
 method  : one run, kept whole — nothing repeated, no outlier discarded
@@ -172,6 +192,8 @@ comparands:
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
+[i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
+[i55]: https://github.com/btclib-org/btclib-benchmarks/issues/55
 
 <!-- The blocks above are rendered from the saved run beside this file,
      and their columns are sized from what is in them; rewrapping one to 80
