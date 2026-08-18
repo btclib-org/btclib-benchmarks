@@ -2,7 +2,7 @@
   "schema": 1,
   "benchmark": "01-libsecp256k1",
   "run": {
-    "when": "2026-08-17T15:45:55+02:00",
+    "when": "2026-08-18T08:11:20+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "10 rounds per row in two halves, minimum kept; calls per table",
@@ -21,7 +21,7 @@
       [
         "btclib-secp256k1",
         "0.8.0.3",
-        "main@68657e14c47c",
+        "main@52f913e706f8",
         "v0.8.0",
         "cffi"
       ],
@@ -59,29 +59,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 0.24133072758559135,
-          "halves_apart": 0.005208857473917333,
+          "us_per_call": 0.24483426997903734,
+          "halves_apart": 0.008257812587544322,
           "rounds": 10,
           "calls": 400000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 0.6495165621163324,
-          "halves_apart": 0.002620937884785235,
+          "us_per_call": 0.6447346875211224,
+          "halves_apart": 0.00040979008190333843,
           "rounds": 10,
           "calls": 400000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 1.2025292729958892,
-          "halves_apart": 0.0028748949989676476,
+          "us_per_call": 1.1845099995844066,
+          "halves_apart": 0.004160832613706589,
           "rounds": 10,
           "calls": 400000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 0.23161749995779246,
-          "halves_apart": 0.0005706248339265585,
+          "us_per_call": 0.2222732303198427,
+          "halves_apart": 0.0006338523235172033,
           "rounds": 10,
           "calls": 400000
         }
@@ -95,29 +95,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 2.351945829577744,
-          "halves_apart": 0.006025012116879225,
+          "us_per_call": 2.336760419420898,
+          "halves_apart": 0.0012033316306769848,
           "rounds": 10,
           "calls": 100000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 2.7616720809601247,
-          "halves_apart": 0.019336258992552757,
+          "us_per_call": 2.7342045796103776,
+          "halves_apart": 0.001050420105457306,
           "rounds": 10,
           "calls": 100000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 3.300985840614885,
-          "halves_apart": 0.01746458001434803,
+          "us_per_call": 3.2608183310367167,
+          "halves_apart": 0.003262918908149004,
           "rounds": 10,
           "calls": 100000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 2.3157383291982114,
-          "halves_apart": 0.001966250129044056,
+          "us_per_call": 2.280105829704553,
+          "halves_apart": 0.0051291706040501595,
           "rounds": 10,
           "calls": 100000
         }
@@ -131,29 +131,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 13.147670915350318,
-          "halves_apart": 0.002024974673986435,
+          "us_per_call": 13.050683285109699,
+          "halves_apart": 0.01982920803129673,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.641620916314423,
-          "halves_apart": 0.0016040867194533348,
+          "us_per_call": 13.550304202362895,
+          "halves_apart": 0.007316586561501026,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 17.442266596481204,
-          "halves_apart": 0.013083405792713165,
+          "us_per_call": 17.269720905460417,
+          "halves_apart": 0.01845818478614092,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 13.07013330515474,
-          "halves_apart": 0.04745009355247021,
+          "us_per_call": 12.973333313129842,
+          "halves_apart": 0.02348329871892929,
           "rounds": 10,
           "calls": 10000
         }
@@ -167,29 +167,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 15.415033395402133,
-          "halves_apart": 0.017658201977610588,
+          "us_per_call": 15.171562507748604,
+          "halves_apart": 0.006016669794917107,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 15.931137488223612,
-          "halves_apart": 0.08400001097470522,
+          "us_per_call": 15.658266609534621,
+          "halves_apart": 0.03370840568095268,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 19.60274998564273,
-          "halves_apart": 0.02296252641826868,
+          "us_per_call": 19.376929104328156,
+          "halves_apart": 0.020875083282589912,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 15.146495820954442,
-          "halves_apart": 0.020749983377754688,
+          "us_per_call": 15.094700013287365,
+          "halves_apart": 0.008154171518981457,
           "rounds": 10,
           "calls": 10000
         }
@@ -207,22 +207,22 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.634366705082357,
-          "halves_apart": 0.005637388676404953,
+          "us_per_call": 13.652804214507341,
+          "halves_apart": 0.008237478323280811,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 15.154308290220797,
-          "halves_apart": 0.031304219737648964,
+          "us_per_call": 15.122275007888675,
+          "halves_apart": 0.003970786929130554,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 13.07376658078283,
-          "halves_apart": 0.049462635070085526,
+          "us_per_call": 12.987374980002642,
+          "halves_apart": 0.02824591938406229,
           "rounds": 10,
           "calls": 10000
         }
@@ -240,22 +240,22 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 15.821450017392637,
-          "halves_apart": 0.009779189713295722,
+          "us_per_call": 15.676616691052914,
+          "halves_apart": 0.036641606129705906,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 17.33059580437839,
-          "halves_apart": 0.023283297196030617,
+          "us_per_call": 17.158270813524723,
+          "halves_apart": 0.0017999904230237007,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 15.16733339522034,
-          "halves_apart": 0.0369915971532464,
+          "us_per_call": 15.079579106532037,
+          "halves_apart": 0.008541694842278957,
           "rounds": 10,
           "calls": 10000
         }
@@ -273,22 +273,22 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.62500418908894,
-          "halves_apart": 0.05846661515533924,
+          "us_per_call": 13.571158284321427,
+          "halves_apart": 0.027975114062428474,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 17.232974991202354,
-          "halves_apart": 0.025687506422400475,
+          "us_per_call": 17.06551657989621,
+          "halves_apart": 0.0240459106862545,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 13.356841704808176,
-          "halves_apart": 0.2676707925274968,
+          "us_per_call": 13.280829112045467,
+          "halves_apart": 0.009704171679913998,
           "rounds": 10,
           "calls": 10000
         }
@@ -302,29 +302,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 15.629929210990666,
-          "halves_apart": 0.08363327942788601,
+          "us_per_call": 15.20670410245657,
+          "halves_apart": 0.017387582920491695,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 16.120808385312557,
-          "halves_apart": 0.08553331717848778,
+          "us_per_call": 15.67239579744637,
+          "halves_apart": 0.0337041914463061,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 19.414383289404213,
-          "halves_apart": 0.26046670973300934,
+          "us_per_call": 19.15117499884218,
+          "halves_apart": 0.0966459047049284,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 15.280708391219378,
-          "halves_apart": 0.03469579387456001,
+          "us_per_call": 15.124866692349315,
+          "halves_apart": 0.007945811375975609,
           "rounds": 10,
           "calls": 10000
         }
@@ -338,29 +338,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 10.68687909282744,
-          "halves_apart": 0.010987487621605396,
+          "us_per_call": 10.591291706077754,
+          "halves_apart": 0.021191593259572983,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 14.305637497454882,
-          "halves_apart": 0.0018999911844730377,
+          "us_per_call": 14.060345781035721,
+          "halves_apart": 0.0051667215302586555,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 23.12564579769969,
-          "halves_apart": 0.17581251449882984,
+          "us_per_call": 22.852504206821322,
+          "halves_apart": 0.002124975435435772,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 10.149412509053946,
-          "halves_apart": 0.01506658736616373,
+          "us_per_call": 10.064545786008239,
+          "halves_apart": 0.0023209257051348686,
           "rounds": 10,
           "calls": 10000
         }
@@ -374,29 +374,29 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 12.834262498654425,
-          "halves_apart": 0.01633339561522007,
+          "us_per_call": 12.707599997520447,
+          "halves_apart": 0.03552080597728491,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 16.472374997101724,
-          "halves_apart": 0.009816605597734451,
+          "us_per_call": 16.123283305205405,
+          "halves_apart": 0.07561671081930399,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 25.419387500733137,
-          "halves_apart": 0.07950831204652786,
+          "us_per_call": 25.054520810954273,
+          "halves_apart": 0.016587600111961365,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 12.27235000114888,
-          "halves_apart": 0.009825010783970356,
+          "us_per_call": 12.167620798572898,
+          "halves_apart": 0.026991707272827625,
           "rounds": 10,
           "calls": 10000
         }
@@ -404,56 +404,56 @@
     },
     {
       "kind": "ratios",
-      "title": "11. ECDSA sign (32-byte digest, DER out)",
+      "title": "11. ECDSA sign (32-byte digest, DER out, a fresh key)",
       "group": "dsa-sign",
       "decimals": 2,
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 26.901687495410442,
-          "halves_apart": 0.017016706988215446,
+          "us_per_call": 26.7086667008698,
+          "halves_apart": 0.019879103638231754,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 26.784112490713596,
-          "halves_apart": 0.2683167112991214,
+          "us_per_call": 26.58505830913782,
+          "halves_apart": 0.00405418686568737,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 47.83263329882175,
-          "halves_apart": 0.47284169122576714,
+          "us_per_call": 47.50820829067379,
+          "halves_apart": 0.03351669292896986,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_grind",
-          "us_per_call": 60.70015411823988,
-          "halves_apart": 0.07548758294433355,
+          "us_per_call": 60.2416249923408,
+          "halves_apart": 0.03373750951141119,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 12.124025006778538,
-          "halves_apart": 0.006074993871152401,
+          "us_per_call": 11.922270897775888,
+          "halves_apart": 0.014050002209842205,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_checked",
-          "us_per_call": 32.45115829631686,
-          "halves_apart": 0.06275831256061792,
+          "us_per_call": 32.21569578163326,
+          "halves_apart": 0.03666251432150602,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_grind",
-          "us_per_call": 24.490820802748203,
-          "halves_apart": 0.01633339561522007,
+          "us_per_call": 23.976895795203745,
+          "halves_apart": 0.009041698649525642,
           "rounds": 10,
           "calls": 10000
         }
@@ -461,7 +461,7 @@
     },
     {
       "kind": "ratios",
-      "title": "12. ECDSA sign (32-byte digest, 64-byte compact out)",
+      "title": "12. ECDSA sign (32-byte digest, 64-byte compact out, a fresh key)",
       "group": "dsa-sign",
       "decimals": 2,
       "rows": [
@@ -471,43 +471,43 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 26.63054580334574,
-          "halves_apart": 0.013937591575086117,
+          "us_per_call": 26.425420795567334,
+          "halves_apart": 0.0010876217857003212,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 45.28320839162916,
-          "halves_apart": 0.02997908741235733,
+          "us_per_call": 45.16257499344647,
+          "halves_apart": 0.07486250251531601,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_grind",
-          "us_per_call": 58.52061251644045,
-          "halves_apart": 0.35301249008625746,
+          "us_per_call": 58.0525416880846,
+          "halves_apart": 0.015175016596913338,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 11.983500001952052,
-          "halves_apart": 0.03186247777193785,
+          "us_per_call": 11.811083322390914,
+          "halves_apart": 0.02246259246021509,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_checked",
-          "us_per_call": 32.56467920728028,
-          "halves_apart": 0.12909998185932636,
+          "us_per_call": 32.036766689270735,
+          "halves_apart": 0.004954217001795769,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_grind",
-          "us_per_call": 24.305008398368955,
-          "halves_apart": 0.07012910209596157,
+          "us_per_call": 24.01843329425901,
+          "halves_apart": 0.008925003930926323,
           "rounds": 10,
           "calls": 10000
         }
@@ -515,42 +515,32 @@
     },
     {
       "kind": "ratios",
-      "title": "13. BIP340 sign (32-byte message, a fresh key)",
-      "group": "ssa-sign",
+      "title": "13. ECDSA sign (32-byte digest, DER out, the key held already)",
+      "group": "dsa-sign",
       "decimals": 2,
       "rows": [
         {
+          "label": "btclib_secp256k1",
+          "unavailable": true
+        },
+        {
           "label": "coincurve",
-          "us_per_call": 43.45252909697592,
-          "halves_apart": 0.08525841403752565,
+          "us_per_call": 11.609320784918964,
+          "halves_apart": 0.016758404672145844,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 22.725975001230836,
-          "halves_apart": 0.16152497846633196,
+          "us_per_call": 11.732891714200377,
+          "halves_apart": 0.03161248750984669,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 49.11938328295946,
-          "halves_apart": 0.12510421220213175,
-          "rounds": 10,
-          "calls": 10000
-        },
-        {
-          "label": "btclib_secp256k1",
-          "us_per_call": 15.882829180918634,
-          "halves_apart": 0.21218752954155207,
-          "rounds": 10,
-          "calls": 10000
-        },
-        {
-          "label": "btclib_secp256k1_checked",
-          "us_per_call": 29.44879170972854,
-          "halves_apart": 0.05510419141501188,
+          "us_per_call": 30.86822920013219,
+          "halves_apart": 0.05511660128831508,
           "rounds": 10,
           "calls": 10000
         }
@@ -558,42 +548,85 @@
     },
     {
       "kind": "ratios",
-      "title": "14. BIP340 sign (32-byte message, the key held already)",
+      "title": "14. BIP340 sign (32-byte message, a fresh key)",
       "group": "ssa-sign",
       "decimals": 2,
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 28.248762502335012,
-          "halves_apart": 0.15223328955471516,
+          "us_per_call": 43.09574170038104,
+          "halves_apart": 0.055370782501995564,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 7.893954101018608,
-          "halves_apart": 0.014116801321505612,
+          "us_per_call": 22.6369374897331,
+          "halves_apart": 0.06574161816388369,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 32.39139998331666,
-          "halves_apart": 0.1466291258111596,
+          "us_per_call": 48.95725001115352,
+          "halves_apart": 0.050879199989140034,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 8.289404213428497,
-          "halves_apart": 0.0065915752202272415,
+          "us_per_call": 15.686720819212498,
+          "halves_apart": 0.06812086794525385,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_checked",
-          "us_per_call": 21.758666704408824,
-          "halves_apart": 0.061645801179111004,
+          "us_per_call": 28.96996671333909,
+          "halves_apart": 0.04668328911066055,
+          "rounds": 10,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "15. BIP340 sign (32-byte message, the key held already)",
+      "group": "ssa-sign",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "coincurve",
+          "us_per_call": 28.03592919372022,
+          "halves_apart": 0.004087504930794239,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "secp256k1",
+          "us_per_call": 7.843912485986948,
+          "halves_apart": 0.017733313143252438,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "electrum_ecc",
+          "us_per_call": 32.04806251451373,
+          "halves_apart": 0.019970792345702648,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "btclib_secp256k1",
+          "us_per_call": 8.161600003950298,
+          "halves_apart": 0.022449996322393417,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "btclib_secp256k1_checked",
+          "us_per_call": 21.335549978539348,
+          "halves_apart": 0.027837534435093403,
           "rounds": 10,
           "calls": 10000
         }
