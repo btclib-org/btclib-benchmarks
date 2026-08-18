@@ -105,7 +105,7 @@ def blocks(measurement: Measurement, has_own_provenance: bool) -> dict[str, list
     output = _results.rendered_output(measurement)
     filled = {
         "provenance": _fenced(provenance),
-        "run": _fenced(_results.rendered_run(measurement.run)),
+        "run": _fenced(_results.rendered_run(measurement)),
         "method": _fenced(_results.rendered_method(measurement)),
         "output": _fenced(
             output if has_own_provenance else f"{provenance}\n\n{output}"

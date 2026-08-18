@@ -318,6 +318,7 @@ from __future__ import annotations
 import sys
 import time
 from collections.abc import Callable
+from dataclasses import replace
 from importlib.metadata import version
 from itertools import cycle
 from typing import TypeVar
@@ -342,6 +343,7 @@ from _results import (
     Timing,
     Unavailable,
     labels,
+    moment,
     page_of,
     rendered_provenance,
     rendered_table,
@@ -1872,6 +1874,79 @@ CALLS_PER_ROWS: dict[tuple[Callable[[], None], ...], int] = {
 
 ROUNDS = 10
 
+# how long the machine is left alone between the two passes, and why the
+# page is measured twice at all.
+#
+# Every column this page prints is agreement within a pass: the halves of a
+# row are seconds apart, and a table's rows minutes. What a reader compares
+# this page against is the version of it published before, which is a
+# different occasion, and the page had no number for that -- it said in
+# prose that a row can move between runs by more than any distance printed
+# beside it, and left the size to the reader.
+#
+# So the whole page is timed twice in one invocation, the first pass is
+# published, and what the second buys is one line saying how far the two
+# disagreed. Which pass is published is a rule rather than a judgement made
+# after the fact, and it was tested rather than assumed: the first run taken
+# this way came out quicker on the second pass for 78 of its 85 rows, which
+# would have been an argument for publishing the second -- and the two runs
+# after it split 45 of 85 and 45 of 86, medians of three hundredths of a per
+# cent. There is no systematic difference between the passes to correct for,
+# so the fixed rule stands: what a criterion applied per run would buy is a
+# page publishing whichever pass flattered it.
+#
+# The second pass is saved per row, because the line is what it buys: a
+# comparison nobody can re-derive from the file is not a measurement this
+# project publishes, and the line is computed from those rows at render time
+# like every other derived number here.
+#
+# Four minutes between them, and the gap is the point rather than the wait:
+# run back to back the second pass would read a machine the first one
+# heated, which is the paragraph CONTRIBUTING.md holds every run of these
+# five to -- one script at a time on a machine given time to cool -- applied
+# inside a script that measures twice. Four is what the runs of this page
+# have been taken after, and what a person watching will sit through.
+COOLING = 240
+
+
+def cooled() -> None:
+    """Leave the machine alone for `COOLING`, counting down as it goes.
+
+    On stderr and overwritten in place, as the row lines are: a run that
+    prints nothing for minutes is a run somebody interrupts. Nothing is
+    timed here and nothing may be -- what a sleep is for is the state the
+    second pass starts from.
+    """
+    for left in range(COOLING, 0, -1):
+        print(
+            f"\rcooling, {left // 60}:{left % 60:02} to the second pass",
+            end="",
+            file=sys.stderr,
+        )
+        time.sleep(1)
+    print("\r" + " " * 40 + "\r", end="", file=sys.stderr)
+
+
+def with_second_pass(published: Ratios, again: Ratios) -> Ratios:
+    """Return the published table, each row carrying its second pass.
+
+    Row by row and by position, the two passes being the same tables in
+    the same order timed twice: the labels are asserted equal rather than
+    matched on, because a pass whose rows have moved under it is a bug in
+    this file and not something to reconcile at run time.
+
+    `NA` stays `NA`. A row nothing measured has no second measurement, and
+    the second pass finds the same absence for the same reason.
+    """
+    rows: list[Timing | Unavailable] = []
+    for row, other in zip(published.rows, again.rows, strict=True):
+        assert row.label == other.label
+        if isinstance(row, Unavailable) or isinstance(other, Unavailable):
+            rows.append(row)
+            continue
+        rows.append(replace(row, us_per_call_again=other.us_per_call))
+    return replace(published, rows=rows)
+
 
 def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
     """Return the quickest round's microseconds per call, and the halves' gap.
@@ -2140,6 +2215,13 @@ def main() -> None:
 
     Each table is printed as it is measured, this being a run somebody
     watches, and printed through the same renderer that writes the page.
+
+    Then the machine is left alone and every table is timed again, and that
+    pass prints nothing: what its numbers buy is the drift line, and a
+    second set of tables on the terminal would be two answers where the page
+    carries one. The published pass is the first, which is the rule beside
+    `COOLING` and not a choice made after seeing both, and the run is dated
+    where that pass began rather than where the file was saved.
     """
     packages = provenance()
     print(rendered_provenance(packages))
@@ -2151,6 +2233,7 @@ def main() -> None:
             for label in [*labels([f.__name__ for f in rows]), *missing]
         ]
     )
+    began = moment()
     tables = []
     for title, rows, missing, group in TABLES:
         table = measured(title, rows, missing, group)
@@ -2158,10 +2241,22 @@ def main() -> None:
         print()
         tables.append(table)
 
+    print(
+        "the tables above are what is published; a second pass follows and"
+        " prints nothing, and what it buys is the drift line",
+        file=sys.stderr,
+    )
+    cooled()
+    again = moment()
+    tables = [
+        with_second_pass(table, measured(title, rows, missing, group))
+        for table, (title, rows, missing, group) in zip(tables, TABLES, strict=True)
+    ]
+
     saved = save(
         Measurement(
             benchmark=page_of(__file__),
-            run=taken_now(__file__, METHOD),
+            run=taken_now(__file__, METHOD, began=began, again=again),
             provenance=packages,
             tables=tables,
             # the page says what a timing contains in its own prose, above

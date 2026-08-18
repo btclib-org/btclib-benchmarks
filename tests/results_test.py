@@ -2,7 +2,7 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""The two things in the renderer that refuse rather than format.
+"""The three things in the renderer that refuse rather than format.
 
 `scripts/_results.py` is outside the coverage gate on purpose: a page is
 written by a command a person runs, and putting the rewording of a heading
@@ -22,7 +22,13 @@ reads the width from outside the module: `LABEL` moving is caught by
 caught by nothing at all -- widening it changes no rendering, only what is
 refused.
 
-`Timing` is the second, and what it refuses is a row stating two dispersions.
+`Measurement` is the second, and what it refuses is half of a second pass:
+a run naming the instant one began with no row measured twice, or rows
+measured twice under a run naming one instant. Either way the drift line is
+unstateable, and the page prints nothing rather than saying why -- which
+reads as a page that never took a second pass.
+
+`Timing` is the third, and what it refuses is a row stating two dispersions.
 Delete those two lines and nothing but the cases below goes red: the row renders
 as whichever field the property reads first, under a column whose page states
 one definition, which is the failure two keys for two statistics exist to
@@ -31,9 +37,9 @@ from a saved run, the second being the only way a file has.
 
 What is asserted throughout is the boundary and not the rendering, so this puts
 no page behind the suite: `labelled` is a pure function of a label and a
-string, and a refused row is refused before any table is built. Importing the
-module costs the gate nothing, `scripts/_results.py` being in coverage's
-`omit`.
+string, and a refused row or run is refused before any table is rendered.
+Importing the module costs the gate nothing, `scripts/_results.py` being in
+coverage's `omit`.
 """
 
 from __future__ import annotations
@@ -137,6 +143,77 @@ def test_a_saved_row_carrying_both_keys_is_refused() -> None:
     }
     with pytest.raises(ValueError, match="two dispersions"):
         _results._table_from_json(saved)
+
+
+def _measurement(
+    run: _results.Run, tables: list[_results.Table]
+) -> _results.Measurement:
+    """Return a measurement of one table, for the limits below to trip.
+
+    The provenance is empty because none of them reads it: what is under
+    test is the agreement between a run's second instant and the rows that
+    second pass produced.
+    """
+    return _results.Measurement(
+        benchmark="01-libsecp256k1",
+        run=run,
+        provenance=_results.Provenance(columns=[], rows=[]),
+        tables=tables,
+    )
+
+
+def _run(*, when_again: str | None) -> _results.Run:
+    """Return a run block naming one instant, or two."""
+    return _results.Run(
+        when="2026-08-18T13:41:00+02:00",
+        timezone="CEST",
+        python="3.13.14",
+        method="10 rounds per row in two halves, minimum kept",
+        command="uv run python scripts/01-libsecp256k1.py",
+        machine="Apple M5, macOS 26.6, arm64",
+        when_again=when_again,
+    )
+
+
+def _timed(*, again: float | None) -> list[_results.Table]:
+    """Return one table of one row, measured once or twice."""
+    return [
+        _results.Ratios(
+            title="1. one operation",
+            decimals=2,
+            rows=[
+                _results.Timing(
+                    label="dsa_sign", us_per_call=15.0, us_per_call_again=again
+                )
+            ],
+        )
+    ]
+
+
+def test_a_second_pass_in_the_rows_and_not_on_the_run_is_refused() -> None:
+    """The third limit, and the half of it a script trips going forwards.
+
+    A page states drift as one fact and one derivation: how far apart the two
+    passes began, and how far the rows they produced disagreed. Rows measured
+    twice under a run naming one instant leave the disagreement undatable, and
+    what a page rendered from it would print is no line at all -- silence that
+    reads as a page that never paid for a second pass.
+    """
+    with pytest.raises(ValueError, match="half of a second pass"):
+        _measurement(_run(when_again=None), _timed(again=15.05))
+
+
+def test_a_second_instant_with_nothing_measured_twice_is_refused() -> None:
+    """And the half it trips going the other way, which is the likelier one.
+
+    A script that slept and stamped the second instant but never ran the pass
+    is this shape, as is a page whose tables are all pairs or break-evens:
+    neither has a row a second pass could be a second pass of, so there is
+    nothing for the line to state and `max` over no row would raise inside the
+    renderer instead of here.
+    """
+    with pytest.raises(ValueError, match="half of a second pass"):
+        _measurement(_run(when_again="2026-08-18T13:52:00+02:00"), _timed(again=None))
 
 
 def test_every_label_the_pages_print_is_padded_alike() -> None:

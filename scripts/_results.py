@@ -47,6 +47,7 @@ from __future__ import annotations
 import json
 import math
 import platform
+import statistics
 import subprocess
 import tomllib
 from collections.abc import Sequence
@@ -165,6 +166,23 @@ class Timing:
     why an absent one is left out of the saved run rather than written as
     zero, a zero here being a measurement like any other.
 
+    `us_per_call_again` is what this row cost when the whole page was timed
+    a second time, a cooling gap later, on the pages that pay for a second
+    pass. It is not published as a number of its own and no column carries
+    it: what it is for is the run block's drift line, and the row is where
+    it is kept because the disagreement that line states is derived from
+    every row at once. `us_per_call` stays what the page prints, and it is
+    the first pass.
+
+    Which pass is published is a rule and not a choice per run, and the
+    rule survived being measured: the first two runs taken this way
+    disagreed about which pass is the quicker one -- one of them came out
+    quicker on the second pass for nearly every row and the other split
+    down the middle -- so there is no systematic difference to correct for
+    and nothing to prefer the later pass for. A fixed rule is then worth
+    more than a criterion, a criterion applied per run being how a page
+    ends up publishing whichever pass flattered it.
+
     Which of the two a row carries is also what heads the column, through
     `DISPERSION_HEADINGS`: that is row knowledge rather than page
     knowledge, so a table is headed by the statistic its own rows hold
@@ -177,6 +195,7 @@ class Timing:
 
     label: str
     us_per_call: float
+    us_per_call_again: float | None = None
     spread: float | None = None
     halves_apart: float | None = None
     deviation: float | None = None
@@ -330,6 +349,12 @@ class Run:
     that offset went by locally: an offset alone dates a run, and a reader
     on another continent reading `+02:00` has to work out which hour of
     whose day that was.
+
+    `when_again` is when the second pass began, on the pages that take one,
+    and it is absent on the pages that do not; `when` is the pass that is
+    published either way, so a page is always dated where the numbers on it
+    were taken. Two instants and not the gap between them: the gap is
+    arithmetic over two facts, and arithmetic here is the renderer's.
     """
 
     when: str
@@ -338,6 +363,7 @@ class Run:
     method: str
     command: str
     machine: str
+    when_again: str | None = None
 
 
 def page_of(script: str) -> str:
@@ -370,6 +396,47 @@ class Measurement:
     provenance: Provenance
     tables: Sequence[Table]
     timing_note: list[str] = field(default_factory=lambda: list(WHAT_A_TIMING_CONTAINS))
+
+    def __post_init__(self) -> None:
+        """Refuse a second pass that only one half of the file records.
+
+        The drift line is one fact and one derivation -- how far apart the
+        two passes began, and how far the rows they produced disagreed --
+        so a file carrying one of the two without the other describes a run
+        that nothing can state. Rows measured twice under a run naming one
+        instant leave the disagreement undatable; an instant with no row
+        behind it leaves nothing to disagree, which is what a page of
+        `Pairs` tables and a script that slept would produce.
+
+        Refused here rather than in the renderer because both halves are
+        written by the script that measured, and a run saved with one of
+        them missing is a bug in that script: a page rendered from it
+        would print no drift line and say nothing about why.
+        """
+        if bool(self.run.when_again) != bool(_measured_twice(self.tables)):
+            raise ValueError(f"{self.benchmark} records half of a second pass")
+
+
+def _measured_twice(tables: Sequence[Table]) -> list[tuple[float, float]]:
+    """Return every row's two passes, from the tables that have them.
+
+    Ratios only, those being the tables whose rows are one call timed: a
+    pair is two operations read against each other and a break-even is
+    three, so neither has a row a second pass could be a second pass *of*.
+    A page whose tables are all of those two shapes cannot state drift, and
+    `Measurement` refuses one that claims to.
+    """
+    passes: list[tuple[float, float]] = []
+    for table in tables:
+        if not isinstance(table, Ratios):
+            continue
+        for row in table.rows:
+            if not isinstance(row, Timing):
+                continue
+            again = row.us_per_call_again
+            if again is not None:
+                passes.append((row.us_per_call, again))
+    return passes
 
 
 # --- taking the run's own details ---------------------------------------
@@ -425,16 +492,39 @@ def _machine_file() -> dict[str, str]:
     return {key: str(value) for key, value in read.items()}
 
 
-def taken_now(script: str, method: str) -> Run:
+def moment() -> datetime:
+    """Return now, with the offset the machine is at.
+
+    One spelling of it, so that a script stamping the start of a pass and
+    this module stamping a run date the same way. Aware and not naive: a
+    run is dated for whoever reads it next, and an hour without an offset
+    is an hour in whose day nobody can say.
+    """
+    return datetime.now().astimezone()
+
+
+def taken_now(
+    script: str,
+    method: str,
+    began: datetime | None = None,
+    again: datetime | None = None,
+) -> Run:
     """Return the run block for a measurement being taken right now.
 
     Everything here is derived, `machine.toml` overriding only the machine
     itself: a detected line is the best this platform will say rather than
     the best there is, and a run on somebody else's hardware wants to name
     whose.
+
+    `began` is for a script that saves later than the pass it publishes
+    started, which every script taking two passes does: called with nothing
+    it dates the run at the call, and a run of minutes then carries the
+    instant it finished as the instant it happened. `again` is when the
+    second pass began, and a run naming one without rows measured twice is
+    refused by `Measurement` rather than published.
     """
     recorded = _machine_file()
-    now = datetime.now().astimezone()
+    now = began or moment()
     return Run(
         when=now.isoformat(timespec="seconds"),
         timezone=now.tzname() or "local",
@@ -442,6 +532,7 @@ def taken_now(script: str, method: str) -> Run:
         method=method,
         command=f"uv run python scripts/{Path(script).name}",
         machine=recorded.get("machine") or _detected_machine(),
+        when_again=None if again is None else again.isoformat(timespec="seconds"),
     )
 
 
@@ -499,7 +590,55 @@ def labelled(label: str, value: str) -> str:
     return line
 
 
-def rendered_run(run: Run) -> str:
+def _rendered_drift(measurement: Measurement) -> str | None:
+    """Return the line stating how far two passes of a page disagreed.
+
+    Nothing, on a page measured once: an absent line is a page that did
+    not pay for a second pass, which is what every page but the cheapest
+    of the five is, and writing it as zero would claim two passes that
+    agreed.
+
+    Every number here is derived and none is stored, which is this
+    module's rule and matters twice over for a summary: "the worst row on
+    this page" is not a measurement, and a stored one would go on saying
+    what it said while the rows under it changed. The worst is the upper
+    bound a reader wants and the median is what says whether the worst is
+    the page or one row of it -- two numbers because one of them alone is
+    either alarming without cause or reassuring without warrant.
+
+    And the count of rows the second pass came out quicker on, which is
+    the number that says what kind of thing the other two are. A count near
+    half the rows is the machine being noisy between two occasions; a count
+    at nearly all of them is a difference in one direction, which is not
+    noise and would mean the two passes are not two samples of one thing.
+    Both have been seen, on the first two runs taken this way, which is
+    the argument for printing the count rather than the magnitudes alone:
+    they came out near enough alike in the median and meant different
+    things.
+
+    Per cent and not microseconds, which is the one place this file states
+    a dispersion in another unit than the value: the rows of a page are
+    orders of magnitude apart, so a page-wide summary in microseconds
+    would be the slowest row's story every time.
+    """
+    when_again = measurement.run.when_again
+    if when_again is None:
+        return None
+    passes = _measured_twice(measurement.tables)
+    apart = [abs(again - first) / first * 100 for first, again in passes]
+    began = datetime.fromisoformat(measurement.run.when)
+    minutes = round((datetime.fromisoformat(when_again) - began).total_seconds() / 60)
+    quicker = sum(again < first for first, again in passes)
+    worst = _significant(max(apart), 2)
+    middle = _significant(statistics.median(apart), 2)
+    return labelled(
+        "drift",
+        f"second pass {minutes} min later: {quicker}/{len(passes)} quicker,"
+        f" median {middle}%, worst {worst}%",
+    )
+
+
+def rendered_run(measurement: Measurement) -> str:
     """Return the block naming when and where a run took place.
 
     Local time and UTC both: a run is dated for whoever reads it next, and
@@ -508,16 +647,23 @@ def rendered_run(run: Run) -> str:
     here: both are a claim about the numbers below rather than about the
     moment the clock started, so they open the output block instead, next
     to what they describe.
+
+    The whole measurement and not the run alone, because the last line of
+    this block is a fact about the run read against a number derived from
+    every row: how far apart the two passes began, and how far the rows
+    they produced disagreed. A block naming the first without the second
+    would date a second pass and withhold what it found.
     """
+    run = measurement.run
     when = datetime.fromisoformat(run.when)
     utc = when.astimezone(UTC)
-    return "\n".join(
-        [
-            labelled("when", f"{when:%Y-%m-%d %H:%M} {run.timezone} ({utc:%H:%M} UTC)"),
-            labelled("machine", run.machine),
-            labelled("python", run.python),
-        ]
-    )
+    lines = [
+        labelled("when", f"{when:%Y-%m-%d %H:%M} {run.timezone} ({utc:%H:%M} UTC)"),
+        labelled("machine", run.machine),
+        labelled("python", run.python),
+    ]
+    drift = _rendered_drift(measurement)
+    return "\n".join(lines if drift is None else [*lines, drift])
 
 
 def labels(names: list[str]) -> list[str]:
@@ -801,6 +947,7 @@ def _table_as_json(table: Table) -> dict[str, object]:
                     for key, value in (
                         ("label", row.label),
                         ("us_per_call", row.us_per_call),
+                        ("us_per_call_again", row.us_per_call_again),
                         ("spread", row.spread),
                         ("halves_apart", row.halves_apart),
                         ("deviation", row.deviation),
@@ -856,6 +1003,11 @@ def _table_from_json(saved: dict[str, object]) -> Table:
                 else Timing(
                     label=str(row["label"]),
                     us_per_call=float(row["us_per_call"]),
+                    us_per_call_again=(
+                        None
+                        if row.get("us_per_call_again") is None
+                        else float(row["us_per_call_again"])
+                    ),
                     spread=None if row.get("spread") is None else float(row["spread"]),
                     halves_apart=(
                         None
@@ -917,6 +1069,7 @@ def as_json(measurement: Measurement) -> dict[str, object]:
             "method": run.method,
             "command": run.command,
             "machine": run.machine,
+            **({} if run.when_again is None else {"when_again": run.when_again}),
         },
         "provenance": {
             "columns": measurement.provenance.columns,

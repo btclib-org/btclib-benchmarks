@@ -62,6 +62,22 @@ ordering — and note that neither can see the machine drifting between one
 run and the next, which is why the machine is given time to cool between
 scripts rather than watched for it afterwards.
 
+Drift itself is measured on one page. `01-libsecp256k1.py` times every
+table twice in one invocation, idle in between, publishes the first pass
+and states in its run block how far apart the two passes began, how many
+rows came out quicker the second time, and by how much. It is the cheapest
+of the five, which is why it is the one that pays for a second pass; the
+other four state nothing, and an absent line there is a page that did not
+pay for one rather than a page whose two passes agreed.
+
+Read the count before the magnitudes. Rows moving one way in the great
+majority is a difference between the two passes rather than noise between
+them, and a run that shows it is one to look at twice; a count near half
+the rows is an ordinary pair of passes. Which pass is published does not
+move either way — it is the first, and fixed, because a rule chosen once
+both passes are in hand is how a page comes to publish whichever of them
+flattered it.
+
 To measure a working tree instead of the published release:
 
 ```shell
