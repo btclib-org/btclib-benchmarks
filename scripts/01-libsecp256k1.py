@@ -88,6 +88,16 @@ check runs once, on the signature the loop settled on, so what it costs adds
 to the grinding row instead of multiplying with it -- a row that would print
 the sum of two the table already carries.
 
+Every signing row carries its flags in its name, the loop first and the check
+second, in the order a call performs them, and each names the argument the
+call spells: `grind` or `nogrind` and `verify` or `noverify`, and in the
+BIP340 tables the verification alone, that scheme having no
+octet to grind for. A row is named for what it did rather than for what its
+API let it decline, so the three packages that take no argument are named as
+plainly as the one that does. The alternative is a bare name, which says only
+that some other row in the same table was worth a suffix, and leaves a reader
+comparing a flag against a silence.
+
 Not every API spells both. `coincurve` signs and verifies in DER alone, so
 its rows in the compact tables are `NA`; `electrum-ecc` signs in the compact
 form and carries its own converter to DER, so both of its rows are its own
@@ -735,13 +745,13 @@ WRAPPERS = (
 )
 
 
-def dsa_sign_der_coincurve() -> None:
+def dsa_sign_der_coincurve_nogrind_noverify() -> None:
     """Time coincurve's ECDSA signing, over a digest it is told not to hash."""
     prvkey, msg = next(DSA_SIGN_DER)
     coincurve.PrivateKey(prvkey).sign(msg, hasher=None)
 
 
-def dsa_sign_der_secp256k1() -> None:
+def dsa_sign_der_secp256k1_nogrind_noverify() -> None:
     """Time secp256k1-py's ECDSA signing, its parsed signature taken to DER.
 
     `ecdsa_sign` returns the parsed signature and no bytes, alone of the
@@ -754,7 +764,7 @@ def dsa_sign_der_secp256k1() -> None:
     key.ecdsa_serialize(key.ecdsa_sign(msg, raw=True))
 
 
-def dsa_sign_der_electrum_ecc() -> None:
+def dsa_sign_der_electrum_ecc_nogrind_verify() -> None:
     """Time electrum-ecc's ECDSA signing, DER through its own encoder.
 
     `ecdsa_sign` answers in 64 bytes, so DER is `ecdsa_der_sig_from_
@@ -770,7 +780,7 @@ def dsa_sign_der_electrum_ecc() -> None:
     )
 
 
-def dsa_sign_der_btclib_secp256k1() -> None:
+def dsa_sign_der_btclib_secp256k1_nogrind_noverify() -> None:
     """Time btclib_secp256k1's ECDSA signing, bytes in and DER out.
 
     `verify=False`, which is one signature and nothing else: the row this
@@ -784,7 +794,7 @@ def dsa_sign_der_btclib_secp256k1() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, verify=False)
 
 
-def dsa_sign_der_btclib_secp256k1_checked() -> None:
+def dsa_sign_der_btclib_secp256k1_nogrind_verify() -> None:
     """Time the same signature with the check the package defaults to.
 
     `verify=True`: the signature is verified under the public key of the
@@ -802,14 +812,14 @@ def dsa_sign_der_btclib_secp256k1_checked() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, verify=True)
 
 
-def dsa_sign_compact_secp256k1() -> None:
+def dsa_sign_compact_secp256k1_nogrind_noverify() -> None:
     """Time secp256k1-py's ECDSA signing, its signature taken to 64 bytes."""
     prvkey, msg = next(DSA_SIGN_COMPACT)
     key = secp256k1.PrivateKey(prvkey, raw=True)
     key.ecdsa_serialize_compact(key.ecdsa_sign(msg, raw=True))
 
 
-def dsa_sign_compact_electrum_ecc() -> None:
+def dsa_sign_compact_electrum_ecc_nogrind_verify() -> None:
     """Time electrum-ecc's ECDSA signing, in the 64 bytes its API answers in.
 
     One signature rather than a ground one, and the verification
@@ -821,7 +831,7 @@ def dsa_sign_compact_electrum_ecc() -> None:
     electrum_ecc.ECPrivkey(prvkey).ecdsa_sign(msg, grind_r_value=False)
 
 
-def dsa_sign_der_electrum_ecc_grind() -> None:
+def dsa_sign_der_electrum_ecc_grind_verify() -> None:
     """Time electrum-ecc's ECDSA signing with the low-r grinding it defaults to.
 
     The row above it with `grind_r_value=False` is one signature; this is
@@ -843,7 +853,7 @@ def dsa_sign_der_electrum_ecc_grind() -> None:
     )
 
 
-def dsa_sign_compact_electrum_ecc_grind() -> None:
+def dsa_sign_compact_electrum_ecc_grind_verify() -> None:
     """Time electrum-ecc's grinding signature, in the form it answers in.
 
     The compact half of the pair above: the same loop, without the DER
@@ -853,7 +863,7 @@ def dsa_sign_compact_electrum_ecc_grind() -> None:
     electrum_ecc.ECPrivkey(prvkey).ecdsa_sign(msg, grind_r_value=True)
 
 
-def dsa_sign_der_btclib_secp256k1_grind() -> None:
+def dsa_sign_der_btclib_secp256k1_grind_noverify() -> None:
     """Time btclib_secp256k1's ECDSA signing with low-r grinding asked for.
 
     `grind=True` rather than a default, which is the difference from the
@@ -874,7 +884,7 @@ def dsa_sign_der_btclib_secp256k1_grind() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, grind=True, verify=False)
 
 
-def dsa_sign_compact_btclib_secp256k1_grind() -> None:
+def dsa_sign_compact_btclib_secp256k1_grind_noverify() -> None:
     """Time the same grinding signature, answered in 64 octets.
 
     `compact=True` is the serialization asked of the same call, not a
@@ -886,7 +896,7 @@ def dsa_sign_compact_btclib_secp256k1_grind() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, grind=True, verify=False)
 
 
-def dsa_sign_compact_btclib_secp256k1() -> None:
+def dsa_sign_compact_btclib_secp256k1_nogrind_noverify() -> None:
     """Time btclib_secp256k1's ECDSA signing, bytes in and 64 bytes out.
 
     `verify=False`, as the DER row above says.
@@ -895,7 +905,7 @@ def dsa_sign_compact_btclib_secp256k1() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, verify=False)
 
 
-def dsa_sign_compact_btclib_secp256k1_checked() -> None:
+def dsa_sign_compact_btclib_secp256k1_nogrind_verify() -> None:
     """Time the same signature checked, in the form the same call answers in.
 
     The compact half of the pair the DER table carries, and it prices the
@@ -907,7 +917,7 @@ def dsa_sign_compact_btclib_secp256k1_checked() -> None:
     btclib_secp256k1.dsa.sign(msg, prvkey, compact=True, verify=True)
 
 
-def dsa_held_coincurve() -> None:
+def dsa_held_coincurve_nogrind_noverify() -> None:
     """Time coincurve's ECDSA signing under a `PrivateKey` held already.
 
     `sign` reads `self.secret` and nothing the constructor derived, so what
@@ -920,7 +930,7 @@ def dsa_held_coincurve() -> None:
     key.sign(msg, hasher=None)
 
 
-def dsa_held_secp256k1() -> None:
+def dsa_held_secp256k1_nogrind_noverify() -> None:
     """Time secp256k1-py's ECDSA signing under a `PrivateKey` held already.
 
     `ecdsa_sign` reads `self.private_key`, so the constructor's public key
@@ -933,7 +943,7 @@ def dsa_held_secp256k1() -> None:
     key.ecdsa_serialize(key.ecdsa_sign(msg, raw=True))
 
 
-def dsa_held_electrum_ecc() -> None:
+def dsa_held_electrum_ecc_nogrind_verify() -> None:
     """Time electrum-ecc's ECDSA signing under an `ECPrivkey` held already.
 
     Its constructor multiplies the generator by the secret, serializes the
@@ -949,7 +959,7 @@ def dsa_held_electrum_ecc() -> None:
     )
 
 
-def ssa_sign_coincurve() -> None:
+def ssa_sign_coincurve_verify() -> None:
     """Time coincurve's BIP340 signing, the keypair and the check included.
 
     `sign_schnorr` builds the keypair fresh every call, its API caching
@@ -960,7 +970,7 @@ def ssa_sign_coincurve() -> None:
     coincurve.PrivateKey(prvkey).sign_schnorr(msg, AUX)
 
 
-def ssa_sign_secp256k1() -> None:
+def ssa_sign_secp256k1_noverify() -> None:
     """Time secp256k1-py's BIP340 signing, its keypair built per call.
 
     `schnorr_sign` takes no key but the one its `PrivateKey` constructor
@@ -972,7 +982,7 @@ def ssa_sign_secp256k1() -> None:
     secp256k1.PrivateKey(prvkey, raw=True).schnorr_sign(msg, None, raw=True)
 
 
-def ssa_sign_electrum_ecc() -> None:
+def ssa_sign_electrum_ecc_verify() -> None:
     """Time electrum-ecc's BIP340 signing, the keypair and the check included.
 
     `schnorr_sign` builds the keypair fresh every call and verifies the
@@ -983,7 +993,7 @@ def ssa_sign_electrum_ecc() -> None:
     electrum_ecc.ECPrivkey(prvkey).schnorr_sign(msg, aux_rand32=AUX)
 
 
-def ssa_sign_btclib_secp256k1() -> None:
+def ssa_sign_btclib_secp256k1_noverify() -> None:
     """Time btclib_secp256k1's BIP340 signing, bytes in and 64 bytes out.
 
     Each call builds the keypair, signs, and overwrites the keypair before
@@ -998,7 +1008,7 @@ def ssa_sign_btclib_secp256k1() -> None:
     btclib_secp256k1.ssa.sign(msg, prvkey, AUX, verify=False)
 
 
-def ssa_sign_btclib_secp256k1_checked() -> None:
+def ssa_sign_btclib_secp256k1_verify() -> None:
     """Time the same BIP340 signature with BIP340's own last step done.
 
     `verify=True`, and the pair with the row above is what that step
@@ -1014,7 +1024,7 @@ def ssa_sign_btclib_secp256k1_checked() -> None:
     btclib_secp256k1.ssa.sign(msg, prvkey, AUX, verify=True)
 
 
-def ssa_held_coincurve() -> None:
+def ssa_held_coincurve_verify() -> None:
     """Time coincurve's BIP340 signing under a `PrivateKey` held already.
 
     Holding one saves the constructor and nothing more: `sign_schnorr`
@@ -1027,7 +1037,7 @@ def ssa_held_coincurve() -> None:
     key.sign_schnorr(msg, AUX)
 
 
-def ssa_held_secp256k1() -> None:
+def ssa_held_secp256k1_noverify() -> None:
     """Time secp256k1-py's BIP340 signing under a `PrivateKey` held already.
 
     `self.keypair` is built by the constructor and `schnorr_sign` takes no
@@ -1039,7 +1049,7 @@ def ssa_held_secp256k1() -> None:
     key.schnorr_sign(msg, None, raw=True)
 
 
-def ssa_held_electrum_ecc() -> None:
+def ssa_held_electrum_ecc_verify() -> None:
     """Time electrum-ecc's BIP340 signing under an `ECPrivkey` held already.
 
     `schnorr_sign` builds the keypair from the held scalar on every call,
@@ -1050,7 +1060,7 @@ def ssa_held_electrum_ecc() -> None:
     key.schnorr_sign(msg, aux_rand32=AUX)
 
 
-def ssa_held_btclib_secp256k1() -> None:
+def ssa_held_btclib_secp256k1_noverify() -> None:
     """Time btclib_secp256k1's BIP340 signing under a held `ssa.Signer`.
 
     The keypair is the `Signer`'s and lives across calls, where `ssa.sign`
@@ -1066,7 +1076,7 @@ def ssa_held_btclib_secp256k1() -> None:
     signer.sign(msg, AUX, verify=False)
 
 
-def ssa_held_btclib_secp256k1_checked() -> None:
+def ssa_held_btclib_secp256k1_verify() -> None:
     """Time the held signer with BIP340's own last step done.
 
     `verify=True`. The row coincurve's and electrum-ecc's held rows are
@@ -1394,40 +1404,40 @@ DERIVE_ROWS = (
     derive_btclib_secp256k1,
 )
 DSA_SIGN_DER_ROWS = (
-    dsa_sign_der_coincurve,
-    dsa_sign_der_secp256k1,
-    dsa_sign_der_electrum_ecc,
-    dsa_sign_der_electrum_ecc_grind,
-    dsa_sign_der_btclib_secp256k1,
-    dsa_sign_der_btclib_secp256k1_checked,
-    dsa_sign_der_btclib_secp256k1_grind,
+    dsa_sign_der_coincurve_nogrind_noverify,
+    dsa_sign_der_secp256k1_nogrind_noverify,
+    dsa_sign_der_electrum_ecc_nogrind_verify,
+    dsa_sign_der_electrum_ecc_grind_verify,
+    dsa_sign_der_btclib_secp256k1_nogrind_noverify,
+    dsa_sign_der_btclib_secp256k1_nogrind_verify,
+    dsa_sign_der_btclib_secp256k1_grind_noverify,
 )
 DSA_SIGN_COMPACT_ROWS = (
-    dsa_sign_compact_secp256k1,
-    dsa_sign_compact_electrum_ecc,
-    dsa_sign_compact_electrum_ecc_grind,
-    dsa_sign_compact_btclib_secp256k1,
-    dsa_sign_compact_btclib_secp256k1_checked,
-    dsa_sign_compact_btclib_secp256k1_grind,
+    dsa_sign_compact_secp256k1_nogrind_noverify,
+    dsa_sign_compact_electrum_ecc_nogrind_verify,
+    dsa_sign_compact_electrum_ecc_grind_verify,
+    dsa_sign_compact_btclib_secp256k1_nogrind_noverify,
+    dsa_sign_compact_btclib_secp256k1_nogrind_verify,
+    dsa_sign_compact_btclib_secp256k1_grind_noverify,
 )
 DSA_HELD_ROWS = (
-    dsa_held_coincurve,
-    dsa_held_secp256k1,
-    dsa_held_electrum_ecc,
+    dsa_held_coincurve_nogrind_noverify,
+    dsa_held_secp256k1_nogrind_noverify,
+    dsa_held_electrum_ecc_nogrind_verify,
 )
 SSA_SIGN_ROWS = (
-    ssa_sign_coincurve,
-    ssa_sign_secp256k1,
-    ssa_sign_electrum_ecc,
-    ssa_sign_btclib_secp256k1,
-    ssa_sign_btclib_secp256k1_checked,
+    ssa_sign_coincurve_verify,
+    ssa_sign_secp256k1_noverify,
+    ssa_sign_electrum_ecc_verify,
+    ssa_sign_btclib_secp256k1_noverify,
+    ssa_sign_btclib_secp256k1_verify,
 )
 SSA_HELD_ROWS = (
-    ssa_held_coincurve,
-    ssa_held_secp256k1,
-    ssa_held_electrum_ecc,
-    ssa_held_btclib_secp256k1,
-    ssa_held_btclib_secp256k1_checked,
+    ssa_held_coincurve_verify,
+    ssa_held_secp256k1_noverify,
+    ssa_held_electrum_ecc_verify,
+    ssa_held_btclib_secp256k1_noverify,
+    ssa_held_btclib_secp256k1_verify,
 )
 PARSE_COMPRESSED_ROWS = (
     parse_compressed_coincurve,
@@ -1753,13 +1763,13 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
     (
         "12. ECDSA sign (32-byte digest, 64-byte compact out, a fresh key)",
         DSA_SIGN_COMPACT_ROWS,
-        ("coincurve",),
+        ("coincurve_nogrind_noverify",),
         "dsa-sign",
     ),
     (
         "13. ECDSA sign (32-byte digest, DER out, the key held already)",
         DSA_HELD_ROWS,
-        ("btclib_secp256k1",),
+        ("btclib_secp256k1_nogrind_noverify",),
         "dsa-sign",
     ),
     ("14. BIP340 sign (32-byte message, a fresh key)", SSA_SIGN_ROWS, (), "ssa-sign"),
