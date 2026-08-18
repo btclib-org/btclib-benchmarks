@@ -517,6 +517,93 @@ The release notes, which say what a user has to act on, are in
   so no measurement was involved and `render.py --check` stayed green
   throughout.
 
+- **Every signing row of the wrappers page says what its call did**, where a
+  bare package name used to mean whichever flag some other row in the same
+  table had thought worth mentioning. `grind` names the low-r loop, `verify`
+  the check made before a signature is handed back, in the order a call
+  performs them, and a bare name is a call that does neither — so the name is
+  a statement either way. The suffixes are the arguments the call spells, not
+  a package's peculiarity spelled out on its behalf: electrum-ecc's rows carry
+  `verify` though its `ecdsa_sign` takes no such argument, because that is
+  what it does, and coincurve's are bare because its signing does neither.
+
+  The first pass at this named both flags on every row, `nogrind_noverify`
+  included. It was correct and it read as a column of one word repeated,
+  which is the same objection this project makes to a call count printed on
+  every line: what a table says once belongs above it, not down it.
+
+  Each table now carries every combination its packages admit, which is four
+  rows for btclib-secp256k1 — the fourth, `grind` with `verify`, being the
+  one the page argued about while it lacked it. The check runs once, on the
+  signature the loop settled on, so grinding a checked signature was said to
+  cost what grinding an unchecked one costs; measured, the two differences
+  agree to a percent. A claim about two rows is better measured than argued.
+
+- **The wrappers page is ordered so that what a later table contains is read
+  before it**, and the derivation is a pair. Signing came last and the
+  derivation after it, on the argument that a derivation is the scale the
+  signing constructors are read against — which is a reason to put it before
+  them rather than after. So the order is the parse pair, the derivation
+  every key object performs as it is built, the tweak, verification, and
+  signing last because it parses no public key at all and what its tables
+  carry instead is a constructor.
+
+  The derivation answers both serializations now, as every other operation
+  here that touches a public key does, and the pair prices a negative
+  result: each package's two rows land inside the run's own agreement with
+  itself, so the octets of y cost less than the column can separate. That is
+  the whole asymmetry of the compressed form in one place — paid for on the
+  way in, once per parse, and never on the way out.
+
+  Three things were found while moving the tables. The derivation rows were
+  missing from the loop that calls every row once at import, having been
+  added to the page without being added to it. `tests/wrappers_test.py` had
+  no derivation case at all, and has one now against `secp256k1lab`'s own
+  generator multiplication, over both encodings. And the per-table call
+  counts were keyed by the table's number, which is an index into a page and
+  moves when the page is reordered: nothing at run time would have said so,
+  the count being printed beside the row it was used for, so a count that
+  followed the position would read as one that had been chosen. They are
+  keyed by the rows they belong to now.
+
+- **A row of the wrappers page ends where its own call ends, and says which
+  end that is.** The tweak tables timed every row to the compressed key
+  BIP32 stores, on the argument that timing each API's own answer would put
+  a tweak-and-serialize beside a tweak. True, and it left the other half
+  unmeasurable: three of the four answer with a key object, so the page was
+  charging them work no caller does in the middle of a chain, which
+  serializes the key it arrives at and not the ones it passed through. Both
+  are rows now, `octets` and `object`, and what the serialization costs is a
+  subtraction inside one table instead of a sentence. btclib-secp256k1 has
+  one row there because octets are what its key is rather than a
+  serialization it performed — and that row stands ahead of the other three
+  even where they stop at their own object.
+
+  The same suffix reaches the one other row whose answer is not what its
+  table's title says: secp256k1-py's `ecdsa_sign` returns a parsed signature
+  and no bytes, alone of the four, so its serialization is now priced in the
+  table that prints the encoding it serializes to. The two `object` rows are
+  one call over two slices of the pool, and they agree, which makes their
+  agreement a check on the pool rather than a second finding.
+
+  The held ECDSA table gains btclib-secp256k1, which read `NA` on the
+  argument that `dsa.sign` takes the 32 octets a caller already holds. True
+  of a plain signature and false of a checked one: the check verifies under a
+  public key, `sign` derives one per call when nobody hands it over, and
+  `pubkey=` is where a caller who has it puts it. So what the other three
+  keep inside a key object, this package keeps as the octets that are its
+  key, and what the row saves is that derivation less the parse of the
+  octets handed in — which the derivation table at the top of the page
+  measures on its own, by a different route, and agrees with. The bare row
+  stays `NA`, and the two together are one finding said twice: a signature
+  nobody checks needs no public key.
+
+  Every title now says which end of a call a key is at and which encoding it
+  is in, no width appearing without the word for it. The four ECDSA
+  verification tables are ordered by the key, the 64-byte signature first, so
+  a package's two signature encodings are adjacent tables and the same
+  signature under the two key encodings is one table apart.
+
 ### Packaging and CI
 
 - **The interpreter is 3.13, where the rest of btclib-org pins 3.14.**
