@@ -45,7 +45,7 @@ wrappers.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-18 09:16 CEST (07:16 UTC)
+when    : 2026-08-18 09:43 CEST (07:43 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -72,7 +72,7 @@ shapes — the keys as 32-byte scalars, the public keys derived from them, the
 signatures made once in the fixtures — and no row is handed an object a
 package built: whatever an API makes a caller construct before it can work is
 constructed inside the call that needs it. The two held signing tables are
-the exception, and holding the key is what they are about: tables 13 and 15
+the exception, and holding the key is what they are about: tables 15 and 17
 are handed the object each package offers a caller who will sign again, built
 from the keys of the fresh table each is paired with and in that table's
 order, so a pair prices the holding and no package is handed something another
@@ -111,13 +111,16 @@ command : uv run python scripts/01-libsecp256k1.py
 
 ## Results
 
-The order below is the argument rather than the operations' importance. The
-parse pair comes first because every verification and every tweak repeats one
-of those parses per call, so it is read isolated before being met eight more
-times inside something else. Signing comes last of the operations because it
-parses no public key at all, and the derivation after it is not a further
-operation in that sequence but the scale the signing tables' constructors are
-read against, which is why it is read once those are on the page.
+The order below is the argument rather than the operations' importance: what
+a later table contains is read before it. The parse pair comes first because
+every verification and every tweak repeats one of those parses per call, so it
+is read isolated before being met eight more times inside something else. The
+derivation follows, because every key object on this page performs one as it
+is built and nothing else on the page says how much of a constructor is the
+curve. Then the tweak, whose own body is a parse and one addition, then
+verification. Signing is last of the operations because it parses no public
+key at all — what its tables carry instead is a constructor, and a
+constructor is the derivation already read.
 
 Two habits of reading apply throughout. A pair of tables is read by
 subtracting, not by dividing — the ratio column is against the fastest row in
@@ -165,16 +168,16 @@ pages define the column they print where they introduce it.
 1. public key parse (a 65-byte uncompressed key)
                                         μs/call     vs best   halves
   btclib_secp256k1                         0.22       1.00x     0.00   (10x400,000 calls)
-  coincurve                                0.24       1.07x     0.00   (10x400,000 calls)
-  secp256k1                                0.64       2.86x     0.00   (10x400,000 calls)
-  electrum_ecc                             1.19       5.28x     0.01   (10x400,000 calls)
+  coincurve                                0.24       1.09x     0.00   (10x400,000 calls)
+  secp256k1                                0.64       2.87x     0.00   (10x400,000 calls)
+  electrum_ecc                             1.19       5.33x     0.01   (10x400,000 calls)
 
 2. public key parse (a 33-byte compressed key)
                                         μs/call     vs best   halves
-  btclib_secp256k1                         2.30       1.00x     0.00   (10x100,000 calls)
-  coincurve                                2.35       1.02x     0.00   (10x100,000 calls)
-  secp256k1                                2.75       1.19x     0.00   (10x100,000 calls)
-  electrum_ecc                             3.27       1.42x     0.00   (10x100,000 calls)
+  btclib_secp256k1                         2.33       1.00x     0.00   (10x100,000 calls)
+  coincurve                                2.39       1.03x     0.00   (10x100,000 calls)
+  secp256k1                                2.77       1.19x     0.01   (10x100,000 calls)
+  electrum_ecc                             3.31       1.42x     0.02   (10x100,000 calls)
 ```
 <!-- tables: parse: end -->
 
@@ -184,9 +187,10 @@ curve. The compressed parse of the same key costs many times it, and the
 difference is one field square root — recovering the y that the shorter
 encoding left out.
 
-That difference is the page's recurring subject, because every table after
-this one parses a public key inside each call. This pair is what to subtract
-from them, and the four packages agree on it closely enough that the
+That difference is the page's recurring subject, because every table that
+takes a public key parses one inside each call — which is every table below
+except the derivation pair, whose input is a secret. This pair is what to
+subtract from them, and the four packages agree on it closely enough that the
 subtraction is worth doing.
 
 electrum-ecc pays the most in both, and for a reason its own API states: an
@@ -195,43 +199,163 @@ libsecp256k1 read, so the constructor parses and then serializes the point
 back out to get them — and every later use parses again. Its verification and
 tweak rows are where that second parse is paid.
 
+### Public key from a private key
+
+<!-- tables: derive: begin -->
+```text
+3. public key from a private key (32-byte secret, 65-byte key out)
+                                        μs/call     vs best   halves
+  coincurve                                7.63       1.00x     0.01   (10x10,000 calls)
+  btclib_secp256k1                         7.72       1.01x     0.02   (10x10,000 calls)
+  secp256k1                               15.17       1.99x     0.04   (10x10,000 calls)
+  electrum_ecc                            16.77       2.20x     0.00   (10x10,000 calls)
+
+4. public key from a private key (32-byte secret, 33-byte key out)
+                                        μs/call     vs best   halves
+  coincurve                                7.62       1.00x     0.03   (10x10,000 calls)
+  btclib_secp256k1                         7.73       1.01x     0.00   (10x10,000 calls)
+  secp256k1                               15.20       1.99x     0.00   (10x10,000 calls)
+  electrum_ecc                            16.80       2.20x     0.01   (10x10,000 calls)
+```
+<!-- tables: derive: end -->
+
+This is the one operation on the page where the C library is most of what a
+row costs, which is either the argument for the pair or the argument against
+it: it prices libsecp256k1 rather than a wrapper, and it is the scale
+everything else is read against. It is here as the second of those, and early
+because of it — without it the held tables below price a key object at more
+than a signature and nothing on the page says how much of that is the curve.
+
+**The pair is the parse pair read the other way round.** Going in, the
+compressed form is an x whose y the parser solves for and the uncompressed
+form carries it, which is what tables 1 and 2 price. Coming out, the y is in
+hand whichever form is asked for, and what differs is whether its octets are
+written. So a package's two rows here differ by a serialization and by no
+arithmetic at all, where its two rows in the parse pair differ by a square
+root.
+
+**What the pair finds is that the serialization is free**, and it is a
+negative result stated rather than a table left out: every package's two rows
+land inside this run's own agreement with itself, so the octets of y cost less
+than the column can separate. Read against the parse pair that is the whole
+asymmetry of the compressed form — it is paid for on the way in, once per
+parse, and never on the way out.
+
+**Both tables split in two, and the split is whether a package will derive
+without building an object.** coincurve and btclib-secp256k1 each offer a call
+that takes octets and answers octets, and those two land together — one C
+library, one generator multiplication, and nothing left to do around it, which
+is the same evidence the held signing tables give further down the page.
+secp256k1-py and electrum-ecc have no such spelling: a public key is reached
+through `PrivateKey` and through `ECPrivkey`, each deriving as it is built. So
+those two rows are a constructor rather than a multiplication, and they come
+out at about twice what the other two charge.
+
+**Which puts the comparison inside one table**, where it otherwise has to be
+made by subtracting a held signing row from the fresh one below. A private-key
+constructor costs about twice a bare derivation, so the reading it invites —
+that building
+one costs a generator multiplication, because it performs one — accounts for
+about half of it. The rest is not the curve at all: it is Python objects and a
+crossing.
+
+Two routes to that, independent, and both worth having. For secp256k1-py and
+electrum-ecc the constructor *is* the row here, and it lands on what
+subtracting the held ECDSA row below from the fresh one says their
+construction costs: the same answer once by a measurement and once by a
+difference.
+coincurve is the third package that builds an object and the one where the two
+routes are not the same number — its row here skips the object, so the
+difference is where its constructor is, and that comes to about twice its own
+row. Which is the ratio again, from the one package that can be read both
+ways.
+
+Both tables end at octets, as the tweak tables below do and for the same
+reason: a point nobody serializes is not the operation a caller performs.
+
+### Public key tweak by a scalar
+
+<!-- tables: tweak: begin -->
+```text
+5. public key tweak by a scalar, a 65-byte key
+                                        μs/call     vs best   halves
+  btclib_secp256k1                        10.09       1.00x     0.00   (10x10,000 calls)
+  coincurve                               10.67       1.06x     0.01   (10x10,000 calls)
+  secp256k1                               14.20       1.41x     0.00   (10x10,000 calls)
+  electrum_ecc                            23.12       2.29x     0.05   (10x10,000 calls)
+
+6. public key tweak by a scalar, a 33-byte key
+                                        μs/call     vs best   halves
+  btclib_secp256k1                        12.21       1.00x     0.01   (10x10,000 calls)
+  coincurve                               12.83       1.05x     0.00   (10x10,000 calls)
+  secp256k1                               16.33       1.34x     0.01   (10x10,000 calls)
+  electrum_ecc                            25.31       2.07x     0.00   (10x10,000 calls)
+```
+<!-- tables: tweak: end -->
+
+BIP32's step rather than BIP32: none of these four packages implements
+derivation, and all four expose the primitive it is built from. The key
+encoding costs here what the parse pair says it costs, which is the first
+time on the page that the same square root is met inside something else.
+
+Octets in and octets out, in both tables. Only one of the four answers a tweak
+in bytes — the other three answer with a key object of their own — so a row
+timing each API's own answer would put a tweak-and-serialize beside a tweak,
+and the serialization is real work three of them would never have done. Every
+row therefore ends at the compressed key BIP32 stores, and pays whichever call
+its API makes a caller write to get there. It is the same 33 octets out of
+both tables: the pair varies the key that goes *in*, that being the difference
+it exists to price, and varying the answer along with it would leave the pair
+reading as neither difference.
+
+`electrum-ecc` is the exception on this page and the row worth reading. It
+has no tweak-add on `ECPubkey`, so its row multiplies the generator by the
+scalar and adds the two points — two crossings into the C library where the
+others make one, and a generator multiplication is not a crossing's worth of
+work but an operation's. That is why its row is last by about what the whole
+tweak costs the others, rather than by the small margin its other rows are
+behind by.
+
+BIP32 proper is in [the libraries table][libs], where the comparands are
+python libraries rather than secp256k1 wrappers.
+
 ### ECDSA verify
 
 <!-- tables: dsa-verify: begin -->
 ```text
-3. ECDSA verify (DER signature, a 65-byte key parsed per call)
+7. ECDSA verify (DER signature, a 65-byte key parsed per call)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        13.00       1.00x     0.00   (10x10,000 calls)
-  coincurve                               13.08       1.01x     0.01   (10x10,000 calls)
-  secp256k1                               13.58       1.04x     0.01   (10x10,000 calls)
-  electrum_ecc                            17.25       1.33x     0.03   (10x10,000 calls)
+  btclib_secp256k1                        13.06       1.00x     0.00   (10x10,000 calls)
+  coincurve                               13.14       1.01x     0.02   (10x10,000 calls)
+  secp256k1                               13.62       1.04x     0.01   (10x10,000 calls)
+  electrum_ecc                            17.36       1.33x     0.02   (10x10,000 calls)
 
-4. ECDSA verify (DER signature, a 33-byte key parsed per call)
+8. ECDSA verify (DER signature, a 33-byte key parsed per call)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        15.08       1.00x     0.01   (10x10,000 calls)
-  coincurve                               15.20       1.01x     0.01   (10x10,000 calls)
-  secp256k1                               15.69       1.04x     0.03   (10x10,000 calls)
-  electrum_ecc                            19.37       1.28x     0.00   (10x10,000 calls)
+  btclib_secp256k1                        15.16       1.00x     0.02   (10x10,000 calls)
+  coincurve                               15.28       1.01x     0.01   (10x10,000 calls)
+  secp256k1                               15.79       1.04x     0.01   (10x10,000 calls)
+  electrum_ecc                            19.55       1.29x     0.05   (10x10,000 calls)
 
-5. ECDSA verify (64-byte signature, a 65-byte key parsed per call)
+9. ECDSA verify (64-byte signature, a 65-byte key parsed per call)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        13.02       1.00x     0.01   (10x10,000 calls)
-  secp256k1                               13.60       1.04x     0.01   (10x10,000 calls)
-  electrum_ecc                            15.04       1.16x     0.02   (10x10,000 calls)
+  btclib_secp256k1                        13.04       1.00x     0.00   (10x10,000 calls)
+  secp256k1                               13.61       1.04x     0.01   (10x10,000 calls)
+  electrum_ecc                            15.13       1.16x     0.02   (10x10,000 calls)
   coincurve                                  NA
 
-6. ECDSA verify (64-byte signature, a 33-byte key parsed per call)
+10. ECDSA verify (64-byte signature, a 33-byte key parsed per call)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        15.11       1.00x     0.00   (10x10,000 calls)
-  secp256k1                               15.72       1.04x     0.01   (10x10,000 calls)
-  electrum_ecc                            17.17       1.14x     0.01   (10x10,000 calls)
+  btclib_secp256k1                        15.21       1.00x     0.04   (10x10,000 calls)
+  secp256k1                               15.79       1.04x     0.04   (10x10,000 calls)
+  electrum_ecc                            17.28       1.14x     0.03   (10x10,000 calls)
   coincurve                                  NA
 ```
 <!-- tables: dsa-verify: end -->
 
 Four tables, one per combination of the two encodings. Three packages can be
 read across the signature encoding at all — coincurve is not one of them, its
-API carrying no compact `ecdsa_verify`, which is what tables 5 and 6 print
+API carrying no compact `ecdsa_verify`, which is what tables 9 and 10 print
 `NA` for — and one of the three is the exception the next paragraph is about.
 So the reading is over two: for btclib-secp256k1 and secp256k1-py, DER and the
 64-byte form differ by a header libsecp256k1 reads once, and a package's two
@@ -265,7 +389,7 @@ that method enforcing the low half by default. So for this one package the two
 rows are not one operation in two encodings, and a reader subtracting them is
 subtracting a policy along with a parse. Of the other three, two refuse the
 malleable half in both encodings and coincurve refuses it in the only encoding
-it has, tables 5 and 6 printing it `NA`. `tests/wrappers_test.py` states all of
+it has, tables 9 and 10 printing it `NA`. `tests/wrappers_test.py` states all of
 that as cases, over the malleable pair and over an r or an s outside the group,
 which is the range check the compact form has no length field to make.
 
@@ -283,19 +407,19 @@ a caller do around the call, not the verification itself.
 
 <!-- tables: ssa-verify: begin -->
 ```text
-7. BIP340 verify (a 65-byte key handed in, the x-only one taken from it)
+11. BIP340 verify (a 65-byte key handed in, the x-only one taken from it)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        13.31       1.00x     0.00   (10x10,000 calls)
-  secp256k1                               13.60       1.02x     0.00   (10x10,000 calls)
-  electrum_ecc                            17.11       1.29x     0.00   (10x10,000 calls)
+  btclib_secp256k1                        13.55       1.00x     0.00   (10x10,000 calls)
+  secp256k1                               13.98       1.03x     0.09   (10x10,000 calls)
+  electrum_ecc                            17.54       1.29x     0.17   (10x10,000 calls)
   coincurve                                  NA
 
-8. BIP340 verify (the x-only key handed in, parsed per call)
+12. BIP340 verify (the x-only key handed in, parsed per call)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        15.17       1.00x     0.01   (10x10,000 calls)
-  coincurve                               15.25       1.01x     0.00   (10x10,000 calls)
-  secp256k1                               15.73       1.04x     0.02   (10x10,000 calls)
-  electrum_ecc                            19.18       1.26x     0.04   (10x10,000 calls)
+  btclib_secp256k1                        15.48       1.00x     0.15   (10x10,000 calls)
+  coincurve                               15.60       1.01x     0.03   (10x10,000 calls)
+  secp256k1                               15.92       1.03x     0.01   (10x10,000 calls)
+  electrum_ecc                            19.40       1.25x     0.09   (10x10,000 calls)
 ```
 <!-- tables: ssa-verify: end -->
 
@@ -315,81 +439,35 @@ coincurve is absent from the 65-byte table because its API has no such
 spelling: `PublicKeyXOnly` is the only type of its that carries a Schnorr
 `verify`.
 
-### Public key tweak by a scalar
-
-<!-- tables: tweak: begin -->
-```text
-9. public key tweak by a scalar, a 65-byte key
-                                        μs/call     vs best   halves
-  btclib_secp256k1                        10.08       1.00x     0.01   (10x10,000 calls)
-  coincurve                               10.62       1.05x     0.02   (10x10,000 calls)
-  secp256k1                               14.18       1.41x     0.03   (10x10,000 calls)
-  electrum_ecc                            22.99       2.28x     0.04   (10x10,000 calls)
-
-10. public key tweak by a scalar, a 33-byte key
-                                        μs/call     vs best   halves
-  btclib_secp256k1                        12.18       1.00x     0.00   (10x10,000 calls)
-  coincurve                               12.75       1.05x     0.04   (10x10,000 calls)
-  secp256k1                               16.22       1.33x     0.03   (10x10,000 calls)
-  electrum_ecc                            25.18       2.07x     0.02   (10x10,000 calls)
-```
-<!-- tables: tweak: end -->
-
-BIP32's step rather than BIP32: none of these four packages implements
-derivation, and all four expose the primitive it is built from. The key
-encoding costs here what it has cost everywhere else, which is the sixth
-reading of the same square root.
-
-Octets in and octets out, in both tables. Only one of the four answers a tweak
-in bytes — the other three answer with a key object of their own — so a row
-timing each API's own answer would put a tweak-and-serialize beside a tweak,
-and the serialization is real work three of them would never have done. Every
-row therefore ends at the compressed key BIP32 stores, and pays whichever call
-its API makes a caller write to get there. It is the same 33 octets out of
-both tables: the pair varies the key that goes *in*, that being the difference
-it exists to price, and varying the answer along with it would leave the pair
-reading as neither difference.
-
-`electrum-ecc` is the exception on this page and the row worth reading. It
-has no tweak-add on `ECPubkey`, so its row multiplies the generator by the
-scalar and adds the two points — two crossings into the C library where the
-others make one, and a generator multiplication is not a crossing's worth of
-work but an operation's. That is why its row is last by about what the whole
-tweak costs the others, rather than by the small margin its other rows are
-behind by.
-
-BIP32 proper is in [the libraries table][libs], where the comparands are
-python libraries rather than secp256k1 wrappers.
-
 ### ECDSA sign
 
 <!-- tables: dsa-sign: begin -->
 ```text
-11. ECDSA sign (32-byte digest, DER out, a fresh key)
+13. ECDSA sign (32-byte digest, DER out, a fresh key)
                                         μs/call     vs best   halves
-  btclib_secp256k1_nogrind_noverify       11.95       1.00x     0.02   (10x10,000 calls)
-  btclib_secp256k1_grind_noverify         24.08       2.01x     0.00   (10x10,000 calls)
-  coincurve_nogrind_noverify              26.66       2.23x     0.05   (10x10,000 calls)
-  secp256k1_nogrind_noverify              26.66       2.23x     0.01   (10x10,000 calls)
-  btclib_secp256k1_nogrind_verify         32.24       2.70x     0.07   (10x10,000 calls)
-  electrum_ecc_nogrind_verify             47.41       3.97x     0.00   (10x10,000 calls)
-  electrum_ecc_grind_verify               60.11       5.03x     0.02   (10x10,000 calls)
+  btclib_secp256k1_nogrind_noverify       11.97       1.00x     0.06   (10x10,000 calls)
+  btclib_secp256k1_grind_noverify         24.09       2.01x     0.02   (10x10,000 calls)
+  coincurve_nogrind_noverify              26.72       2.23x     0.01   (10x10,000 calls)
+  secp256k1_nogrind_noverify              26.73       2.23x     0.03   (10x10,000 calls)
+  btclib_secp256k1_nogrind_verify         32.32       2.70x     0.08   (10x10,000 calls)
+  electrum_ecc_nogrind_verify             47.62       3.98x     0.07   (10x10,000 calls)
+  electrum_ecc_grind_verify               60.19       5.03x     0.12   (10x10,000 calls)
 
-12. ECDSA sign (32-byte digest, 64-byte compact out, a fresh key)
+14. ECDSA sign (32-byte digest, 64-byte compact out, a fresh key)
                                         μs/call     vs best   halves
-  btclib_secp256k1_nogrind_noverify       11.86       1.00x     0.00   (10x10,000 calls)
-  btclib_secp256k1_grind_noverify         24.07       2.03x     0.02   (10x10,000 calls)
-  secp256k1_nogrind_noverify              26.49       2.23x     0.08   (10x10,000 calls)
-  btclib_secp256k1_nogrind_verify         32.13       2.71x     0.03   (10x10,000 calls)
-  electrum_ecc_nogrind_verify             45.10       3.80x     0.07   (10x10,000 calls)
-  electrum_ecc_grind_verify               57.92       4.89x     0.01   (10x10,000 calls)
+  btclib_secp256k1_nogrind_noverify       11.86       1.00x     0.04   (10x10,000 calls)
+  btclib_secp256k1_grind_noverify         24.08       2.03x     0.02   (10x10,000 calls)
+  secp256k1_nogrind_noverify              26.55       2.24x     0.04   (10x10,000 calls)
+  btclib_secp256k1_nogrind_verify         32.21       2.72x     0.03   (10x10,000 calls)
+  electrum_ecc_nogrind_verify             45.23       3.81x     0.05   (10x10,000 calls)
+  electrum_ecc_grind_verify               58.07       4.90x     0.03   (10x10,000 calls)
   coincurve_nogrind_noverify                 NA
 
-13. ECDSA sign (32-byte digest, DER out, the key held already)
+15. ECDSA sign (32-byte digest, DER out, the key held already)
                                         μs/call     vs best   halves
   coincurve_nogrind_noverify              11.59       1.00x     0.01   (10x10,000 calls)
-  secp256k1_nogrind_noverify              11.72       1.01x     0.01   (10x10,000 calls)
-  electrum_ecc_nogrind_verify             30.82       2.66x     0.03   (10x10,000 calls)
+  secp256k1_nogrind_noverify              11.73       1.01x     0.01   (10x10,000 calls)
+  electrum_ecc_nogrind_verify             30.85       2.66x     0.01   (10x10,000 calls)
   btclib_secp256k1_nogrind_noverify          NA
 ```
 <!-- tables: dsa-sign: end -->
@@ -502,21 +580,21 @@ a fraction because its base is nearly all something else.
 
 <!-- tables: ssa-sign: begin -->
 ```text
-14. BIP340 sign (32-byte message, a fresh key)
+16. BIP340 sign (32-byte message, a fresh key)
                                         μs/call     vs best   halves
-  btclib_secp256k1_noverify               15.69       1.00x     0.01   (10x10,000 calls)
-  secp256k1_noverify                      22.59       1.44x     0.02   (10x10,000 calls)
-  btclib_secp256k1_verify                 28.99       1.85x     0.04   (10x10,000 calls)
-  coincurve_verify                        43.10       2.75x     0.06   (10x10,000 calls)
-  electrum_ecc_verify                     48.70       3.10x     0.01   (10x10,000 calls)
+  btclib_secp256k1_noverify               15.73       1.00x     0.04   (10x10,000 calls)
+  secp256k1_noverify                      22.62       1.44x     0.03   (10x10,000 calls)
+  btclib_secp256k1_verify                 29.07       1.85x     0.02   (10x10,000 calls)
+  coincurve_verify                        43.10       2.74x     0.01   (10x10,000 calls)
+  electrum_ecc_verify                     48.80       3.10x     0.02   (10x10,000 calls)
 
-15. BIP340 sign (32-byte message, the key held already)
+17. BIP340 sign (32-byte message, the key held already)
                                         μs/call     vs best   halves
-  secp256k1_noverify                       7.78       1.00x     0.01   (10x10,000 calls)
-  btclib_secp256k1_noverify                8.18       1.05x     0.00   (10x10,000 calls)
-  btclib_secp256k1_verify                 21.36       2.74x     0.03   (10x10,000 calls)
-  coincurve_verify                        28.09       3.61x     0.01   (10x10,000 calls)
-  electrum_ecc_verify                     32.01       4.11x     0.04   (10x10,000 calls)
+  secp256k1_noverify                       7.86       1.00x     0.03   (10x10,000 calls)
+  btclib_secp256k1_noverify                8.21       1.04x     0.01   (10x10,000 calls)
+  btclib_secp256k1_verify                 21.45       2.73x     0.08   (10x10,000 calls)
+  coincurve_verify                        28.13       3.58x     0.12   (10x10,000 calls)
+  electrum_ecc_verify                     32.11       4.09x     0.24   (10x10,000 calls)
 ```
 <!-- tables: ssa-sign: end -->
 
@@ -642,56 +720,6 @@ the same argument: btclib has grown a `verify` keyword on both its signing
 calls and on that signer, so a held row there prices a policy the caller
 chooses rather than the only one on offer. That was [ISS 23][i23]'s question,
 and what is left of it is a run of those pages rather than a decision.
-
-### Public key from a private key
-
-<!-- tables: derive: begin -->
-```text
-16. public key from a private key (32-byte secret, 33-byte key out)
-                                        μs/call     vs best   halves
-  coincurve                                7.61       1.00x     0.02   (10x10,000 calls)
-  btclib_secp256k1                         7.70       1.01x     0.00   (10x10,000 calls)
-  secp256k1                               15.18       2.00x     0.03   (10x10,000 calls)
-  electrum_ecc                            16.65       2.19x     0.01   (10x10,000 calls)
-```
-<!-- tables: derive: end -->
-
-This is the one operation on the page where the C library is most of what a
-row costs, which is either the argument for the row or the argument against
-it: it prices libsecp256k1 rather than a wrapper, and it is the scale
-everything else is read against. It is here as the second of those. Without it
-the held tables above price a key object at more than a signature and nothing
-on the page says how much of that is the curve.
-
-**The table splits in two, and the split is whether a package will derive
-without building an object.** coincurve and btclib-secp256k1 each offer a call
-that takes octets and answers octets, and those two land together — one C
-library, one generator multiplication, and nothing left to do around it, which
-is the same evidence the held table gives one operation further on.
-secp256k1-py and electrum-ecc have no such spelling: a public key is reached
-through `PrivateKey` and through `ECPrivkey`, each deriving as it is built. So
-those two rows are a constructor rather than a multiplication, and they come
-out at about twice what the other two charge.
-
-**Which puts the comparison inside one table**, where it otherwise has to be
-made by subtracting the held row from the fresh one. A private-key constructor
-costs about twice a bare derivation, so the reading it invites — that building
-one costs a generator multiplication, because it performs one — accounts for
-about half of it. The rest is not the curve at all: it is Python objects and a
-crossing.
-
-Two routes to that, independent, and both worth having. For secp256k1-py and
-electrum-ecc the constructor *is* the row here, and it lands on what
-subtracting the held ECDSA row from the fresh one says their construction
-costs: the same answer once by a measurement and once by a difference.
-coincurve is the third package that builds an object and the one where the two
-routes are not the same number — its row here skips the object, so the
-difference is where its constructor is, and that comes to about twice its own
-row. Which is the ratio again, from the one package that can be read both
-ways.
-
-It ends at octets, as the tweak tables do and for the same reason: a point
-nobody serializes is not the operation a caller performs.
 
 ## What the rows leave out
 

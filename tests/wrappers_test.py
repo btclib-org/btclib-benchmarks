@@ -13,9 +13,10 @@ and ECDSA verification of a DER signature under an uncompressed key, and
 those three are where its published files stop.
 
 What is left is signing ECDSA, grinding for a low r, parsing a public key,
-verifying under a compressed key or a compact signature, verifying BIP340
-against a full public key, and tweaking a point. No file publishes vectors
-for most of them, so what is checked instead is agreement: four
+deriving one from a secret, verifying under a compressed key or a compact
+signature, verifying BIP340 against a full public key, and tweaking a point.
+No file publishes vectors for most of them, so what is checked instead is
+agreement: four
 implementations of one library must answer identically, and where a property
 can be stated without a second implementation -- a ground signature has a low
 r, a parse round-trips, the tweak does not depend on how the key was
@@ -995,6 +996,54 @@ def test_bip340_answers_the_same_under_a_full_key_as_under_its_x(
     for package, verify in SSA_VERIFIERS_FULL.items():
         assert verify(vector.msg, _uncompressed(vector.prvkey), vector.sig), package
         assert verify(vector.msg, _compressed(vector.prvkey), vector.sig), package
+
+
+# --- the derivation, which every constructor on that page performs -------
+
+# each package's own spelling, in both encodings, which is what its two rows
+# time. secp256k1-py and electrum-ecc reach a public key only through a
+# private-key object, and that is the row's finding rather than the test's
+# problem: what is checked is the octets, however they were arrived at
+DERIVERS: dict[str, Callable[[bytes, bool], bytes]] = {
+    "btclib_secp256k1": lambda prvkey, compressed: (
+        btclib_secp256k1.keys.pubkey_from_prvkey(prvkey, compressed=compressed)
+    ),
+    "coincurve": lambda prvkey, compressed: coincurve.PublicKey.from_valid_secret(
+        prvkey
+    ).format(compressed=compressed),
+    "secp256k1-py": lambda prvkey, compressed: secp256k1.PrivateKey(
+        prvkey, raw=True
+    ).pubkey.serialize(compressed=compressed),
+    "electrum-ecc": lambda prvkey, compressed: electrum_ecc.ECPrivkey(
+        prvkey
+    ).get_public_key_bytes(compressed=compressed),
+}
+
+
+@pytest.mark.parametrize("vector", SIGNING, ids=_ids())
+def test_the_derivation_is_one_point_in_both_encodings(
+    vector: _vectors.Signing,
+) -> None:
+    """Four wrappers, two serializations, one multiplication underneath.
+
+    Against `secp256k1lab` rather than against each other alone, for the
+    reason the tweak is: four wrappers of one C library can agree by calling
+    it the same wrong way, and the fifth multiplies the generator in Python.
+
+    The two encodings are checked as one point rather than as two answers,
+    because that is what the benchmark's pair claims when it prints them
+    beside each other -- a package whose compressed form was not its own
+    uncompressed form's x would make that pair a comparison of two points.
+    """
+    scalar = secp256k1lab.secp256k1.Scalar(  # type: ignore[no-untyped-call]
+        int.from_bytes(vector.prvkey, "big")
+    )
+    point = scalar * secp256k1lab.secp256k1.G
+    expected = {True: point.to_bytes_compressed(), False: point.to_bytes_uncompressed()}
+
+    for package, derive in DERIVERS.items():
+        for compressed, octets in expected.items():
+            assert derive(vector.prvkey, compressed) == octets, package
 
 
 # --- the tweak, which nothing else in the suite touches -----------------

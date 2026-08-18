@@ -18,11 +18,13 @@ this module leaves the bindings on for the rest of the process.
 
 Measured are ECDSA and BIP340 signing and verification, a public key tweaked
 by a scalar, which is BIP32's step -- none of the four implements BIP32
-itself, and all four expose the primitive it is built from -- and the parse
+itself, and all four expose the primitive it is built from -- the parse
 of a public key on its own, which is the step the verification and tweak
-rows repeat per call. `electrum-ecc` has no tweak-add on `ECPubkey`, so it
-reaches the same point as a scalar times the generator plus an addition: two
-crossings where the others make one.
+rows repeat per call, and the derivation of a public key from a secret,
+which is the multiplication a key object's constructor performs and the
+scale those constructors are read against. `electrum-ecc` has no tweak-add
+on `ECPubkey`, so it reaches the same point as a scalar times the generator
+plus an addition: two crossings where the others make one.
 
 Signing and verifying are two tables each, one per serialization: DER, which
 is what a transaction carries, and the 64-byte compact form, which is what a
@@ -36,6 +38,13 @@ of a public key lives: the compressed form is an x whose y the parser has
 to solve for, and the uncompressed form carries it. The parse tables are
 that difference on its own, verification is it twice over, once per
 signature encoding, and so is the tweak.
+
+The derivation pair is the same two forms read the other way round, and it
+is the one place the difference is a serialization rather than a square
+root: nothing has to be solved for on the way out, the y being in hand
+already, so what the pair prices is whether its octets are written. What
+that comes to is worth having beside the parse pair, which prices the
+same encoding going in.
 
 BIP340 verification is a pair for the same reason, over a different
 difference. It verifies against an x-only key, and a caller either holds one
@@ -185,13 +194,13 @@ costs, which is a different question from the one every row is being asked.
 
 The two signing pairs are where that different question gets asked, and each
 asks it of every package at once, which is what keeps it a measurement. Table
-14 signs under a key each row is handed as bytes; table 15 signs under the
+16 signs under a key each row is handed as bytes; table 17 signs under the
 object each package offers a caller who will sign again -- coincurve's and
 secp256k1-py's `PrivateKey`, electrum-ecc's `ECPrivkey`, btclib_secp256k1's
-`ssa.Signer` -- built in the fixtures from table 14's own keys, in table 14's
+`ssa.Signer` -- built in the fixtures from table 16's own keys, in table 16's
 order. So the pair prices holding the key and nothing else, and no package is
-handed something another package was not. Table 13 is the same question asked
-of table 11's ECDSA rows, over table 11's keys and in its order.
+handed something another package was not. Table 15 is the same question asked
+of table 13's ECDSA rows, over table 13's keys and in its order.
 
 What the pair finds is that holding a key and holding what a signature is
 made from are two different things, and an API's shape does not say which one
@@ -227,7 +236,7 @@ it.
 
 It is a toll BIP340 charges and ECDSA does not: signing a message with
 Schnorr starts from a keypair, where ECDSA takes the secret key as it is.
-Which is the whole of what makes table 13 a different finding rather than
+Which is the whole of what makes table 15 a different finding rather than
 the same one in another scheme. Two of the four build a key object for ECDSA
 as well -- coincurve's `PrivateKey` derives a public key and an x-only one,
 secp256k1-py's derives a public key and the keypair its BIP340 row saves --
@@ -243,7 +252,7 @@ is asked.
 
 btclib_secp256k1 is `NA` there, and that is the finding rather than a gap:
 `dsa.sign` takes the 32 bytes, so a caller who will sign again holds what a
-caller who will sign once holds, and its row in table 11 is already the held
+caller who will sign once holds, and its row in table 13 is already the held
 shape. A row under another title calling the same function on the same slice
 would print a number the table above it carries.
 
@@ -495,7 +504,7 @@ MESSAGES = _inputs.messages()
 
 # 65 bytes, the uncompressed form every one of the four parses, so that a
 # verify row is handed the same key as every other verify row. The 33-byte
-# form beside it is what tables 4 and 5 price against each other: the same
+# form beside it is what each verify pair prices against the other: the same
 # key, one encoding carrying its y and the other making the parser solve
 # for it -- cut from the uncompressed bytes rather than derived a second
 # time, the parity of y and x being both already there
@@ -637,10 +646,14 @@ TWEAK = cycle(list(zip(_slice(9, PUBKEYS), _slice(9, PRVKEYS), strict=True)))
 TWEAK_33 = cycle(
     list(zip(_slice(9, PUBKEYS_COMPRESSED), _slice(9, PRVKEYS), strict=True))
 )
-# and the secret keys the derivation table multiplies the generator by, on
-# the tenth slice -- which is the last one the pool holds, so a table added
-# after this either shares a slice with a reason or the pool grows
-DERIVE = cycle(_slice(10, PRVKEYS))
+# and the secret keys the derivation tables multiply the generator by, on
+# the tenth slice -- which is the last one the pool holds. The pair shares
+# it, as the tweak pair shares the ninth and for the same reason: the two
+# tables are one operation over one set of secrets, and what differs is the
+# encoding they answer in. A table that is not a second encoding of one of
+# these either shares a slice with a reason of its own or the pool grows
+DERIVE_65 = cycle(_slice(10, PRVKEYS))
+DERIVE_33 = cycle(_slice(10, PRVKEYS))
 
 
 # When each of these builds was published, read from the index -- where
@@ -1357,18 +1370,58 @@ def tweak_33_btclib_secp256k1() -> None:
     btclib_secp256k1.keys.pubkey_tweak_add(pubkey, tweak, compressed=True)
 
 
-def derive_coincurve() -> None:
+def derive_65_coincurve() -> None:
+    """Time coincurve's derivation, taken to the 65 octets of a key.
+
+    `from_valid_secret` and not `PrivateKey(...).public_key`: the row is the
+    derivation and nothing else, where the constructor would carry the very
+    Python object this table exists to be subtracted from.
+    """
+    prvkey = next(DERIVE_65)
+    coincurve.PublicKey.from_valid_secret(prvkey).format(compressed=False)
+
+
+def derive_65_secp256k1() -> None:
+    """Time secp256k1-py's derivation, taken to 65 octets.
+
+    Its only spelling goes through the private-key object, `pubkey` being an
+    attribute that object computes -- so this row alone cannot be the bare
+    multiplication, and what it prices is the same constructor the signing
+    tables pay. That is the finding rather than a flaw in the row: the
+    package offers no way to derive without building one.
+    """
+    prvkey = next(DERIVE_65)
+    secp256k1.PrivateKey(prvkey, raw=True).pubkey.serialize(compressed=False)
+
+
+def derive_65_electrum_ecc() -> None:
+    """Time electrum-ecc's derivation, taken to 65 octets.
+
+    `ECPrivkey` derives on construction, so the same reading applies as to
+    secp256k1-py's row above.
+    """
+    prvkey = next(DERIVE_65)
+    electrum_ecc.ECPrivkey(prvkey).get_public_key_bytes(compressed=False)
+
+
+def derive_65_btclib_secp256k1() -> None:
+    """Time btclib_secp256k1's derivation, bytes in and 65 bytes out."""
+    prvkey = next(DERIVE_65)
+    btclib_secp256k1.keys.pubkey_from_prvkey(prvkey, compressed=False)
+
+
+def derive_33_coincurve() -> None:
     """Time coincurve's derivation, taken to the 33 octets of a key.
 
     `from_valid_secret` and not `PrivateKey(...).public_key`: the row is the
     derivation and nothing else, where the constructor would carry the very
     Python object this table exists to be subtracted from.
     """
-    prvkey = next(DERIVE)
+    prvkey = next(DERIVE_33)
     coincurve.PublicKey.from_valid_secret(prvkey).format(compressed=True)
 
 
-def derive_secp256k1() -> None:
+def derive_33_secp256k1() -> None:
     """Time secp256k1-py's derivation, taken to 33 octets.
 
     Its only spelling goes through the private-key object, `pubkey` being an
@@ -1377,31 +1430,37 @@ def derive_secp256k1() -> None:
     tables pay. That is the finding rather than a flaw in the row: the
     package offers no way to derive without building one.
     """
-    prvkey = next(DERIVE)
+    prvkey = next(DERIVE_33)
     secp256k1.PrivateKey(prvkey, raw=True).pubkey.serialize(compressed=True)
 
 
-def derive_electrum_ecc() -> None:
+def derive_33_electrum_ecc() -> None:
     """Time electrum-ecc's derivation, taken to 33 octets.
 
     `ECPrivkey` derives on construction, so the same reading applies as to
     secp256k1-py's row above.
     """
-    prvkey = next(DERIVE)
+    prvkey = next(DERIVE_33)
     electrum_ecc.ECPrivkey(prvkey).get_public_key_bytes(compressed=True)
 
 
-def derive_btclib_secp256k1() -> None:
+def derive_33_btclib_secp256k1() -> None:
     """Time btclib_secp256k1's derivation, bytes in and bytes out."""
-    prvkey = next(DERIVE)
+    prvkey = next(DERIVE_33)
     btclib_secp256k1.keys.pubkey_from_prvkey(prvkey, compressed=True)
 
 
-DERIVE_ROWS = (
-    derive_coincurve,
-    derive_secp256k1,
-    derive_electrum_ecc,
-    derive_btclib_secp256k1,
+DERIVE_65_ROWS = (
+    derive_65_coincurve,
+    derive_65_secp256k1,
+    derive_65_electrum_ecc,
+    derive_65_btclib_secp256k1,
+)
+DERIVE_33_ROWS = (
+    derive_33_coincurve,
+    derive_33_secp256k1,
+    derive_33_electrum_ecc,
+    derive_33_btclib_secp256k1,
 )
 DSA_SIGN_DER_ROWS = (
     dsa_sign_der_coincurve_nogrind_noverify,
@@ -1513,6 +1572,8 @@ for _row in (
     + SSA_VERIFY_DERIVED_ROWS
     + TWEAK_ROWS
     + TWEAK_33_ROWS
+    + DERIVE_65_ROWS
+    + DERIVE_33_ROWS
 ):
     _row()
 
@@ -1551,8 +1612,18 @@ DEFAULT_CALLS = 10_000
 # 65-byte parse reads two coordinates and costs a fraction of a
 # microsecond, so ten thousand of them is a round of under three
 # milliseconds. These counts put both rounds where the rest of the page
-# already is
-CALLS_PER_TABLE = {1: 400_000, 2: 100_000}
+# already is.
+#
+# Keyed by the rows the count belongs to and not by the table's number,
+# which is an index into a page and moves whenever the page is reordered: a
+# count keyed by it follows the position rather than the operation, and
+# would quietly hand four hundred thousand calls to whatever became table
+# one. Nothing at run time would say so -- the count is printed beside the
+# row it was used for, so the wrong one prints as though it were chosen
+CALLS_PER_ROWS: dict[tuple[Callable[[], None], ...], int] = {
+    PARSE_UNCOMPRESSED_ROWS: 400_000,
+    PARSE_COMPRESSED_ROWS: 100_000,
+}
 
 ROUNDS = 10
 
@@ -1670,7 +1741,7 @@ def measured(
             end="",
             file=sys.stderr,
         )
-        calls = CALLS_PER_TABLE.get(int(title.split(".", maxsplit=1)[0]), DEFAULT_CALLS)
+        calls = CALLS_PER_ROWS.get(rows, DEFAULT_CALLS)
         value, apart = benchmark(func, calls)
         timings.append(
             Timing(
@@ -1717,73 +1788,79 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
         "parse",
     ),
     (
-        "3. ECDSA verify (DER signature, a 65-byte key parsed per call)",
+        "3. public key from a private key (32-byte secret, 65-byte key out)",
+        DERIVE_65_ROWS,
+        (),
+        "derive",
+    ),
+    (
+        "4. public key from a private key (32-byte secret, 33-byte key out)",
+        DERIVE_33_ROWS,
+        (),
+        "derive",
+    ),
+    ("5. public key tweak by a scalar, a 65-byte key", TWEAK_ROWS, (), "tweak"),
+    ("6. public key tweak by a scalar, a 33-byte key", TWEAK_33_ROWS, (), "tweak"),
+    (
+        "7. ECDSA verify (DER signature, a 65-byte key parsed per call)",
         DSA_VERIFY_DER_ROWS,
         (),
         "dsa-verify",
     ),
     (
-        "4. ECDSA verify (DER signature, a 33-byte key parsed per call)",
+        "8. ECDSA verify (DER signature, a 33-byte key parsed per call)",
         DSA_VERIFY_DER_33_ROWS,
         (),
         "dsa-verify",
     ),
     (
-        "5. ECDSA verify (64-byte signature, a 65-byte key parsed per call)",
+        "9. ECDSA verify (64-byte signature, a 65-byte key parsed per call)",
         DSA_VERIFY_COMPACT_ROWS,
         ("coincurve",),
         "dsa-verify",
     ),
     (
-        "6. ECDSA verify (64-byte signature, a 33-byte key parsed per call)",
+        "10. ECDSA verify (64-byte signature, a 33-byte key parsed per call)",
         DSA_VERIFY_COMPACT_33_ROWS,
         ("coincurve",),
         "dsa-verify",
     ),
     (
-        "7. BIP340 verify (a 65-byte key handed in, the x-only one taken from it)",
+        "11. BIP340 verify (a 65-byte key handed in, the x-only one taken from it)",
         SSA_VERIFY_DERIVED_ROWS,
         ("coincurve",),
         "ssa-verify",
     ),
     (
-        "8. BIP340 verify (the x-only key handed in, parsed per call)",
+        "12. BIP340 verify (the x-only key handed in, parsed per call)",
         SSA_VERIFY_XONLY_ROWS,
         (),
         "ssa-verify",
     ),
-    ("9. public key tweak by a scalar, a 65-byte key", TWEAK_ROWS, (), "tweak"),
-    ("10. public key tweak by a scalar, a 33-byte key", TWEAK_33_ROWS, (), "tweak"),
     (
-        "11. ECDSA sign (32-byte digest, DER out, a fresh key)",
+        "13. ECDSA sign (32-byte digest, DER out, a fresh key)",
         DSA_SIGN_DER_ROWS,
         (),
         "dsa-sign",
     ),
     (
-        "12. ECDSA sign (32-byte digest, 64-byte compact out, a fresh key)",
+        "14. ECDSA sign (32-byte digest, 64-byte compact out, a fresh key)",
         DSA_SIGN_COMPACT_ROWS,
         ("coincurve_nogrind_noverify",),
         "dsa-sign",
     ),
     (
-        "13. ECDSA sign (32-byte digest, DER out, the key held already)",
+        "15. ECDSA sign (32-byte digest, DER out, the key held already)",
         DSA_HELD_ROWS,
         ("btclib_secp256k1_nogrind_noverify",),
         "dsa-sign",
     ),
-    ("14. BIP340 sign (32-byte message, a fresh key)", SSA_SIGN_ROWS, (), "ssa-sign"),
+    ("16. BIP340 sign (32-byte message, a fresh key)", SSA_SIGN_ROWS, (), "ssa-sign"),
     (
-        "15. BIP340 sign (32-byte message, the key held already)",
+        "17. BIP340 sign (32-byte message, the key held already)",
         SSA_HELD_ROWS,
         (),
         "ssa-sign",
-    ),
-    (
-        "16. public key from a private key (32-byte secret, 33-byte key out)",
-        DERIVE_ROWS,
-        (),
-        "derive",
     ),
 )
 
