@@ -903,8 +903,74 @@ The release notes, which say what a user has to act on, are in
   [ISS 55 — page 04's shape][iss55], and [ISS 47 — the spread estimator][iss47],
   which rides with page 03's run rather than costing a second one.
 
+- **The wrappers page states how far two of its own passes disagreed**, which is
+  the one thing every dispersion column on these pages cannot say. A column of
+  within-pass agreement answers whether a gap between two adjacent rows is a gap
+  the run settled; what a reader comparing this page against the version
+  published before it relies on is between-run agreement, and the page warned
+  that a row could move by more than any distance printed beside it without
+  giving the size.
+
+  So the page is timed twice in one invocation, idle in between, and the run
+  block carries a generated line naming how far apart the two passes began, how
+  many rows came out quicker the second time, and by how much — the worst row
+  and the median beside it. What a published number is does not change: it is
+  the first pass, and the same minimum of two halves it was before.
+
+  The count of rows is in that line because a magnitude without it means two
+  different things, and both were measured. The first run taken this way came
+  out quicker on the second pass for 78 of its 85 rows, which is a difference
+  between the passes rather than noise between them and would be an argument for
+  publishing the later one. Two more runs within the hour split 45 of 85 and 45
+  of 86, with median differences of three hundredths of a per cent, so there is
+  nothing systematic to correct for: the rule stays what ISS 35 set — the first
+  pass is published, fixed rather than chosen once both are in hand — and the
+  line prints the count, three runs having shown that the median alone means
+  either thing.
+
+  The one-directional run is not what is published and it is not discarded
+  either. What is published is a later run, taken on this page as it stands
+  after the rows were renamed; what the earlier ones are kept for is the count
+  above, which is evidence about the method rather than about the packages. One
+  of them earned discarding on its own: its halves put a row at seven per cent
+  of its value, and by the standard this page has always been kept to that is
+  interference rather than a measurement.
+
+  A claim the page already made was checked against the run rather than assumed
+  to survive it. The derivation pair states that serializing y is free, on the
+  argument that a package's two rows land inside the run's own agreement with
+  itself: it holds for all five packages here, and it did not in the run of an
+  hour earlier, where two of the five sat further apart than their halves
+  distance and every one of them inside its own drift. Which is what the drift
+  line is for, and why the sentence stands rather than being widened to a claim
+  no single run supports.
+
+  Both halves of a second pass are refused unless the file carries both: a run
+  naming the instant the second pass began with no row measured twice, or rows
+  measured twice under a run naming one instant, raises where it is built.
+  Either half alone renders as silence, and silence there means a page that
+  never took a second pass — which is what the other four pages are, and what
+  they stay until one of them is worth two passes rather than one.
+
+  Nothing derived is stored, as everywhere here: the second pass is kept per row
+  under `us_per_call_again` and the second instant beside `when` under
+  `when_again`, and the count, the median and the worst are computed at render
+  time where the ratios and the sort already are. Two optional keys and a shape
+  addition, so `SCHEMA` does not move and a run file written before this renders
+  exactly as it did.
+
+  Against publishing the row-wise minimum of both passes, which was the other
+  shape considered: a page whose rows come from two occasions has no run to
+  name. The run block states one instant, one machine, one method, and the saved
+  file is what one clock produced. That it would also double the four expensive
+  pages is the second objection rather than the first. [ISS 35 — between-run
+  agreement][iss35] is where the shape was argued, and it waited for this page's
+  rows to settle: a run taken while what a table contains is still moving is a
+  run thrown away.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
+[iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
 [iss47]: https://github.com/btclib-org/btclib-benchmarks/issues/47
 [iss53]: https://github.com/btclib-org/btclib-benchmarks/issues/53
 [iss55]: https://github.com/btclib-org/btclib-benchmarks/issues/55

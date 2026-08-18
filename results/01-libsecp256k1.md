@@ -45,9 +45,10 @@ wrappers.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-18 14:29 CEST (12:29 UTC)
+when    : 2026-08-18 16:15 CEST (14:15 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
+drift   : second pass 7 min later: 45/86 quicker, median 0.21%, worst 3.6%
 ```
 <!-- run: end -->
 
@@ -139,12 +140,35 @@ whose distance is a large fraction of its neighbour's lead has not been
 separated from that neighbour by this run; a row whose distance is near zero
 has in effect been measured twice and agreed.
 
-Agreement with another run is what it does not state. The two halves are
-seconds apart and a table's rows are minutes apart, so what the column catches
-is the machine's noise and not its drift — the same row measured again on
-another day can differ by more than any distance on this page. That is the
-reason the numbers here are an order of magnitude rather than a figure to
-quote, and the reason a ratio is read instead of a difference.
+Agreement with another run is what the column cannot state. The two halves are
+seconds apart and a table's rows are minutes apart, so what it catches is the
+machine's noise rather than its drift — and drift is what a reader comparing
+this page against the one published before it is relying on.
+
+The `drift` line in the run block above is that reading, and it is stated in
+per cent where every dispersion beside a row is in microseconds. The whole
+page is timed twice in one invocation, the machine left idle between the
+passes; what is published is the first pass, and the line says how far apart
+the two began, how many rows came out quicker the second time, and by how much
+— the worst row, and the median beside it to say whether that worst is the
+page or one row of it. Per cent because the rows here are orders of magnitude
+apart, and a page-wide number in microseconds would be the slowest row's story
+every time.
+
+The count is there because the magnitudes alone would not distinguish two
+different things. Nearly every row moving the same way is a difference between
+the two passes rather than noise between them, and a page that saw that would
+have to say which of its passes to believe; a count near half the rows is the
+machine being unremarkable between two occasions. Both have been seen here,
+which is why the pass that is published is fixed as the first one rather than
+chosen once both are in hand.
+
+Read the line as an upper bound and as a sample, and not as an error bar: two
+passes on one machine on one afternoon say nothing about another machine or
+another day, and a row can still move by more than either number the next time
+somebody runs this. Which is why the numbers here are read as an order of
+magnitude rather than quoted as figures, and why a ratio is read instead of a
+difference.
 
 It is deliberately not the slowest round less the quickest. A maximum over ten
 samples reports the worst interruption a row happened to catch, has enormous
@@ -167,17 +191,17 @@ pages define the column they print where they introduce it.
 ```text
 1. public key parse (a 65-byte uncompressed key handed in, an object out)
                                         μs/call     vs best   halves
-  btclib_secp256k1                         0.22       1.00x     0.00   (10x400,000 calls)
-  coincurve                                0.24       1.07x     0.00   (10x400,000 calls)
-  secp256k1                                0.66       2.97x     0.00   (10x400,000 calls)
-  electrum_ecc                             1.18       5.31x     0.01   (10x400,000 calls)
+  btclib_secp256k1                         0.23       1.00x     0.00   (10x400,000 calls)
+  coincurve                                0.24       1.05x     0.00   (10x400,000 calls)
+  secp256k1                                0.65       2.82x     0.00   (10x400,000 calls)
+  electrum_ecc                             1.22       5.32x     0.03   (10x400,000 calls)
 
 2. public key parse (a 33-byte compressed key handed in, an object out)
                                         μs/call     vs best   halves
-  btclib_secp256k1                         2.32       1.00x     0.00   (10x100,000 calls)
-  coincurve                                2.36       1.02x     0.01   (10x100,000 calls)
-  secp256k1                                2.78       1.20x     0.02   (10x100,000 calls)
-  electrum_ecc                             3.30       1.42x     0.01   (10x100,000 calls)
+  btclib_secp256k1                         2.30       1.00x     0.01   (10x100,000 calls)
+  coincurve                                2.33       1.01x     0.01   (10x100,000 calls)
+  secp256k1                                2.75       1.20x     0.01   (10x100,000 calls)
+  electrum_ecc                             3.28       1.42x     0.02   (10x100,000 calls)
 ```
 <!-- tables: parse: end -->
 
@@ -211,19 +235,19 @@ tweak rows are where that second parse is paid.
 ```text
 3. public key from a private key (32-byte secret, 65-byte uncompressed key out)
                                         μs/call     vs best   halves
-  coincurve_unchecked                      7.61       1.00x     0.01   (10x10,000 calls)
-  btclib_secp256k1                         7.73       1.02x     0.00   (10x10,000 calls)
-  coincurve                                7.79       1.02x     0.00   (10x10,000 calls)
-  secp256k1                               15.20       2.00x     0.06   (10x10,000 calls)
-  electrum_ecc                            16.74       2.20x     0.00   (10x10,000 calls)
+  coincurve_unchecked                      7.59       1.00x     0.00   (10x10,000 calls)
+  btclib_secp256k1                         7.71       1.02x     0.01   (10x10,000 calls)
+  coincurve                                7.73       1.02x     0.00   (10x10,000 calls)
+  secp256k1                               15.17       2.00x     0.01   (10x10,000 calls)
+  electrum_ecc                            16.68       2.20x     0.24   (10x10,000 calls)
 
 4. public key from a private key (32-byte secret, 33-byte compressed key out)
                                         μs/call     vs best   halves
-  coincurve_unchecked                      7.60       1.00x     0.02   (10x10,000 calls)
-  btclib_secp256k1                         7.71       1.01x     0.03   (10x10,000 calls)
-  coincurve                                7.74       1.02x     0.02   (10x10,000 calls)
-  secp256k1                               15.19       2.00x     0.05   (10x10,000 calls)
-  electrum_ecc                            16.84       2.22x     0.00   (10x10,000 calls)
+  coincurve_unchecked                      7.59       1.00x     0.01   (10x10,000 calls)
+  btclib_secp256k1                         7.71       1.02x     0.02   (10x10,000 calls)
+  coincurve                                7.72       1.02x     0.03   (10x10,000 calls)
+  secp256k1                               15.16       2.00x     0.04   (10x10,000 calls)
+  electrum_ecc                            16.77       2.21x     0.00   (10x10,000 calls)
 ```
 <!-- tables: derive: end -->
 
@@ -306,23 +330,23 @@ reason: a point nobody serializes is not the operation a caller performs.
 ```text
 5. public key tweak by a scalar (a 65-byte uncompressed key handed in)
                                         μs/call     vs best   halves
-  btclib_secp256k1_octets                 10.16       1.00x     0.02   (10x10,000 calls)
-  coincurve_object                        10.22       1.01x     0.03   (10x10,000 calls)
-  coincurve_octets                        10.63       1.05x     0.01   (10x10,000 calls)
-  secp256k1_object                        13.89       1.37x     0.01   (10x10,000 calls)
-  secp256k1_octets                        14.31       1.41x     0.01   (10x10,000 calls)
-  electrum_ecc_object                     22.88       2.25x     0.02   (10x10,000 calls)
-  electrum_ecc_octets                     23.14       2.28x     0.05   (10x10,000 calls)
+  btclib_secp256k1_octets                 10.06       1.00x     0.00   (10x10,000 calls)
+  coincurve_object                        10.20       1.01x     0.02   (10x10,000 calls)
+  coincurve_octets                        10.59       1.05x     0.00   (10x10,000 calls)
+  secp256k1_object                        13.77       1.37x     0.03   (10x10,000 calls)
+  secp256k1_octets                        14.19       1.41x     0.04   (10x10,000 calls)
+  electrum_ecc_object                     22.76       2.26x     0.19   (10x10,000 calls)
+  electrum_ecc_octets                     23.15       2.30x     0.06   (10x10,000 calls)
 
 6. public key tweak by a scalar (a 33-byte compressed key handed in)
                                         μs/call     vs best   halves
-  btclib_secp256k1_octets                 12.35       1.00x     0.03   (10x10,000 calls)
-  coincurve_object                        12.38       1.00x     0.01   (10x10,000 calls)
-  coincurve_octets                        12.79       1.04x     0.05   (10x10,000 calls)
-  secp256k1_object                        16.02       1.30x     0.02   (10x10,000 calls)
-  secp256k1_octets                        16.44       1.33x     0.01   (10x10,000 calls)
-  electrum_ecc_object                     25.36       2.05x     0.09   (10x10,000 calls)
-  electrum_ecc_octets                     25.47       2.06x     0.50   (10x10,000 calls)
+  btclib_secp256k1_octets                 12.19       1.00x     0.00   (10x10,000 calls)
+  coincurve_object                        12.31       1.01x     0.01   (10x10,000 calls)
+  coincurve_octets                        12.73       1.04x     0.02   (10x10,000 calls)
+  secp256k1_object                        15.86       1.30x     0.00   (10x10,000 calls)
+  secp256k1_octets                        16.28       1.34x     0.04   (10x10,000 calls)
+  electrum_ecc_object                     24.86       2.04x     0.05   (10x10,000 calls)
+  electrum_ecc_octets                     25.28       2.07x     0.10   (10x10,000 calls)
 ```
 <!-- tables: tweak: end -->
 
@@ -369,31 +393,31 @@ python libraries rather than secp256k1 wrappers.
 ```text
 7. ECDSA verify (64-byte signature, a 65-byte uncompressed key parsed per call)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        13.06       1.00x     0.00   (10x10,000 calls)
-  secp256k1                               13.74       1.05x     0.13   (10x10,000 calls)
-  electrum_ecc                            15.18       1.16x     0.03   (10x10,000 calls)
+  btclib_secp256k1                        13.03       1.00x     0.01   (10x10,000 calls)
+  secp256k1                               13.62       1.05x     0.03   (10x10,000 calls)
+  electrum_ecc                            15.17       1.16x     0.03   (10x10,000 calls)
   coincurve                                  NA
 
 8. ECDSA verify (DER signature, a 65-byte uncompressed key parsed per call)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        13.07       1.00x     0.01   (10x10,000 calls)
-  coincurve                               13.13       1.00x     0.03   (10x10,000 calls)
-  secp256k1                               13.68       1.05x     0.01   (10x10,000 calls)
-  electrum_ecc                            17.40       1.33x     0.21   (10x10,000 calls)
+  btclib_secp256k1                        13.02       1.00x     0.02   (10x10,000 calls)
+  coincurve                               13.11       1.01x     0.03   (10x10,000 calls)
+  secp256k1                               13.61       1.04x     0.02   (10x10,000 calls)
+  electrum_ecc                            17.52       1.35x     0.01   (10x10,000 calls)
 
 9. ECDSA verify (64-byte signature, a 33-byte compressed key parsed per call)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        15.20       1.00x     0.01   (10x10,000 calls)
-  secp256k1                               15.84       1.04x     0.05   (10x10,000 calls)
-  electrum_ecc                            17.28       1.14x     0.05   (10x10,000 calls)
+  btclib_secp256k1                        15.10       1.00x     0.00   (10x10,000 calls)
+  secp256k1                               15.79       1.05x     0.02   (10x10,000 calls)
+  electrum_ecc                            17.26       1.14x     0.05   (10x10,000 calls)
   coincurve                                  NA
 
 10. ECDSA verify (DER signature, a 33-byte compressed key parsed per call)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        15.20       1.00x     0.02   (10x10,000 calls)
-  coincurve                               15.32       1.01x     0.03   (10x10,000 calls)
-  secp256k1                               15.84       1.04x     0.03   (10x10,000 calls)
-  electrum_ecc                            19.55       1.29x     0.00   (10x10,000 calls)
+  btclib_secp256k1                        15.14       1.00x     0.01   (10x10,000 calls)
+  coincurve                               15.21       1.00x     0.04   (10x10,000 calls)
+  secp256k1                               15.74       1.04x     0.01   (10x10,000 calls)
+  electrum_ecc                            19.61       1.29x     0.07   (10x10,000 calls)
 ```
 <!-- tables: dsa-verify: end -->
 
@@ -456,17 +480,17 @@ a caller do around the call, not the verification itself.
 ```text
 11. BIP340 verify (a 65-byte uncompressed key handed in, x-only taken from it)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        13.38       1.00x     0.01   (10x10,000 calls)
-  secp256k1                               13.65       1.02x     0.00   (10x10,000 calls)
-  electrum_ecc                            17.23       1.29x     0.00   (10x10,000 calls)
+  btclib_secp256k1                        13.30       1.00x     0.03   (10x10,000 calls)
+  secp256k1                               13.61       1.02x     0.04   (10x10,000 calls)
+  electrum_ecc                            17.18       1.29x     0.01   (10x10,000 calls)
   coincurve                                  NA
 
 12. BIP340 verify (the x-only key handed in, parsed per call)
                                         μs/call     vs best   halves
-  btclib_secp256k1                        15.24       1.00x     0.01   (10x10,000 calls)
-  coincurve                               15.31       1.00x     0.03   (10x10,000 calls)
-  secp256k1                               15.88       1.04x     0.02   (10x10,000 calls)
-  electrum_ecc                            19.36       1.27x     0.21   (10x10,000 calls)
+  btclib_secp256k1                        15.18       1.00x     0.00   (10x10,000 calls)
+  coincurve                               15.27       1.01x     0.02   (10x10,000 calls)
+  secp256k1                               15.79       1.04x     0.00   (10x10,000 calls)
+  electrum_ecc                            19.26       1.27x     0.02   (10x10,000 calls)
 ```
 <!-- tables: ssa-verify: end -->
 
@@ -492,35 +516,35 @@ spelling: `PublicKeyXOnly` is the only type of its that carries a Schnorr
 ```text
 13. ECDSA sign (32-byte digest, a fresh private key handed in, DER out)
                                         μs/call     vs best   halves
-  btclib_secp256k1_nogrind_noverify       12.01       1.00x     0.03   (10x10,000 calls)
-  btclib_secp256k1_grind_noverify         24.19       2.01x     0.01   (10x10,000 calls)
-  secp256k1_nogrind_noverify_object       26.32       2.19x     0.01   (10x10,000 calls)
-  secp256k1_nogrind_noverify_octets       26.80       2.23x     0.02   (10x10,000 calls)
-  coincurve_nogrind_noverify              26.82       2.23x     0.00   (10x10,000 calls)
-  btclib_secp256k1_nogrind_verify         32.49       2.70x     0.06   (10x10,000 calls)
-  btclib_secp256k1_grind_verify           44.79       3.73x     0.01   (10x10,000 calls)
-  electrum_ecc_nogrind_verify             47.75       3.97x     0.09   (10x10,000 calls)
-  electrum_ecc_grind_verify               60.54       5.04x     0.04   (10x10,000 calls)
+  btclib_secp256k1_nogrind_noverify       11.99       1.00x     0.00   (10x10,000 calls)
+  btclib_secp256k1_grind_noverify         24.14       2.01x     0.07   (10x10,000 calls)
+  secp256k1_nogrind_noverify_object       26.19       2.18x     0.01   (10x10,000 calls)
+  secp256k1_nogrind_noverify_octets       26.60       2.22x     0.06   (10x10,000 calls)
+  coincurve_nogrind_noverify              26.71       2.23x     0.01   (10x10,000 calls)
+  btclib_secp256k1_nogrind_verify         32.32       2.70x     0.00   (10x10,000 calls)
+  btclib_secp256k1_grind_verify           44.47       3.71x     0.06   (10x10,000 calls)
+  electrum_ecc_nogrind_verify             47.59       3.97x     0.25   (10x10,000 calls)
+  electrum_ecc_grind_verify               60.47       5.05x     0.29   (10x10,000 calls)
 
 14. ECDSA sign (32-byte digest, a fresh private key handed in, 64 octets out)
                                         μs/call     vs best   halves
-  btclib_secp256k1_nogrind_noverify       11.88       1.00x     0.07   (10x10,000 calls)
-  btclib_secp256k1_grind_noverify         24.17       2.03x     0.02   (10x10,000 calls)
-  secp256k1_nogrind_noverify_object       26.31       2.21x     0.00   (10x10,000 calls)
-  secp256k1_nogrind_noverify_octets       26.65       2.24x     0.00   (10x10,000 calls)
-  btclib_secp256k1_nogrind_verify         32.35       2.72x     0.07   (10x10,000 calls)
-  btclib_secp256k1_grind_verify           44.64       3.76x     0.14   (10x10,000 calls)
-  electrum_ecc_nogrind_verify             45.32       3.81x     0.08   (10x10,000 calls)
-  electrum_ecc_grind_verify               58.19       4.90x     0.02   (10x10,000 calls)
+  btclib_secp256k1_nogrind_noverify       11.85       1.00x     0.03   (10x10,000 calls)
+  btclib_secp256k1_grind_noverify         24.18       2.04x     0.01   (10x10,000 calls)
+  secp256k1_nogrind_noverify_object       26.21       2.21x     0.02   (10x10,000 calls)
+  secp256k1_nogrind_noverify_octets       26.62       2.25x     0.00   (10x10,000 calls)
+  btclib_secp256k1_nogrind_verify         32.24       2.72x     0.14   (10x10,000 calls)
+  btclib_secp256k1_grind_verify           44.51       3.76x     0.06   (10x10,000 calls)
+  electrum_ecc_nogrind_verify             45.12       3.81x     0.31   (10x10,000 calls)
+  electrum_ecc_grind_verify               58.62       4.95x     0.19   (10x10,000 calls)
   coincurve_nogrind_noverify                 NA
 
 15. ECDSA sign (32-byte digest, the public key held already, DER out)
                                         μs/call     vs best   halves
-  coincurve_nogrind_noverify              11.69       1.00x     0.04   (10x10,000 calls)
-  secp256k1_nogrind_noverify              11.75       1.01x     0.04   (10x10,000 calls)
-  btclib_secp256k1_nogrind_noverify       11.99       1.03x     0.08   (10x10,000 calls)
-  btclib_secp256k1_nogrind_verify         25.11       2.15x     0.01   (10x10,000 calls)
-  electrum_ecc_nogrind_verify             30.94       2.65x     0.07   (10x10,000 calls)
+  coincurve_nogrind_noverify              11.63       1.00x     0.02   (10x10,000 calls)
+  secp256k1_nogrind_noverify              11.72       1.01x     0.00   (10x10,000 calls)
+  btclib_secp256k1_nogrind_noverify       12.01       1.03x     0.01   (10x10,000 calls)
+  btclib_secp256k1_nogrind_verify         25.10       2.16x     0.00   (10x10,000 calls)
+  electrum_ecc_nogrind_verify             31.65       2.72x     0.10   (10x10,000 calls)
 ```
 <!-- tables: dsa-sign: end -->
 
@@ -673,20 +697,20 @@ a fraction because its base is nearly all something else.
 ```text
 16. BIP340 sign (32-byte message, a fresh key)
                                         μs/call     vs best   halves
-  btclib_secp256k1_aux_noverify           15.72       1.00x     0.04   (10x10,000 calls)
-  secp256k1_noaux_noverify                22.65       1.44x     0.04   (10x10,000 calls)
-  btclib_secp256k1_aux_verify             29.01       1.84x     0.06   (10x10,000 calls)
-  coincurve_noaux_verify                  43.03       2.74x     0.05   (10x10,000 calls)
-  coincurve_aux_verify                    43.19       2.75x     0.01   (10x10,000 calls)
-  electrum_ecc_aux_verify                 48.82       3.10x     0.00   (10x10,000 calls)
+  btclib_secp256k1_aux_noverify           15.70       1.00x     0.02   (10x10,000 calls)
+  secp256k1_noaux_noverify                22.59       1.44x     0.01   (10x10,000 calls)
+  btclib_secp256k1_aux_verify             29.07       1.85x     0.01   (10x10,000 calls)
+  coincurve_noaux_verify                  43.00       2.74x     0.05   (10x10,000 calls)
+  coincurve_aux_verify                    43.17       2.75x     0.01   (10x10,000 calls)
+  electrum_ecc_aux_verify                 48.93       3.12x     0.01   (10x10,000 calls)
 
 17. BIP340 sign (32-byte message, the key held already)
                                         μs/call     vs best   halves
-  secp256k1_noaux_noverify                 7.82       1.00x     0.01   (10x10,000 calls)
-  btclib_secp256k1_aux_noverify            8.22       1.05x     0.02   (10x10,000 calls)
-  btclib_secp256k1_aux_verify             21.51       2.75x     0.05   (10x10,000 calls)
-  coincurve_aux_verify                    28.08       3.59x     0.02   (10x10,000 calls)
-  electrum_ecc_aux_verify                 32.10       4.10x     0.00   (10x10,000 calls)
+  secp256k1_noaux_noverify                 7.79       1.00x     0.00   (10x10,000 calls)
+  btclib_secp256k1_aux_noverify            8.18       1.05x     0.01   (10x10,000 calls)
+  btclib_secp256k1_aux_verify             21.42       2.75x     0.01   (10x10,000 calls)
+  coincurve_aux_verify                    28.08       3.60x     0.00   (10x10,000 calls)
+  electrum_ecc_aux_verify                 32.05       4.11x     0.01   (10x10,000 calls)
 ```
 <!-- tables: ssa-sign: end -->
 
