@@ -197,10 +197,13 @@ The release notes, which say what a user has to act on, are in
   answers, and an object accumulating state across calls would price
   something other than a signature from its second call on.
 
-  The BIP340 pair is on the published page and the ECDSA one is not yet: a
-  table reaches a page from a run, and a run is a person's on a machine whose
-  state they know. The rows and the case for them land first, and the page
-  carries the numbers from the next run of it.
+  Both pairs are on the published page, the ECDSA one from the run after its
+  rows landed: a table reaches a page from a run, and a run is a person's on a
+  machine whose state they know. What that pair prices is read out beside it
+  there — more of a fresh-key row is the construction than is the signature,
+  and what is left once the construction goes is one cost three of the four
+  wrappers share, which is the page's own premise measured rather than
+  asserted.
 
 - **Every table prints microseconds per call.** `02-btclib-vs-btclib.py` had
   been printing seconds per thousand: a unit that changes between

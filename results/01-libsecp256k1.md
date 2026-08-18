@@ -79,11 +79,12 @@ before it left the same key in a cache. Every table starts from the same
 shapes — the keys as 32-byte scalars, the public keys derived from them, the
 signatures made once in the fixtures — and no row is handed an object a
 package built: whatever an API makes a caller construct before it can work is
-constructed inside the call that needs it. The BIP340 signing pair is the
-exception, and holding the key is what that pair is about: table 14 is handed
-the object each of the four offers a caller who will sign again, built from
-table 13's own keys, so the pair prices the holding and no package is handed
-something another was not.
+constructed inside the call that needs it. The two held signing tables are
+the exception, and holding the key is what they are about: tables 13 and 15
+are handed the object each package offers a caller who will sign again, built
+from the keys of the fresh table each is paired with and in that table's
+order, so a pair prices the holding and no package is handed something another
+was not.
 
 Random rather than published, because four wrappers of one C library compute
 the same arithmetic by construction: a vector proves nothing here that
@@ -98,9 +99,9 @@ splits signing in two and verification in two. A public key is 33 octets or
 in two. The members of a pair share their inputs down to the byte: the same
 keys, the same signatures, one serialization of each.
 
-One pair differs by something else. BIP340 signing is asked twice over one
-encoding, under a key handed over as bytes and under the object each package
-offers for signing again, which is the only question on this page whose
+Two pairs differ by something else. Signing is asked twice in each scheme,
+over one encoding, under a key handed over as bytes and under the object each
+package offers for signing again — the only question on this page whose
 subject is what a caller kept rather than what an API costs.
 
 Only what a package offers is measured. Where its own API has no such call
@@ -406,11 +407,12 @@ signature.
 
 Two habits do it. Two of the four sign only through a key object of their own
 — coincurve's `PrivateKey` and secp256k1-py's — and building one derives the
-public key, work a signature does not need and a caller cannot decline. And
-three of them verify the signature they just made before handing it back:
-electrum-ecc inside `ecdsa_sign`, coincurve inside `sign_schnorr`, and
-btclib-secp256k1 by default. Only the last of the three takes an argument that
-stops it, which is why it is the one with two rows here.
+public key, work a signature does not need and a caller signing a fresh key
+cannot decline. And three of them verify the signature they just made before
+handing it back: electrum-ecc inside `ecdsa_sign`, coincurve inside
+`sign_schnorr`, and btclib-secp256k1 by default. Only the last of the three
+takes an argument that stops it, which is why it is the one with two rows
+here.
 
 **No single row of that pair compares with all three of the others**, and that
 is what the pair is for. The unchecked row is the operation coincurve performs
@@ -439,6 +441,28 @@ times it — but its size is what the difference between the two schemes'
 checks comes to. Which makes this the one row on the page that prices a
 default rather than an operation — the argument exists, and a caller who does
 not pass it pays for a proof that libsecp256k1 already gave.
+
+**The other habit is what the held table prices.** Handed an object it built
+once, coincurve signs for what secp256k1-py signs for, and both land beside
+btclib-secp256k1's unchecked row above: more of what either charges for a
+fresh key is the construction than is the signature. It is not work a caller
+can decline — both APIs sign only through the object — but it is work paid
+once and kept, and what keeping it costs is a secret in memory for longer than
+the call that needed it.
+
+btclib-secp256k1 reads `NA` there, and that is the finding rather than a gap:
+`dsa.sign` takes the 32 octets, so a caller who will sign again holds what a
+caller who will sign once holds, and its row above is already the held shape.
+A row under another title calling the same function would print the number
+beside it.
+
+**What is left once the construction goes is the same for all three**, which
+is what says these tables measure wrappers and not arithmetic: one C library
+makes one signature, and three wrappers with nothing else left to do around it
+charge what it costs. electrum-ecc is the one that does not join them, and
+the check is why: `ecdsa_sign` verifies on every call, and that verification
+parses a public key out of the coordinates its `ECPrivkey` holds — the second
+parse the parse section above describes, in one more row than it names.
 
 The grinding rows hold the check off on **both** sides, and they have to.
 A pair prices one difference: btclib-secp256k1's grinding pair prices the
@@ -512,18 +536,26 @@ wider range than this one's while having no keypair in them at all.
 
 ### What holding the key is worth
 
-Table 14 is the only place on this page where a row is handed an object a
-package built, and the exception is the measurement: what a caller pays for
-the *second* signature under a key is not a question the fresh-key shape can
-be asked. Every other page here times one operation once, which is the right
-shape for asking what an operation costs and the wrong one for asking what a
-signing service pays — the same argument [the key reuse page][reuse] makes,
-on the side of the signature it does not ask about.
+The two held tables are the only place on this page where a row is handed an
+object a package built, and the exception is the measurement: what a caller
+pays for the *second* signature under a key is not a question the fresh-key
+shape can be asked. Every other page here times one operation once, which is
+the right shape for asking what an operation costs and the wrong one for
+asking what a signing service pays — the same argument [the key reuse
+page][reuse] makes, on the side of the signature it does not ask about.
 
-The pair is over table 13's own keys, in table 13's order, so what it prices
-is the holding and nothing else. What each row is handed is the object its own
-package offers a caller who will sign again: coincurve's and secp256k1-py's
-`PrivateKey`, electrum-ecc's `ECPrivkey`, btclib-secp256k1's `ssa.Signer`.
+Each pair is over its own fresh table's keys, in that table's order, so what
+it prices is the holding and nothing else. What each row is handed is the
+object its own package offers a caller who will sign again: coincurve's and
+secp256k1-py's `PrivateKey`, electrum-ecc's `ECPrivkey`, btclib-secp256k1's
+`ssa.Signer`.
+
+The two pairs are not one finding asked in two schemes, and what is below is
+the BIP340 half. Schnorr signing starts from a keypair where ECDSA takes the
+secret key as it is, so a held BIP340 row saves work the signature would
+otherwise have to do again, and a held ECDSA row saves a constructor with
+nothing in it the signature reads — which is the reading beside the ECDSA
+tables above.
 
 **Holding a key and holding what a signature is made from are two different
 things, and an API's shape does not say which one a caller got.** Two of the
