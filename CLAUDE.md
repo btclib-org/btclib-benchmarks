@@ -108,9 +108,17 @@ which machine ran it.
   vendors**, `LIBSECP256K1_PINS` in `01-libsecp256k1.py` holding
   it: three of the four link the library into a cffi extension, where
   nothing at run time can say which revision that was. Each pin is keyed
-  by the release it was read from, so an upgraded comparand prints
+  by the build it was read from, so an upgraded comparand prints
   `unrecorded` instead of a pin that has quietly stopped being true. Go
-  read the new release and put the pin back.
+  read the new build and put the pin back.
+- **A build is not always a version.** `secp256k1` serves an sdist and
+  wheels under one version carrying libsecp256k1 revisions years apart,
+  so the version fires no guard when the library moves under it: for that
+  row the key is the version and the artifact, `INDEX_WHEELS` recording
+  the tags the index serves and `_provenance.built_here` answering the
+  other side. A tag in neither set is `unrecorded` rather than a guess.
+  Do not key a pin on a version again without checking that the version
+  has one artifact.
 - **Coverage measures `_provenance.py` and the suite, and omits the five
   benchmarks** — covering a timing function means running it, and a
   measurement inside CI is a number that means nothing.

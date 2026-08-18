@@ -110,6 +110,19 @@ def _built_here(tag: str) -> bool:
     )
 
 
+def built_here(dist_name: str) -> bool:
+    """Say whether the wheel an install came from was built where it is.
+
+    A tag no index would have served is a positive statement, and its
+    absence is not the negative one: macOS and Windows spell a published
+    wheel and a local build alike, so `False` there means the tag did not
+    say rather than that the wheel was downloaded. A caller keying anything
+    on the difference needs the other half from somewhere the tag is not --
+    which for the pins is the set of tags an index is known to serve.
+    """
+    return any(_built_here(tag) for tag in wheel_tags(dist_name) or [])
+
+
 def artifact_of(dist_name: str) -> str:
     """Say which artifact an install resolved to, where the tag can tell.
 
@@ -117,10 +130,11 @@ def artifact_of(dist_name: str) -> str:
     which for a comparand vendoring a C library is half the answer: an
     index serves a wheel and an sdist under one version, and the two do
     not have to carry the same library. `secp256k1` is the case that
-    proves it -- its wheels build against libsecp256k1 v0.6.0 and the only
-    sdist of the same version downloads a pre-v0.1.0 revision, four years
-    older. Which library a machine got is therefore not in the version it
-    reports, and a pin keyed on that version cannot be right for both.
+    proves it -- its wheels build against libsecp256k1 v0.6.0 and the
+    only sdist of the same version carries a pre-v0.1.0 revision in its
+    own tree, four years older. Which library a machine got is therefore
+    not in the version it reports, and a pin keyed on that version cannot
+    be right for both.
 
     The wheel's tag can say, on the platform where the question is live. A
     bare `linux_*` tag is one no index accepts, so a wheel carrying it was
@@ -137,7 +151,7 @@ def artifact_of(dist_name: str) -> str:
     if not tags:
         return "no WHEEL metadata"
     said = ", ".join(tags)
-    if any(_built_here(tag) for tag in tags):
+    if built_here(dist_name):
         return f"{said}, built where it is installed"
     return said
 

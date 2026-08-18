@@ -656,4 +656,45 @@ The release notes, which say what a user has to act on, are in
   the paragraph says so — prose outside the `run:` markers, so the
   numbers beside it are untouched.
 
+- **A libsecp256k1 pin is keyed on the build, and a build is not always a
+  version.** `secp256k1` 0.14.0 serves two artifacts carrying libsecp256k1
+  revisions years apart: the sdist ships a library tree among its own files
+  whose `configure.ac` still calls itself 0.1, and the wheels — re-published
+  under that unchanged version long afterwards — come from a source that had
+  moved `LIB_TARBALL_URL` on to the v0.6.0 tag. The installed extension is
+  what settles it rather than the upstream claim: it exports the `musig`
+  entry points that release added, where the tree in the sdist has neither
+  that module nor `ellswift`.
+
+  So the guard on that column could not fire. It compared the recorded key
+  with what identifies the build, and for a release that was the version —
+  which stood still while the library moved under it, leaving a pin that
+  went on printing after it had stopped being true. `_build_of` is the key
+  now: a commit for a branch install, a version for a release, and the
+  version with the artifact for a release whose index serves two.
+  `INDEX_WHEELS` records the tags the index is known to serve, because that
+  is the half a tag cannot answer alone — `_provenance.built_here` says when
+  a wheel was made where it sits, which on Linux is the sdist, and on macOS
+  and Windows a published wheel and a local build are spelled alike. A tag
+  in neither set is `unrecorded` for both columns rather than a guess
+  between two libraries.
+
+  The `released` column had the same defect one column earlier and is fixed
+  by the same key, which also reorders the table: that build is one of the
+  newest here rather than the oldest, and only the library it carries is
+  old. `built_here` is public for this, and `artifact_of` now says the sdist
+  *carries* its revision rather than downloading it — it ships the tree.
+
+  Two places said the old rule as fact and no longer do. The aarch64 CI
+  job's `xfail` reason named the compiler, and names the library it builds:
+  that job is the only one of the six running the older revision, which is
+  a candidate for the nonce difference recorded there that the pin could
+  not confirm before and can now. And `results/01-libsecp256k1.md` is wrong
+  on that row, measured under the old key — provenance is measured data, so
+  re-publishing cannot correct it and the next run of that page will. The
+  prose says so meanwhile, outside the markers, naming [ISS 67][iss67];
+  ISS 27's third candidate is narrowed by it but not closed, that one
+  splitting macOS from Linux where both install wheels of one revision.
+
+[iss67]: https://github.com/btclib-org/btclib-benchmarks/issues/67
 [iss68]: https://github.com/btclib-org/btclib-benchmarks/issues/68

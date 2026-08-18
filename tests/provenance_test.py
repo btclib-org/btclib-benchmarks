@@ -354,3 +354,23 @@ def test_an_uninstalled_distribution_has_no_tags_rather_than_none_readable() -> 
     """`None` is the answer for a name nothing installed, and it is not `[]`."""
     assert _provenance.wheel_tags("no-such-distribution-anywhere") is None
     assert _provenance.artifact_of("no-such-distribution-anywhere") == "not installed"
+
+
+def test_built_here_answers_yes_positively_and_no_only_by_default(
+    fake_wheel: Callable[[str | None], None],
+) -> None:
+    """The asymmetry a caller keying a pin on this has to respect.
+
+    `True` is a statement: no index would have served that tag, so the
+    wheel was made where it sits and a comparand vendoring a C library
+    carries whatever its sdist carries. `False` is not the opposite one --
+    a macOS wheel is spelled the same whoever built it, so it means the tag
+    did not say. `01-libsecp256k1.py` records the tags an index is known to
+    serve for exactly that reason, and prints `unrecorded` for a tag in
+    neither set rather than reading this as a download.
+    """
+    fake_wheel("Tag: cp311-cp311-linux_aarch64\n")
+    assert _provenance.built_here("anything") is True
+    fake_wheel("Tag: cp313-cp313-macosx_11_0_arm64\n")
+    assert _provenance.built_here("anything") is False
+    assert _provenance.built_here("no-such-distribution-anywhere") is False

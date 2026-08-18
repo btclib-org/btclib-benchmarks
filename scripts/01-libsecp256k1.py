@@ -306,7 +306,12 @@ import btclib_secp256k1.ssa
 import coincurve
 import electrum_ecc
 import secp256k1
-from _provenance import from_a_declared_source, origin_of
+from _provenance import (
+    built_here,
+    from_a_declared_source,
+    origin_of,
+    wheel_tags,
+)
 from _results import (
     Measurement,
     Provenance,
@@ -323,6 +328,39 @@ from _results import (
 )
 
 
+def _build_of(dist_name: str) -> str:
+    """Return what identifies the build installed here.
+
+    This is the key both recorded tables below are read by, and there are
+    three answers, because what identifies a build is not one thing. A
+    wrapper resolved from a branch is its commit, the version there
+    standing still while the branch moves. A released wrapper is its
+    version -- unless the index serves two artifacts of that version
+    carrying different libraries, which `secp256k1` 0.14.0 does: its sdist
+    is the original and its wheels were re-published under the same
+    version years later from a source that had moved on. For that row the
+    artifact is part of the identity, and the wheel's tag is what says
+    which, an sdist reaching site-packages as a wheel built where it is
+    installed.
+
+    A tag that is neither one the index is recorded as serving nor one no
+    index would serve says nothing: it is a wheel published since those
+    were read, or a local build on a platform that spells the two alike.
+    The answer then is a string no line below is keyed by, so both columns
+    say `unrecorded` rather than pick between two libraries.
+    """
+    if dist_name not in RELEASE_DATES:
+        # the branch and the commit, without the repository the package
+        # column has already named
+        return origin_of(dist_name).split()[-1]
+    released = version(dist_name)
+    if dist_name not in INDEX_WHEELS:
+        return released
+    if any(tag in INDEX_WHEELS[dist_name] for tag in wheel_tags(dist_name) or []):
+        return f"{released} wheel"
+    return f"{released} sdist" if built_here(dist_name) else "unrecorded"
+
+
 def _built_from(dist_name: str) -> str:
     """Say when this build was published, or where it came from instead.
 
@@ -332,25 +370,24 @@ def _built_from(dist_name: str) -> str:
     branch and the commit, which is what a reader has to look up to get
     these rows again.
     """
-    if not (recorded := RELEASE_DATES.get(dist_name)):
-        # the branch and the commit, without the repository the package
-        # column has already named
-        return origin_of(dist_name).split()[-1]
-    return recorded[1] if version(dist_name) == recorded[0] else "unrecorded"
+    build = _build_of(dist_name)
+    if dist_name not in RELEASE_DATES:
+        return build
+    return RELEASE_DATES[dist_name].get(build, "unrecorded")
 
 
 def _vendored_pin(dist_name: str) -> str:
     """Return the libsecp256k1 revision this build carries, if it is known.
 
-    Keyed by whatever identifies the build, which is not the same thing
-    for all four: a released wrapper is identified by its version, and a
-    wrapper resolved from a branch is not -- the version there stays put
-    while the branch moves, so the key is the commit and any other prints
-    `unrecorded`. Either way an upgraded comparand says it has outgrown
-    its pin rather than repeating one that has quietly stopped being true.
+    An upgraded comparand says it has outgrown its pin rather than
+    repeating one that has quietly stopped being true -- which is the whole
+    of what this column is worth, and it is only as good as its key. Keyed
+    on the version alone it was not: a maintainer who re-publishes wheels
+    without moving the version moves the library under a pin that goes on
+    printing, and one of these four did exactly that. `_build_of` is what
+    the key is now.
     """
-    recorded, pin = LIBSECP256K1_PINS[dist_name]
-    return pin if _built_from(dist_name) == recorded else "unrecorded"
+    return LIBSECP256K1_PINS[dist_name].get(_build_of(dist_name), "unrecorded")
 
 
 def provenance() -> Provenance:
@@ -365,7 +402,10 @@ def provenance() -> Provenance:
     Two of the five cannot be read at run time and are recorded against the
     build they were read for, printing `unrecorded` for any other: no
     compiled artifact exports a version symbol, and no installed metadata
-    carries a release date.
+    carries a release date. What a build is differs by row and is
+    `_build_of`'s subject -- one of the four has two artifacts under one
+    version, carrying libraries years apart, so its version alone names no
+    build and the pair of columns is what names it.
 
     A package installed from anywhere other than its declared source is named
     under the table rather than in it: `editable:` and `sys.path:` are what a
@@ -589,12 +629,19 @@ TWEAK_33 = cycle(
 )
 
 
-# When each of these releases was published, read from the index and
-# recorded against the release it was read for. Not available at run time:
-# a wheel's METADATA carries a Version and no date, and the dist-info
-# directory's mtime is when the package was installed on this machine. A
-# comparand's age is worth a column here -- one of these four is years older
-# than the others, and the revision it vendors follows from that.
+# When each of these builds was published, read from the index -- where
+# `uv.lock` keeps it too, an `upload-time` per artifact -- and recorded
+# against the build it was read for. Not available at run time: a wheel's
+# METADATA carries a Version and no date, and the dist-info directory's
+# mtime is when the package was installed on this machine. A comparand's
+# age is worth a column here, the revision a build vendors following from
+# when the build was made.
+#
+# Keyed by build rather than by version, which for secp256k1 are not the
+# same thing: its sdist and the wheels re-published under that version
+# years afterwards are two builds, and keyed by version this column stated
+# the sdist's date on a machine that had installed a wheel. It is the
+# column that made that mistake first, one column ahead of the pin.
 #
 # btclib-secp256k1 is absent on purpose rather than missing: it resolves
 # from its branch until the release these rows call for is on PyPI, and
@@ -602,9 +649,9 @@ TWEAK_33 = cycle(
 # `_built_from` prints the commit for it instead, and the day the source
 # entry in pyproject.toml goes, a line here is what replaces it
 RELEASE_DATES = {
-    "coincurve": ("21.0.0", "2025-03-08"),
-    "secp256k1": ("0.14.0", "2021-11-06"),
-    "electrum-ecc": ("0.0.7", "2026-02-25"),
+    "coincurve": {"21.0.0": "2025-03-08"},
+    "secp256k1": {"0.14.0 wheel": "2026-01-29", "0.14.0 sdist": "2021-11-06"},
+    "electrum-ecc": {"0.0.7": "2026-02-25"},
 }
 
 
@@ -617,23 +664,60 @@ RELEASE_DATES = {
 #   the library did not
 # - coincurve: `VENDORED_UPSTREAM_REF` in its pyproject.toml, 0cdc758a,
 #   which is upstream's v0.6.0
-# - secp256k1: `LIB_TARBALL_URL` in its setup.py, 9526874d, a master
-#   commit older than upstream's first tagged release -- the configure.ac
-#   of the tree it bundles still calls itself 0.1
+# - secp256k1: two, one per artifact, which is the whole reason these are
+#   keyed the way they are. Its sdist ships a libsecp256k1 tree among its
+#   own files rather than fetching one, and that tree's configure.ac still
+#   calls itself 0.1: it is 9526874d, a master commit older than upstream's
+#   first tagged release. The wheels come from a source that had moved
+#   `LIB_TARBALL_URL` on to the v0.6.0 tag, and the installed extension is
+#   what confirms it rather than the claim -- it exports the `musig` entry
+#   points that release added, where the tree in the sdist has four modules
+#   and neither that one nor `ellswift`
 # - electrum-ecc: the libsecp256k1 tree carried in its sdist and compiled
 #   at install time, whose configure.ac names 0.7.1 as a release
 #
-# Keyed by whatever `_built_from` prints, because that is what identifies
-# a build: a release is its version, and a branch install is the commit,
-# the version there standing still while the branch moves. Either way the
-# floors in pyproject.toml are floors -- a comparand upgrades without a
-# word, and a pin has to stop being claimed when the build it was read
-# from is no longer the one installed.
+# Keyed by what identifies a build, which `_build_of` decides and is not
+# one thing for all four: a branch install is its commit, a release is its
+# version, and a release whose index serves two artifacts of one version
+# is neither until the artifact is named. The floors in pyproject.toml are
+# floors -- a comparand upgrades without a word, and a pin has to stop
+# being claimed when the build it was read from is no longer the one
+# installed. What made that guard miss was the key, not the pin: a version
+# that stands still while its artifacts change is a key that cannot fire.
 LIBSECP256K1_PINS = {
-    "btclib-secp256k1": ("main@52f913e706f8", "v0.8.0"),
-    "coincurve": ("2025-03-08", "v0.6.0"),
-    "secp256k1": ("2021-11-06", "9526874d, pre-v0.1.0"),
-    "electrum-ecc": ("2026-02-25", "v0.7.1"),
+    "btclib-secp256k1": {"main@52f913e706f8": "v0.8.0"},
+    "coincurve": {"21.0.0": "v0.6.0"},
+    "secp256k1": {
+        "0.14.0 wheel": "v0.6.0",
+        "0.14.0 sdist": "9526874d, pre-v0.1.0",
+    },
+    "electrum-ecc": {"0.0.7": "v0.7.1"},
+}
+
+# The wheels the index serves for the one release whose two artifacts
+# disagree, as the tags they carry: three interpreters over three
+# platforms, uploaded together. A `WHEEL` file expands the compressed tag
+# set in a wheel's name into one `Tag` line each and any of them answering
+# is the wheel answering, so each platform is named once, by the spelling
+# its name puts first.
+#
+# This is the half of the question a tag cannot answer on its own.
+# `built_here` says when a wheel was made where it is installed, which on
+# Linux is the sdist and is how the one CI job with no wheel to install
+# gets identified; on macOS and Windows a published wheel and a local build
+# are spelled alike, so a downloaded one has to be recognised rather than
+# deduced, and this is what recognises it. A tag in neither set is an
+# artifact nobody has read, and `unrecorded` is the honest answer for it.
+INDEX_WHEELS = {
+    "secp256k1": frozenset(
+        f"{abi}-{abi}-{platform}"
+        for abi in ("cp311", "cp312", "cp313")
+        for platform in (
+            "macosx_11_0_arm64",
+            "manylinux_2_17_x86_64",
+            "manylinux_2_5_i686",
+        )
+    ),
 }
 
 # how each row reaches the library, which is the difference this whole

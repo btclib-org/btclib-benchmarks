@@ -155,17 +155,23 @@ DSA_SIGNERS_DER: dict[str, Callable[[bytes, bytes], bytes]] = {
 # secp256k1-py on Linux aarch64, and the same package on Linux x86_64 and on
 # macOS arm64 reduces like the other three.
 #
-# Which library that build ended up with is the part nothing here can read,
-# and it is the reason `LIBSECP256K1_PINS` exists: `uv.lock` carries a macOS
-# arm64 wheel for this package, a manylinux x86_64 one and a manylinux i686
-# one, and no aarch64 wheel at all -- so that job is the only one of the six
-# installing a comparand it compiled rather than one somebody shipped, which
-# is the candidate the pin cannot confirm. What the benchmark publishes is
-# the wheel's behaviour, that being what a published run is measured on.
+# Which library that build ended up with is no longer the part nothing here
+# can read, and naming it is what turns this from a platform into a cause:
+# `uv.lock` carries a macOS arm64 wheel for this package, a manylinux x86_64
+# one and a manylinux i686 one, and no aarch64 wheel at all, so that job is
+# the only one of the six installing a comparand it compiled rather than one
+# somebody shipped -- and what it compiles is the libsecp256k1 the sdist
+# ships among its own files, years older than the one every wheel of that
+# same version carries. `LIBSECP256K1_PINS` is keyed on the artifact for
+# this row and records both, so the difference below is a different library
+# rather than a different compiler. What the benchmark publishes is the
+# wheel's behaviour, that being what a published run is measured on.
 UNREDUCED_ON = {"secp256k1-py": ("Linux", "aarch64")}
 
 # said once, because three cases below are expected to fail for it
-UNREDUCED_REASON = "no aarch64 wheel, so this job compiles its own libsecp256k1"
+UNREDUCED_REASON = (
+    "no aarch64 wheel, so this job builds the sdist and its pre-v0.1.0 libsecp256k1"
+)
 
 
 def _hands_the_digest_over_unreduced(package: str) -> bool:

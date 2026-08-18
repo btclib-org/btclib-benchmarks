@@ -18,8 +18,21 @@ here.
 `btclib-secp256k1` is the one row with a commit where the others have a
 date: it resolves from its branch until the release these rows are written
 against is published, so what identifies that build is the commit, and that
-is what its pin is keyed to. The others are releases, and their version is
-what identifies them.
+is what its pin is keyed to. Two of the others are releases whose version
+identifies them. The fourth is not, and the pair of columns is why both are
+here: `secp256k1` serves an sdist carrying one libsecp256k1 and wheels,
+re-published under that same version years afterwards, carrying another, so
+the version names a release and the date names which of its builds ran.
+
+The table below predates that distinction and is wrong on that row. It was
+measured while the pin was keyed on the version alone, and a version that
+stands still while its artifacts change is a key that cannot fire: the row
+reports the sdist's date and the sdist's revision on a machine that
+installed a wheel, whose libsecp256k1 is years newer. Provenance is
+measured data rather than something this page derives, so re-publishing
+cannot correct it and the next measurement will — [ISS 67][i67] is what the
+row is wrong against until then. `uv run python scripts/artifacts.py` says
+which artifact each comparand here resolved to on the machine reading it.
 
 <!-- provenance: begin -->
 ```text
@@ -631,6 +644,7 @@ comparands:
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 [i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
+[i67]: https://github.com/btclib-org/btclib-benchmarks/issues/67
 
 <!-- The blocks above are rendered from the saved run beside this file,
      and their columns are sized from what is in them; rewrapping one to 80
