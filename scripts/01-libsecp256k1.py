@@ -627,6 +627,10 @@ TWEAK = cycle(list(zip(_slice(9, PUBKEYS), _slice(9, PRVKEYS), strict=True)))
 TWEAK_33 = cycle(
     list(zip(_slice(9, PUBKEYS_COMPRESSED), _slice(9, PRVKEYS), strict=True))
 )
+# and the secret keys the derivation table multiplies the generator by, on
+# the tenth slice -- which is the last one the pool holds, so a table added
+# after this either shares a slice with a reason or the pool grows
+DERIVE = cycle(_slice(10, PRVKEYS))
 
 
 # When each of these builds was published, read from the index -- where
@@ -1343,6 +1347,52 @@ def tweak_33_btclib_secp256k1() -> None:
     btclib_secp256k1.keys.pubkey_tweak_add(pubkey, tweak, compressed=True)
 
 
+def derive_coincurve() -> None:
+    """Time coincurve's derivation, taken to the 33 octets of a key.
+
+    `from_valid_secret` and not `PrivateKey(...).public_key`: the row is the
+    derivation and nothing else, where the constructor would carry the very
+    Python object this table exists to be subtracted from.
+    """
+    prvkey = next(DERIVE)
+    coincurve.PublicKey.from_valid_secret(prvkey).format(compressed=True)
+
+
+def derive_secp256k1() -> None:
+    """Time secp256k1-py's derivation, taken to 33 octets.
+
+    Its only spelling goes through the private-key object, `pubkey` being an
+    attribute that object computes -- so this row alone cannot be the bare
+    multiplication, and what it prices is the same constructor the signing
+    tables pay. That is the finding rather than a flaw in the row: the
+    package offers no way to derive without building one.
+    """
+    prvkey = next(DERIVE)
+    secp256k1.PrivateKey(prvkey, raw=True).pubkey.serialize(compressed=True)
+
+
+def derive_electrum_ecc() -> None:
+    """Time electrum-ecc's derivation, taken to 33 octets.
+
+    `ECPrivkey` derives on construction, so the same reading applies as to
+    secp256k1-py's row above.
+    """
+    prvkey = next(DERIVE)
+    electrum_ecc.ECPrivkey(prvkey).get_public_key_bytes(compressed=True)
+
+
+def derive_btclib_secp256k1() -> None:
+    """Time btclib_secp256k1's derivation, bytes in and bytes out."""
+    prvkey = next(DERIVE)
+    btclib_secp256k1.keys.pubkey_from_prvkey(prvkey, compressed=True)
+
+
+DERIVE_ROWS = (
+    derive_coincurve,
+    derive_secp256k1,
+    derive_electrum_ecc,
+    derive_btclib_secp256k1,
+)
 DSA_SIGN_DER_ROWS = (
     dsa_sign_der_coincurve,
     dsa_sign_der_secp256k1,
@@ -1718,6 +1768,12 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
         SSA_HELD_ROWS,
         (),
         "ssa-sign",
+    ),
+    (
+        "16. public key from a private key (32-byte secret, 33-byte key out)",
+        DERIVE_ROWS,
+        (),
+        "derive",
     ),
 )
 

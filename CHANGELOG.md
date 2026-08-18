@@ -635,6 +635,29 @@ The release notes, which say what a user has to act on, are in
   a local build downloaded — nothing in an installed tree records it, and
   `LIBSECP256K1_PINS` is where that is written down by hand.
 
+- **The wrappers page prices a public key derivation**, which is what its
+  own constructors have to be read against. Two of the four sign only
+  through a private-key object, and building one derives a public key — so
+  a reader met a constructor costing more than a signature with nothing on
+  the page to say how much of it was the curve. Most of it is not: a
+  constructor costs close to twice a derivation, and the rest is Python
+  objects and a crossing. That decomposition was measured outside the
+  benchmark and recorded in an issue; the table is what puts it where a
+  reader of the constructors finds it.
+
+  Whether it belonged here was the question, and the answer is the reason
+  it is last on the page. A generator multiplication is the one operation
+  on this page where the C library is most of the cost, which is either the
+  argument for the row or against it: it prices libsecp256k1 rather than a
+  wrapper, and it is the scale everything else is read against. It is
+  ordered as the second of those — after the tables whose constructors it
+  explains, rather than among the operations it is not one of.
+
+  Two of the four rows are a constructor themselves, `PrivateKey` and
+  `ECPrivkey` each deriving as they are built and neither package offering a
+  spelling that skips the object. That is not a flaw in those rows: it is
+  why those two are the ones that gain least from a key they already hold.
+
 - **The lock moves btclib to the tip that answers ISS 23.**
   `btclib-secp256k1` was already there, so this is one revision: btclib's
   `dsa.sign_`, `ssa.sign_` and `ssa.Signer.sign` now take a `verify`
