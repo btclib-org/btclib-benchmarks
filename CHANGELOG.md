@@ -632,4 +632,28 @@ The release notes, which say what a user has to act on, are in
   a local build downloaded — nothing in an installed tree records it, and
   `LIBSECP256K1_PINS` is where that is written down by hand.
 
+- **The lock moves btclib to the tip that answers ISS 23.**
+  `btclib-secp256k1` was already there, so this is one revision: btclib's
+  `dsa.sign_`, `ssa.sign_` and `ssa.Signer.sign` now take a `verify`
+  keyword, and `dsa.sign_` a `pub_key` beside it, so a caller can decline
+  the check or hand over the key the check would otherwise derive. What
+  the fast path does with it is the other half of
+  [btclib#982](https://github.com/btclib-org/btclib/issues/982): the
+  grind and the check both cross into the bindings now, so the check
+  happens once on the signature the grind kept rather than once per
+  attempt discarded, and the arm has no verification of its own to write.
+
+  Nothing here is measured against it yet, and that is the point of
+  recording the move on its own. Every page that times btclib's signing
+  was measured before the check existed on that path, so what those pages
+  publish is the shape btclib had; the pages are the run that follows,
+  one script at a time on a machine given time to cool.
+
+  One published sentence went stale with the keyword and is corrected
+  here rather than left for the run: `results/01-libsecp256k1.md` said
+  btclib exposed no way to decline the check, which was the reason its
+  held pair had no counterpart on the btclib pages. It has one now, and
+  the paragraph says so — prose outside the `run:` markers, so the
+  numbers beside it are untouched.
+
 [iss68]: https://github.com/btclib-org/btclib-benchmarks/issues/68

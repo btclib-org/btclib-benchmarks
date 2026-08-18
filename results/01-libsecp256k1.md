@@ -552,11 +552,12 @@ what a signature costs. A page that timed only the fresh-key shape would
 report the friendlier of the two, and the shape a signing service actually
 runs is the other one.
 
-The btclib pages do not carry this pair. `btclib.ecc.ssa.Signer` delegates to
-the one timed here, but btclib exposes no way to decline the check its fast
-path now makes, so a held row there would price one policy and have nothing to
-be a pair with. That is [ISS 23][i23]'s question and it is btclib's to answer
-first.
+The btclib pages do not carry this pair yet, and what was stopping them has
+gone. `btclib.ecc.ssa.Signer` delegates to the one timed here and now takes
+the same argument: btclib has grown a `verify` keyword on both its signing
+calls and on that signer, so a held row there prices a policy the caller
+chooses rather than the only one on offer. That was [ISS 23][i23]'s question,
+and what is left of it is a run of those pages rather than a decision.
 
 ## What the rows leave out
 
