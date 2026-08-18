@@ -722,5 +722,46 @@ The release notes, which say what a user has to act on, are in
   ISS 27's third candidate is narrowed by it but not closed, that one
   splitting macOS from Linux where both install wheels of one revision.
 
+- **The three pages that time btclib's signing say that they predate its
+  check.** The lock move above records it in this file, and a reader of one of
+  those pages had no way to know it from the page in front of them: btclib
+  verifies the signature it has just made before answering with it, the lock
+  carries that btclib, and those rows were measured before that path had a check
+  at all. Saying which rows are the stale ones is prose and lands now;
+  correcting them is a run, and a run here is one script at a time on a machine
+  given time to cool. Every other row on all three pages is current,
+  verification included, and each page says so — a page that warned about itself
+  in general would have put its whole table in doubt to correct three rows.
+
+  Each page also says what its next run has to print, that being a decision
+  rather than a measurement and separable from one.
+  `results/02-btclib-vs-btclib.md` declines the check on both arms, its subject
+  being the crossing: the two checks are not the same size — a verification on
+  the Python arm against a fraction of a signature on the other — so a row that
+  took the default would move the ratio a long way with neither arithmetic
+  having changed. Its recoverable row has no such choice, recoverable signing
+  taking no argument that declines, and what is paid there is a recovery and a
+  comparison rather than a verification, on the libsecp256k1 side alone: [ISS 28
+  — the recoverable row][iss28].
+
+  `results/03-libraries.md` and `results/04-pure-python.md` each want a pair,
+  which is the shape `results/01-libsecp256k1.md` took for the same question:
+  btclib is the only comparand on either page that takes the argument, so one
+  row is what compares with the implementations that verify nothing and a second
+  is what the guarantee costs. The pure-Python page is the sharper of the two,
+  the check there being a verification in Python — the largest share of a
+  signature it comes to anywhere in this project, and that page's own verify
+  rows are what say so.
+
+  No number is settled here, and four issues stay open for the runs: [ISS 23 —
+  the three pages][iss23], [ISS 53 — page 03 measured and discarded][iss53],
+  [ISS 55 — page 04's shape][iss55], and [ISS 47 — the spread estimator][iss47],
+  which rides with page 03's run rather than costing a second one.
+
+[iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
+[iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
+[iss47]: https://github.com/btclib-org/btclib-benchmarks/issues/47
+[iss53]: https://github.com/btclib-org/btclib-benchmarks/issues/53
+[iss55]: https://github.com/btclib-org/btclib-benchmarks/issues/55
 [iss67]: https://github.com/btclib-org/btclib-benchmarks/issues/67
 [iss68]: https://github.com/btclib-org/btclib-benchmarks/issues/68

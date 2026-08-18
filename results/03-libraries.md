@@ -89,6 +89,29 @@ vendored files publish, cycled one per call; the address rows are the
 exception, one witness-v0 and one witness-v1 address being what is
 vendored, so they call one input.
 
+**btclib's three signing rows were measured before its signing had a check**,
+and they are the only rows on this page that predate one: btclib verifies the
+signature it has just made before answering with it, and the lock carries that
+btclib. Each of the three understates that default by one such check — a
+bare verification in BIP340, and in ECDSA a verification plus the public key
+derivation verifying needs and signing did not. The grinding row pays it once
+as well, the loop and the check crossing into the bindings together so that
+what is proved is the signature the loop kept rather than every attempt
+discarded, which is the ordering [ISS 982 (btclib-org/btclib)][i982] asked
+for and the lock now carries. Every other row here is current, btclib's
+verification rows included — [ISS 53][i53] re-measured this page to find that
+out, and discarded the run rather than publish it.
+
+What that re-measurement has to settle is a shape and not a number, and [the
+wrappers table][wrappers] settled the same question the same way: btclib is
+the only comparand here that takes the argument, the others verifying or not
+as their own APIs happen to, so one row is what compares with libraries that
+verify nothing and a second is what the guarantee costs. Printing one of the
+two alone makes whichever comparison it is not in wrong. [ISS 23][i23] is the
+order that run waits on, and [ISS 47][i47] the spread estimator that rides
+with it — four rounds being affordable, and a second measurement of this page
+not.
+
 <!-- output: begin -->
 ```text
 method  : 3 rounds per row, minimum kept; nothing else repeated
@@ -281,6 +304,10 @@ comparands:
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
+[i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
+[i47]: https://github.com/btclib-org/btclib-benchmarks/issues/47
+[i53]: https://github.com/btclib-org/btclib-benchmarks/issues/53
+[i982]: https://github.com/btclib-org/btclib/issues/982
 
 <!-- The blocks above are rendered from the saved run beside this file,
      and their columns are sized from what is in them; rewrapping one to 80
