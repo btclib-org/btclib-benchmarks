@@ -67,6 +67,11 @@ exception and say so where they are defined.
   row is a multiple of the row above it, and the multiple is a property of
   the key and message rather than of the library.
 
+  Both flags are written out on every btclib row, the defaults included:
+  a row that took a default would be a row whose name is a claim about
+  btclib's defaults on the day it was measured rather than about the call
+  it made, and this page's whole subject is what each row did.
+
   btclib alone *takes the argument*, so it alone carries a
   `noverify`/`verify` pair: one of the two compares with the rows that
   check nothing, the other with the rows that check and cannot decline, and
@@ -550,7 +555,7 @@ def dsa_sign_btclib_nogrind_verify() -> None:
     point by the time its check runs.
     """
     msg, prvkey, _, _ = next(DSA_BTCLIB)
-    dsa.sign_(msg, prvkey, grind=False)
+    dsa.sign_(msg, prvkey, grind=False, verify=True)
 
 
 def dsa_sign_btclib_grind_noverify() -> None:
@@ -566,7 +571,7 @@ def dsa_sign_btclib_grind_noverify() -> None:
     differs by the grinding alone.
     """
     msg, prvkey, _, _ = next(DSA_BTCLIB)
-    dsa.sign_(msg, prvkey, verify=False)
+    dsa.sign_(msg, prvkey, grind=True, verify=False)
 
 
 def dsa_sign_btclib_grind_verify() -> None:
@@ -580,7 +585,7 @@ def dsa_sign_btclib_grind_verify() -> None:
     the ungrinding pair prices.
     """
     msg, prvkey, _, _ = next(DSA_BTCLIB)
-    dsa.sign_(msg, prvkey)
+    dsa.sign_(msg, prvkey, grind=True, verify=True)
 
 
 def dsa_verify_btclib() -> None:
@@ -731,7 +736,7 @@ def ssa_sign_btclib_verify() -> None:
     derived the point its check needs, where an ECDSA signature has not.
     """
     msg, prvkey, aux = next(SSA_BTCLIB)
-    ssa.sign_(msg, prvkey, aux=aux)
+    ssa.sign_(msg, prvkey, aux=aux, verify=True)
 
 
 def ssa_verify_btclib() -> None:

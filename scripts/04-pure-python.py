@@ -49,6 +49,10 @@ flag beside a row named for neither is a flag read against a silence, and
 the silence says nothing about what that call did -- so an implementation
 that takes no argument is labelled as plainly as the one that does.
 
+Both flags are written out on every btclib row, the defaults included: a row
+that took a default would be a row whose label is a claim about btclib's
+defaults on the day it was measured rather than about the call it made.
+
 btclib alone grinds for a low-r signature, and btclib alone *takes an
 argument* for the check, so btclib alone carries the pairs. Which other rows
 check was read out of each implementation rather than assumed, and the two
@@ -378,7 +382,7 @@ def dsa_sign_btclib_nogrind_verify() -> None:
     signature is one, and none of it is amortised by a keypair.
     """
     msg, prvkey = next(DSA_SIGN_BTCLIB)
-    dsa.sign_(msg, prvkey, grind=False)
+    dsa.sign_(msg, prvkey, grind=False, verify=True)
 
 
 def dsa_sign_btclib_grind_noverify() -> None:
@@ -391,7 +395,7 @@ def dsa_sign_btclib_grind_noverify() -> None:
     what a caller who declines nothing but the check waits for.
     """
     msg, prvkey = next(DSA_SIGN_BTCLIB)
-    dsa.sign_(msg, prvkey, verify=False)
+    dsa.sign_(msg, prvkey, grind=True, verify=False)
 
 
 def dsa_sign_btclib_grind_verify() -> None:
@@ -404,7 +408,7 @@ def dsa_sign_btclib_grind_verify() -> None:
     prices.
     """
     msg, prvkey = next(DSA_SIGN_BTCLIB)
-    dsa.sign_(msg, prvkey)
+    dsa.sign_(msg, prvkey, grind=True, verify=True)
 
 
 def dsa_verify_btclib() -> None:
@@ -474,7 +478,7 @@ def ssa_sign_btclib_verify() -> None:
     already derived the point.
     """
     msg, prvkey, aux = next(SSA_BTCLIB_SIGN)
-    ssa.sign_(msg, prvkey, aux=aux).serialize()
+    ssa.sign_(msg, prvkey, aux=aux, verify=True).serialize()
 
 
 def ssa_verify_btclib() -> None:
