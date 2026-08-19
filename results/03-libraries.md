@@ -96,6 +96,31 @@ vendored files publish, cycled one per call; the address rows are the
 exception, one witness-v0 and one witness-v1 address being what is
 vendored, so they call one input.
 
+**BIP340 signing is two tables now, a fresh key and a key held already**, and
+the split corrects a comparison as much as it adds one. A signer does not
+sign one message any more than a verifier verifies one signature, and no page
+in this project timed a held one on either of btclib's arms — [ISS 42][i42].
+It also puts the old single table right: buidl and embit are called through an
+object built from the secret, and that object was built once outside the
+clock, so those rows were already the held shape while btclib's row was handed
+32 octets and built everything per call. Two tables put each library in both
+shapes.
+
+What each library holds is different, and it is a reading of the source rather
+than of the shape of its API. btclib's `ssa.Signer` holds the keypair that
+`ssa.sign_` builds and wipes inside every call. buidl's `PrivateKey` computes
+`secret * G` in its constructor and `sign_schnorr` reads the point it kept.
+embit's holds the 32 secret octets and validates them, and hands those octets
+to the bundled library, which builds the keypair inside every call — so a held
+key object is not a held keypair, and holding embit's saves the validation and
+nothing else. The pair of tables is where a reader reads that off instead of
+being told it.
+
+btclib's held rows answer with the signature's octets where its fresh rows
+answer with a `Sig`, that being what the two spellings offer, so the pair
+prices the change of call a caller would make rather than the keypair on its
+own. buidl and embit answer with objects of their own in both tables.
+
 **btclib's three signing rows were measured before its signing had a check**,
 and they are the only rows on this page that predate one: btclib verifies the
 signature it has just made before answering with it, and the lock carries that
@@ -333,6 +358,7 @@ comparands:
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 [i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
+[i42]: https://github.com/btclib-org/btclib-benchmarks/issues/42
 [i47]: https://github.com/btclib-org/btclib-benchmarks/issues/47
 [i53]: https://github.com/btclib-org/btclib-benchmarks/issues/53
 [i982]: https://github.com/btclib-org/btclib/issues/982
