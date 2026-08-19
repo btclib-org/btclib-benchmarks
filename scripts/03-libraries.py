@@ -1054,8 +1054,8 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
     a maximum less a minimum cannot answer it. An extreme-value statistic
     over a handful of samples has enormous variance by construction and
     reports the worst interruption a row happened to catch rather than
-    anything about the package, which is what #19 concluded and what this
-    page told its reader to use for two releases after it.
+    anything about the package, which is what ISS 19 concluded and what
+    this page told its reader to use for two releases after it.
 
     It is saved as `halves_apart` and not as `spread`, which is the key this
     page wrote for the statistic it is deliberately no longer: a definition
