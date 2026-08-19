@@ -105,7 +105,14 @@ jobs:
     # the closed one for the same reason, added at the trigger above:
     # a closed pull request skips uniformly rather than tripping this
     # gate over a job it deliberately never ran
-    if: ${{ always() && !github.event.pull_request.draft && github.event.action != 'closed' }}
+    # not always(): a cancellation of this run itself -- the concurrency
+    # group superseding it with a newer push -- would still reach this
+    # job and have it fail explicitly below, turning a cancellation the
+    # newer run already speaks for into a required check with no defect
+    # behind it. !cancelled() lets this job be skipped in that case
+    # instead, which satisfies the check same as any other skip, while a
+    # single job of the run cancelled on its own still fails below
+    if: ${{ !cancelled() && !github.event.pull_request.draft && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -117,8 +124,9 @@ jobs:
     steps:
       # one required status check in branch protection instead of one per
       # matrix cell, which would have to be re-listed on every change to
-      # the matrix. `always()` above is what makes a cancelled or skipped
-      # cell reach this job rather than leave it unreported.
+      # the matrix. `!cancelled()` above is what makes a skipped cell, or
+      # a cell cancelled on its own rather than by this run being
+      # cancelled, reach this job rather than leave it unreported.
       #
       # What this asks is the run, and not `needs.*.result`, which twice
       # reported a red matrix as `success`: under the outage that had
