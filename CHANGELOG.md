@@ -1111,6 +1111,18 @@ The release notes, which say what a user has to act on, are in
   others. The tweak is the next key's scalar instead, and the comment beside
   it says why.
 
+  Each of the three is pinned in `tests/wrappers_test.py`, which is where
+  correctness for this page lives — the benchmark asserts nothing, by design.
+  The tweak check is held to answering no as well as yes, a positive case
+  alone being unable to tell a check from a function that returns True: a
+  wrong tweak, a wrong parity and a wrong internal key are each refused. The
+  BIP340 nonce is held to the published vector, R being the nonce times the
+  generator and x(R) the first half of the signature. The RFC6979 nonce is
+  held to the r of the signature the same package makes, no file publishing
+  one, and the test says that this is agreement rather than a specification.
+  Re-encoding is held to the key derived from the secret rather than only to
+  the parse and serialize it replaces.
+
   The page carries the prose and not the tables: a rendered region is filled
   from a saved run, and the run beside it was taken before these rows existed.
   Adding the region is part of publishing the next run, and `render.py`
