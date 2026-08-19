@@ -8,6 +8,33 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### Landing and review
+
+- **The pull request is the only way into `main`, and the button is the
+  landing.** `CONTRIBUTING.md` had "a local squash fast-forwarded onto
+  `main`, never a button on the forge", and `REPOSITORY.md` the push
+  that went with it, the branch left standing because a fast-forward is
+  not a merge the forge cleans up after, and auto-merge "allowed and
+  unused". The `main-self-merge` bypass is in `pull_request` mode across
+  the organization, so it excuses the approving review one maintainer
+  cannot produce and excuses nothing else: a direct push is refused for
+  everyone, the holder included. The ruleset also names `squash` as the
+  only merge method it accepts. `REPOSITORY.md` documented neither
+  ruleset before and documents both now, the bypass mode being the fact
+  the rest hangs on.
+
+- **`REVIEWING.md` is the standard a review is written against**, the
+  reviewer's half of `CONTRIBUTING.md`: what a review establishes before
+  it gives an ack, what a finding must contain and how it labels its
+  severity, and what becomes of everything a reviewer notices that the
+  diff is not about — every collateral finding is filed as an issue
+  rather than asked for in a comment. Named from `CONTRIBUTING.md`, the
+  README and `CLAUDE.md`, a page of the documentation beside
+  `contributing`, and `.claude/commands/review.md` as the `/review`
+  command. The body is deliberately the text btclib carries, one section
+  excepted: the questions a review of *this* tree asks, which are about
+  a measured number restated where no rerun corrects it.
+
 ### The benchmarks
 
 - **The four benchmarks of btclib and btclib-secp256k1 live here**, and

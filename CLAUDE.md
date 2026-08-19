@@ -10,7 +10,10 @@ How a change gets from an issue to `main` — one subject per pull request,
 opened as soon as it is written, the review it goes through and the
 landing, which only needs a valid signature on the commit rather than
 the maintainer's own key — is `CONTRIBUTING.md`'s *Pull requests*. Read
-it before opening one, and before reviewing one.
+it before opening one, and before reviewing one. What a review itself
+has to establish, what a finding must contain, and why everything it
+notices that the diff is not about becomes an issue rather than a
+comment, is `REVIEWING.md` — and `/review` is that file as a command.
 
 ## Commands
 

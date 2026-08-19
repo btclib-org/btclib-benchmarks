@@ -9,6 +9,7 @@
 :hidden:
 
 contributing
+reviewing
 changelog
 history
 ```
