@@ -1152,8 +1152,8 @@ The release notes, which say what a user has to act on, are in
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
-[iss42]: https://github.com/btclib-org/btclib-benchmarks/issues/42
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
+[iss42]: https://github.com/btclib-org/btclib-benchmarks/issues/42
 [iss47]: https://github.com/btclib-org/btclib-benchmarks/issues/47
 [iss53]: https://github.com/btclib-org/btclib-benchmarks/issues/53
 [iss55]: https://github.com/btclib-org/btclib-benchmarks/issues/55
