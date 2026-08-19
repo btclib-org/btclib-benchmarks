@@ -1023,36 +1023,57 @@ for _encoding_row in (
     _encoding_row()
 
 
-# three, and the estimator below is the one that goes with three rather than
-# the one this project would rather have: `scripts/01-libsecp256k1.py` halves
-# its rounds and prints the distance between the two halves' minima. Three do
-# not halve, so adopting that here is `ROUNDS = 4` and nothing else -- two and
-# two, which costs a third of a run.
+# four, and even, which is what the estimator below wants: the rounds are
+# halved and what is printed is the distance between the two halves' minima,
+# as `scripts/01-libsecp256k1.py` prints it. Three did not halve -- half a
+# round is the minimum of nothing -- so the change from that page's statistic
+# to this one is this constant and the arithmetic under it, two and two, and
+# it costs a third of a run.
 #
-# Affordable, and not what is in the way. Changing the estimator means
-# re-measuring this page, and this page cannot be re-measured yet: #53 has the
-# numbers and #23 the reason
-ROUNDS = 3
+# More would be better here as they are there, each half's minimum being the
+# better for having more rounds behind it. Four is what this page can afford:
+# its pure-Python rows are orders of magnitude slower than the wrappers
+# page's, which is why `calls` is per row here and per table there, and a
+# fifth and sixth round would be paid on those rows too.
+ROUNDS = 4
 
 
 def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
-    """Return the microseconds per call of the quickest round, and the spread.
+    """Return the quickest round's microseconds per call, and the halves' gap.
 
     `ROUNDS` rounds of `calls` calls each. The minimum is the estimate:
     noise is one-sided -- nothing on this machine makes a call quicker than
     it is -- so the quickest round is the one that ran with least taken from
-    it. The spread is how far the slowest round ran from the quickest, in
-    the same microseconds as the value beside it, and it is printed rather
-    than hidden because it is the only thing in the output that says whether
-    the machine was quiet while a row was measured.
+    it, where a mean would carry every interruption into the number.
 
-    That statistic is what the `spread` key means in a saved run, and this
-    is the page that still writes it: `01-libsecp256k1.py` moved to the
-    distance between two halves' minima and to a key of its own, so the two
-    are told apart by a reader of either file rather than by knowing which
-    script wrote it. The day this page adopts that estimator -- the
-    arithmetic is beside `ROUNDS` above, and #53 is what it waits for -- the
-    key it writes moves with it.
+    The second number is how far that estimate moved when the row was
+    measured twice, which is what the rounds are halved for: the column is
+    the distance between the two halves' minima, in the same microseconds as
+    the value beside it. That is the question the column is read for --
+    whether a gap between two adjacent rows is a gap this run settled -- and
+    a maximum less a minimum cannot answer it. An extreme-value statistic
+    over a handful of samples has enormous variance by construction and
+    reports the worst interruption a row happened to catch rather than
+    anything about the package, which is what #19 concluded and what this
+    page told its reader to use for two releases after it.
+
+    It is saved as `halves_apart` and not as `spread`, which is the key this
+    page wrote for the statistic it is deliberately no longer: a definition
+    living in this docstring is not carried by the file, so the two
+    statistics are two keys and a saved number means what its key says.
+    `_results.py`'s `SCHEMA` has the reasoning, that being where a format
+    decision belongs -- and it is why this change writes a different key
+    rather than redefining the one that is there.
+
+    Contiguous halves rather than alternate rounds, as on the wrappers page
+    and for its reason: the rows of a table are measured minutes apart, and
+    a machine that drifts over a row's rounds will drift over a table's
+    rows.
+
+    Two halves seconds apart say nothing about two runs a day apart, and
+    nothing here can see the second. That page pays for a second pass and
+    states the size; this one does not, and an absent line there is a page
+    that did not pay for one rather than a page whose two passes agreed.
 
     Returned and not printed: the tables below are sorted fastest to
     slowest and each row divides by the quickest, neither of which can be
@@ -1080,8 +1101,11 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
         for _ in range(calls):
             func()
         rounds.append((time.perf_counter() - start) / calls * 1e6)
-    quickest = min(rounds)
-    return quickest, max(rounds) - quickest
+    # halved on what the loop above actually produced rather than on
+    # `ROUNDS`, the two being the same number until somebody changes one
+    half = len(rounds) // 2
+    first, second = min(rounds[:half]), min(rounds[half:])
+    return min(first, second), abs(first - second)
 
 
 Rows = tuple[tuple[Callable[[], None], int], ...]
@@ -1109,12 +1133,12 @@ def measured(title: str, rows: Rows) -> Ratios:
     """
     timings: list[Timing | Unavailable] = []
     for label, (func, calls) in zip(labels_of(rows), rows, strict=True):
-        value, spread = benchmark(func, calls)
+        value, apart = benchmark(func, calls)
         timings.append(
             Timing(
                 label=label,
                 us_per_call=value,
-                spread=spread,
+                halves_apart=apart,
                 calls=calls,
                 rounds=ROUNDS,
             )
@@ -1236,8 +1260,8 @@ TABLES: tuple[tuple[str, Rows], ...] = (
 
 # what the run block claims about how these numbers were taken, said by
 # the script that takes them: `benchmark` above is where the rounds and
-# the minimum are, and the spread column is what a reader checks it by
-METHOD = f"{ROUNDS} rounds per row, minimum kept; nothing else repeated"
+# the minimum are, and the halves column is what a reader checks it by
+METHOD = f"{ROUNDS} rounds per row in two halves, minimum kept; calls per row"
 
 
 def main() -> None:

@@ -1966,12 +1966,14 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
     rows of a table are measured minutes apart and a machine that drifts
     over a row's rounds will drift over a table's rows.
 
-    It is saved as `halves_apart` and not as `spread`, which is the key
-    `03-libraries.py` writes for the statistic this one is deliberately not:
-    a definition living in this docstring is not carried by the file, so the
+    It is saved as `halves_apart` and not as `spread`, which is the key this
+    project wrote for the statistic this one is deliberately not: a
+    definition living in this docstring is not carried by the file, so the
     two statistics are two keys and a saved number means what its key says.
     `_results.py`'s `SCHEMA` has the reasoning, that being where a format
-    decision belongs.
+    decision belongs. `03-libraries.py` measures this statistic too now and
+    writes the same key; the runs saved under the other one keep it, which
+    is what the two keys are for.
 
     The column is quantized and lands on a lattice, which is worth knowing
     before reading a small value on it: a round is measured to one tick of

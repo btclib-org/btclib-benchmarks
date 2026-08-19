@@ -59,30 +59,37 @@ python  : 3.13.14
 
 The tables are the curve operations, BIP32 derivation, and the three
 address encodings in both directions. Fastest row first, ratioed against
-whichever row came out quickest, with the spread of a row's own three
-rounds beside it — how far its slowest round ran from its quickest, in the
+whichever row came out quickest, with a dispersion column beside it in the
 same microseconds as the value it sits beside.
 
-Read it as the computer and not as the library — as what else the machine was
-doing while a row was measured, rather than as anything the code under that
-row does. It is the worst of three rounds less the best, so a wide one says
-one round in three caught an interruption and a narrow one says none of them
-did.
+**That column is changing, and the block above still carries the old one.**
+What the rows above print, headed `spread`, is how far a row's slowest round
+ran from its quickest over three rounds. What the script now measures, and
+what the next run of this page will print under `halves`, is the distance
+between the minima of two halves of four rounds — the statistic [the wrappers
+page][wrappers] prints, arriving here under a key of its own so that a number
+in a saved run means what its key says.
 
-It is **not** a separation test. The worst of three samples is a number
-dominated by whichever round happened to go badly, so it moves a great deal
-from run to run while the row's own minimum barely moves at all: whether two
-adjacent rows are really in the order printed is not a question it answers,
-and comparing their gap against it does not make it one.
+The reason for the change is that the two answer different questions and only
+one of them is the question the column is read for. A maximum less a minimum
+is dominated by whichever round happened to go badly: it is an extreme-value
+statistic over a handful of samples, so it has enormous variance by
+construction, it grows as rounds are added, and it reports the worst
+interruption a row happened to catch rather than anything about the package.
+Whether two adjacent rows are really in the order printed is not a question it
+answers, and comparing their gap against it does not make it one. A distance
+between two halves' minima is that question: it says whether the row agreed
+with itself when measured twice, seconds apart, and it shrinks as rounds are
+added because each half's minimum is the better for having more behind it.
 
-That is not the statistic the column of the same name carries on [the
-wrappers page][wrappers], and the two are not comparable in either direction.
-This one is a maximum less a minimum, so it grows as rounds are added and
-reports the worst interruption a row happened to catch. That one is the
-distance between the minima of two halves of the rounds, so it shrinks as
-rounds are added and reports whether the row agreed with itself. Both are
-in microseconds and neither is an error bar; a small number here and a
-small number there do not mean the same thing.
+Four rounds and not more, where the wrappers page takes ten: this page's
+pure-Python rows are orders of magnitude slower, which is why its loop count
+is per row rather than per table, and every extra round is paid on those rows
+too. Read either column as the computer and not as the library — as what else
+the machine was doing while a row was measured — and neither as an error bar.
+Neither can see the machine drifting between one run and the next; the
+wrappers page pays for a second pass and states that size, and this page does
+not, so nothing here says it.
 
 The inputs are every BIP340 signing vector and every BIP32 chain the
 vendored files publish, cycled one per call; the address rows are the
@@ -111,8 +118,9 @@ alone makes whichever comparison it is not in wrong. The script now carries
 all four combinations of the two flags — the check runs once on the signature
 the grinding loop settled on, so grinding and verifying add rather than
 multiply — and one row of BIP340's pair beside the other. [ISS 23][i23] is
-the order that run waits on, and [ISS 47][i47] the spread estimator that
-rides with it.
+the order that run waits on, and the dispersion column above is the other
+thing that run has to print anew: [ISS 47][i47] moved the script to the
+statistic the wrappers page prints, and one run serves both.
 
 **Every signing row states both of its flags in its name**, which the rows
 above do not yet and the next run will: `grind` or `nogrind`, then `verify`

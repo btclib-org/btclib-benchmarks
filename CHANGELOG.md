@@ -1081,6 +1081,34 @@ The release notes, which say what a user has to act on, are in
   again, and `bms_sign` is the row that will move. [ISS 23][iss23],
   [ISS 28][iss28], [ISS 53][iss53] and [ISS 55][iss55] end in those runs.
 
+- **The libraries page measures the dispersion the wrappers page measures**,
+  four rounds in two halves with the distance between the halves' minima
+  beside each row, where it took three rounds and printed the slowest less
+  the quickest. The two answer different questions and only one of them is
+  the question the column is read for: a maximum less a minimum is an
+  extreme-value statistic over a handful of samples, so it has enormous
+  variance by construction, grows as rounds are added, and reports the worst
+  interruption a row happened to catch. A distance between two halves' minima
+  says whether the row agreed with itself, and shrinks as rounds are added.
+  The page stopped telling its reader to use the first as a separation test
+  two entries ago; it now stops printing it.
+
+  Four and not more. Each half's minimum is the better for having rounds
+  behind it, and this page's pure-Python rows are orders of magnitude slower
+  than the wrappers page's — which is why its loop count is per row rather
+  than per table, and why a fifth round costs more here than a fifth round
+  costs there. Three would not halve: half a round is the minimum of nothing.
+
+  The key moves with the statistic, `halves_apart` rather than `spread`, which
+  is the discipline `SCHEMA` states — a value whose definition changes is
+  written under a new name, so a number in a saved run means what its key
+  says and a run saved before the change keeps the statistic it was taken
+  under. Nothing re-saves and nothing re-renders: the block on the page still
+  carries three rounds under `spread` until the page is next run, and the
+  prose beside it says which column is which. That run is the one
+  [ISS 23][iss23] orders, and it prints the new rows and the new column
+  together rather than paying for this page twice. [ISS 47][iss47].
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
