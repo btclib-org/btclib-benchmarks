@@ -92,6 +92,23 @@ exception and say so where they are defined.
   what keeps btclib's row on the libsecp256k1 path. The vector's aux_rand
   makes
   both signing rows reproducible, and therefore checkable against BIP340.
+
+  Signing has two tables, a fresh key and a key held already, because a
+  signer does not sign one message any more than a verifier verifies one
+  signature. It is also what makes the fresh table honest: buidl and embit
+  are called through an object built from the secret, and that object was
+  built once outside the clock, so those rows were the held shape while
+  btclib's row was handed 32 octets and built everything per call. Two
+  tables put each library in both shapes and let the pair say what the
+  holding is worth.
+
+  What each of them holds is different, and it is a reading of the source
+  rather than of the API's shape: btclib's `ssa.Signer` holds the keypair,
+  buidl's `PrivateKey` holds `secret * G`, and embit's holds the 32 secret
+  octets and hands them to the bundled library, which builds the keypair
+  inside every call. So one of the three saves the constructor and two save
+  a multiplication of the generator, and the pair of tables is where that
+  shows.
 - BIP32 derivation, every chain the vector file publishes, checked against
   the public key it publishes for that path.
 - base58check, bech32 and bech32m, encoding and decoding. Pure Python in
@@ -699,6 +716,45 @@ SSA_EMBIT_SIGS = [
 SSA_BTCLIB = cycle(
     [(msg, prvkey, AUX) for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)]
 )
+
+# What each library's answer to "sign repeatedly under this key" holds, built
+# from the keys its own fresh row signs with once, so that a held row and the
+# fresh row above it differ by the holding and by nothing else. Which of them
+# saves what is a reading of each library rather than an assumption:
+#
+# - `btclib.ecc.ssa.Signer` holds the `libsecp256k1_ssa.Signer` that
+#   `ssa.sign_` builds and wipes inside every call, and that is a keypair --
+#   a multiplication of the generator, and about half of what a BIP340
+#   signature costs on this path;
+# - buidl's `PrivateKey` computes `secret * G` in its constructor and
+#   `sign_schnorr` reads the point it kept, so holding one saves a
+#   pure-Python point multiplication, which is the largest saving on the
+#   page and the reason its fresh row is worth timing at all;
+# - embit's `PrivateKey` holds the 32 secret octets and validates them,
+#   nothing more: `schnorr_sign` hands those octets to the bundled library,
+#   which builds the keypair inside every call. Holding one saves the
+#   validation. It is in the table because that is the finding -- a held key
+#   object is not a held keypair, and which one a library gives a caller is
+#   not something the shape of its API says.
+#
+# One object per key rather than one for the slice: a single held key signed
+# fifty thousand times would measure one key's second signature over and over,
+# which is a cache and not a benchmark.
+SSA_BTCLIB_SIGNERS = [ssa.Signer(prvkey) for prvkey in PRVKEYS]
+SSA_BTCLIB_HELD = cycle(
+    [
+        (signer, msg, AUX)
+        for signer, msg in zip(SSA_BTCLIB_SIGNERS, MESSAGES, strict=True)
+    ]
+)
+# the raw material the fresh rows build their object from, per call
+SSA_BUIDL_FRESH = cycle(
+    [
+        (scalar, msg)
+        for scalar, msg in zip(PYCOIN_SCALARS[:BUIDL_CALLS], MESSAGES, strict=False)
+    ]
+)
+SSA_EMBIT_FRESH = cycle(list(zip(PRVKEYS, MESSAGES, strict=True)))
 # the x-only key the verification takes, cut in the fixtures rather than
 # derived inside the row: deriving it is a generator multiplication, and
 # every other row of that table verifies against a key it was handed
@@ -745,17 +801,34 @@ def ssa_verify_btclib() -> None:
     ssa.verify_(msg, xonly, sig)
 
 
-def ssa_sign_buidl_verify() -> None:
-    """Time BIP340 signing through buidl's pure-Python PrivateKey.
+def ssa_held_buidl_verify() -> None:
+    """Time BIP340 signing under a buidl PrivateKey held already.
+
+    What the holding saves here is `secret * G` in Python, the constructor
+    having computed it and `sign_schnorr` reading the point it kept. The
+    fresh row beside this one is what says how much, and the two tables are
+    where a reader reads it off rather than being told.
 
     `verify`, and no argument declines it: `sign_schnorr` ends by verifying
-    the signature under the point the key holds and raising on one that does
-    not check out, which is BIP340's own last step. So this row is btclib's
+    the signature under that same point and raising on one that does not
+    check out, which is BIP340's own last step. So this row is btclib's
     checked row's comparand rather than its unchecked one -- and what checks
     here is Python, where what checks in btclib's row is libsecp256k1.
     """
     key, msg, aux, _ = next(SSA_BUIDL)
     key.sign_schnorr(msg, aux)
+
+
+def ssa_sign_buidl_verify() -> None:
+    """Time buidl's BIP340 signing with the key object built per call.
+
+    The fresh half of the pair, and the object is built inside the timed
+    call because building it is what the pair prices: `PrivateKey.__init__`
+    multiplies the generator by the secret, and a caller who signs once pays
+    that and a caller who signs a thousand times pays it once.
+    """
+    scalar, msg = next(SSA_BUIDL_FRESH)
+    buidl.pecc.PrivateKey(scalar).sign_schnorr(msg, AUX)
 
 
 def ssa_verify_buidl() -> None:
@@ -764,16 +837,62 @@ def ssa_verify_buidl() -> None:
     key.point.verify_schnorr(msg, sig)
 
 
-def ssa_sign_embit_noverify() -> None:
-    """Time BIP340 signing through embit's bundled library.
+def ssa_held_embit_noverify() -> None:
+    """Time BIP340 signing under an embit PrivateKey held already.
 
-    `noverify`, and no argument asks for a check: `schnorr_sign` builds a
-    keypair from the secret its key holds and calls the bundled
-    `secp256k1_schnorrsig_sign`, which answers with the signature and proves
+    The row that says a held key object is not a held keypair. embit's
+    `PrivateKey` holds the 32 secret octets and validates them, and
+    `schnorr_sign` hands those octets to the bundled library, which builds
+    the keypair inside every call -- so what this saves against the fresh row
+    is the validation, and its distance from btclib's held row is a keypair
+    per signature that btclib no longer builds.
+
+    `noverify`, and no argument asks for a check: what the bundled
+    `secp256k1_schnorrsig_sign` answers with is the signature, and it proves
     nothing about it.
     """
     key, _, msg, _ = next(SSA_EMBIT)
     key.schnorr_sign(msg)
+
+
+def ssa_sign_embit_noverify() -> None:
+    """Time embit's BIP340 signing with the key object built per call.
+
+    The fresh half of the pair. What the constructor costs is a length check
+    and `ec_seckey_verify`, so this row and the held one are expected to sit
+    close together -- a negative result the pair is worth printing to have.
+    """
+    prvkey, msg = next(SSA_EMBIT_FRESH)
+    embit.ec.PrivateKey(prvkey).schnorr_sign(msg)
+
+
+def ssa_held_btclib_noverify() -> None:
+    """Time unchecked BIP340 signing under a key the signer already holds.
+
+    `ssa.Signer` holds the keypair `ssa.sign_` builds and wipes inside every
+    call, and a keypair is a multiplication of the generator -- about half of
+    what a BIP340 signature costs on this path. The pair with the fresh row
+    is what a caller who signs more than once under a key saves by asking for
+    it, which is the decision a caller actually takes; it is not the keypair
+    alone, the held spelling also answering with the octets where the fresh
+    one answers with a `Sig`.
+
+    `verify=False`, as the fresh row passes, so nothing in the pair is the
+    check.
+    """
+    signer, msg, aux = next(SSA_BTCLIB_HELD)
+    signer.sign_(msg, aux, verify=False)
+
+
+def ssa_held_btclib_verify() -> None:
+    """Time the held signer with BIP340's own last step done.
+
+    The row buidl's held row is comparable with, both of them checking inside
+    the call, and the one that says what the check is worth once the keypair
+    is no longer part of the number it is a fraction of.
+    """
+    signer, msg, aux = next(SSA_BTCLIB_HELD)
+    signer.sign_(msg, aux, verify=True)
 
 
 def ssa_verify_embit() -> None:
@@ -1177,16 +1296,25 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "3. BIP340 sign (32-byte message)",
+        "3. BIP340 sign (32-byte message, a fresh key)",
         (
             (ssa_sign_btclib_noverify, 50_000),
             (ssa_sign_btclib_verify, 30_000),
-            (ssa_sign_buidl_verify, 20),
+            (ssa_sign_buidl_verify, 10),
             (ssa_sign_embit_noverify, 50_000),
         ),
     ),
     (
-        "4. BIP340 verify (32-byte message)",
+        "4. BIP340 sign (32-byte message, the key held already)",
+        (
+            (ssa_held_btclib_noverify, 50_000),
+            (ssa_held_btclib_verify, 30_000),
+            (ssa_held_buidl_verify, 20),
+            (ssa_held_embit_noverify, 50_000),
+        ),
+    ),
+    (
+        "5. BIP340 verify (32-byte message)",
         (
             (ssa_verify_btclib, 50_000),
             (ssa_verify_buidl, 25),
@@ -1194,7 +1322,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "5. BIP32 derive, seed to child, every chain BIP32 publishes",
+        "6. BIP32 derive, seed to child, every chain BIP32 publishes",
         (
             (bip32_derive_btclib, 30_000),
             (bip32_derive_pycoin, pycoin_calls(30_000, 75)),
@@ -1203,7 +1331,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "6. base58check encode, a P2PKH address from a hash160",
+        "7. base58check encode, a P2PKH address from a hash160",
         (
             (base58_encode_btclib, 200_000),
             (base58_encode_pycoin, 200_000),
@@ -1213,7 +1341,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "7. base58check decode, a hash160 from a P2PKH address",
+        "8. base58check decode, a hash160 from a P2PKH address",
         (
             (base58_decode_btclib, 200_000),
             (base58_decode_pycoin, 200_000),
@@ -1223,7 +1351,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "8. bech32 encode, a witness-v0 address from a 20-byte program",
+        "9. bech32 encode, a witness-v0 address from a 20-byte program",
         (
             (bech32_encode_btclib, 200_000),
             (bech32_encode_embit, 200_000),
@@ -1232,7 +1360,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "9. bech32 decode, a 20-byte program from a witness-v0 address",
+        "10. bech32 decode, a 20-byte program from a witness-v0 address",
         (
             (bech32_decode_btclib, 200_000),
             (bech32_decode_embit, 200_000),
@@ -1241,7 +1369,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "10. bech32m encode, a witness-v1 address from a 32-byte program",
+        "11. bech32m encode, a witness-v1 address from a 32-byte program",
         (
             (bech32m_encode_btclib, 200_000),
             (bech32m_encode_embit, 200_000),
@@ -1249,7 +1377,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "11. bech32m decode, a 32-byte program from a witness-v1 address",
+        "12. bech32m decode, a 32-byte program from a witness-v1 address",
         (
             (bech32m_decode_btclib, 200_000),
             (bech32m_decode_embit, 200_000),

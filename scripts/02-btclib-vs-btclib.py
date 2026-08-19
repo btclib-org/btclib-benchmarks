@@ -48,6 +48,24 @@ table's two labels are made from the operation's name, `_libsecp256k1` and
 `_pure_python`: every row here is btclib, and every row here is invoked from
 Python.
 
+## The one row whose two columns do not save the same thing
+
+`ssa_sign_held_noverify` signs under an `ssa.Signer`, which holds across
+calls the keypair that `ssa.sign_` builds and wipes inside each one. There
+is a keypair to hold only where libsecp256k1 answers: with the dispatch off
+a `Signer` holds a scalar and every signature is `sign_`'s again. So that
+row's ratio is the crossing multiplied by a saving one column has and the
+other does not, and it is read against the fresh signing row above it rather
+than against the rest of the table. It is here because the asymmetry is the
+answer -- what btclib's fallback cannot offer is as much this page's subject
+as what it costs.
+
+It is also the one fixture `python_arithmetic_only` cannot reach. A signer
+decides which arm it is on when it is built and keeps the answer, so the
+held objects are built twice, once per pass, off the clock both times. Every
+other fixture here is bytes or a point and is read by whichever arithmetic
+is switched on when the row runs.
+
 ## Which flags a signing row passed, in its name
 
 btclib verifies the signature it has just made before answering with it,
@@ -179,28 +197,35 @@ _MESSAGES = _inputs.messages()
 _PUBKEYS_33 = _inputs.pubkeys_33()
 POOL = len(_KEYS)
 
+# the operations, in the order their slices are cut from the pool
+_OPERATION_NAMES = (
+    "pubkey_from_prvkey",
+    "pubkey_parse_33",
+    "generator_mult",
+    "dsa_sign_nogrind_noverify",
+    "dsa_verify",
+    "dsa_recover",
+    "ssa_sign_noverify",
+    "ssa_verify",
+    "dh_shared_secret",
+    "bms_sign",
+    "bms_verify",
+    "taproot_tweak",
+    "ellswift_decode",
+)
+
 # where each operation starts reading. Spread across the pool rather than
 # packed, so that operations measured one after another are not walking the
-# same keys in the same order
+# same keys in the same order.
+#
+# Divided by how many operations there are and not by a number written here:
+# the two were the same until an operation was added, and the count written
+# out is the one that does not follow -- it would have packed the new slice
+# on top of an old one rather than re-spreading them, silently and only for
+# the rows past where it was added
 _OFFSETS = {
-    name: (index * POOL // 13)
-    for index, name in enumerate(
-        (
-            "pubkey_from_prvkey",
-            "pubkey_parse_33",
-            "generator_mult",
-            "dsa_sign_nogrind_noverify",
-            "dsa_verify",
-            "dsa_recover",
-            "ssa_sign_noverify",
-            "ssa_verify",
-            "dh_shared_secret",
-            "bms_sign",
-            "bms_verify",
-            "taproot_tweak",
-            "ellswift_decode",
-        )
-    )
+    name: (index * POOL // len(_OPERATION_NAMES))
+    for index, name in enumerate(_OPERATION_NAMES)
 }
 
 # how many of the pool each operation prepares. A fixture is only needed for
@@ -309,6 +334,48 @@ DSA_RECOVER_CYCLE = cycle(
 SSA_SIGN_CYCLE = cycle(
     list(zip(_messages("ssa_sign_noverify"), _keys("ssa_sign_noverify"), strict=True))
 )
+
+
+def _held_signers() -> cycle[tuple[ssa.Signer, bytes]]:
+    """Return one `ssa.Signer` per key of the signing slice, and its messages.
+
+    Built before anything is timed, because what a held row prices is
+    holding the key: an object built inside the timed call is the fresh row
+    again. The signing slice and not one of its own, so that the two rows
+    differ by the holding and not by their inputs -- the one place this file
+    reads a slice twice, and the reason is the pair rather than a shortcut.
+
+    One signer per key and not one for the slice: a round is the slice once
+    through, and a single held key signed twenty-five thousand times would
+    measure one key's second signature over and over, which is a cache and
+    not a benchmark.
+
+    A function rather than a list because these have to be built twice, once
+    per arithmetic. `SSA_HELD` below says why, and `python_arithmetic_only`
+    is what calls it the second time.
+    """
+    signers = [ssa.Signer(prvkey) for prvkey in _keys("ssa_sign_noverify")]
+    return cycle(list(zip(signers, _messages("ssa_sign_noverify"), strict=True)))
+
+
+# **A held object is the one fixture `python_arithmetic_only` cannot reach**,
+# and this is the whole of why it is a list with one cycle in it rather than
+# the cycle. `ssa.Signer.__init__` asks `_libsecp256k1_serves` once and keeps
+# the answer: where the bindings serve it builds their signer and sets its
+# own scalar to zero, that scalar being a second copy of the secret it would
+# otherwise be holding for nothing. So a signer built while the dispatch was
+# on stays on the bindings for the rest of its life and could not sign in
+# Python if asked -- it has no scalar left to sign with.
+#
+# Every other fixture here is bytes or a point and is read by whichever
+# arithmetic is switched on when the row runs. This one carries its
+# arithmetic inside it. Built once at import for the libsecp256k1 pass and
+# rebuilt by `python_arithmetic_only` for the Python one, both times off the
+# clock, and the rebuild is not an optimisation: without it the pure-Python
+# column of that row prints a libsecp256k1 number, silently and
+# convincingly -- it did, when this row was first written, and
+# `tests/pure_python_path_test.py` is what said so.
+SSA_HELD = [_held_signers()]
 SSA_VERIFY_CYCLE = cycle(
     list(zip(_messages("ssa_verify"), XONLY, SSA_SIGS, strict=True))
 )
@@ -334,8 +401,21 @@ def python_arithmetic_only() -> None:
 
     Called once, after every fixture above is built: those go through
     libsecp256k1 too, and there is no reason to slow them down.
+
+    The held signers are rebuilt here rather than by the caller, and that is
+    the whole of why this function has a second line. `SSA_HELD` above says
+    what they are: the one fixture the assignment cannot reach, each object
+    having decided which arm it is on when it was built. Leaving the rebuild
+    to whoever throws the switch is leaving it to be forgotten, and what
+    forgetting it produces is not an error -- it is a pure-Python column
+    printing a libsecp256k1 number. `tests/pure_python_path_test.py` throws
+    this switch too, and it caught exactly that.
+
+    Off the clock, as the first set was: this runs between the two passes and
+    inside neither.
     """
     curve._libsecp256k1_available = False
+    SSA_HELD[0] = _held_signers()
 
 
 def pubkey() -> None:
@@ -415,6 +495,33 @@ def ssa_sign_noverify() -> None:
     ssa.sign_(msg, prvkey, verify=False).serialize()
 
 
+def ssa_sign_held_noverify() -> None:
+    """Time BIP340 signing under a key the signer is already holding.
+
+    `ssa.Signer` holds the keypair that `ssa.sign_` builds and wipes inside
+    every call, and a keypair is a multiplication of the generator -- about
+    half of what a BIP340 signature costs on the arm that has one. So the
+    pair with the row above is what a caller who signs more than once under
+    a key saves by asking for it, which is the decision a caller actually
+    takes; it is not the keypair alone, the held spelling also answering
+    with the octets where the fresh one answers with a `Sig`.
+
+    **The two columns do not save the same thing, and that is the row's
+    finding rather than a defect in it.** There is a keypair to hold only
+    where libsecp256k1 answers. Turn the dispatch off and `Signer` holds a
+    scalar and nothing else -- every signature is `sign_`'s again -- so the
+    pure-Python column here is the pure-Python column above, and this row's
+    ratio is the crossing multiplied by a saving one side has and the other
+    does not. Read it against the row above rather than against the rest of
+    the table.
+
+    `verify=False`, as the fresh row passes, so nothing in the pair is the
+    check.
+    """
+    signer, msg = next(SSA_HELD[0])
+    signer.sign_(msg, verify=False)
+
+
 def ssa_verify() -> None:
     """Time BIP340 verification."""
     msg, xonly_pubkey, sig = next(SSA_VERIFY_CYCLE)
@@ -475,6 +582,7 @@ for _op in (
     dsa_verify,
     dsa_recover,
     ssa_sign_noverify,
+    ssa_sign_held_noverify,
     ssa_verify,
     dh_shared_secret,
     bms_sign,
@@ -527,6 +635,7 @@ OPERATIONS = (
     ("dsa_verify", dsa_verify, 25, 1),
     ("dsa_recover", dsa_recover, 10, 1),
     ("ssa_sign_noverify", ssa_sign_noverify, 25, 2),
+    ("ssa_sign_held_noverify", ssa_sign_held_noverify, 25, 2),
     ("ssa_verify", ssa_verify, 25, 1),
     ("dh_shared_secret", dh_shared_secret, 25, 2),
     ("bms_sign", bms_sign, 15, 2),
@@ -561,6 +670,8 @@ def main() -> None:
         for name, op, calls, _ in OPERATIONS
     }
 
+    # this also rebuilds the held signers, which is the one fixture the
+    # assignment cannot reach: see `SSA_HELD`
     python_arithmetic_only()
 
     seconds |= {

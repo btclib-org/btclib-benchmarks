@@ -1110,9 +1110,50 @@ The release notes, which say what a user has to act on, are in
   prints the new rows and the new column together rather than paying for this
   page twice.
 
+- **Two pages time a held signer, which nothing here did.** `05-key-reuse.py`
+  asks what a verifier pays per signature under a key it already has, and its
+  own argument for asking — that a verifier does not verify one signature — is
+  every bit as true of a signer. `grep -rn Signer scripts/*.py` was empty on
+  btclib's side: neither `btclib.ecc.ssa.Signer` nor the one it delegates to
+  was timed on either arm. [ISS 42][iss42].
+
+  `scripts/02-btclib-vs-btclib.py` gains one row, and its two columns do not
+  save the same thing. `ssa.Signer` holds across calls the keypair `ssa.sign_`
+  builds and wipes inside each one, and there is a keypair to hold only where
+  libsecp256k1 answers: with the dispatch off a signer holds a scalar and every
+  signature is `sign_`'s again. The row is there because that asymmetry is the
+  answer — what the fallback cannot offer is as much that page's subject as
+  what it costs — and it is read against the fresh signing row rather than
+  against the rest of the table.
+
+  `scripts/03-libraries.py` splits BIP340 signing into two tables, a fresh key
+  and a key held already, and the split corrects a comparison as much as it
+  adds one: buidl and embit were already being called through an object built
+  outside the clock, where btclib's row was handed 32 octets and built
+  everything per call. What each library holds differs, and it was read out of
+  the source rather than off the shape of its API — btclib's `ssa.Signer`
+  holds the keypair, buidl's `PrivateKey` holds `secret * G`, embit's holds
+  the secret octets and hands them to a library that builds the keypair inside
+  every call. A held key object is not a held keypair.
+
+  **A held object is the one fixture `python_arithmetic_only` cannot reach**,
+  and finding that out is what the page 02 row cost. `ssa.Signer.__init__`
+  asks the dispatch once and keeps the answer, zeroing its own scalar where it
+  built the bindings' signer, so an object built before the switch stays on
+  libsecp256k1 for life and could not sign in Python if asked. Written the
+  obvious way, that row's pure-Python column printed a libsecp256k1 number,
+  silently and convincingly, and `tests/pure_python_path_test.py` — which
+  blocks every binding and throws the same switch — is what said so. The
+  rebuild is therefore inside `python_arithmetic_only` rather than beside its
+  callers: an invariant a caller has to remember is one that gets forgotten,
+  and what forgetting this one produces is not an error but a wrong number.
+
+  Neither page moves until it is run. [ISS 42][iss42] ends in those two runs.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
+[iss42]: https://github.com/btclib-org/btclib-benchmarks/issues/42
 [iss47]: https://github.com/btclib-org/btclib-benchmarks/issues/47
 [iss53]: https://github.com/btclib-org/btclib-benchmarks/issues/53
 [iss55]: https://github.com/btclib-org/btclib-benchmarks/issues/55
