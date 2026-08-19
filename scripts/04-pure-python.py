@@ -41,6 +41,44 @@ against those are fixed in 5.9.0 and 5.29.6, so the row would cost standing
 security alerts for as long as those ceilings hold. It also declares
 `requires_python <3.13`, and `.python-version` is 3.13.
 
+## Which flags a signing row passed, in its label
+
+Every signing row states both of its flags, in the order the call performs
+them: `grind` or `nogrind`, and `verify` or `noverify`. A row named for one
+flag beside a row named for neither is a flag read against a silence, and
+the silence says nothing about what that call did -- so an implementation
+that takes no argument is labelled as plainly as the one that does.
+
+Both flags are written out on every btclib row, the defaults included: a row
+that took a default would be a row whose label is a claim about btclib's
+defaults on the day it was measured rather than about the call it made.
+
+btclib alone grinds for a low-r signature, and btclib alone *takes an
+argument* for the check, so btclib alone carries the pairs. Which other rows
+check was read out of each implementation rather than assumed, and the two
+schemes do not answer alike.
+
+In the ECDSA table nothing else checks, so a single checked btclib row would
+sit among three implementations that sign and stop and would read as btclib's
+arithmetic having grown several times slower, when what changed is that its
+row had become a different operation from the ones beside it. That is the
+pair's whole reason here, and the increment is the largest the check comes to
+anywhere in this project: on this arm a verification is two point
+multiplications where a signature is one, and none of it is amortised by a
+keypair. The verify table below is where that increment is priced on its own.
+
+In the BIP340 table both comparands check and neither can decline.
+secp256k1lab ends `schnorr_sign` on `assert schnorr_verify(...)`, which is
+how the specification's own reference code writes BIP340's last step, and
+buidl verifies under the point its key holds and raises on a failure. So
+there it is btclib's *checked* row that has comparands and its unchecked row
+that stands alone -- which is the same pair read the other way round, and the
+reason the pair is a pair rather than a choice between two rows.
+
+The four ECDSA combinations are four rows and not two: the check runs once
+on the signature the grinding loop settled on, so grinding and verifying add
+rather than multiply.
+
 ## The inputs
 
 Every BIP340 signing vector, cycled, `_vectors` reading the file and checking
@@ -311,28 +349,66 @@ def pubkey_pycoin() -> None:
 # ----------------------------------------------------------------- ECDSA
 
 
-def dsa_sign_btclib() -> None:
-    """Time one ECDSA signature through btclib.
+def dsa_sign_btclib_nogrind_noverify() -> None:
+    """Time one unchecked ECDSA signature through btclib.
 
     `grind=False`, which is not btclib's default: one signature is what every
-    other row in the table produces, and the default is the row below.
+    other row in the table produces.
+
+    `verify=False`, which is not btclib's default either, and on this page it
+    is the flag that matters most. btclib verifies the signature it has just
+    made before answering with it, on this arm as on the other, and here that
+    check is a verification in Python -- the table below prices one, and it
+    is several signatures. No other implementation in this table checks
+    anything after signing, so this is the row they are read against.
     """
     msg, prvkey = next(DSA_SIGN_BTCLIB)
-    dsa.sign_(msg, prvkey, grind=False)
+    dsa.sign_(msg, prvkey, grind=False, verify=False)
 
 
-def dsa_sign_btclib_grind() -> None:
-    """Time ECDSA signing as btclib performs it unless told otherwise.
+def dsa_sign_btclib_nogrind_verify() -> None:
+    """Time one ECDSA signature with the check btclib performs by default.
+
+    The pair with the row above, and the reason the page carries a pair
+    rather than moving the one row: a single checked row would sit among
+    implementations that sign and stop, and would read as btclib's Python
+    arithmetic having grown several times slower rather than as a row that
+    had become a different operation from the ones beside it.
+
+    What is added is btclib's own pure-Python verification and the public key
+    derivation it needs, which the verify table below is the price of. It is
+    the largest share of a signature the check comes to anywhere in this
+    project: a verification here is two point multiplications where a
+    signature is one, and none of it is amortised by a keypair.
+    """
+    msg, prvkey = next(DSA_SIGN_BTCLIB)
+    dsa.sign_(msg, prvkey, grind=False, verify=True)
+
+
+def dsa_sign_btclib_grind_noverify() -> None:
+    """Time unchecked ECDSA signing with btclib's low-r grinding.
 
     btclib grinds for a low-r signature by default: it signs until r fits in
     32 bytes, an expectation of two signatures and, for one fixed key and
     message, a fixed number of them. No other implementation in this table
-    grinds, so the two rows say which question is being answered -- what one
-    signature costs, and what a caller who writes `dsa.sign_(msg, key)` waits
-    for.
+    grinds, so the pair with the row above says what one signature costs and
+    what a caller who declines nothing but the check waits for.
     """
     msg, prvkey = next(DSA_SIGN_BTCLIB)
-    dsa.sign_(msg, prvkey)
+    dsa.sign_(msg, prvkey, grind=True, verify=False)
+
+
+def dsa_sign_btclib_grind_verify() -> None:
+    """Time ECDSA signing as btclib performs it unless told otherwise.
+
+    Both defaults, which is what a caller who writes `dsa.sign_(msg, key)`
+    waits for. The check is of the signature the loop settled on and not of
+    every attempt, so grinding and verifying add rather than multiply, and
+    this row is the grinding row plus the increment the ungrinding pair
+    prices.
+    """
+    msg, prvkey = next(DSA_SIGN_BTCLIB)
+    dsa.sign_(msg, prvkey, grind=True, verify=True)
 
 
 def dsa_verify_btclib() -> None:
@@ -380,10 +456,29 @@ def dsa_verify_buidl() -> None:
 # ---------------------------------------------------------------- BIP340
 
 
-def ssa_sign_btclib() -> None:
-    """Time a BIP340 signature through btclib, over the vector's aux_rand."""
+def ssa_sign_btclib_noverify() -> None:
+    """Time an unchecked BIP340 signature, over the vector's aux_rand.
+
+    `verify=False`. Neither comparand in this table checks what it signed,
+    so this is the row they are read against; the row below is BIP340's own
+    last step, priced.
+    """
     msg, prvkey, aux = next(SSA_BTCLIB_SIGN)
-    ssa.sign_(msg, prvkey, aux=aux).serialize()
+    ssa.sign_(msg, prvkey, aux=aux, verify=False).serialize()
+
+
+def ssa_sign_btclib_verify() -> None:
+    """Time BIP340 signing with the check btclib performs by default.
+
+    BIP340 puts the step inside Default Signing -- "If Verify(bytes(P), m,
+    sig) returns failure, abort" -- so this row is the scheme's algorithm run
+    whole. On this arm the step is btclib's own Python verification, which
+    the BIP340 verify table below prices, and it is not the smaller of the
+    two increments this page carries the way it is where a keypair has
+    already derived the point.
+    """
+    msg, prvkey, aux = next(SSA_BTCLIB_SIGN)
+    ssa.sign_(msg, prvkey, aux=aux, verify=True).serialize()
 
 
 def ssa_verify_btclib() -> None:
@@ -393,7 +488,13 @@ def ssa_verify_btclib() -> None:
 
 
 def ssa_sign_lab() -> None:
-    """Time a BIP340 signature through secp256k1lab."""
+    """Time a BIP340 signature through secp256k1lab, which checks it.
+
+    `verify`, and no argument declines it: `schnorr_sign` ends on
+    `assert schnorr_verify(...)`, BIP340's own last step, written the way the
+    specification's reference code writes it. So this row's comparand is
+    btclib's checked one.
+    """
     msg, prvkey, aux = next(SSA_LAB_SIGN)
     secp256k1lab.bip340.schnorr_sign(msg, prvkey, aux)
 
@@ -405,7 +506,12 @@ def ssa_verify_lab() -> None:
 
 
 def ssa_sign_buidl() -> None:
-    """Time a BIP340 signature through buidl's pure-Python module."""
+    """Time a BIP340 signature through buidl's pure-Python module, checked.
+
+    `verify`, and no argument declines it: `sign_schnorr` ends by verifying
+    the signature under the point its key holds and raising on a failure,
+    which is BIP340's own last step. Its comparand is btclib's checked row.
+    """
     key, msg, aux = next(SSA_BUIDL_SIGN)
     key.sign_schnorr(msg, aux)
 
@@ -533,11 +639,13 @@ TABLES: tuple[tuple[str, Rows], ...] = (
     (
         "ECDSA sign, over a 32-byte digest",
         (
-            ("btclib, one signature", dsa_sign_btclib, 50),
-            ("btclib, grinding (default)", dsa_sign_btclib_grind, 20),
-            ("python-ecdsa", dsa_sign_ecdsa, 100),
-            ("pycoin", dsa_sign_pycoin, 20),
-            ("buidl.pecc", dsa_sign_buidl, 10),
+            ("btclib, nogrind, noverify", dsa_sign_btclib_nogrind_noverify, 50),
+            ("btclib, nogrind, verify", dsa_sign_btclib_nogrind_verify, 10),
+            ("btclib, grind, noverify", dsa_sign_btclib_grind_noverify, 20),
+            ("btclib, grind, verify", dsa_sign_btclib_grind_verify, 10),
+            ("python-ecdsa, nogrind, noverify", dsa_sign_ecdsa, 100),
+            ("pycoin, nogrind, noverify", dsa_sign_pycoin, 20),
+            ("buidl.pecc, nogrind, noverify", dsa_sign_buidl, 10),
         ),
     ),
     (
@@ -552,9 +660,10 @@ TABLES: tuple[tuple[str, Rows], ...] = (
     (
         "BIP340 sign, over a 32-byte message",
         (
-            ("btclib", ssa_sign_btclib, 50),
-            ("secp256k1lab", ssa_sign_lab, 50),
-            ("buidl.pecc", ssa_sign_buidl, 5),
+            ("btclib, noverify", ssa_sign_btclib_noverify, 50),
+            ("btclib, verify", ssa_sign_btclib_verify, 20),
+            ("secp256k1lab, verify", ssa_sign_lab, 50),
+            ("buidl.pecc, verify", ssa_sign_buidl, 5),
         ),
     ),
     (

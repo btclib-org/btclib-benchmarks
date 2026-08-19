@@ -1027,6 +1027,60 @@ The release notes, which say what a user has to act on, are in
   rows to settle: a run taken while what a table contains is still moving is a
   run thrown away.
 
+- **Every btclib signing row on the three pages that carry one now states the
+  policy it was measured under**, and passes it rather than taking whatever
+  btclib's default happens to be. btclib verifies the signature it has just
+  made before answering with it, on both arms, and exposes `verify` for a
+  caller who declines — so a row that named nothing was a row whose reader
+  could not tell what it had done, and the three pages' decisions, written
+  down in the entry above, are now what their scripts perform.
+
+  `scripts/02-btclib-vs-btclib.py` declines on both arms and says so in two
+  row names, `dsa_sign_nogrind_noverify` and `ssa_sign_noverify`. That is
+  what the ratio requires rather than a preference: the check is a fraction
+  of a signature where libsecp256k1 answers and a full verification where the
+  Python does, so a row taking the default would divide one checked signing
+  by another and move with neither arithmetic having changed. `bms_sign` is
+  the row that still names no verify flag, and the name is silent because its
+  two columns do not share one — recoverable signing takes no argument that
+  declines, and what it performs is a recovery and a comparison on the
+  libsecp256k1 side alone. Its docstring and the page say so where a label
+  cannot.
+
+  `scripts/03-libraries.py` and `scripts/04-pure-python.py` each carry the
+  pair the wrappers page took, btclib being the only comparand on either that
+  takes the argument: an unchecked row for the comparison with libraries that
+  check nothing, and a checked row for what the guarantee costs. Both grind
+  as well, so btclib's ECDSA rows are four and not two — the check runs once
+  on the signature the loop settled on, so the flags add rather than multiply.
+  Every other signing row on both pages is renamed to state its own two flags,
+  which is `results/01-libsecp256k1.md`'s rule arriving where the same silence
+  was: what a row did is a property of the row, not a favour its API granted,
+  and python-ecdsa having no way to ask for a check is why its row says
+  `noverify` rather than why it should say nothing.
+
+  Reading each library to name its flag turned up something neither page
+  said, and it changes which rows are comparable with which. **Both BIP340
+  comparands on the pure-Python page check what they signed, and buidl checks
+  on the libraries page too**, none of the three offering a way to decline:
+  secp256k1lab ends `schnorr_sign` on `assert schnorr_verify(...)`, which is
+  how BIP340's own reference code writes the specification's last step, and
+  buidl verifies under the point its key holds and raises on a failure. So in
+  those tables it is btclib's *checked* row that has comparands and its
+  unchecked row that stands alone — the same pair read the other way round,
+  and the reason the pair has to be a pair rather than a choice between two
+  rows. The BIP340 signing rows published today put btclib ahead of both, and
+  part of that lead is a step those two take and that row did not. No
+  comparand checks an ECDSA signature it has just made, on either page.
+
+  No page moves until it is run, one script at a time on a machine given time
+  to cool, and each of the three still carries the paragraph naming the rows
+  that predate the check. What changes on page 02 is the shape of that
+  warning: its two declining rows have least to correct, what they publish
+  being a signature alone and a signature alone being what they will publish
+  again, and `bms_sign` is the row that will move. [ISS 23][iss23],
+  [ISS 28][iss28], [ISS 53][iss53] and [ISS 55][iss55] end in those runs.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

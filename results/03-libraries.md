@@ -102,15 +102,35 @@ for and the lock now carries. Every other row here is current, btclib's
 verification rows included — [ISS 53][i53] re-measured this page to find that
 out, and discarded the run rather than publish it.
 
-What that re-measurement has to settle is a shape and not a number, and [the
-wrappers table][wrappers] settled the same question the same way: btclib is
-the only comparand here that takes the argument, the others verifying or not
-as their own APIs happen to, so one row is what compares with libraries that
-verify nothing and a second is what the guarantee costs. Printing one of the
-two alone makes whichever comparison it is not in wrong. [ISS 23][i23] is the
-order that run waits on, and [ISS 47][i47] the spread estimator that rides
-with it — four rounds being affordable, and a second measurement of this page
-not.
+The shape that re-measurement has to print is settled, and it is the one
+[the wrappers table][wrappers] took for the same question: btclib is the only
+comparand here that takes the argument, the others verifying or not as their
+own APIs happen to, so one row is what compares with libraries that verify
+nothing and a second is what the guarantee costs. Printing one of the two
+alone makes whichever comparison it is not in wrong. The script now carries
+all four combinations of the two flags — the check runs once on the signature
+the grinding loop settled on, so grinding and verifying add rather than
+multiply — and one row of BIP340's pair beside the other. [ISS 23][i23] is
+the order that run waits on, and [ISS 47][i47] the spread estimator that
+rides with it.
+
+**Every signing row states both of its flags in its name**, which the rows
+above do not yet and the next run will: `grind` or `nogrind`, then `verify`
+or `noverify`, in the order the call performs them. A row named for one flag
+beside a row named for neither is a flag read against a silence, and a
+silence says nothing about whether that call ground, verified, both or
+neither — so a library that takes no argument is named as plainly as the one
+that does. What a row did is a property of the row, not a favour its API
+granted, and python-ecdsa having no way to ask for a check is why its row
+will say `noverify` rather than why it should say nothing.
+
+Which rows check was read out of each library rather than assumed, and the
+two schemes do not answer alike. No comparand here checks an ECDSA signature
+it has just made. buidl checks a BIP340 one — `sign_schnorr` verifies under
+the point its key holds and raises on a failure, which is BIP340's own last
+step — so in that table it is btclib's checked row that has a comparand and
+its unchecked row that stands alone, and what checks in buidl's row is Python
+where what checks in btclib's is libsecp256k1.
 
 <!-- output: begin -->
 ```text

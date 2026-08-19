@@ -53,11 +53,39 @@ exception and say so where they are defined.
 - ECDSA sign and verify, over each vector's 32 bytes read as a digest. Every
   comparand takes a digest directly, so none of them hashes it again.
 
+  Every signing row states both of its flags in its name, in the order the
+  call performs them: `grind` or `nogrind`, and `verify` or `noverify`. A
+  row named for one flag beside a row named for neither is a flag read
+  against a silence, and the silence says nothing about what that call did
+  -- so a library that takes no argument is named as plainly as the one
+  that does, what a row performed being a property of the row rather than
+  a favour its API granted.
+
   btclib and embit grind for a low-r signature by default -- they sign until
-  r fits in 32 bytes -- so each has two rows: a `grind=False` row, which is
-  the one signature the other four produce, and its default beside it. A
-  grinding row is a multiple of the row above it, and the multiple is a
-  property of the key and message rather than of the library.
+  r fits in 32 bytes -- so each has a `nogrind` row, which is the one
+  signature the other four produce, and a `grind` row beside it. A grinding
+  row is a multiple of the row above it, and the multiple is a property of
+  the key and message rather than of the library.
+
+  Both flags are written out on every btclib row, the defaults included:
+  a row that took a default would be a row whose name is a claim about
+  btclib's defaults on the day it was measured rather than about the call
+  it made, and this page's whole subject is what each row did.
+
+  btclib alone *takes the argument*, so it alone carries a
+  `noverify`/`verify` pair: one of the two compares with the rows that
+  check nothing, the other with the rows that check and cannot decline, and
+  printing either alone makes the comparison it is not in wrong. The four
+  ECDSA combinations are four rows and not two, the check running once on
+  the signature the grinding loop settled on, so the two flags add rather
+  than multiply.
+
+  Which rows check was read out of each library rather than assumed, and
+  the two schemes do not answer alike. No comparand checks an ECDSA
+  signature it has just made. buidl checks a BIP340 one -- `sign_schnorr`
+  verifies under the point its key holds and raises on a failure, which is
+  BIP340's own last step -- so in that table it is btclib's checked row
+  that has a comparand and its unchecked row that stands alone.
 - BIP340 sign and verify, over each vector's message and aux_rand. BIP340
   does not hash its message, so this is the value every implementation signs
   byte for byte, and it is libsecp256k1's fixed-size entry point, which is
@@ -498,30 +526,66 @@ DSA_EMBIT = cycle(
 )
 
 
-def dsa_sign_btclib() -> None:
-    """Time one ECDSA signature through btclib, libsecp256k1 enabled.
+def dsa_sign_btclib_nogrind_noverify() -> None:
+    """Time one unchecked ECDSA signature through btclib, libsecp256k1 on.
 
     `grind=False`, which is not btclib's default and is what makes this row
     comparable: every other row in the table produces one signature, and
     btclib's default produces as many as it takes to find one whose r fits in
-    32 bytes. `dsa_sign_btclib_grind` below times the default.
+    32 bytes.
+
+    `verify=False`, which is not btclib's default either, and is what makes
+    the row comparable for the second reason: btclib verifies the signature
+    it has just made before answering with it, and no other comparand in this
+    table does. This is the row the five implementations that check nothing
+    are read against; the checked row below is what the guarantee costs.
     """
     msg, prvkey, _, _ = next(DSA_BTCLIB)
-    dsa.sign_(msg, prvkey, grind=False)
+    dsa.sign_(msg, prvkey, grind=False, verify=False)
 
 
-def dsa_sign_btclib_grind() -> None:
-    """Time ECDSA signing as `pip install btclib` performs it.
+def dsa_sign_btclib_nogrind_verify() -> None:
+    """Time one ECDSA signature with the check btclib performs by default.
+
+    The pair with the row above, and the pair is what the two rows are for:
+    printing either alone makes the comparison it is not in wrong. What is
+    added is a verification and the public key derivation a verification
+    needs and a signature did not, which is why this increment is the larger
+    of the two the page carries -- BIP340's keypair has already derived the
+    point by the time its check runs.
+    """
+    msg, prvkey, _, _ = next(DSA_BTCLIB)
+    dsa.sign_(msg, prvkey, grind=False, verify=True)
+
+
+def dsa_sign_btclib_grind_noverify() -> None:
+    """Time unchecked ECDSA signing with btclib's low-r grinding.
 
     btclib grinds for a low-r signature unless told not to, so this row signs
     repeatedly until r fits in 32 bytes: an expectation of two signatures and,
-    for one fixed key and message, a fixed number of them. It is here because
-    it is what a caller who writes `dsa.sign_(msg, key)` gets, and a row of
-    its own rather than *the* btclib row because no comparand in this table
+    for one fixed key and message, a fixed number of them. It is a row of its
+    own rather than *the* btclib row because no comparand in this table
     grinds, so per-signature it compares with nothing.
+
+    `verify=False` as the ungrinding row passes it, so the pair with it
+    differs by the grinding alone.
     """
     msg, prvkey, _, _ = next(DSA_BTCLIB)
-    dsa.sign_(msg, prvkey)
+    dsa.sign_(msg, prvkey, grind=True, verify=False)
+
+
+def dsa_sign_btclib_grind_verify() -> None:
+    """Time ECDSA signing as `pip install btclib` performs it.
+
+    Both defaults, which is what a caller who writes `dsa.sign_(msg, key)`
+    gets. The check is of the signature the loop settled on and not of every
+    attempt -- the loop and the check cross into the bindings together, and
+    the Python arm keeps the same order -- so grinding and verifying add
+    rather than multiply, and this row is the one above plus the increment
+    the ungrinding pair prices.
+    """
+    msg, prvkey, _, _ = next(DSA_BTCLIB)
+    dsa.sign_(msg, prvkey, grind=True, verify=True)
 
 
 def dsa_verify_btclib() -> None:
@@ -530,7 +594,7 @@ def dsa_verify_btclib() -> None:
     dsa.verify_(msg, pubkey, sig)
 
 
-def dsa_sign_ecdsa() -> None:
+def dsa_sign_ecdsa_nogrind_noverify() -> None:
     """Time ECDSA signing through the `ecdsa` PyPI package."""
     msg, key, _ = next(DSA_ECDSA)
     key.sign_digest_deterministic(
@@ -544,7 +608,7 @@ def dsa_verify_ecdsa() -> None:
     key.verifying_key.verify_digest(sig, msg, sigdecode=ecdsa.util.sigdecode_der)
 
 
-def dsa_sign_pycoin() -> None:
+def dsa_sign_pycoin_nogrind_noverify() -> None:
     """Time ECDSA signing through pycoin's Generator, backend as reported."""
     scalar, digest, _, _ = next(DSA_PYCOIN)
     pycoin_generator.sign(scalar, digest)
@@ -556,7 +620,7 @@ def dsa_verify_pycoin() -> None:
     pycoin_generator.verify(pair, digest, sig)
 
 
-def dsa_sign_buidl() -> None:
+def dsa_sign_buidl_nogrind_noverify() -> None:
     """Time ECDSA signing through buidl's pure-Python PrivateKey."""
     key, digest, _ = next(DSA_BUIDL)
     key.sign(digest)
@@ -568,7 +632,7 @@ def dsa_verify_buidl() -> None:
     key.point.verify(digest, sig)
 
 
-def dsa_sign_bitcoinlib() -> None:
+def dsa_sign_bitcoinlib_nogrind_noverify() -> None:
     """Time ECDSA signing through python-bitcoinlib's CECKey, over OpenSSL."""
     msg, key, _, _ = next(DSA_BITCOINLIB)
     key.sign(msg)
@@ -580,7 +644,7 @@ def dsa_verify_bitcoinlib() -> None:
     pubkey.verify(msg, sig)
 
 
-def dsa_sign_embit() -> None:
+def dsa_sign_embit_nogrind_noverify() -> None:
     """Time one ECDSA signature through embit's bundled library.
 
     `grind=False`, for the reason btclib's row passes it: embit is the other
@@ -591,7 +655,7 @@ def dsa_sign_embit() -> None:
     key.sign(msg, grind=False)
 
 
-def dsa_sign_embit_grind() -> None:
+def dsa_sign_embit_grind_noverify() -> None:
     """Time ECDSA signing as embit performs it by default.
 
     embit grinds with a counter in the extra entropy where btclib grinds by
@@ -650,10 +714,29 @@ SSA_EMBIT = cycle(
 )
 
 
-def ssa_sign_btclib() -> None:
-    """Time BIP340 signing through btclib, libsecp256k1 enabled."""
+def ssa_sign_btclib_noverify() -> None:
+    """Time unchecked BIP340 signing through btclib, libsecp256k1 enabled.
+
+    `verify=False`. btclib verifies the signature it has just made before
+    answering with it, and neither comparand in this table does, so this is
+    the row the other two are read against.
+    """
     msg, prvkey, aux = next(SSA_BTCLIB)
-    ssa.sign_(msg, prvkey, aux=aux)
+    ssa.sign_(msg, prvkey, aux=aux, verify=False)
+
+
+def ssa_sign_btclib_verify() -> None:
+    """Time BIP340 signing with the check btclib performs by default.
+
+    BIP340 puts the step inside Default Signing -- "If Verify(bytes(P), m,
+    sig) returns failure, abort" -- so this row is the scheme's own algorithm
+    run whole, and the pair with the row above is what that last step costs.
+    Smaller than the ECDSA pair's increment above, and for a reason that is
+    not the arithmetic of a verification: a BIP340 signature has already
+    derived the point its check needs, where an ECDSA signature has not.
+    """
+    msg, prvkey, aux = next(SSA_BTCLIB)
+    ssa.sign_(msg, prvkey, aux=aux, verify=True)
 
 
 def ssa_verify_btclib() -> None:
@@ -662,8 +745,15 @@ def ssa_verify_btclib() -> None:
     ssa.verify_(msg, xonly, sig)
 
 
-def ssa_sign_buidl() -> None:
-    """Time BIP340 signing through buidl's pure-Python PrivateKey."""
+def ssa_sign_buidl_verify() -> None:
+    """Time BIP340 signing through buidl's pure-Python PrivateKey.
+
+    `verify`, and no argument declines it: `sign_schnorr` ends by verifying
+    the signature under the point the key holds and raising on one that does
+    not check out, which is BIP340's own last step. So this row is btclib's
+    checked row's comparand rather than its unchecked one -- and what checks
+    here is Python, where what checks in btclib's row is libsecp256k1.
+    """
     key, msg, aux, _ = next(SSA_BUIDL)
     key.sign_schnorr(msg, aux)
 
@@ -674,8 +764,14 @@ def ssa_verify_buidl() -> None:
     key.point.verify_schnorr(msg, sig)
 
 
-def ssa_sign_embit() -> None:
-    """Time BIP340 signing through embit's bundled library."""
+def ssa_sign_embit_noverify() -> None:
+    """Time BIP340 signing through embit's bundled library.
+
+    `noverify`, and no argument asks for a check: `schnorr_sign` builds a
+    keypair from the secret its key holds and calls the bundled
+    `secp256k1_schnorrsig_sign`, which answers with the signature and proves
+    nothing about it.
+    """
     key, _, msg, _ = next(SSA_EMBIT)
     key.schnorr_sign(msg)
 
@@ -1033,14 +1129,16 @@ TABLES: tuple[tuple[str, Rows], ...] = (
     (
         "1. ECDSA sign (32-byte digest)",
         (
-            (dsa_sign_btclib, 50_000),
-            (dsa_sign_btclib_grind, 20_000),
-            (dsa_sign_ecdsa, 5_000),
-            (dsa_sign_pycoin, pycoin_calls(50_000, 200)),
-            (dsa_sign_buidl, 50),
-            (dsa_sign_bitcoinlib, 8_000),
-            (dsa_sign_embit, 50_000),
-            (dsa_sign_embit_grind, 20_000),
+            (dsa_sign_btclib_nogrind_noverify, 50_000),
+            (dsa_sign_btclib_nogrind_verify, 20_000),
+            (dsa_sign_btclib_grind_noverify, 20_000),
+            (dsa_sign_btclib_grind_verify, 15_000),
+            (dsa_sign_ecdsa_nogrind_noverify, 5_000),
+            (dsa_sign_pycoin_nogrind_noverify, pycoin_calls(50_000, 200)),
+            (dsa_sign_buidl_nogrind_noverify, 50),
+            (dsa_sign_bitcoinlib_nogrind_noverify, 8_000),
+            (dsa_sign_embit_nogrind_noverify, 50_000),
+            (dsa_sign_embit_grind_noverify, 20_000),
         ),
     ),
     (
@@ -1057,9 +1155,10 @@ TABLES: tuple[tuple[str, Rows], ...] = (
     (
         "3. BIP340 sign (32-byte message)",
         (
-            (ssa_sign_btclib, 50_000),
-            (ssa_sign_buidl, 20),
-            (ssa_sign_embit, 50_000),
+            (ssa_sign_btclib_noverify, 50_000),
+            (ssa_sign_btclib_verify, 30_000),
+            (ssa_sign_buidl_verify, 20),
+            (ssa_sign_embit_noverify, 50_000),
         ),
     ),
     (
