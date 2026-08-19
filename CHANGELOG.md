@@ -8,6 +8,38 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### Claude reads a pull request against REVIEWING.md
+
+- **`claude-review.yml`**, two jobs: one on every non-draft pull request,
+  whose prompt names `REVIEWING.md` rather than restating it, so the
+  standard moves without the workflow being edited; one answering
+  `@claude` in a comment, carrying no prompt of ours on purpose — the
+  action reads the comment that triggered it. It gates nothing and must
+  not: `main`'s required contexts are named outside the repository, and
+  a review that held a merge would make a model's judgement a branch
+  rule. It does not re-run the gates, `test.yml` and `lint.yml` running
+  them beside it on the same sha — the two workflows this repository
+  has, which is why the prompt names those two and not the three btclib
+  names.
+
+  Three things it refuses to do silently, each measured in btclib before
+  being asked not to. Without `CLAUDE_CODE_OAUTH_TOKEN` the action
+  reviews nothing and reports **success**. Without `id-token: write` it
+  dies before authentication, the action minting a GitHub OIDC token at
+  startup whatever the Anthropic credential is. And it refuses to run at
+  all when the workflow file differs from the copy on the default
+  branch — a pull request must not be able to edit the workflow holding
+  the credential — reporting that refusal by skipping, green. It fails
+  on an empty secret and on an empty `execution_file`, which is exactly
+  when no review was written. On a pull request that adds or edits this
+  file the job is therefore red until the change is on `main`.
+
+  The automatic job skips a pull request from a fork, which is not a
+  policy but what secrets do: none but `GITHUB_TOKEN` reaches a runner a
+  fork triggered. `@claude` in a comment still answers there, and is
+  also how a pull request that needs no push asks for a review:
+  `issue_comment` is a base-repository event and fires on its own.
+
 ### Landing and review
 
 - **The pull request is the only way into `main`, and the button is the
