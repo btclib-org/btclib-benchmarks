@@ -92,6 +92,23 @@ exception and say so where they are defined.
   what keeps btclib's row on the libsecp256k1 path. The vector's aux_rand
   makes
   both signing rows reproducible, and therefore checkable against BIP340.
+
+  Signing has two tables, a fresh key and a key held already, because a
+  signer does not sign one message any more than a verifier verifies one
+  signature. It is also what makes the fresh table honest: buidl and embit
+  are called through an object built from the secret, and that object was
+  built once outside the clock, so those rows were the held shape while
+  btclib's row was handed 32 octets and built everything per call. Two
+  tables put each library in both shapes and let the pair say what the
+  holding is worth.
+
+  What each of them holds is different, and it is a reading of the source
+  rather than of the API's shape: btclib's `ssa.Signer` holds the keypair,
+  buidl's `PrivateKey` holds `secret * G`, and embit's holds the 32 secret
+  octets and hands them to the bundled library, which builds the keypair
+  inside every call. So one of the three saves the constructor and two save
+  a multiplication of the generator, and the pair of tables is where that
+  shows.
 - BIP32 derivation, every chain the vector file publishes, checked against
   the public key it publishes for that path.
 - base58check, bech32 and bech32m, encoding and decoding. Pure Python in
@@ -699,6 +716,45 @@ SSA_EMBIT_SIGS = [
 SSA_BTCLIB = cycle(
     [(msg, prvkey, AUX) for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)]
 )
+
+# What each library's answer to "sign repeatedly under this key" holds, built
+# from the keys its own fresh row signs with once, so that a held row and the
+# fresh row above it differ by the holding and by nothing else. Which of them
+# saves what is a reading of each library rather than an assumption:
+#
+# - `btclib.ecc.ssa.Signer` holds the `libsecp256k1_ssa.Signer` that
+#   `ssa.sign_` builds and wipes inside every call, and that is a keypair --
+#   a multiplication of the generator, and about half of what a BIP340
+#   signature costs on this path;
+# - buidl's `PrivateKey` computes `secret * G` in its constructor and
+#   `sign_schnorr` reads the point it kept, so holding one saves a
+#   pure-Python point multiplication, which is the largest saving on the
+#   page and the reason its fresh row is worth timing at all;
+# - embit's `PrivateKey` holds the 32 secret octets and validates them,
+#   nothing more: `schnorr_sign` hands those octets to the bundled library,
+#   which builds the keypair inside every call. Holding one saves the
+#   validation. It is in the table because that is the finding -- a held key
+#   object is not a held keypair, and which one a library gives a caller is
+#   not something the shape of its API says.
+#
+# One object per key rather than one for the slice: a single held key signed
+# fifty thousand times would measure one key's second signature over and over,
+# which is a cache and not a benchmark.
+SSA_BTCLIB_SIGNERS = [ssa.Signer(prvkey) for prvkey in PRVKEYS]
+SSA_BTCLIB_HELD = cycle(
+    [
+        (signer, msg, AUX)
+        for signer, msg in zip(SSA_BTCLIB_SIGNERS, MESSAGES, strict=True)
+    ]
+)
+# the raw material the fresh rows build their object from, per call
+SSA_BUIDL_FRESH = cycle(
+    [
+        (scalar, msg)
+        for scalar, msg in zip(PYCOIN_SCALARS[:BUIDL_CALLS], MESSAGES, strict=False)
+    ]
+)
+SSA_EMBIT_FRESH = cycle(list(zip(PRVKEYS, MESSAGES, strict=True)))
 # the x-only key the verification takes, cut in the fixtures rather than
 # derived inside the row: deriving it is a generator multiplication, and
 # every other row of that table verifies against a key it was handed
@@ -745,17 +801,34 @@ def ssa_verify_btclib() -> None:
     ssa.verify_(msg, xonly, sig)
 
 
-def ssa_sign_buidl_verify() -> None:
-    """Time BIP340 signing through buidl's pure-Python PrivateKey.
+def ssa_held_buidl_verify() -> None:
+    """Time BIP340 signing under a buidl PrivateKey held already.
+
+    What the holding saves here is `secret * G` in Python, the constructor
+    having computed it and `sign_schnorr` reading the point it kept. The
+    fresh row beside this one is what says how much, and the two tables are
+    where a reader reads it off rather than being told.
 
     `verify`, and no argument declines it: `sign_schnorr` ends by verifying
-    the signature under the point the key holds and raising on one that does
-    not check out, which is BIP340's own last step. So this row is btclib's
+    the signature under that same point and raising on one that does not
+    check out, which is BIP340's own last step. So this row is btclib's
     checked row's comparand rather than its unchecked one -- and what checks
     here is Python, where what checks in btclib's row is libsecp256k1.
     """
     key, msg, aux, _ = next(SSA_BUIDL)
     key.sign_schnorr(msg, aux)
+
+
+def ssa_sign_buidl_verify() -> None:
+    """Time buidl's BIP340 signing with the key object built per call.
+
+    The fresh half of the pair, and the object is built inside the timed
+    call because building it is what the pair prices: `PrivateKey.__init__`
+    multiplies the generator by the secret, and a caller who signs once pays
+    that and a caller who signs a thousand times pays it once.
+    """
+    scalar, msg = next(SSA_BUIDL_FRESH)
+    buidl.pecc.PrivateKey(scalar).sign_schnorr(msg, AUX)
 
 
 def ssa_verify_buidl() -> None:
@@ -764,16 +837,62 @@ def ssa_verify_buidl() -> None:
     key.point.verify_schnorr(msg, sig)
 
 
-def ssa_sign_embit_noverify() -> None:
-    """Time BIP340 signing through embit's bundled library.
+def ssa_held_embit_noverify() -> None:
+    """Time BIP340 signing under an embit PrivateKey held already.
 
-    `noverify`, and no argument asks for a check: `schnorr_sign` builds a
-    keypair from the secret its key holds and calls the bundled
-    `secp256k1_schnorrsig_sign`, which answers with the signature and proves
+    The row that says a held key object is not a held keypair. embit's
+    `PrivateKey` holds the 32 secret octets and validates them, and
+    `schnorr_sign` hands those octets to the bundled library, which builds
+    the keypair inside every call -- so what this saves against the fresh row
+    is the validation, and its distance from btclib's held row is a keypair
+    per signature that btclib no longer builds.
+
+    `noverify`, and no argument asks for a check: what the bundled
+    `secp256k1_schnorrsig_sign` answers with is the signature, and it proves
     nothing about it.
     """
     key, _, msg, _ = next(SSA_EMBIT)
     key.schnorr_sign(msg)
+
+
+def ssa_sign_embit_noverify() -> None:
+    """Time embit's BIP340 signing with the key object built per call.
+
+    The fresh half of the pair. What the constructor costs is a length check
+    and `ec_seckey_verify`, so this row and the held one are expected to sit
+    close together -- a negative result the pair is worth printing to have.
+    """
+    prvkey, msg = next(SSA_EMBIT_FRESH)
+    embit.ec.PrivateKey(prvkey).schnorr_sign(msg)
+
+
+def ssa_held_btclib_noverify() -> None:
+    """Time unchecked BIP340 signing under a key the signer already holds.
+
+    `ssa.Signer` holds the keypair `ssa.sign_` builds and wipes inside every
+    call, and a keypair is a multiplication of the generator -- about half of
+    what a BIP340 signature costs on this path. The pair with the fresh row
+    is what a caller who signs more than once under a key saves by asking for
+    it, which is the decision a caller actually takes; it is not the keypair
+    alone, the held spelling also answering with the octets where the fresh
+    one answers with a `Sig`.
+
+    `verify=False`, as the fresh row passes, so nothing in the pair is the
+    check.
+    """
+    signer, msg, aux = next(SSA_BTCLIB_HELD)
+    signer.sign_(msg, aux, verify=False)
+
+
+def ssa_held_btclib_verify() -> None:
+    """Time the held signer with BIP340's own last step done.
+
+    The row buidl's held row is comparable with, both of them checking inside
+    the call, and the one that says what the check is worth once the keypair
+    is no longer part of the number it is a fraction of.
+    """
+    signer, msg, aux = next(SSA_BTCLIB_HELD)
+    signer.sign_(msg, aux, verify=True)
 
 
 def ssa_verify_embit() -> None:
@@ -1023,36 +1142,57 @@ for _encoding_row in (
     _encoding_row()
 
 
-# three, and the estimator below is the one that goes with three rather than
-# the one this project would rather have: `scripts/01-libsecp256k1.py` halves
-# its rounds and prints the distance between the two halves' minima. Three do
-# not halve, so adopting that here is `ROUNDS = 4` and nothing else -- two and
-# two, which costs a third of a run.
+# four, and even, which is what the estimator below wants: the rounds are
+# halved and what is printed is the distance between the two halves' minima,
+# as `scripts/01-libsecp256k1.py` prints it. Three did not halve -- half a
+# round is the minimum of nothing -- so the change from that page's statistic
+# to this one is this constant and the arithmetic under it, two and two, and
+# it costs a third of a run.
 #
-# Affordable, and not what is in the way. Changing the estimator means
-# re-measuring this page, and this page cannot be re-measured yet: #53 has the
-# numbers and #23 the reason
-ROUNDS = 3
+# More would be better here as they are there, each half's minimum being the
+# better for having more rounds behind it. Four is what this page can afford:
+# its pure-Python rows are orders of magnitude slower than the wrappers
+# page's, which is why `calls` is per row here and per table there, and a
+# fifth and sixth round would be paid on those rows too.
+ROUNDS = 4
 
 
 def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
-    """Return the microseconds per call of the quickest round, and the spread.
+    """Return the quickest round's microseconds per call, and the halves' gap.
 
     `ROUNDS` rounds of `calls` calls each. The minimum is the estimate:
     noise is one-sided -- nothing on this machine makes a call quicker than
     it is -- so the quickest round is the one that ran with least taken from
-    it. The spread is how far the slowest round ran from the quickest, in
-    the same microseconds as the value beside it, and it is printed rather
-    than hidden because it is the only thing in the output that says whether
-    the machine was quiet while a row was measured.
+    it, where a mean would carry every interruption into the number.
 
-    That statistic is what the `spread` key means in a saved run, and this
-    is the page that still writes it: `01-libsecp256k1.py` moved to the
-    distance between two halves' minima and to a key of its own, so the two
-    are told apart by a reader of either file rather than by knowing which
-    script wrote it. The day this page adopts that estimator -- the
-    arithmetic is beside `ROUNDS` above, and #53 is what it waits for -- the
-    key it writes moves with it.
+    The second number is how far that estimate moved when the row was
+    measured twice, which is what the rounds are halved for: the column is
+    the distance between the two halves' minima, in the same microseconds as
+    the value beside it. That is the question the column is read for --
+    whether a gap between two adjacent rows is a gap this run settled -- and
+    a maximum less a minimum cannot answer it. An extreme-value statistic
+    over a handful of samples has enormous variance by construction and
+    reports the worst interruption a row happened to catch rather than
+    anything about the package, which is what ISS 19 concluded and what
+    this page told its reader to use for two releases after it.
+
+    It is saved as `halves_apart` and not as `spread`, which is the key this
+    page wrote for the statistic it is deliberately no longer: a definition
+    living in this docstring is not carried by the file, so the two
+    statistics are two keys and a saved number means what its key says.
+    `_results.py`'s `SCHEMA` has the reasoning, that being where a format
+    decision belongs -- and it is why this change writes a different key
+    rather than redefining the one that is there.
+
+    Contiguous halves rather than alternate rounds, as on the wrappers page
+    and for its reason: the rows of a table are measured minutes apart, and
+    a machine that drifts over a row's rounds will drift over a table's
+    rows.
+
+    Two halves seconds apart say nothing about two runs a day apart, and
+    nothing here can see the second. That page pays for a second pass and
+    states the size; this one does not, and an absent line there is a page
+    that did not pay for one rather than a page whose two passes agreed.
 
     Returned and not printed: the tables below are sorted fastest to
     slowest and each row divides by the quickest, neither of which can be
@@ -1080,8 +1220,11 @@ def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
         for _ in range(calls):
             func()
         rounds.append((time.perf_counter() - start) / calls * 1e6)
-    quickest = min(rounds)
-    return quickest, max(rounds) - quickest
+    # halved on what the loop above actually produced rather than on
+    # `ROUNDS`, the two being the same number until somebody changes one
+    half = len(rounds) // 2
+    first, second = min(rounds[:half]), min(rounds[half:])
+    return min(first, second), abs(first - second)
 
 
 Rows = tuple[tuple[Callable[[], None], int], ...]
@@ -1109,12 +1252,12 @@ def measured(title: str, rows: Rows) -> Ratios:
     """
     timings: list[Timing | Unavailable] = []
     for label, (func, calls) in zip(labels_of(rows), rows, strict=True):
-        value, spread = benchmark(func, calls)
+        value, apart = benchmark(func, calls)
         timings.append(
             Timing(
                 label=label,
                 us_per_call=value,
-                spread=spread,
+                halves_apart=apart,
                 calls=calls,
                 rounds=ROUNDS,
             )
@@ -1153,16 +1296,25 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "3. BIP340 sign (32-byte message)",
+        "3. BIP340 sign (32-byte message, a fresh key)",
         (
             (ssa_sign_btclib_noverify, 50_000),
             (ssa_sign_btclib_verify, 30_000),
-            (ssa_sign_buidl_verify, 20),
+            (ssa_sign_buidl_verify, 10),
             (ssa_sign_embit_noverify, 50_000),
         ),
     ),
     (
-        "4. BIP340 verify (32-byte message)",
+        "4. BIP340 sign (32-byte message, the key held already)",
+        (
+            (ssa_held_btclib_noverify, 50_000),
+            (ssa_held_btclib_verify, 30_000),
+            (ssa_held_buidl_verify, 20),
+            (ssa_held_embit_noverify, 50_000),
+        ),
+    ),
+    (
+        "5. BIP340 verify (32-byte message)",
         (
             (ssa_verify_btclib, 50_000),
             (ssa_verify_buidl, 25),
@@ -1170,7 +1322,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "5. BIP32 derive, seed to child, every chain BIP32 publishes",
+        "6. BIP32 derive, seed to child, every chain BIP32 publishes",
         (
             (bip32_derive_btclib, 30_000),
             (bip32_derive_pycoin, pycoin_calls(30_000, 75)),
@@ -1179,7 +1331,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "6. base58check encode, a P2PKH address from a hash160",
+        "7. base58check encode, a P2PKH address from a hash160",
         (
             (base58_encode_btclib, 200_000),
             (base58_encode_pycoin, 200_000),
@@ -1189,7 +1341,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "7. base58check decode, a hash160 from a P2PKH address",
+        "8. base58check decode, a hash160 from a P2PKH address",
         (
             (base58_decode_btclib, 200_000),
             (base58_decode_pycoin, 200_000),
@@ -1199,7 +1351,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "8. bech32 encode, a witness-v0 address from a 20-byte program",
+        "9. bech32 encode, a witness-v0 address from a 20-byte program",
         (
             (bech32_encode_btclib, 200_000),
             (bech32_encode_embit, 200_000),
@@ -1208,7 +1360,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "9. bech32 decode, a 20-byte program from a witness-v0 address",
+        "10. bech32 decode, a 20-byte program from a witness-v0 address",
         (
             (bech32_decode_btclib, 200_000),
             (bech32_decode_embit, 200_000),
@@ -1217,7 +1369,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "10. bech32m encode, a witness-v1 address from a 32-byte program",
+        "11. bech32m encode, a witness-v1 address from a 32-byte program",
         (
             (bech32m_encode_btclib, 200_000),
             (bech32m_encode_embit, 200_000),
@@ -1225,7 +1377,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         ),
     ),
     (
-        "11. bech32m decode, a 32-byte program from a witness-v1 address",
+        "12. bech32m decode, a 32-byte program from a witness-v1 address",
         (
             (bech32m_decode_btclib, 200_000),
             (bech32m_decode_embit, 200_000),
@@ -1236,8 +1388,8 @@ TABLES: tuple[tuple[str, Rows], ...] = (
 
 # what the run block claims about how these numbers were taken, said by
 # the script that takes them: `benchmark` above is where the rounds and
-# the minimum are, and the spread column is what a reader checks it by
-METHOD = f"{ROUNDS} rounds per row, minimum kept; nothing else repeated"
+# the minimum are, and the halves column is what a reader checks it by
+METHOD = f"{ROUNDS} rounds per row in two halves, minimum kept; calls per row"
 
 
 def main() -> None:

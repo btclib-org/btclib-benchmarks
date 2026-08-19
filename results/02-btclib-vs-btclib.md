@@ -68,6 +68,26 @@ and part of what this row prints after the next run is a default of the
 bindings rather than the price of the crossing. That row is [ISS 28][i28],
 and the run all three wait for is [ISS 23][i23]'s.
 
+**`ssa_sign_held_noverify` is a new row, and its two columns do not save the
+same thing.** It signs under an `ssa.Signer`, which holds across calls the
+keypair `ssa.sign_` builds and wipes inside each one — and there is a keypair
+to hold only where libsecp256k1 answers. With the dispatch off a `Signer`
+holds a scalar and every signature is `sign_`'s again, so its pure-Python
+column is the pure-Python column of the row above and its ratio is the
+crossing multiplied by a saving one side has and the other has not. Read it
+against the fresh signing row rather than against the rest of the table.
+
+The row is here because that asymmetry is the answer. What btclib's fallback
+cannot offer is as much this page's subject as what it costs, and no page in
+this project timed a held signer on either of btclib's arms: [ISS 42][i42].
+It is also the one fixture the switch cannot reach — a signer decides which
+arm it is on when it is built and keeps the answer, so the held objects are
+built once per pass, off the clock both times, by the same call that throws
+the switch. Every other fixture here is octets or a point, and is read by
+whichever arithmetic is on when the row runs. Written the obvious way, that
+row's pure-Python column printed a libsecp256k1 number, silently and
+convincingly, and the suite's own pure-Python probe is what said so.
+
 <!-- output: begin -->
 ```text
 btclib 2026.9 (wrapper 0.8.0.3), measured as μs/call, sorted on the ratio
@@ -175,6 +195,7 @@ comparands:
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 [i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [i28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
+[i42]: https://github.com/btclib-org/btclib-benchmarks/issues/42
 
 <!-- The blocks above are rendered from the saved run beside this file,
      and their columns are sized from what is in them; rewrapping one to 80
