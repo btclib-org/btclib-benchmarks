@@ -1103,11 +1103,13 @@ The release notes, which say what a user has to act on, are in
   three shares one with a reason of its own, which is what the tweak and
   derivation pairs already do. The nonce rows read the slices their own scheme
   signs on, so each is that scheme's first step over the inputs its table
-  used. That sharing found something on the way in: an x-only key is the
-  even-y one of its pair, so for half the pool it names the negation of the
-  public key, and tweaking that by the key's own scalar is the point at
-  infinity — which libsecp256k1 refuses. Exactly half the slice raised. The
-  tweak is the next key's scalar instead, and the comment beside it says why.
+  used. That sharing found something on the way in: an x-only key names the
+  even-y point of its pair, so where a pool key's public key has odd y the
+  x-only form names that key's negation, and a negated point tweaked by the
+  scalar it came from is the point at infinity — which libsecp256k1 refuses.
+  Written each-key's-own it raised on the keys of that parity and on no
+  others. The tweak is the next key's scalar instead, and the comment beside
+  it says why.
 
   The page carries the prose and not the tables: a rendered region is filled
   from a saved run, and the run beside it was taken before these rows existed.

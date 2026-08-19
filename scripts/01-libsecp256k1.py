@@ -726,11 +726,12 @@ NONCE_BIP340 = cycle(list(zip(_slice(3, MESSAGES), _slice(3, PRVKEYS), strict=Tr
 # refuses early and would time a refusal rather than a verification.
 #
 # The tweak is the *next* key's scalar and not each key's own, which the
-# tweak tables above can use and this cannot. An x-only key is the even-y
-# one of the pair, so for the half of the pool whose public key has odd y it
-# names -P, and -P tweaked by P's own scalar is the point at infinity --
-# which libsecp256k1 refuses. Exactly half the slice raised, which is what
-# said so.
+# tweak tables above can use and this cannot. An x-only key names the even-y
+# point of its pair, so where a pool key's public key has odd y the x-only
+# form names that key's negation -- and a negated point tweaked by the
+# scalar it came from is the point at infinity, which libsecp256k1 refuses.
+# Written each-key's-own, this raised on the keys of that parity and on no
+# others, which is what said what it was.
 _XONLY_SLICE = _slice(9, XONLY)
 _TWEAK_SCALARS = _slice(9, PRVKEYS)[1:] + _slice(9, PRVKEYS)[:1]
 XONLY_TWEAKS = [
