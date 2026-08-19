@@ -39,32 +39,34 @@ no 65-byte row because there would be nothing to compare — the
 uncompressed form hands both coordinates over and is read in Python either
 way, one code path with no dispatch in it.
 
-**The three signing rows were measured before btclib's signing had a check**,
-and they are the only rows here that predate one. btclib verifies the
-signature it has just made before answering with it, by default and on both
-arms, `verify=False` being a caller declining it, and the lock carries that
-btclib — so what `dsa_sign` and `ssa_sign` publish is the signature alone, on
-both sides of their ratio.
+**The three signing rows below were measured before btclib's signing had a
+check**, and they are the only rows here that predate one. btclib verifies
+the signature it has just made before answering with it, by default and on
+both arms, `verify=False` being a caller declining it, and the lock carries
+that btclib.
 
-Declining it on both is what the next run of this page wants, and the keyword
-is what makes that available. A row that took the default would divide one
-checked signing by another, and the two checks are not the same size: on the
-Python arm it is a verification, which the rows below put well above a
-signature, and on the other it is a fraction of one. The ratio would move a
-long way with neither arithmetic having changed, which is the one thing this
-table is read for. What the default costs is priced where it is performed —
-[the wrappers table][wrappers] for the crossing, and the verification rows
-below for the Python.
+The script now declines it wherever a row can, and the two rows that can say
+so in their names: `dsa_sign_nogrind_noverify` and `ssa_sign_noverify`. That
+is what this table's ratio requires rather than a preference — the check is
+not the same work on the two arms, a fraction of a signature where
+libsecp256k1 answers against a full verification where the Python does, so a
+row taking the default would divide one checked signing by another and move a
+long way with neither arithmetic having changed. What the default costs is
+priced where it is performed: [the wrappers table][wrappers] for the crossing,
+and the verification rows below for the Python. Those two rows are therefore
+the ones whose next run has least to correct — what they publish is a
+signature alone, and a signature alone is what they will publish again.
 
-`bms_sign` is the row with no such choice. Recoverable signing takes no
-argument that declines, and what its fast path performs is not a
-verification: it recovers the key from the signature and refuses one that is
-not the signer's, which reads the recovery id — the one value the call is
-made for that nothing downstream re-derives. So that check is paid on the
-libsecp256k1 side only, and part of what the row prints after the next run is
-a default of the bindings rather than the price of the crossing, which the row
-will have to name rather than absorb. That row is [ISS 28][i28], and the run
-all three wait for is [ISS 23][i23]'s.
+`bms_sign` is the row with no such choice, and it is the one that will move.
+Recoverable signing takes no argument that declines, and what its fast path
+performs is not a verification: it recovers the key from the signature and
+refuses one that is not the signer's, which reads the recovery id — the one
+value the call is made for that nothing downstream re-derives. The
+pure-Python arm performs no such check. So the check is paid on the
+libsecp256k1 side only, no flag in a name shared by two columns could say so,
+and part of what this row prints after the next run is a default of the
+bindings rather than the price of the crossing. That row is [ISS 28][i28],
+and the run all three wait for is [ISS 23][i23]'s.
 
 <!-- output: begin -->
 ```text

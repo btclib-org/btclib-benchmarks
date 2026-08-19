@@ -59,9 +59,19 @@ this the page where one row cannot carry the default. btclib would fall behind
 the implementations that verify nothing and read as arithmetic that had grown
 slower, when what changed is that its row had become a different operation from
 the ones beside it. [The wrappers table][wrappers] met that with a pair, and
-this page wants the same one when it is next measured: an unchecked row is what
-compares with the four others, and a checked row beside it is what the
-guarantee costs. [ISS 55][i55] is that decision, and [ISS 23][i23] the run.
+the script now carries the same one: an unchecked row is what compares with
+the four others, and a checked row beside it is what the guarantee costs.
+[ISS 55][i55] is that decision, and [ISS 23][i23] the run that prints it.
+
+**Every signing row will state both of its flags**, which the rows above do
+not yet and the next run will: `grind` or `nogrind`, then `verify` or
+`noverify`, in the order the call performs them. A row named for one flag
+beside a row named for neither is a flag read against a silence, and a
+silence says nothing about whether that call ground, verified, both or
+neither — so an implementation that takes no argument is labelled as plainly
+as the one that does. btclib's ECDSA rows become four rather than two, the
+check running once on the signature the grinding loop settled on, so the two
+flags add rather than multiply.
 
 <!-- output: begin -->
 ```text

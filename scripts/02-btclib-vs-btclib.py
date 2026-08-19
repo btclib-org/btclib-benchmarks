@@ -48,6 +48,22 @@ table's two labels are made from the operation's name, `_libsecp256k1` and
 `_pure_python`: every row here is btclib, and every row here is invoked from
 Python.
 
+## Which flags a signing row passed, in its name
+
+btclib verifies the signature it has just made before answering with it,
+by default and on both arms. The two rows that can decline it do, and say
+so in their names: what this table is a ratio of has to be the same work
+on both sides, and the check is not -- a fraction of a signature where
+libsecp256k1 answers, a full verification where the Python does. A row
+taking the default would move a long way with neither arithmetic having
+changed.
+
+`bms_sign` names no such flag because its two columns do not share one:
+recoverable signing takes no argument that declines, and what the fast
+path performs is a recovery and a comparison on that side alone. A name
+is silent there because no flag would be true of both columns, and not
+because nothing happens.
+
 ## One input per call, and no two operations over the same ones
 
 The inputs are drawn from a seed written into this file, the way
@@ -173,10 +189,10 @@ _OFFSETS = {
             "pubkey_from_prvkey",
             "pubkey_parse_33",
             "generator_mult",
-            "dsa_sign",
+            "dsa_sign_nogrind_noverify",
             "dsa_verify",
             "dsa_recover",
-            "ssa_sign",
+            "ssa_sign_noverify",
             "ssa_verify",
             "dh_shared_secret",
             "bms_sign",
@@ -194,10 +210,10 @@ DRAW_SIZES = {
     "pubkey_from_prvkey": 25_000,
     "pubkey_parse_33": 50_000,
     "generator_mult": 25_000,
-    "dsa_sign": 25_000,
+    "dsa_sign_nogrind_noverify": 25_000,
     "dsa_verify": 25_000,
     "dsa_recover": 10_000,
-    "ssa_sign": 25_000,
+    "ssa_sign_noverify": 25_000,
     "ssa_verify": 25_000,
     "dh_shared_secret": 25_000,
     "bms_sign": 15_000,
@@ -275,14 +291,24 @@ ELLS = [ellswift.encode_var(pubkey) for pubkey in ELLSWIFT_KEYS]
 PUBKEY_CYCLE = cycle(_keys("pubkey_from_prvkey"))
 PARSE_33_CYCLE = cycle(PUBKEYS_33)
 MULT_CYCLE = cycle([int.from_bytes(k, "big") for k in _keys("generator_mult")])
-DSA_SIGN_CYCLE = cycle(list(zip(_messages("dsa_sign"), _keys("dsa_sign"), strict=True)))
+DSA_SIGN_CYCLE = cycle(
+    list(
+        zip(
+            _messages("dsa_sign_nogrind_noverify"),
+            _keys("dsa_sign_nogrind_noverify"),
+            strict=True,
+        )
+    )
+)
 DSA_VERIFY_CYCLE = cycle(
     list(zip(_messages("dsa_verify"), DSA_VERIFY_KEYS, DSA_SIGS, strict=True))
 )
 DSA_RECOVER_CYCLE = cycle(
     list(zip(_messages("dsa_recover"), DSA_RECOVER_SIGS, strict=True))
 )
-SSA_SIGN_CYCLE = cycle(list(zip(_messages("ssa_sign"), _keys("ssa_sign"), strict=True)))
+SSA_SIGN_CYCLE = cycle(
+    list(zip(_messages("ssa_sign_noverify"), _keys("ssa_sign_noverify"), strict=True))
+)
 SSA_VERIFY_CYCLE = cycle(
     list(zip(_messages("ssa_verify"), XONLY, SSA_SIGS, strict=True))
 )
@@ -340,8 +366,8 @@ def mult() -> None:
     curve.mult(next(MULT_CYCLE))
 
 
-def dsa_sign() -> None:
-    """Time one ECDSA signature: RFC6979's nonce, and no low-r grinding.
+def dsa_sign_nogrind_noverify() -> None:
+    """Time one ECDSA signature: RFC6979's nonce, no grinding, no check.
 
     `grind=False`, and no second row for the default, where the benchmarks
     that compare packages carry one. Grinding signs repeatedly until r fits
@@ -349,9 +375,19 @@ def dsa_sign() -> None:
     message rather than of the arithmetic: both paths make the same number,
     so both rows would be multiplied by it and the ratio -- which is what
     this table is read for -- would not move, as measuring it confirms.
+
+    `verify=False`, and here the reason is the opposite one: the check
+    btclib performs by default is *not* the same work on the two arms. On
+    this side of the ratio it is a fraction of a signature, on the other it
+    is a verification, which the rows below put well above one. A row taking
+    the default would divide one checked signing by another and move a long
+    way with neither arithmetic having changed, which is the one thing this
+    table is read for. What the default costs is priced where it is
+    performed: the wrappers page for the crossing, and this page's own
+    verify row for the Python.
     """
     msg, prvkey = next(DSA_SIGN_CYCLE)
-    dsa.sign_(msg, prvkey, grind=False)
+    dsa.sign_(msg, prvkey, grind=False, verify=False)
 
 
 def dsa_verify() -> None:
@@ -366,10 +402,17 @@ def dsa_recover() -> None:
     dsa.recover_pub_keys_(msg, sig)
 
 
-def ssa_sign() -> None:
-    """Time BIP340 signing, the auxiliary randomness left to btclib."""
+def ssa_sign_noverify() -> None:
+    """Time BIP340 signing, no check, the auxiliary randomness left to btclib.
+
+    `verify=False` for the reason the ECDSA row above passes it: the two
+    arms do not pay the same check, so a row taking the default would move
+    this row's ratio without either arithmetic having moved. There is no
+    grinding flag to name beside it -- BIP340 has no DER length to shorten,
+    so no scheme here grinds for it.
+    """
     msg, prvkey = next(SSA_SIGN_CYCLE)
-    ssa.sign_(msg, prvkey).serialize()
+    ssa.sign_(msg, prvkey, verify=False).serialize()
 
 
 def ssa_verify() -> None:
@@ -385,7 +428,22 @@ def dh_shared_secret() -> None:
 
 
 def bms_sign() -> None:
-    """Time signing a bitcoin message, which signs recoverably."""
+    """Time signing a bitcoin message, which signs recoverably.
+
+    The one signing row here that names no verify flag, and the name is
+    silent because the two columns do not share one. Recoverable signing
+    takes no argument that declines a check, and what the fast path
+    performs is not the verification the two rows above decline: it
+    recovers the key from the signature and refuses one that is not the
+    signer's, which reads the recovery id -- the one value the call is made
+    for that nothing downstream re-derives. The Python arm performs no such
+    check. So this row's libsecp256k1 column carries a check its pure-Python
+    column does not, and no flag in a label shared by both could say so.
+
+    What follows for the ratio is what the page says beside the table: part
+    of what this row prints is a default of the bindings rather than the
+    price of the crossing.
+    """
     msg, prvkey = next(BMS_SIGN_CYCLE)
     bms.sign(msg, prvkey)
 
@@ -413,10 +471,10 @@ for _op in (
     pubkey,
     point_parse_33,
     mult,
-    dsa_sign,
+    dsa_sign_nogrind_noverify,
     dsa_verify,
     dsa_recover,
-    ssa_sign,
+    ssa_sign_noverify,
     ssa_verify,
     dh_shared_secret,
     bms_sign,
@@ -465,10 +523,10 @@ OPERATIONS = (
     ("pubkey_from_prvkey", pubkey, 25, 2),
     ("pubkey_parse_33", point_parse_33, 50, 5),
     ("generator_mult", mult, 25, 2),
-    ("dsa_sign", dsa_sign, 25, 2),
+    ("dsa_sign_nogrind_noverify", dsa_sign_nogrind_noverify, 25, 2),
     ("dsa_verify", dsa_verify, 25, 1),
     ("dsa_recover", dsa_recover, 10, 1),
-    ("ssa_sign", ssa_sign, 25, 2),
+    ("ssa_sign_noverify", ssa_sign_noverify, 25, 2),
     ("ssa_verify", ssa_verify, 25, 1),
     ("dh_shared_secret", dh_shared_secret, 25, 2),
     ("bms_sign", bms_sign, 15, 2),
