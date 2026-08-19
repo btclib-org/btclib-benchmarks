@@ -26,6 +26,23 @@ scale those constructors are read against. `electrum-ecc` has no tweak-add
 on `ECPubkey`, so it reaches the same point as a scalar times the generator
 plus an addition: two crossings where the others make one.
 
+## Three tables have one comparand, and say something else
+
+Every other table here is four wrappers answering one question, and its
+ratio column says what choosing one of them instead of another costs. The
+last three have one wrapper in them: each is a call `btclib_secp256k1`
+exports and no other comparand here does, beside its own nearest sibling
+inside the same package, so the ratio is between two calls rather than
+between two packages. A table of unlike exclusives would have made that
+column meaningless -- an ElligatorSwift encode divided by a tweak check is a
+ratio of nothing -- which is why the exclusives with no sibling are not here
+and are ISS 83's to place.
+
+Nothing in them reaches past an API into the C it wraps, which is the rule
+the `NA` rows keep everywhere else: what is timed is a call this package
+offers, and the other three not offering it is what the section is about
+rather than something to fill in.
+
 Signing and verifying are two tables each, one per serialization: DER, which
 is what a transaction carries, and the 64-byte compact form, which is what a
 caller holds. The difference between the two is an encoding rather than an
@@ -688,6 +705,43 @@ DERIVE_65 = cycle(_slice(10, PRVKEYS))
 DERIVE_33 = cycle(_slice(10, PRVKEYS))
 DERIVE_65_UNCHECKED = cycle(_slice(10, PRVKEYS))
 DERIVE_33_UNCHECKED = cycle(_slice(10, PRVKEYS))
+
+# The three tables below have one comparand, so each of them shares a slice
+# rather than asking for an eleventh the pool does not have -- which is the
+# paragraph above asking for a reason, and each has one of its own:
+#
+# - the nonce rows read the slices their schemes sign on, the first and the
+#   third, because the nonce a derivation answers with is the nonce that
+#   signature used. Reading somewhere else would price the same arithmetic
+#   over inputs no row above signs;
+# - the tweak-check rows read the ninth, which is the tweak slice, and the
+#   x-only form of the keys the tweak tables hand over in two encodings;
+# - the re-encoding rows read the fifth, the uncompressed parse slice, which
+#   is the encoding they are handed and the table they are read against.
+NONCE_RFC6979 = cycle(list(zip(_slice(1, MESSAGES), _slice(1, PRVKEYS), strict=True)))
+NONCE_BIP340 = cycle(list(zip(_slice(3, MESSAGES), _slice(3, PRVKEYS), strict=True)))
+
+# the tweak, and the tweaked key it produced, so that the checking row is
+# handed a tweak that really was performed: a check of something false
+# refuses early and would time a refusal rather than a verification.
+#
+# The tweak is the *next* key's scalar and not each key's own, which the
+# tweak tables above can use and this cannot. An x-only key is the even-y
+# one of the pair, so for the half of the pool whose public key has odd y it
+# names -P, and -P tweaked by P's own scalar is the point at infinity --
+# which libsecp256k1 refuses. Exactly half the slice raised, which is what
+# said so.
+_XONLY_SLICE = _slice(9, XONLY)
+_TWEAK_SCALARS = _slice(9, PRVKEYS)[1:] + _slice(9, PRVKEYS)[:1]
+XONLY_TWEAKS = [
+    (xonly_key, tweak, *btclib_secp256k1.xonly.tweak_add(xonly_key, tweak))
+    for xonly_key, tweak in zip(_XONLY_SLICE, _TWEAK_SCALARS, strict=True)
+]
+TWEAK_ADD = cycle([(key, tweak) for key, tweak, _, _ in XONLY_TWEAKS])
+TWEAK_ADD_CHECK = cycle(XONLY_TWEAKS)
+
+RESERIALIZE = cycle(_slice(5, PUBKEYS))
+PARSE_SERIALIZE = cycle(_slice(5, PUBKEYS))
 
 
 # When each of these builds was published, read from the index -- where
@@ -1696,6 +1750,81 @@ DERIVE_33_ROWS = (
     derive_33_electrum_ecc,
     derive_33_btclib_secp256k1,
 )
+
+
+def exclusive_nonce_rfc6979() -> None:
+    """Time RFC6979's nonce derivation, exposed rather than performed inside.
+
+    `dsa.nonce_rfc6979` is the derivation every ECDSA signature on this page
+    begins with, and no other comparand here offers it: coincurve, secp256k1
+    and electrum-ecc derive one inside their signing call and hand back the
+    signature. Reading the message and key of the first slice, which is what
+    the DER signing table signs, so this is that table's first step timed on
+    its own inputs rather than the same arithmetic over strangers.
+    """
+    msg, prvkey = next(NONCE_RFC6979)
+    btclib_secp256k1.dsa.nonce_rfc6979(msg, prvkey)
+
+
+def exclusive_nonce_bip340() -> None:
+    """Time BIP340's nonce derivation, over the third slice's key and message.
+
+    The pair with the row above, and the question the table asks: two schemes
+    deriving the nonce their signature will use, one hashing under RFC6979's
+    HMAC construction and the other under BIP340's tagged hashes with the
+    auxiliary randomness folded in. What each whole signature costs is the
+    signing tables above; this is what the two derivations cost against each
+    other.
+    """
+    msg, prvkey = next(NONCE_BIP340)
+    btclib_secp256k1.ssa.nonce_bip340(msg, prvkey, AUX)
+
+
+def exclusive_tweak_add() -> None:
+    """Time BIP341's x-only tweak, an output key from an internal key."""
+    xonly_key, tweak = next(TWEAK_ADD)
+    btclib_secp256k1.xonly.tweak_add(xonly_key, tweak)
+
+
+def exclusive_tweak_add_check() -> None:
+    """Time checking a tweak that was performed, which no other wrapper does.
+
+    `xonly.tweak_add_check` answers whether a tweaked key really is this
+    internal key tweaked by this scalar, which is what a taproot spend has to
+    establish and what libsecp256k1 exposes an entry point for. The other
+    three wrappers tweak and none of them checks.
+
+    The pair with the row above is the question: verifying the claim against
+    making it. The tweaked key handed in is the one that row produced, so
+    this is a check that succeeds -- a false one refuses early and would time
+    a refusal.
+    """
+    xonly_key, tweak, tweaked, parity = next(TWEAK_ADD_CHECK)
+    btclib_secp256k1.xonly.tweak_add_check(tweaked, parity, xonly_key, tweak)
+
+
+def exclusive_reserialize() -> None:
+    """Time re-encoding a public key's octets without an object in between.
+
+    `keys.reserialize` takes the 65-byte form and answers with the 33-byte
+    one, and it is the only call of its kind among the four: the other three
+    wrappers have a caller parse to an object and serialize it again.
+    """
+    btclib_secp256k1.keys.reserialize(next(RESERIALIZE), compressed=True)
+
+
+def exclusive_parse_serialize() -> None:
+    """Time the round trip the call above replaces: parse, then serialize.
+
+    The pair with it, and the same package on both sides, so the ratio is
+    what the shortcut saves rather than what one wrapper's parser costs
+    against another's. Both rows are handed the uncompressed form and answer
+    with the compressed one, so nothing but the object in the middle differs.
+    """
+    parsed = btclib_secp256k1.keys.parse(next(PARSE_SERIALIZE))
+    btclib_secp256k1.keys.serialize(parsed, compressed=True)
+
+
 DSA_SIGN_DER_ROWS = (
     dsa_sign_der_coincurve_nogrind_noverify,
     dsa_sign_der_secp256k1_nogrind_noverify_octets,
@@ -1738,6 +1867,18 @@ SSA_HELD_ROWS = (
     ssa_held_electrum_ecc_aux_verify,
     ssa_held_btclib_secp256k1_aux_noverify,
     ssa_held_btclib_secp256k1_aux_verify,
+)
+NONCE_ROWS = (
+    exclusive_nonce_rfc6979,
+    exclusive_nonce_bip340,
+)
+TWEAK_CHECK_ROWS = (
+    exclusive_tweak_add,
+    exclusive_tweak_add_check,
+)
+RESERIALIZE_ROWS = (
+    exclusive_reserialize,
+    exclusive_parse_serialize,
 )
 PARSE_COMPRESSED_ROWS = (
     parse_compressed_coincurve,
@@ -1821,6 +1962,9 @@ for _row in (
     + TWEAK_33_ROWS
     + DERIVE_65_ROWS
     + DERIVE_33_ROWS
+    + NONCE_ROWS
+    + TWEAK_CHECK_ROWS
+    + RESERIALIZE_ROWS
 ):
     _row()
 
@@ -1870,6 +2014,10 @@ DEFAULT_CALLS = 10_000
 CALLS_PER_ROWS: dict[tuple[Callable[[], None], ...], int] = {
     PARSE_UNCOMPRESSED_ROWS: 400_000,
     PARSE_COMPRESSED_ROWS: 100_000,
+    # the re-encoding pair, for the same reason as the parse tables above and
+    # more so: neither row leaves the octets long enough to build a table, so
+    # ten thousand of them is a round of a few milliseconds
+    RESERIALIZE_ROWS: 200_000,
 }
 
 ROUNDS = 10
@@ -2191,6 +2339,24 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
         SSA_HELD_ROWS,
         (),
         "ssa-sign",
+    ),
+    (
+        "18. the nonce derivations, exposed (32-byte message, a private key)",
+        NONCE_ROWS,
+        (),
+        "exclusive",
+    ),
+    (
+        "19. BIP341 x-only tweak (performing one, against checking one)",
+        TWEAK_CHECK_ROWS,
+        (),
+        "exclusive",
+    ),
+    (
+        "20. public key re-encoding (65 octets in, 33 out, an object or none)",
+        RESERIALIZE_ROWS,
+        (),
+        "exclusive",
     ),
 )
 

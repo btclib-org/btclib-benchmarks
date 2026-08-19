@@ -1080,6 +1080,40 @@ The release notes, which say what a user has to act on, are in
   being a signature alone and a signature alone being what they will publish
   again, and `bms_sign` is the row that will move. [ISS 23][iss23],
   [ISS 28][iss28], [ISS 53][iss53] and [ISS 55][iss55] end in those runs.
+- **The wrappers page prices three calls only one of its four comparands
+  offers**, each beside its own nearest sibling inside the same package. Every
+  other table there is four wrappers answering one question and a ratio saying
+  what choosing one instead of another costs; these have one wrapper, and the
+  ratio is between two calls of it. The nonce derivations both schemes expose,
+  where the other three wrappers derive theirs inside the signing call and
+  hand back a signature. BIP341's tweak check, which is what a taproot spend
+  has to establish and which all four wrappers can tweak toward and none of
+  the other three can ask about. And re-encoding a public key's octets in one
+  call, against the parse and serialize the other three leave to a caller.
+
+  The shape is the one [ISS 83][iss83] arrived at, and it is what its census
+  argued for: a table of unlike exclusives would have had a ratio column
+  dividing an ElligatorSwift encode by a silent-payment scan, which is a ratio
+  of nothing. So what is here is the exclusives that have a sibling to be read
+  against, and the two whole modules the census names — `ellswift` and
+  `silentpayments` — are what it still holds open, having no sibling and no
+  fixtures in this pool.
+
+  No eleventh slice: the pool holds ten and all ten were taken, so each of the
+  three shares one with a reason of its own, which is what the tweak and
+  derivation pairs already do. The nonce rows read the slices their own scheme
+  signs on, so each is that scheme's first step over the inputs its table
+  used. That sharing found something on the way in: an x-only key is the
+  even-y one of its pair, so for half the pool it names the negation of the
+  public key, and tweaking that by the key's own scalar is the point at
+  infinity — which libsecp256k1 refuses. Exactly half the slice raised. The
+  tweak is the next key's scalar instead, and the comment beside it says why.
+
+  The page carries the prose and not the tables: a rendered region is filled
+  from a saved run, and the run beside it was taken before these rows existed.
+  Adding the region is part of publishing the next run, and `render.py`
+  refuses a run whose groups the page has no region for, so that run cannot
+  quietly drop them.
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
@@ -1089,3 +1123,4 @@ The release notes, which say what a user has to act on, are in
 [iss55]: https://github.com/btclib-org/btclib-benchmarks/issues/55
 [iss67]: https://github.com/btclib-org/btclib-benchmarks/issues/67
 [iss68]: https://github.com/btclib-org/btclib-benchmarks/issues/68
+[iss83]: https://github.com/btclib-org/btclib-benchmarks/issues/83
