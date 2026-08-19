@@ -10,7 +10,14 @@ on:
     branches: [main]
     paths-ignore: ["*.md"]
   pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
+    # closed too, though every job below declines the real work on it: a
+    # merge or a close is neither a push nor a synchronize, so a run this
+    # ref's concurrency group is still holding survives either unless the
+    # closed event lands in that same group -- which this type is what
+    # makes it do, cancel-in-progress below turning the landing into the
+    # cancellation. A closed pull request has nothing left to ask this
+    # workflow, the merge commit being main's own push trigger's question
+    types: [opened, reopened, synchronize, ready_for_review, closed]
   workflow_call:
   workflow_dispatch:
 
@@ -24,7 +31,11 @@ concurrency:
 jobs:
   suite:
     name: Run the suite on ${{ matrix.python }}, ${{ matrix.os }}
-    if: ${{ !github.event.pull_request.draft }}
+    # a draft pull request is work in progress and spends no runner here
+    # either. A closed one spends none either -- the trigger above takes
+    # the closed event only to supersede a run this ref's group is still
+    # holding
+    if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -91,7 +102,10 @@ jobs:
     # has to wait for -- a job added outside this list is judged without
     # being waited for, and turns the gate red until it is added here
     needs: [suite]
-    if: ${{ always() && !github.event.pull_request.draft }}
+    # the closed one for the same reason, added at the trigger above:
+    # a closed pull request skips uniformly rather than tripping this
+    # gate over a job it deliberately never ran
+    if: ${{ always() && !github.event.pull_request.draft && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
