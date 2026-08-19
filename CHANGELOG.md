@@ -1105,9 +1105,10 @@ The release notes, which say what a user has to act on, are in
   says and a run saved before the change keeps the statistic it was taken
   under. Nothing re-saves and nothing re-renders: the block on the page still
   carries three rounds under `spread` until the page is next run, and the
-  prose beside it says which column is which. That run is the one
-  [ISS 23][iss23] orders, and it prints the new rows and the new column
-  together rather than paying for this page twice. [ISS 47][iss47].
+  prose beside it says which column is which. [ISS 47][iss47] is the change,
+  and the run it waits for is the one [ISS 23][iss23] orders — one run that
+  prints the new rows and the new column together rather than paying for this
+  page twice.
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
