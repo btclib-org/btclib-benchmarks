@@ -303,9 +303,17 @@ not caught up.
 
 ## Pull requests
 
-`main` is the only branch, and everything lands through a pull request.
-Run the two gates locally first: CI runs exactly them, so a red run there
-is a local run that was not done.
+`main` is the only branch, and everything lands through a pull request —
+through nothing else, a direct push being refused for everyone. Run the
+two gates locally first: CI runs exactly them, so a red run there is a
+local run that was not done.
+
+`REVIEWING.md` is the standard that review is written
+against, and is this file's other half: what a review establishes before
+it gives an ack, how a finding states its severity, and why everything
+it notices that the pull request is not about becomes an issue rather
+than a comment. Read before opening a pull request, it is what the pull
+request will be answered against.
 
 CHANGELOG.md gets an entry for anything a reader would notice.
 HISTORY.md moves only for something a user has to *act* on.
@@ -374,10 +382,12 @@ rebase that moved nothing but the base leaves the ack standing; one that
 resolved a conflict does not, that resolution being a change no reviewer
 has seen.
 
-Then a local squash fast-forwarded onto `main`, never a button on the
-forge, which would sign the commit with the forge's own key; the signature
-verified afterwards; the branch deleted, the fast-forward not being a merge
-the forge cleans up after; and every checkout sitting on `main` brought up
-to date, that being where the next session starts from and a stale one
-being where a branch gets built on a base that has moved. `REPOSITORY.md`
-carries the procedure in full, and why the branch protections permit it.
+Then the squash button, pressed by auto-merge once the review and the
+checks are in — which is the only way in, a direct push to `main` being
+refused for everyone. The forge composes the commit and signs it with
+its own key, and that is what the rule asks for: a valid signature, not
+a particular signer's. The forge deletes the head branch itself. What is
+still yours to do is bring every checkout sitting on `main` up to date,
+that being where the next session starts from and a stale one being
+where a branch gets built on a base that has moved. `REPOSITORY.md`
+carries the settings and why they are what they are.

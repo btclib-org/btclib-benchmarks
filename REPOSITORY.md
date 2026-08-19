@@ -66,50 +66,41 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 ```
 
 `main` is the only branch, and no change reaches it except through a pull
-request. One push to it is not a change: the fast-forward that lands a
-pull request already written and reviewed, below.
-
-`enforce_admins` is false, and that is the one entry here that is a
-compromise rather than a rule: this repository has one maintainer, so a
-required review cannot be satisfied in the ordinary way. The rule stays
-on — it is what a second contributor would meet — and what lands is the
-branch's own tip, fast-forwarded:
+request — no exception, and no push. Two rulesets carry that beside the
+classic protection above, rules aggregating across the two and the most
+restrictive combination winning wherever they overlap:
 
 ```shell
-git fetch origin && git rebase origin/main
-# more than one commit? squash first, and move the branch with it:
-#   git reset --soft origin/main && git commit
-#   git push --force-with-lease origin <branch>
-git push origin <branch-tip-sha>:refs/heads/main
+gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
+  | xargs -I{} gh api repos/btclib-org/btclib-benchmarks/rulesets/{} \
+    --jq '{name, rules: [.rules[].type],
+           bypass: [.bypass_actors[].bypass_mode]}'
 ```
 
-The squash has to move the branch as well as the working tree, and that is
-not tidiness: GitHub closes a pull request as merged when its *head ref*
-becomes reachable from the base, not when some commit with the same tree
-does. A squash left behind locally lands the change and leaves the pull
-request open, and pushing the unsquashed branch lands more than one commit
-on `main`, which *Merge methods* below says never happens. Fast-forwarding
-the tip is what satisfies both.
+- `main-integrity` — required signatures, required linear history, no
+  force pushes, no deletions — with **no bypass actor at all**, which is
+  what makes those four true of an administrator too.
+- `main-self-merge` — require a pull request, one approving review,
+  stale reviews dismissed, conversations resolved — bypassed by the
+  maintainer in **`pull_request` mode**, and naming `squash` as the only
+  merge method it will accept.
 
-Not `gh pr merge`, and not the forge's button either. Both write the commit
-themselves and sign it with GitHub's own key, so the commit on `main` would
-not be the maintainer's — *Signed commits* below is the whole of that
-reason.
+**The bypass mode is the whole of the design.** `pull_request` excuses
+its holder from the rule *while merging a pull request* and at no other
+time, so it answers the one thing a one-maintainer repository cannot do
+— produce an approving review from somebody else — and answers nothing
+further. A direct push to `main` is refused for everyone, the holder
+included.
 
-What `enforce_admins: false` costs is that this push bypasses the rules
-above it: the required checks, `strict` included, the required review, and
-the resolution of review threads. None of the three is enforced against
-the one account that lands anything, so each is honoured by the procedure
-instead — the checks read on the head that is about to land, an ack
-recorded on the pull request against that sha, the threads resolved by
-whoever opened them. What that buys over turning the requirements off is
-that they are still required of everyone else, and that what replaces them
-here is written down rather than remembered.
+`enforce_admins` is false, and that is what clears the *classic*
+protection's own review requirement for the maintainer; the ruleset
+bypass alone would not be enough, and turning it on would deadlock every
+merge instead, that requirement having no bypass list to be named in.
 
-Whether the same `false` exempts the push from `required_signatures` below
-has not been tested, and will not be: the test is pushing an unsigned
-commit to `main`. So the signature is not left to it either — the commit is
-read before it is pushed, which is the next section.
+What lands, therefore, is a squash GitHub composes at the button and
+signs with its own web-flow key. That the signer is GitHub rather than
+the maintainer costs nothing: `main-integrity` asks for a signature and
+not for a particular signer, and asks it of everyone.
 
 ## Signed commits
 
@@ -145,15 +136,14 @@ gh api repos/btclib-org/btclib-benchmarks \
 
 Squash only, which is what `required_linear_history` above already
 implies and this makes unambiguous in the UI: one pull request is one
-commit on main. Auto-merge is allowed and unused, for the reason the
-previous sections give — it would have the forge write the commit.
+commit on `main`. The ruleset names the same one, so the constraint
+holds even if this setting is flipped. Auto-merge is what presses it,
+once the review and the checks are in.
 
-`delete_branch_on_merge` deletes the head branch of a pull request merged
-*through* the pull request, which the fast-forward above is not: GitHub
-closes the pull request and leaves the branch standing, so deleting it is
-a step of the procedure rather than something the setting does. A branch
-still present is therefore evidence of nothing; what the pull request says
-about itself is.
+`delete_branch_on_merge` deletes the head branch of a pull request
+merged *through* the pull request, and every landing here is one, so it
+fires on its own and there is nothing to delete by hand. A branch still
+standing is a pull request that was closed rather than merged.
 
 ## Features that are off
 
