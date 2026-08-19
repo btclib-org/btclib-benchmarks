@@ -67,14 +67,20 @@ exception and say so where they are defined.
   row is a multiple of the row above it, and the multiple is a property of
   the key and message rather than of the library.
 
-  btclib alone verifies the signature it has just made before answering
-  with it, and alone takes the argument that declines, so it alone carries
-  a `noverify`/`verify` pair. One of the two compares with the five
-  implementations that check nothing; the other says what the guarantee
-  costs. Printing either alone makes the comparison it is not in wrong.
-  The four combinations are all four rows and not two: the check runs once
-  on the signature the loop settled on, so grinding and verifying add
-  rather than multiply.
+  btclib alone *takes the argument*, so it alone carries a
+  `noverify`/`verify` pair: one of the two compares with the rows that
+  check nothing, the other with the rows that check and cannot decline, and
+  printing either alone makes the comparison it is not in wrong. The four
+  ECDSA combinations are four rows and not two, the check running once on
+  the signature the grinding loop settled on, so the two flags add rather
+  than multiply.
+
+  Which rows check was read out of each library rather than assumed, and
+  the two schemes do not answer alike. No comparand checks an ECDSA
+  signature it has just made. buidl checks a BIP340 one -- `sign_schnorr`
+  verifies under the point its key holds and raises on a failure, which is
+  BIP340's own last step -- so in that table it is btclib's checked row
+  that has a comparand and its unchecked row that stands alone.
 - BIP340 sign and verify, over each vector's message and aux_rand. BIP340
   does not hash its message, so this is the value every implementation signs
   byte for byte, and it is libsecp256k1's fixed-size entry point, which is
@@ -734,8 +740,15 @@ def ssa_verify_btclib() -> None:
     ssa.verify_(msg, xonly, sig)
 
 
-def ssa_sign_buidl_noverify() -> None:
-    """Time BIP340 signing through buidl's pure-Python PrivateKey."""
+def ssa_sign_buidl_verify() -> None:
+    """Time BIP340 signing through buidl's pure-Python PrivateKey.
+
+    `verify`, and no argument declines it: `sign_schnorr` ends by verifying
+    the signature under the point the key holds and raising on one that does
+    not check out, which is BIP340's own last step. So this row is btclib's
+    checked row's comparand rather than its unchecked one -- and what checks
+    here is Python, where what checks in btclib's row is libsecp256k1.
+    """
     key, msg, aux, _ = next(SSA_BUIDL)
     key.sign_schnorr(msg, aux)
 
@@ -747,7 +760,13 @@ def ssa_verify_buidl() -> None:
 
 
 def ssa_sign_embit_noverify() -> None:
-    """Time BIP340 signing through embit's bundled library."""
+    """Time BIP340 signing through embit's bundled library.
+
+    `noverify`, and no argument asks for a check: `schnorr_sign` builds a
+    keypair from the secret its key holds and calls the bundled
+    `secp256k1_schnorrsig_sign`, which answers with the signature and proves
+    nothing about it.
+    """
     key, _, msg, _ = next(SSA_EMBIT)
     key.schnorr_sign(msg)
 
@@ -1133,7 +1152,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         (
             (ssa_sign_btclib_noverify, 50_000),
             (ssa_sign_btclib_verify, 30_000),
-            (ssa_sign_buidl_noverify, 20),
+            (ssa_sign_buidl_verify, 20),
             (ssa_sign_embit_noverify, 50_000),
         ),
     ),

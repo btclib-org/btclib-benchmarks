@@ -55,12 +55,13 @@ Nowhere else in this project is that check so large a share of what it
 protects, and the tables below say why between them: verifying multiplies an
 arbitrary point as well as the generator, where signing multiplies the
 generator alone and starts from a table btclib has already built. Which makes
-this the page where one row cannot carry the default. btclib would fall behind
-the implementations that verify nothing and read as arithmetic that had grown
-slower, when what changed is that its row had become a different operation from
-the ones beside it. [The wrappers table][wrappers] met that with a pair, and
-the script now carries the same one: an unchecked row is what compares with
-the four others, and a checked row beside it is what the guarantee costs.
+this the page where one row cannot carry the default. In the ECDSA table
+nothing else checks, so btclib would fall behind implementations that sign and
+stop and read as arithmetic that had grown slower, when what changed is that
+its row had become a different operation from the ones beside it. [The
+wrappers table][wrappers] met that with a pair, and the script now carries the
+same one: an unchecked row for the comparison with the three that check
+nothing, and a checked row beside it for what the guarantee costs.
 [ISS 55][i55] is that decision, and [ISS 23][i23] the run that prints it.
 
 **Every signing row will state both of its flags**, which the rows above do
@@ -72,6 +73,18 @@ neither — so an implementation that takes no argument is labelled as plainly
 as the one that does. btclib's ECDSA rows become four rather than two, the
 check running once on the signature the grinding loop settled on, so the two
 flags add rather than multiply.
+
+Which rows check was read out of each implementation rather than assumed, and
+the answer is not the same in the two schemes. **Both BIP340 comparands check
+what they signed, and neither can decline**: secp256k1lab ends `schnorr_sign`
+on `assert schnorr_verify(...)`, which is how BIP340's own reference code
+writes its last step, and buidl verifies under the point its key holds and
+raises on a failure. So in that table it is btclib's *checked* row that has
+comparands and its unchecked row that stands alone — the same pair read the
+other way round, and the reason it has to be a pair rather than a choice
+between two rows. The rows above, measured before any of this was named, put
+btclib's BIP340 signing ahead of both; part of that lead is a step those two
+take and that row did not.
 
 <!-- output: begin -->
 ```text

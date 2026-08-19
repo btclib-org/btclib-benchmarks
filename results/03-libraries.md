@@ -124,6 +124,14 @@ that does. What a row did is a property of the row, not a favour its API
 granted, and python-ecdsa having no way to ask for a check is why its row
 will say `noverify` rather than why it should say nothing.
 
+Which rows check was read out of each library rather than assumed, and the
+two schemes do not answer alike. No comparand here checks an ECDSA signature
+it has just made. buidl checks a BIP340 one — `sign_schnorr` verifies under
+the point its key holds and raises on a failure, which is BIP340's own last
+step — so in that table it is btclib's checked row that has a comparand and
+its unchecked row that stands alone, and what checks in buidl's row is Python
+where what checks in btclib's is libsecp256k1.
+
 <!-- output: begin -->
 ```text
 method  : 3 rounds per row, minimum kept; nothing else repeated

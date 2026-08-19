@@ -1000,6 +1000,20 @@ The release notes, which say what a user has to act on, are in
   and python-ecdsa having no way to ask for a check is why its row says
   `noverify` rather than why it should say nothing.
 
+  Reading each library to name its flag turned up something neither page
+  said, and it changes which rows are comparable with which. **Both BIP340
+  comparands on the pure-Python page check what they signed, and buidl checks
+  on the libraries page too**, none of the three offering a way to decline:
+  secp256k1lab ends `schnorr_sign` on `assert schnorr_verify(...)`, which is
+  how BIP340's own reference code writes the specification's last step, and
+  buidl verifies under the point its key holds and raises on a failure. So in
+  those tables it is btclib's *checked* row that has comparands and its
+  unchecked row that stands alone — the same pair read the other way round,
+  and the reason the pair has to be a pair rather than a choice between two
+  rows. The BIP340 signing rows published today put btclib ahead of both, and
+  part of that lead is a step those two take and that row did not. No
+  comparand checks an ECDSA signature it has just made, on either page.
+
   No page moves until it is run, one script at a time on a machine given time
   to cool, and each of the three still carries the paragraph naming the rows
   that predate the check. What changes on page 02 is the shape of that

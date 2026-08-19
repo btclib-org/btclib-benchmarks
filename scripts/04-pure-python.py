@@ -49,17 +49,27 @@ flag beside a row named for neither is a flag read against a silence, and
 the silence says nothing about what that call did -- so an implementation
 that takes no argument is labelled as plainly as the one that does.
 
-btclib alone grinds for a low-r signature, and btclib alone verifies the
-signature it has just made before answering with it, so btclib alone carries
-the pairs. The verify pair is the one this page needs most. Here the check
-is btclib's own Python verification -- two point multiplications where a
-signature is one, and none of it amortised by a keypair -- which is the
-largest share of a signature the check comes to anywhere in this project. A
-single checked row would sit among four implementations that sign and stop,
-and would read as btclib's arithmetic having grown several times slower
-rather than as a row that had become a different operation from the ones
-beside it. The verify tables below are where that increment is priced on its
-own.
+btclib alone grinds for a low-r signature, and btclib alone *takes an
+argument* for the check, so btclib alone carries the pairs. Which other rows
+check was read out of each implementation rather than assumed, and the two
+schemes do not answer alike.
+
+In the ECDSA table nothing else checks, so a single checked btclib row would
+sit among three implementations that sign and stop and would read as btclib's
+arithmetic having grown several times slower, when what changed is that its
+row had become a different operation from the ones beside it. That is the
+pair's whole reason here, and the increment is the largest the check comes to
+anywhere in this project: on this arm a verification is two point
+multiplications where a signature is one, and none of it is amortised by a
+keypair. The verify table below is where that increment is priced on its own.
+
+In the BIP340 table both comparands check and neither can decline.
+secp256k1lab ends `schnorr_sign` on `assert schnorr_verify(...)`, which is
+how the specification's own reference code writes BIP340's last step, and
+buidl verifies under the point its key holds and raises on a failure. So
+there it is btclib's *checked* row that has comparands and its unchecked row
+that stands alone -- which is the same pair read the other way round, and the
+reason the pair is a pair rather than a choice between two rows.
 
 The four ECDSA combinations are four rows and not two: the check runs once
 on the signature the grinding loop settled on, so grinding and verifying add
@@ -474,7 +484,13 @@ def ssa_verify_btclib() -> None:
 
 
 def ssa_sign_lab() -> None:
-    """Time a BIP340 signature through secp256k1lab."""
+    """Time a BIP340 signature through secp256k1lab, which checks it.
+
+    `verify`, and no argument declines it: `schnorr_sign` ends on
+    `assert schnorr_verify(...)`, BIP340's own last step, written the way the
+    specification's reference code writes it. So this row's comparand is
+    btclib's checked one.
+    """
     msg, prvkey, aux = next(SSA_LAB_SIGN)
     secp256k1lab.bip340.schnorr_sign(msg, prvkey, aux)
 
@@ -486,7 +502,12 @@ def ssa_verify_lab() -> None:
 
 
 def ssa_sign_buidl() -> None:
-    """Time a BIP340 signature through buidl's pure-Python module."""
+    """Time a BIP340 signature through buidl's pure-Python module, checked.
+
+    `verify`, and no argument declines it: `sign_schnorr` ends by verifying
+    the signature under the point its key holds and raising on a failure,
+    which is BIP340's own last step. Its comparand is btclib's checked row.
+    """
     key, msg, aux = next(SSA_BUIDL_SIGN)
     key.sign_schnorr(msg, aux)
 
@@ -637,8 +658,8 @@ TABLES: tuple[tuple[str, Rows], ...] = (
         (
             ("btclib, noverify", ssa_sign_btclib_noverify, 50),
             ("btclib, verify", ssa_sign_btclib_verify, 20),
-            ("secp256k1lab, noverify", ssa_sign_lab, 50),
-            ("buidl.pecc, noverify", ssa_sign_buidl, 5),
+            ("secp256k1lab, verify", ssa_sign_lab, 50),
+            ("buidl.pecc, verify", ssa_sign_buidl, 5),
         ),
     ),
     (
