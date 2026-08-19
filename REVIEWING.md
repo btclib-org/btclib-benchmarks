@@ -239,7 +239,6 @@ because that document, and not this one, is where the rule lives.
   runs two workflows and requires two checks, so a job added to either
   is a check the branch rule does not know about.
 
-
 ## The verdict
 
 Inline comments for the line-anchored findings, then exactly one summary
