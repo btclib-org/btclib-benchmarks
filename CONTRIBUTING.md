@@ -52,12 +52,13 @@ after measures a hot machine rather than the operation: measured that way,
 the pure-Python columns of `02-btclib-vs-btclib.py` came out up to three
 times their real cost, and a verification through the C library came out
 at twice. The dispersion column beside a row is what shows it, and which
-statistic it is belongs to the page: `03-libraries.py` saves `spread`, the
-slowest round less the quickest, so a wide one is a round that caught an
-interruption; `01-libsecp256k1.py` saves `halves_apart`, how far the minima
-of the halves of a row's rounds sat apart, so a wide one is a row whose own
-estimate moved while it was being measured. Each page defines the column it
-prints, in the prose beside its tables. Read it before believing an
+statistic it is belongs to the page. Both `01-libsecp256k1.py` and
+`03-libraries.py` now save `halves_apart`, how far the minima of the halves
+of a row's rounds sat apart, so a wide one is a row whose own estimate moved
+while it was being measured; `spread`, the slowest round less the quickest,
+is the key a run saved before that carries, and it answers a different
+question. Each page defines the column it prints, in the prose beside its
+tables. Read it before believing an
 ordering — and note that neither can see the machine drifting between one
 run and the next, which is why the machine is given time to cool between
 scripts rather than watched for it afterwards.
