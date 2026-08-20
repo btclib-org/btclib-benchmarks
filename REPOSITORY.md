@@ -71,7 +71,10 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 `main` is the only branch, and no change reaches it except through a pull
 request — no exception, and no push. Two rulesets carry that beside the
 classic protection above, rules aggregating across the two and the most
-restrictive combination winning wherever they overlap:
+restrictive combination winning wherever they overlap — a third,
+`tag-integrity`, is described further down and targets tags rather than
+`main`, so the command below lists it too without it being one of these
+two:
 
 ```shell
 gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
@@ -104,6 +107,17 @@ What lands, therefore, is a squash GitHub composes at the button and
 signs with its own web-flow key. That the signer is GitHub rather than
 the maintainer costs nothing: `main-integrity` asks for a signature and
 not for a particular signer, and asks it of everyone.
+
+A third ruleset, `tag-integrity`, targets tags rather than `main` and so
+sits outside the aggregation above: `target: tag`, `refs/tags/v*`,
+`required_signatures`, **no bypass actor at all**. There is no
+publish-on-tag workflow here to protect — RELEASING.md says as much,
+"there is no release" — so the reason is consistency rather than a
+publish trigger: RELEASING.md's own tagging step already says "Signed,
+as every tag in this org is", and the ruleset now enforces that
+uniformly rather than leaving it to be remembered by hand. It carries no
+`deletion` or `non_fast_forward` rule, matching the sibling repositories
+that do gate a release on the tag.
 
 ## Signed commits
 
