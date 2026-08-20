@@ -14,7 +14,9 @@ those three are where its published files stop.
 
 What is left is signing ECDSA, grinding for a low r, parsing a public key,
 deriving one from a secret, verifying under a compressed key or a compact
-signature, verifying BIP340 against a full public key, and tweaking a point.
+signature, verifying BIP340 against a full public key, tweaking a point,
+checking that a tweak was the one made, re-encoding a key's octets, and the
+two nonce derivations.
 No file publishes vectors for most of them, so what is checked instead is
 agreement: four
 implementations of one library must answer identically, and where a property
@@ -48,6 +50,7 @@ import _vectors
 import btclib_secp256k1.dsa
 import btclib_secp256k1.keys
 import btclib_secp256k1.ssa
+import btclib_secp256k1.xonly
 import coincurve
 import electrum_ecc
 import pytest
@@ -1079,3 +1082,111 @@ def test_the_tweak_is_one_point_however_the_key_arrived(
     for package, add in TWEAKERS.items():
         for pubkey in (_uncompressed(vector.prvkey), _compressed(vector.prvkey)):
             assert add(pubkey, tweak) == expected, package
+
+
+# each vector's x-only key paired with the *next* vector's secret as the
+# tweak, which is the rotation `scripts/01-libsecp256k1.py` makes for the
+# same reason: an x-only key names the even-y point of its pair, so where a
+# key's public key has odd y the x-only form names that key's negation, and a
+# negated point tweaked by the scalar it came from is the point at infinity
+TWEAK_CHECK_CASES = list(zip(SIGNING, SIGNING[1:] + SIGNING[:1], strict=True))
+
+
+def _tweak_check_ids() -> list[str]:
+    """Name each case for the vector whose key is tweaked."""
+    return [f"bip340-{key.number}" for key, _ in TWEAK_CHECK_CASES]
+
+
+@pytest.mark.parametrize("key,tweaker", TWEAK_CHECK_CASES, ids=_tweak_check_ids())
+def test_the_tweak_check_answers_yes_only_to_the_tweak_that_was_made(
+    key: _vectors.Signing, tweaker: _vectors.Signing
+) -> None:
+    """`xonly.tweak_add_check` is a check, and a check that answers no.
+
+    The row timing it is `btclib_secp256k1`'s alone -- the other three
+    wrappers tweak and none of them checks -- so there is no second
+    implementation to agree with, and what is stated instead is the property:
+    it answers True for the tweak that was performed and False for anything
+    else it is handed. A positive case alone cannot tell a check from a
+    function that returns True, which is the shape
+    `scripts/01-libsecp256k1.py` already refuses in its own docstring.
+
+    Three ways of being wrong, and each is a different argument being wrong:
+    a tweak that was not the one applied, a parity that was not the one that
+    came out, and an internal key that was not the one tweaked.
+    """
+    tweak = tweaker.prvkey
+    tweaked, parity = btclib_secp256k1.xonly.tweak_add(key.xonly_pubkey, tweak)
+
+    assert btclib_secp256k1.xonly.tweak_add_check(
+        tweaked, parity, key.xonly_pubkey, tweak
+    )
+    assert not btclib_secp256k1.xonly.tweak_add_check(
+        tweaked, parity, key.xonly_pubkey, key.prvkey
+    )
+    assert not btclib_secp256k1.xonly.tweak_add_check(
+        tweaked, 1 - parity, key.xonly_pubkey, tweak
+    )
+    assert not btclib_secp256k1.xonly.tweak_add_check(
+        tweaked, parity, tweaker.xonly_pubkey, tweak
+    )
+
+
+@pytest.mark.parametrize("vector", SIGNING, ids=_ids())
+def test_the_bip340_nonce_is_the_r_the_published_signature_carries(
+    vector: _vectors.Signing,
+) -> None:
+    """The nonce `ssa.nonce_bip340` answers is the one BIP340 signed with.
+
+    The strongest form available for a call only this wrapper exposes: R is
+    the nonce times the generator, and BIP340 puts x(R) in the first 32
+    octets of the signature, so the published vector is what the derivation
+    is held to rather than another call of the same package.
+    """
+    nonce = btclib_secp256k1.ssa.nonce_bip340(vector.msg, vector.prvkey, vector.aux)
+    assert _compressed(nonce)[1:] == vector.sig[:32]
+
+
+@pytest.mark.parametrize("vector", SIGNING, ids=_ids())
+def test_the_rfc6979_nonce_is_the_r_the_signature_it_belongs_to_carries(
+    vector: _vectors.Signing,
+) -> None:
+    """The nonce `dsa.nonce_rfc6979` answers is the one the signature used.
+
+    r is x(kG) reduced by the group order, and a compact signature carries r
+    in its first 32 octets, so this states that the exposed derivation is the
+    one the signing call performs inside itself.
+
+    Weaker than the BIP340 case above and worth saying why: no file publishes
+    an RFC6979 nonce for these keys, so what this agrees with is another call
+    of the same package rather than a specification. What it would still
+    catch is the exposed derivation drifting from the internal one, which is
+    the thing a caller reads it for.
+    """
+    nonce = btclib_secp256k1.dsa.nonce_rfc6979(vector.msg, vector.prvkey)
+    signature = btclib_secp256k1.dsa.sign(
+        vector.msg, vector.prvkey, compact=True, grind=False, verify=False
+    )
+    assert int.from_bytes(_compressed(nonce)[1:], "big") % ORDER == int.from_bytes(
+        signature[:32], "big"
+    )
+
+
+@pytest.mark.parametrize("vector", SIGNING, ids=_ids())
+def test_re_encoding_the_octets_answers_what_a_parse_and_a_serialize_do(
+    vector: _vectors.Signing,
+) -> None:
+    """`keys.reserialize` is the round trip it replaces, and the same key.
+
+    Held to the key derived from the secret rather than only to the pair of
+    calls it is timed against: agreeing with `parse` and `serialize` would be
+    satisfied by three calls sharing one mistake, where the derivation is a
+    fourth answer to the same question.
+    """
+    uncompressed = _uncompressed(vector.prvkey)
+    reserialized = btclib_secp256k1.keys.reserialize(uncompressed, compressed=True)
+
+    assert reserialized == _compressed(vector.prvkey)
+    assert reserialized == btclib_secp256k1.keys.serialize(
+        btclib_secp256k1.keys.parse(uncompressed), compressed=True
+    )
