@@ -9,7 +9,7 @@ cannot be asserted -- the number is a property of the machine, not of the
 code -- so what is checked here is the two things that can be:
 
 - the module imports. That covers the fixtures at its top and the block
-  of assertions each of the five builds them with, holding every
+  of assertions each of the six builds them with, holding every
   comparand to what the others answer, or to what a specification
   publishes, before any of them is timed. A table whose rows are
   computing different things is worth nothing, and importing the module
@@ -36,9 +36,10 @@ BENCHMARKS = [
     "03-libraries",
     "04-pure-python",
     "05-key-reuse",
+    "06-silentpayments",
 ]
 
-# an import does fixture work, and since the five scripts draw from one
+# an import does fixture work, and since the six scripts draw from one
 # shared pool that work is no longer a handful of vectors: `03-libraries.py`
 # builds key objects and signatures for six packages, two of which sign in
 # pure Python at tens of milliseconds a signature. What the pool caches --
@@ -48,7 +49,7 @@ BENCHMARKS = [
 # So this is tens of seconds rather than milliseconds, and the number is
 # chosen against what it guards rather than against what a quiet machine
 # manages: a benchmark that timed on import would spend minutes, every one
-# of the five timing runs being minutes long. It is deliberately loose,
+# of the six timing runs being minutes long. It is deliberately loose,
 # because the machine running this suite may have just run one of those --
 # `03-libraries.py` built its fixtures in thirteen seconds cold and
 # twenty-six warm, and a budget tight enough to catch the difference would
@@ -75,7 +76,7 @@ def test_importing_a_benchmark_does_not_run_it(name: str) -> None:
 
 @pytest.mark.parametrize("name", BENCHMARKS)
 def test_every_benchmark_offers_the_same_entry_point(name: str) -> None:
-    """`main` and `provenance`, so the five are run and read alike."""
+    """`main` and `provenance`, so the six are run and read alike."""
     module = importlib.import_module(name)
     assert callable(module.main)
     assert callable(module.provenance)

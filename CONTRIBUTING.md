@@ -46,7 +46,7 @@ Each script prints what it is about to measure — every package's version
 and where it was imported from — before any number. Read that header:
 a table without it cannot be checked.
 
-**One script at a time, and not in a loop over the five.** Each run
+**One script at a time, and not in a loop over the six.** Each run
 saturates the machine for minutes, and the next one started immediately
 after measures a hot machine rather than the operation: measured that way,
 the pure-Python columns of `02-btclib-vs-btclib.py` came out up to three
@@ -67,8 +67,8 @@ Drift itself is measured on one page. `01-libsecp256k1.py` times every
 table twice in one invocation, idle in between, publishes the first pass
 and states in its run block how far apart the two passes began, how many
 rows came out quicker the second time, and by how much. It is the cheapest
-of the five, which is why it is the one that pays for a second pass; the
-other four state nothing, and an absent line there is a page that did not
+of the six, which is why it is the one that pays for a second pass; the
+other five state nothing, and an absent line there is a page that did not
 pay for one rather than a page whose two passes agreed.
 
 Read the count before the magnitudes. Rows moving one way in the great

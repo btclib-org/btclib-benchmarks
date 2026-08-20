@@ -42,7 +42,7 @@ Do not use Fable unless explicitly instructed.
 
 ## What this repository is
 
-Five benchmarks, one question each:
+Six benchmarks, one question each:
 
 - `scripts/02-btclib-vs-btclib.py` — btclib's libsecp256k1 path against its own
   pure-Python arithmetic
@@ -55,6 +55,8 @@ Five benchmarks, one question each:
 - `scripts/05-key-reuse.py` — what a verifier pays per signature under a key
   it already has, raw against prepared, on both paths and against
   python-ecdsa's `precompute()`
+- `scripts/06-silentpayments.py` — BIP352, which only `btclib_secp256k1`
+  implements of every comparand here
 
 `scripts/_provenance.py`, `scripts/_inputs.py` and `scripts/artifacts.py`
 are what the suite covers. `scripts/_results.py` and `scripts/render.py`
@@ -132,7 +134,7 @@ which machine ran it.
   other side. A tag in neither set is `unrecorded` rather than a guess.
   Do not key a pin on a version again without checking that the version
   has one artifact.
-- **Coverage measures `_provenance.py` and the suite, and omits the five
+- **Coverage measures `_provenance.py` and the suite, and omits the six
   benchmarks** — covering a timing function means running it, and a
   measurement inside CI is a number that means nothing.
 
