@@ -43,36 +43,31 @@ ECDSA twice, once per row: one signature, which is what the other
 implementations produce, and its own default beside it, which grinds until r
 fits in 32 bytes.
 
-**btclib's three signing rows were measured before its signing had a check**,
-and on this page that check is Python. btclib verifies the signature it has
-just made before answering with it, by default, on this arm as much as on the
-one the switch turns off — a fallback answering a different question from the
-arm it stands in for would be two libraries wearing one name. So the ECDSA
-verify row below is what the two ECDSA signing rows are missing, and the
-BIP340 verify row what the BIP340 one is.
+**btclib's four ECDSA signing rows and its BIP340 pair state both flags of
+the check in their name:** `grind` or `nogrind`, then `verify` or
+`noverify`, in the order the call performs them. btclib verifies the
+signature it has just made before answering with it, by default, on this
+arm as much as on the one the switch turns off — a fallback answering a
+different question from the arm it stands in for would be two libraries
+wearing one name. So the ECDSA verify row below is what the two unchecked
+ECDSA signing rows are missing, and the BIP340 verify row what the unchecked
+BIP340 row is.
 
 Nowhere else in this project is that check so large a share of what it
 protects, and the tables below say why between them: verifying multiplies an
 arbitrary point as well as the generator, where signing multiplies the
-generator alone and starts from a table btclib has already built. Which makes
-this the page where one row cannot carry the default. In the ECDSA table
-nothing else checks, so btclib would fall behind implementations that sign and
-stop and read as arithmetic that had grown slower, when what changed is that
-its row had become a different operation from the ones beside it. [The
-wrappers table][wrappers] met that with a pair, and the script now carries the
-same one: an unchecked row for the comparison with the three that check
-nothing, and a checked row beside it for what the guarantee costs.
-[ISS 55][i55] is that decision, and [ISS 23][i23] the run that prints it.
-
-**Every signing row will state both of its flags**, which the rows above do
-not yet and the next run will: `grind` or `nogrind`, then `verify` or
-`noverify`, in the order the call performs them. A row named for one flag
-beside a row named for neither is a flag read against a silence, and a
-silence says nothing about whether that call ground, verified, both or
-neither — so an implementation that takes no argument is labelled as plainly
-as the one that does. btclib's ECDSA rows become four rather than two, the
-check running once on the signature the grinding loop settled on, so the two
-flags add rather than multiply.
+generator alone and starts from a table btclib has already built. Which
+makes this the page where one row cannot carry the default: in the ECDSA
+table nothing else checks, so a single btclib row would fall behind
+implementations that sign and stop and read as arithmetic that had grown
+slower, when what changed is that the row had become a different operation
+from the ones beside it. [The wrappers table][wrappers] met that with a
+pair, and this page carries the same one: an unchecked row for the
+comparison with the three that check nothing, and a checked row beside it
+for what the guarantee costs — [ISS 55][i55] is that decision, and [ISS
+23][i23] the run that carries it. The check runs once on the signature the
+grinding loop settled on, so the two flags add rather than multiply, and
+btclib's ECDSA rows are four rather than two.
 
 Which rows check was read out of each implementation rather than assumed, and
 the answer is not the same in the two schemes. **Both BIP340 comparands check
@@ -82,9 +77,7 @@ writes its last step, and buidl verifies under the point its key holds and
 raises on a failure. So in that table it is btclib's *checked* row that has
 comparands and its unchecked row that stands alone — the same pair read the
 other way round, and the reason it has to be a pair rather than a choice
-between two rows. The rows above, measured before any of this was named, put
-btclib's BIP340 signing ahead of both; part of that lead is a step those two
-take and that row did not.
+between two rows.
 
 <!-- output: begin -->
 ```text

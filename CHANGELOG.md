@@ -84,6 +84,20 @@ The release notes, which say what a user has to act on, are in
 
 ### The benchmarks
 
+- **Pages 02, 03 and 04 stop describing their own checked/noverify rows as
+  a future run's work.** [ISS 23][iss23], [ISS 28][iss28], [ISS 53][iss53]
+  and [ISS 55][iss55] each ended in a run, and that run is in the refresh
+  above — the rows already state both flags of the check. The prose beside
+  them did not catch up: "the next run will", "the run all three wait
+  for", "measured before ... had a check" all stayed true in wording after
+  they had stopped being true in fact, because `render.py` replaces only
+  the marked blocks and a run cannot rewrite the words around them.
+  Rewritten to match what is already published; no numbers moved.
+
+  Page 01's own aside about page 03 still printing `spread` goes with it —
+  page 03 prints `halves` now, like every other page that has moved to the
+  statistic the wrappers page introduced.
+
 - **The wrappers page's three exclusive tables and all of Silent
   Payments are published.** Both were prose with no numbers below them:
   `results/01-libsecp256k1.md`'s "What only one of the four offers" and
