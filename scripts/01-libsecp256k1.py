@@ -801,7 +801,7 @@ RELEASE_DATES = {
 # installed. What made that guard miss was the key, not the pin: a version
 # that stands still while its artifacts change is a key that cannot fire.
 LIBSECP256K1_PINS = {
-    "btclib-secp256k1": {"main@52f913e706f8": "v0.8.0"},
+    "btclib-secp256k1": {"main@bc36867fa1dc": "v0.8.0"},
     "coincurve": {"21.0.0": "v0.6.0"},
     "secp256k1": {
         "0.14.0 wheel": "v0.6.0",

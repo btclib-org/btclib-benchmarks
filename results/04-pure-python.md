@@ -5,7 +5,7 @@
 <!-- provenance: begin -->
 ```text
 package       version           released           held to Python by
-btclib        2026.9            main@9d85d3e61467  its delegation to btclib-secp256k1's cffi bindings switched off
+btclib        2026.9            main@5f7ad5422544  its delegation to btclib-secp256k1's cffi bindings switched off
 pycoin        0.92718.20260405  2026-04-05         PYCOIN_NATIVE=none before its import, resolving to pure Python
 ecdsa         0.19.2            2026-03-26         having no compiled backend at all
 secp256k1lab  1.0.0             2025-03-26         having no compiled backend at all
@@ -25,7 +25,7 @@ tag, which is still a release somebody cut on a day.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-16 23:40 CEST (21:40 UTC)
+when    : 2026-08-20 09:25 CEST (07:25 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -98,39 +98,42 @@ what a timing contains
   each script builds its fixtures, which is before any clock
 
 public key from a private key: a multiplication of the generator
-                                 μs/call     vs best
-  btclib                          184.06        1.0x
-  python-ecdsa                    268.72        1.5x
-  secp256k1lab                   1260.72        6.8x
-  pycoin                         5631.97       30.6x
-  buidl.pecc                    29482.75      160.2x
+                                      μs/call     vs best
+  btclib                               183.68        1.0x
+  python-ecdsa                         269.28        1.5x
+  secp256k1lab                        1270.36        6.9x
+  pycoin                              5536.40       30.1x
+  buidl.pecc                         29794.67      162.2x
 
 ECDSA sign, over a 32-byte digest
-                                 μs/call     vs best
-  btclib, one signature           162.75        1.0x
-  python-ecdsa                    287.60        1.8x
-  btclib, grinding (default)      366.29        2.3x
-  pycoin                         5675.19       34.9x
-  buidl.pecc                    29526.17      181.4x
+                                      μs/call     vs best
+  btclib, nogrind, noverify            161.85        1.0x
+  python-ecdsa, nogrind, noverify      292.09        1.8x
+  btclib, grind, noverify              380.51        2.4x
+  btclib, grind, verify               1013.90        6.3x
+  btclib, nogrind, verify             1483.03        9.2x
+  pycoin, nogrind, noverify           5703.13       35.2x
+  buidl.pecc, nogrind, noverify      29829.55      184.3x
 
 ECDSA verify, over a 32-byte digest
-                                 μs/call     vs best
-  btclib                          780.24        1.0x
-  python-ecdsa                   1108.76        1.4x
-  pycoin                        17877.09       22.9x
-  buidl.pecc                    59181.21       75.8x
+                                      μs/call     vs best
+  btclib                               659.41        1.0x
+  python-ecdsa                        1089.68        1.7x
+  pycoin                             17752.52       26.9x
+  buidl.pecc                         59596.86       90.4x
 
 BIP340 sign, over a 32-byte message
-                                 μs/call     vs best
-  btclib                          326.29        1.0x
-  secp256k1lab                   7595.14       23.3x
-  buidl.pecc                   103350.51      316.7x
+                                      μs/call     vs best
+  btclib, noverify                     320.80        1.0x
+  btclib, verify                       976.72        3.0x
+  secp256k1lab, verify                7613.43       23.7x
+  buidl.pecc, verify                103897.65      323.9x
 
 BIP340 verify, over a 32-byte message
-                                 μs/call     vs best
-  btclib                          657.18        1.0x
-  secp256k1lab                   5057.21        7.7x
-  buidl.pecc                    70408.53      107.1x
+                                      μs/call     vs best
+  btclib                               673.34        1.0x
+  secp256k1lab                        5057.73        7.5x
+  buidl.pecc                         70935.72      105.3x
 ```
 <!-- output: end -->
 

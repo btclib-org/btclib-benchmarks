@@ -2,7 +2,7 @@
   "schema": 1,
   "benchmark": "05-key-reuse",
   "run": {
-    "when": "2026-08-16T23:47:53+02:00",
+    "when": "2026-08-20T09:29:56+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "one run, kept whole — nothing repeated, no outlier discarded",
@@ -29,55 +29,57 @@
     {
       "kind": "ratios",
       "title": "ECDSA verify, one key, every signature under it",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib, libsecp256k1, octets",
-          "us_per_call": 19.891120854299515
+          "us_per_call": 19.546706249821
         },
         {
           "label": "btclib, libsecp256k1, parsed point",
-          "us_per_call": 17.269708355888724
+          "us_per_call": 17.18567085044924
         },
         {
           "label": "btclib, Python, octets",
-          "us_per_call": 671.880915760994
+          "us_per_call": 664.100332011003
         },
         {
           "label": "btclib, Python, parsed point",
-          "us_per_call": 579.1510818526149
+          "us_per_call": 579.7575000033248
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 1091.1761680617929
+          "us_per_call": 1078.9034999907017
         },
         {
           "label": "python-ecdsa, precomputed",
-          "us_per_call": 550.0329178757966
+          "us_per_call": 546.9427500211168
         }
       ]
     },
     {
       "kind": "break-even",
       "title": "what preparing the key costs, and after how many verifications it pays",
+      "group": "",
       "rows": [
         {
           "label": "btclib, libsecp256k1, parse once",
-          "prepare": 3.4490708028897643,
-          "plain": 19.891120854299515,
-          "prepared": 17.269708355888724
+          "prepare": 3.411804149800446,
+          "plain": 19.546706249821,
+          "prepared": 17.18567085044924
         },
         {
           "label": "btclib, Python, parse once",
-          "prepare": 73.5433540539816,
-          "plain": 671.880915760994,
-          "prepared": 579.1510818526149
+          "prepare": 73.74245800019708,
+          "plain": 664.100332011003,
+          "prepared": 579.7575000033248
         },
         {
           "label": "python-ecdsa, precompute()",
-          "prepare": 3088.918828871101,
-          "plain": 1091.1761680617929,
-          "prepared": 550.0329178757966
+          "prepare": 3203.9728510426357,
+          "plain": 1078.9034999907017,
+          "prepared": 546.9427500211168
         }
       ]
     }

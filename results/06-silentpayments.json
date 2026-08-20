@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "benchmark": "06-silentpayments",
+  "run": {
+    "when": "2026-08-20T09:34:15+02:00",
+    "timezone": "CEST",
+    "python": "3.13.14",
+    "method": "the quickest of ten rounds; the halves' gap is beside it",
+    "command": "uv run python scripts/06-silentpayments.py",
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
+  },
+  "provenance": {
+    "columns": [],
+    "rows": [],
+    "notes": [
+      "btclib-secp256k1    : 0.8.0.3"
+    ]
+  },
+  "timing_note": [],
+  "tables": [
+    {
+      "kind": "ratios",
+      "title": "1. a payment, made and found",
+      "group": "",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "create_outputs",
+          "us_per_call": 43.37037500081351,
+          "halves_apart": 0.08431249880231917,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "scan_outputs",
+          "us_per_call": 28.79951669892762,
+          "halves_apart": 0.0004624016582965851,
+          "rounds": 10,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "2. the recipient's setup, before any scan",
+      "group": "",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "prevouts_summary",
+          "us_per_call": 3.7230125002679415,
+          "halves_apart": 0.0047999987145885825,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "label",
+          "us_per_call": 7.864941700245253,
+          "halves_apart": 0.002220799797216344,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "labeled_spend_pubkey",
+          "us_per_call": 5.794354199315421,
+          "halves_apart": 0.00020830048015341163,
+          "rounds": 10,
+          "calls": 10000
+        }
+      ]
+    }
+  ]
+}
