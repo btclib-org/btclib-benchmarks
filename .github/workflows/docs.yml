@@ -10,12 +10,20 @@ on:
     branches: [main]
   pull_request:
     # closed too, though the job below declines the real work on it: a
-    # merge or a close is neither a push nor a synchronize, so a run this
-    # ref's concurrency group is still holding survives either unless the
-    # closed event lands in that same group -- which this type is what
-    # makes it do, cancel-in-progress below turning the landing into the
-    # cancellation. A closed pull request has nothing left to ask this
-    # workflow, the merge commit being main's own push trigger's question
+    # merge or a close is neither a push nor a synchronize, so a run
+    # this pull request's own concurrency group is still holding
+    # survives either unless the closed event lands in that same group
+    # -- which this type is what makes it do, cancel-in-progress below
+    # turning the landing into the cancellation. That was meant to be
+    # *this* pull request's own group and nothing else's: github.ref for
+    # a closed, merged pull request resolves to the base branch's ref
+    # rather than refs/pull/N/merge, so grouping by github.ref alone put
+    # the closed run in the push trigger's own group instead, cancelling
+    # the run building the actual merge commit's documentation one to
+    # two seconds after every merge -- observed on this repository's own
+    # main after #99 merged. The concurrency block below groups a
+    # pull_request run by the pull request's own number instead, which
+    # cannot equal any push's github.ref under any action
     types: [opened, reopened, synchronize, ready_for_review, closed]
   workflow_call:
   workflow_dispatch:
@@ -26,8 +34,14 @@ permissions:
 concurrency:
   # named literally, never through github.workflow: in a called workflow
   # that expression is the *caller's* name, so two workflows called from
-  # one place would share a group and cancel each other
-  group: docs-${{ github.ref }}
+  # one place would share a group and cancel each other.
+  # github.event.pull_request.number, not github.ref alone, is what a
+  # pull_request run of any action groups by, so a closed run cannot
+  # resolve to the same group as a push to main -- the pull_request
+  # trigger's own comment above has the evidence. A push carries no
+  # pull_request context, so github.ref is still what groups it,
+  # unchanged
+  group: docs-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,8 +49,8 @@ jobs:
     name: Build the documentation
     # a draft pull request is work in progress and spends no runner here
     # either. A closed one spends none either -- the trigger above takes
-    # the closed event only to supersede a run this ref's group is still
-    # holding
+    # the closed event only to supersede a run this pull request's own
+    # group is still holding
     if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
