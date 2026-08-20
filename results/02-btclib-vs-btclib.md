@@ -88,6 +88,19 @@ whichever arithmetic is on when the row runs. Written the obvious way, that
 row's pure-Python column printed a libsecp256k1 number, silently and
 convincingly, and the suite's own pure-Python probe is what said so.
 
+**`ellswift_xdh` is a new row, ElligatorSwift's x-only ECDH beside the
+decode above it.** `ellswift.py` gates four public functions on the same
+dispatch this page reads every other row through, and only one of them
+was a row: `create_var` and `encode_var` draw a random field element on
+every call, which is why an encoded form is built once as a fixture and
+never timed, `decode_var` being the deterministic half of that pair.
+`xdh` is deterministic too — no field element is drawn inside it, only
+hashed — so it is timed the same way `decode_var` is, over a fixture
+key paired with the next key's encoding in its own slice, the same
+construction `dh_shared_secret` already uses for its counterparty. It
+multiplies one point that is not the generator, so once measured it
+joins the wide group below rather than the narrow one decoding sits in.
+
 <!-- output: begin -->
 ```text
 btclib 2026.9 (wrapper 0.8.0.3), measured as μs/call, sorted on the ratio
