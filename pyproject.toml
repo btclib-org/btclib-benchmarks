@@ -223,7 +223,7 @@ extend-ignore-re = ['[0-9A-Za-z+/]{26,}={0,2}']
 buidl = "buidl"
 
 [tool.typos.type.verbatim]
-extend-glob = ["CHANGELOG.md", "HISTORY.md", ".pre-commit-config.yaml"]
+extend-glob = ["CHANGELOG.md", "RELEASE_NOTES.md", ".pre-commit-config.yaml"]
 extend-ignore-re = ['`[^`]*`']
 
 [tool.coverage.run]

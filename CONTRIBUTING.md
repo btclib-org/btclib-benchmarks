@@ -317,7 +317,7 @@ than a comment. Read before opening a pull request, it is what the pull
 request will be answered against.
 
 CHANGELOG.md gets an entry for anything a reader would notice.
-HISTORY.md moves only for something a user has to *act* on.
+RELEASE_NOTES.md moves only for something a user has to *act* on.
 
 ### One subject, opened as soon as it is written
 

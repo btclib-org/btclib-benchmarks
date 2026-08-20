@@ -11,5 +11,5 @@
 contributing
 reviewing
 changelog
-history
+release_notes
 ```
