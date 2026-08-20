@@ -862,6 +862,58 @@ calls and on that signer, so a held row there prices a policy the caller
 chooses rather than the only one on offer. That was [ISS 23][i23]'s question,
 and what is left of it is a run of those pages rather than a decision.
 
+### What only one of the four offers
+
+Every table above it is four wrappers answering one question, and the ratio
+column says what choosing one of them instead of another costs. These three
+have one wrapper in them, so the column says something else: each table is a
+call `btclib-secp256k1` exports and no other comparand here does, beside its
+own nearest sibling inside the same package, and the ratio is between the two
+calls rather than between two packages. A table of unlike operations would
+have made that column meaningless — an ElligatorSwift encode divided by a
+tweak check is a ratio of nothing — which is why the exclusives that have no
+sibling are not here. [ISS 83][i83] is the census these were chosen from, and
+the two whole modules it names, `ellswift` and `silentpayments`, are what it
+still holds open: they have no sibling to be read against and their fixtures
+are not in this pool.
+
+The three questions, in the order the tables ask them:
+
+- **the nonce derivations.** Both schemes derive a nonce before they sign,
+  and the other three wrappers derive theirs inside the signing call and hand
+  back a signature. These two hand back the nonce, so what the pair says is
+  what RFC6979's HMAC construction costs against BIP340's tagged hashes with
+  the auxiliary randomness folded in. What a whole signature costs is the
+  signing tables above, and the reader who wants the share divides.
+- **the taproot tweak, checked.** All four wrappers tweak; none of the other
+  three asks whether a tweaked key really is this internal key tweaked by
+  this scalar, which is what a taproot spend has to establish. The pair is
+  verifying the claim against making it. The tweaked key handed to the
+  checking row is the one the row above produced, so it is a check that
+  succeeds — a false one refuses early, and a table of refusals would price
+  the wrong thing.
+- **the re-encoding.** `keys.reserialize` takes the uncompressed octets and
+  answers with the compressed ones, where the other three have a caller parse
+  to an object and serialize it again. The pair is that round trip against
+  the one call, both of them this package's own, so what the ratio isolates
+  is the object in the middle and not one parser against another. A pair that
+  comes out level is an answer and is published as one.
+
+The keys and messages come from slices the tables above already read, and
+each row says which and why where it is defined: an eleventh slice is not
+available, the pool holding ten, and sharing one with a stated reason is what
+the tweak and derivation pairs above already do. The nonce rows read what
+their own scheme signs, so each is that scheme's first step over the inputs
+that scheme's table used.
+
+**The three tables are not below yet**, and this section carries no block
+until the page is next measured: a rendered region is filled from a saved
+run, and the run beside this file was taken before these rows existed.
+Adding the region is part of publishing that run rather than something to
+leave behind an empty fence, and `render.py` refuses to render a run whose
+groups the page has no region for — so the next run of this page cannot
+quietly drop them.
+
 ## What the rows leave out
 
 Nothing is measured that a package does not offer. A row is either its own
@@ -927,6 +979,7 @@ comparands:
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 [i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
+[i83]: https://github.com/btclib-org/btclib-benchmarks/issues/83
 
 <!-- The blocks above are rendered from the saved run beside this file,
      and their columns are sized from what is in them; rewrapping one to 80
