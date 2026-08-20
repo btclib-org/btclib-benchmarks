@@ -16,11 +16,14 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 
 Two contexts, and the second is an aggregate rather than a matrix cell.
 `test.yml`'s `test-passed` job runs last and demands `success` of every
-job the run reports, `always()` in its `if:` being what makes a red cell
-reach it rather than leave it unreported. Naming the aggregate means the
-matrix can gain or lose a cell without anyone editing branch protection;
-naming the cells would mean this list going stale the first time it
-changed.
+job the run reports, `!cancelled()` in its `if:` being what makes a red
+cell reach it rather than leave it unreported -- while a cancellation of
+the run itself, superseded by a newer push under the workflow's
+concurrency group, skips the gate instead of reaching it, a skip
+satisfying this required check the same as a pass. Naming the aggregate
+means the matrix can gain or lose a cell without anyone editing branch
+protection; naming the cells would mean this list going stale the first
+time it changed.
 
 What it judges is therefore not what `needs` waits for, and the two are
 the same set only while that workflow has two jobs. So the rule is that
