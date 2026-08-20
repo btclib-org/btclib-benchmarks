@@ -62,25 +62,20 @@ address encodings in both directions. Fastest row first, ratioed against
 whichever row came out quickest, with a dispersion column beside it in the
 same microseconds as the value it sits beside.
 
-**That column is changing, and the block above still carries the old one.**
-What the rows above print, headed `spread`, is how far a row's slowest round
-ran from its quickest over three rounds. What the script now measures, and
-what the next run of this page will print under `halves`, is the distance
-between the minima of two halves of four rounds — the statistic [the wrappers
-page][wrappers] prints, arriving here under a key of its own so that a number
-in a saved run means what its key says.
-
-The reason for the change is that the two answer different questions and only
-one of them is the question the column is read for. A maximum less a minimum
-is dominated by whichever round happened to go badly: it is an extreme-value
-statistic over a handful of samples, so it has enormous variance by
-construction, it grows as rounds are added, and it reports the worst
-interruption a row happened to catch rather than anything about the package.
-Whether two adjacent rows are really in the order printed is not a question it
-answers, and comparing their gap against it does not make it one. A distance
-between two halves' minima is that question: it says whether the row agreed
-with itself when measured twice, seconds apart, and it shrinks as rounds are
-added because each half's minimum is the better for having more behind it.
+**The dispersion column is `halves`, not the `spread` earlier runs of this
+page printed.** `spread` was a maximum less a minimum — a row's slowest
+round against its quickest — dominated by whichever round happened to go
+badly: it has enormous variance by construction, it grows as rounds are
+added, and it reports the worst interruption a row happened to catch rather
+than anything about the package. Whether two adjacent rows are really in the
+order printed is not a question it answers. `halves` is the distance
+between the minima of two halves of the row's rounds — the statistic [the
+wrappers page][wrappers] prints, arriving here under a key of its own so a
+number in a saved run means what its key says — and it does answer that
+question: near zero, the row agreed with itself measured twice, seconds
+apart; a large fraction of a neighbour's lead, and this run has not
+separated the two. [ISS 47][i47] moved the script to it, and [ISS 53][i53]
+is the re-measurement that carries it.
 
 Four rounds and not more, where the wrappers page takes ten: this page's
 pure-Python rows are orders of magnitude slower, which is why its loop count
@@ -121,41 +116,25 @@ answer with a `Sig`, that being what the two spellings offer, so the pair
 prices the change of call a caller would make rather than the keypair on its
 own. buidl and embit answer with objects of their own in both tables.
 
-**btclib's three signing rows were measured before its signing had a check**,
-and they are the only rows on this page that predate one: btclib verifies the
-signature it has just made before answering with it, and the lock carries that
-btclib. Each of the three understates that default by one such check — a
-bare verification in BIP340, and in ECDSA a verification plus the public key
-derivation verifying needs and signing did not. The grinding row pays it once
-as well, the loop and the check crossing into the bindings together so that
-what is proved is the signature the loop kept rather than every attempt
-discarded, which is the ordering [ISS 982 (btclib-org/btclib)][i982] asked
-for and the lock now carries. Every other row here is current, btclib's
-verification rows included — [ISS 53][i53] re-measured this page to find that
-out, and discarded the run rather than publish it.
+**btclib's four ECDSA signing rows and its two BIP340 pairs state both flags
+of the check in their name:** `grind` or `nogrind`, then `verify` or
+`noverify`, in the order the call performs them. btclib verifies the
+signature it has just made before answering with it, by default and on both
+arms, and the grinding row pays the check once — the loop and the check
+cross into the bindings together, so what is proved is the signature the
+loop kept rather than every attempt discarded, the ordering [ISS 982
+(btclib-org/btclib)][i982] asked for. The unchecked row of each pair is what
+compares with the libraries beside it that verify nothing; the checked row
+is what the guarantee costs — printing one of the two alone would make
+whichever comparison it is not in wrong. [ISS 23][i23] is the shape these
+rows settled on and [ISS 53][i53] the re-measurement that produced them; [the
+wrappers table][wrappers] took the same shape for the same question first.
 
-The shape that re-measurement has to print is settled, and it is the one
-[the wrappers table][wrappers] took for the same question: btclib is the only
-comparand here that takes the argument, the others verifying or not as their
-own APIs happen to, so one row is what compares with libraries that verify
-nothing and a second is what the guarantee costs. Printing one of the two
-alone makes whichever comparison it is not in wrong. The script now carries
-all four combinations of the two flags — the check runs once on the signature
-the grinding loop settled on, so grinding and verifying add rather than
-multiply — and one row of BIP340's pair beside the other. [ISS 23][i23] is
-the order that run waits on, and the dispersion column above is the other
-thing that run has to print anew: [ISS 47][i47] moved the script to the
-statistic the wrappers page prints, and one run serves both.
-
-**Every signing row states both of its flags in its name**, which the rows
-above do not yet and the next run will: `grind` or `nogrind`, then `verify`
-or `noverify`, in the order the call performs them. A row named for one flag
-beside a row named for neither is a flag read against a silence, and a
-silence says nothing about whether that call ground, verified, both or
-neither — so a library that takes no argument is named as plainly as the one
-that does. What a row did is a property of the row, not a favour its API
-granted, and python-ecdsa having no way to ask for a check is why its row
-will say `noverify` rather than why it should say nothing.
+Every row states both of its flags for the same reason a library that takes
+no argument is named as plainly as one that does: what a row did is a
+property of the row, not a favour its API granted, and python-ecdsa having
+no way to ask for a check is why its row says `noverify` rather than why it
+should say nothing.
 
 Which rows check was read out of each library rather than assumed, and the
 two schemes do not answer alike. No comparand here checks an ECDSA signature
