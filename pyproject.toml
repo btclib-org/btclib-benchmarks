@@ -227,7 +227,7 @@ extend-glob = ["CHANGELOG.md", "HISTORY.md", ".pre-commit-config.yaml"]
 extend-ignore-re = ['`[^`]*`']
 
 [tool.coverage.run]
-# `_provenance.py` and the suite, and deliberately not the five benchmark
+# `_provenance.py` and the suite, and deliberately not the six benchmark
 # scripts beside it. What their bodies do is time things: covering a
 # timing function means running it, so a coverage gate over them would
 # make every test run a benchmark -- slow, and worse, it would put a
@@ -239,7 +239,7 @@ extend-ignore-re = ['`[^`]*`']
 # checked on the one property a test can hold them to -- that they load,
 # that their comparands agree -- and measured by a person
 source = ["scripts", "tests"]
-# the five benchmarks themselves. Naming them here rather than leaving
+# the six benchmarks themselves. Naming them here rather than leaving
 # them to fail the gate is the same decision as the `source` comment
 # above, said in the form coverage understands: measured by a person, and
 # checked by a test only on whether they load.
@@ -262,6 +262,7 @@ omit = [
     "scripts/05-key-reuse.py",
     "scripts/01-libsecp256k1.py",
     "scripts/04-pure-python.py",
+    "scripts/06-silentpayments.py",
     "scripts/render.py",
 ]
 

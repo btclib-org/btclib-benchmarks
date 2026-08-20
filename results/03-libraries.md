@@ -341,7 +341,7 @@ from the backend found, for the reason its paragraph above gives.
 
 ## More benchmarks
 
-Four other sets of benchmarks are published in `results/`, each with its own
+Five other sets of benchmarks are published in `results/`, each with its own
 comparands:
 
 - [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C
@@ -352,11 +352,14 @@ comparands:
   bindings anywhere
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
+- [Silent Payments][sp] — what only `btclib_secp256k1` offers of BIP352,
+  which no other comparand here implements at all
 
 [wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
+[sp]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
 [i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [i42]: https://github.com/btclib-org/btclib-benchmarks/issues/42
 [i47]: https://github.com/btclib-org/btclib-benchmarks/issues/47

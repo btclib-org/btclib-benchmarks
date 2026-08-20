@@ -132,7 +132,7 @@ rather than an omission.
 
 ## More benchmarks
 
-Four other sets of benchmarks are published in `results/`, each with its own
+Five other sets of benchmarks are published in `results/`, each with its own
 comparands:
 
 - [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C
@@ -143,11 +143,14 @@ comparands:
   component of a python library
 - [every pure-Python implementation][pure] — the same operations with no
   bindings anywhere
+- [Silent Payments][sp] — what only `btclib_secp256k1` offers of BIP352,
+  which no other comparand here implements at all
 
 [wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
+[sp]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
 
 <!-- The blocks above are rendered from the saved run beside this file,
      and their columns are sized from what is in them; rewrapping one to 80

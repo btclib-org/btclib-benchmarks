@@ -721,6 +721,52 @@ The release notes, which say what a user has to act on, are in
   order the call meets them: the digest, the key handed in or held already,
   and what comes out.
 
+- **A sixth benchmark, `06-silentpayments.py`, for BIP352.** [ISS 83][iss83]'s
+  census found two whole modules `btclib_secp256k1` exports that no other
+  wrapper on the wrappers page does, `ellswift` and `silentpayments`, and
+  the pull request that answered the rest of that census left both for a
+  page of their own. `ellswift`'s two deterministic calls turned out to
+  have a real second arithmetic after all — btclib's own pure-Python
+  `ecc/ellswift.py` dispatches through the same switch `02-btclib-vs-btclib.py`
+  already reads every row through, so `decode` and `xdh` are timed there
+  now instead, against Python rather than against a same-package ratio.
+  `silentpayments` has no such split anywhere in btclib, so this new page
+  is the whole of where it is priced.
+
+  Two tables, each keeping the rule the wrappers page's own exclusives
+  kept — a ratio between two things that answer one question, never
+  between two unrelated operations. `create_outputs` and `scan_outputs`
+  are the sender's and the recipient's sides of one payment, verifying the
+  claim against making it: the fixture for the second row is the first
+  row's own output, scanned for and found before either is timed.
+  `prevouts_summary`, `label` and `labeled_spend_pubkey` are the three
+  calls a recipient makes that are not themselves a scan, read as three
+  prices beside each other rather than a fresh-versus-prepared pair.
+  `keys.pubkey_sum` and its aggregation siblings are exclusives from the
+  same census and are not here: they have no part in BIP352, and would
+  have been the same "ratio of nothing" the wrappers page already refused.
+
+  The fixtures are three disjoint slices of `_inputs`' shared pool, read
+  from the top rather than shared with a stated reason the way the
+  wrappers page's own ten are: that pool is read by every script here
+  independently, and this page does not compete with the wrappers page
+  for the same slices. Module-level assertions round-trip both tables
+  before anything is timed — what `create_outputs` makes, `scan_outputs`
+  finds, labeled and unlabeled — which nothing else in this project's
+  suite exercises, no BIP352 vector file being vendored here.
+
+  Six benchmarks now, not five: `README.md`, `CLAUDE.md`,
+  `tests/scripts_import_test.py`'s `BENCHMARKS` and the coverage omit
+  list all said five in one place or another, and every other page's
+  own `More benchmarks` footer named four other sets rather than five.
+  Found and fixed together rather than left for the next reader to
+  notice one was stale and wonder about the rest.
+
+  Not measured here. `render.py` puts a page's three blocks between the
+  markers it carries, and this page carries none yet — adding them is
+  part of publishing the first run rather than something to leave behind
+  an empty fence.
+
 ### Packaging and CI
 
 - **The interpreter is 3.13, where the rest of btclib-org pins 3.14.**
@@ -1212,6 +1258,19 @@ The release notes, which say what a user has to act on, are in
   this page's subject already, which is a better home for its
   deterministic calls than a same-package ratio would have been. The page
   is not re-measured here, and the new row carries no number until it is.
+- **`test.yml` no longer asks apt for a toolchain the runner already
+  carries.** [ISS 96][iss96] traced three cancelled jobs in one evening to
+  the same cause: `apt-get update` stalled on an upstream mirror and took
+  the step's whole thirty minutes with it, before any comparand was
+  installed and before the checkout did anything for the job. The step
+  existed for `pkg-config`, `autoconf`, `automake` and `libtool`, which
+  three of the wrapper comparands want to compile a libsecp256k1 of their
+  own. Both `ubuntu-latest` and `ubuntu-24.04-arm` — the whole matrix —
+  ship all four already, `actions/runner-images`' own manifests for
+  Ubuntu 24.04 and its arm64 image listing each among the preinstalled
+  software, so the step was asking apt for what the image had every time
+  it ran. It is gone rather than retried: a request for nothing has
+  nothing a retry improves on.
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
@@ -1223,3 +1282,4 @@ The release notes, which say what a user has to act on, are in
 [iss67]: https://github.com/btclib-org/btclib-benchmarks/issues/67
 [iss68]: https://github.com/btclib-org/btclib-benchmarks/issues/68
 [iss83]: https://github.com/btclib-org/btclib-benchmarks/issues/83
+[iss96]: https://github.com/btclib-org/btclib-benchmarks/issues/96
