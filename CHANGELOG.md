@@ -85,6 +85,55 @@ The release notes, which say what a user has to act on, are in
 
 ### The benchmarks
 
+- **Page 04 times each row in rounds and prints how far its halves sat
+  apart**, which is [ISS 111][iss111]. Its two checked signing rows priced
+  one check at two sizes a factor of two apart, where the check runs once
+  in both and they have to agree, and both sat off what the page's own
+  verify and derivation rows predict — one well above, one below a bare
+  verification. Nothing beside either row said how much to trust it, this
+  being the last page timing every row once with no dispersion column at
+  all.
+
+  The loop counts are the cause and they are much larger now. They had been
+  chosen so that the *slowest* rows on the page were bearable, which is a
+  different question from what each row needs: it left btclib's signing
+  rows running for a handful of milliseconds, where one scheduling slice is
+  a large share of the number. Each count is now picked so a round lands
+  near half a second. The fear recorded beside the old ones — that rounds
+  here would be "a run nobody waits for" — was measured rather than
+  reasoned and did not survive it: every row of the previous run together
+  came to a few seconds of clock, and four rounds of the new counts cost
+  under a minute.
+
+  This is the page that needed the column most rather than least, which is
+  what made an absent one worth a run. Its tables are read by subtracting,
+  an unchecked signing row taken from its checked one being what btclib's
+  pure-Python verification costs, and a difference keeps the error a ratio
+  would divide away. `halves_apart` is the key `_results.py` already
+  carries, so `SCHEMA` does not move, and the page never printed the
+  `spread` that key stands against — nothing is redefined.
+
+  `CONTRIBUTING.md` named the two pages saving the statistic and now names
+  the four, having already been one short of the truth before this: page 06
+  has saved it since it was written.
+
+  Two paragraphs of the page's own *Results* went with the run, both of
+  them describing a table that had since gained rows. The signing section
+  was still written for the pair btclib's ECDSA rows were before the check
+  got a flag of its own, calling them "one switch thrown both ways" and
+  putting btclib's default above the comparand — where the default has
+  both switches on and comes last, and python-ecdsa sits ahead of every
+  btclib row that checks. It says so now, and says why that is the
+  comparands not doing the work rather than btclib doing it worse.
+
+  The other is what the new column immediately paid for. The page had said
+  that which of its shared tables put btclib and python-ecdsa closest was
+  "not a gap this run settles" — an honest hedge while nothing beside a row
+  said how far it might move, and no longer one now that something does.
+  The distances printed beside those rows are far smaller than the
+  distances between them, so the run does settle it, and the page states
+  which table it is.
+
 - **`bms_sign`'s paragraph says why its check cannot be declined**, where it
   had asserted that the asymmetry was [ISS 28][iss28]'s answer and left the
   reason out. The assertion was right and unsupported, which is the worse
@@ -1395,4 +1444,5 @@ The release notes, which say what a user has to act on, are in
 [iss83]: https://github.com/btclib-org/btclib-benchmarks/issues/83
 [iss95]: https://github.com/btclib-org/btclib-benchmarks/issues/95
 [iss96]: https://github.com/btclib-org/btclib-benchmarks/issues/96
+[iss111]: https://github.com/btclib-org/btclib-benchmarks/issues/111
 [pr99]: https://github.com/btclib-org/btclib-benchmarks/pull/99

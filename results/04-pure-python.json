@@ -2,10 +2,10 @@
   "schema": 1,
   "benchmark": "04-pure-python",
   "run": {
-    "when": "2026-08-20T09:25:41+02:00",
+    "when": "2026-08-20T15:08:14+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
-    "method": "one run, kept whole — nothing repeated, no outlier discarded",
+    "method": "4 rounds per row in two halves, minimum kept; calls per row",
     "command": "uv run python scripts/04-pure-python.py",
     "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
   },
@@ -66,23 +66,38 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 183.6754200485302
+          "us_per_call": 156.54138888715318,
+          "halves_apart": 0.5655862979539279,
+          "rounds": 4,
+          "calls": 2700
         },
         {
           "label": "secp256k1lab",
-          "us_per_call": 1270.3608399897348
+          "us_per_call": 1401.1238549937843,
+          "halves_apart": 8.091769996099174,
+          "rounds": 4,
+          "calls": 400
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 269.2849999584723
+          "us_per_call": 298.64025444516705,
+          "halves_apart": 7.658565001394095,
+          "rounds": 4,
+          "calls": 1800
         },
         {
           "label": "pycoin",
-          "us_per_call": 5536.404200393008
+          "us_per_call": 6249.099533306435,
+          "halves_apart": 156.48564456367058,
+          "rounds": 4,
+          "calls": 90
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 29794.666699308436
+          "us_per_call": 30610.036764889683,
+          "halves_apart": 77.48776474994884,
+          "rounds": 4,
+          "calls": 17
         }
       ]
     },
@@ -94,31 +109,52 @@
       "rows": [
         {
           "label": "btclib, nogrind, noverify",
-          "us_per_call": 161.85499989660457
+          "us_per_call": 158.36155566406282,
+          "halves_apart": 0.4595833355172658,
+          "rounds": 4,
+          "calls": 3000
         },
         {
           "label": "btclib, nogrind, verify",
-          "us_per_call": 1483.025000197813
+          "us_per_call": 878.9159180014394,
+          "halves_apart": 1.9662500126287341,
+          "rounds": 4,
+          "calls": 500
         },
         {
           "label": "btclib, grind, noverify",
-          "us_per_call": 380.51459996495396
+          "us_per_call": 331.0010576947556,
+          "halves_apart": 1.7563461509640774,
+          "rounds": 4,
+          "calls": 1300
         },
         {
           "label": "btclib, grind, verify",
-          "us_per_call": 1013.9000005437993
+          "us_per_call": 1097.425000014482,
+          "halves_apart": 6.794749991968274,
+          "rounds": 4,
+          "calls": 500
         },
         {
           "label": "python-ecdsa, nogrind, noverify",
-          "us_per_call": 292.0874999836087
+          "us_per_call": 309.31093117140017,
+          "halves_apart": 4.822598241255889,
+          "rounds": 4,
+          "calls": 1700
         },
         {
           "label": "pycoin, nogrind, noverify",
-          "us_per_call": 5703.1292002648115
+          "us_per_call": 6200.527465890363,
+          "halves_apart": 181.25756816351168,
+          "rounds": 4,
+          "calls": 88
         },
         {
           "label": "buidl.pecc, nogrind, noverify",
-          "us_per_call": 29829.554200114217
+          "us_per_call": 30093.352941227804,
+          "halves_apart": 86.02452940334842,
+          "rounds": 4,
+          "calls": 17
         }
       ]
     },
@@ -130,19 +166,31 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 659.4116799533367
+          "us_per_call": 665.9346666613905,
+          "halves_apart": 0.7146666563736517,
+          "rounds": 4,
+          "calls": 750
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 1089.6849998971447
+          "us_per_call": 1090.3276844571035,
+          "halves_apart": 4.36370445337775,
+          "rounds": 4,
+          "calls": 450
         },
         {
           "label": "pycoin",
-          "us_per_call": 17752.516600012314
+          "us_per_call": 19093.569928372744,
+          "halves_apart": 249.29910744373774,
+          "rounds": 4,
+          "calls": 28
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 59596.86249989318
+          "us_per_call": 59885.322998525226,
+          "halves_apart": 161.99462697841227,
+          "rounds": 4,
+          "calls": 8
         }
       ]
     },
@@ -154,19 +202,31 @@
       "rows": [
         {
           "label": "btclib, noverify",
-          "us_per_call": 320.7950000069104
+          "us_per_call": 327.4854166666046,
+          "halves_apart": 0.7253886627344173,
+          "rounds": 4,
+          "calls": 1500
         },
         {
           "label": "btclib, verify",
-          "us_per_call": 976.7249997821638
+          "us_per_call": 984.9346659902949,
+          "halves_apart": 0.3965020296163857,
+          "rounds": 4,
+          "calls": 500
         },
         {
           "label": "secp256k1lab, verify",
-          "us_per_call": 7613.429999910295
+          "us_per_call": 7597.903199852086,
+          "halves_apart": 27.64167707377692,
+          "rounds": 4,
+          "calls": 65
         },
         {
           "label": "buidl.pecc, verify",
-          "us_per_call": 103897.65000145417
+          "us_per_call": 104089.8000006564,
+          "halves_apart": 26.041798992082477,
+          "rounds": 4,
+          "calls": 5
         }
       ]
     },
@@ -178,15 +238,24 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 673.3424999401905
+          "us_per_call": 655.8645824190681,
+          "halves_apart": 1.3986500168874727,
+          "rounds": 4,
+          "calls": 740
         },
         {
           "label": "secp256k1lab",
-          "us_per_call": 5057.728340034373
+          "us_per_call": 5057.53375007771,
+          "halves_apart": 5.478329840116203,
+          "rounds": 4,
+          "calls": 100
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 70935.72499870788
+          "us_per_call": 70303.72028696418,
+          "halves_apart": 157.43442678026622,
+          "rounds": 4,
+          "calls": 7
         }
       ]
     }

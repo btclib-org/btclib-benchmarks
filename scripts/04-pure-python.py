@@ -136,6 +136,7 @@ from _results import (
     Provenance,
     Ratios,
     Timing,
+    Unavailable,
     page_of,
     rendered_provenance,
     rendered_table,
@@ -525,8 +526,46 @@ def ssa_verify_buidl() -> None:
 # ------------------------------------------------------------- the timing
 
 
-def benchmark(func: Callable[[], None], calls: int) -> float:
-    """Return microseconds per call, `calls` calls of `func`.
+# four, and even, which is what the estimator below halves. Three did not
+# halve -- half a round is the minimum of nothing -- so this page adopts
+# `scripts/03-libraries.py`'s constant along with its statistic.
+#
+# What this page said against rounds was that "three rounds of the slowest
+# would be a run nobody waits for", and it was measured rather than
+# reasoned: every row of the published one-round run together came to under
+# four seconds of clock. The counts below are what made that true, and they
+# are the defect ISS 111 found -- picked so that the *slowest* rows were
+# bearable, they left the quickest running for milliseconds, where a
+# scheduler taking one is a large fraction of the number. Chosen per row to
+# a target instead, four rounds of this page cost under a minute.
+ROUNDS = 4
+
+
+def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
+    """Return the quickest round's microseconds per call, and the halves' gap.
+
+    `ROUNDS` rounds of `calls` calls each. The minimum is the estimate:
+    noise is one-sided -- nothing on this machine makes a call quicker than
+    it is -- so the quickest round is the one that ran with least taken from
+    it, where a mean would carry every interruption into the number.
+
+    The second number is how far that estimate moved when the row was
+    measured twice, which is what the rounds are halved for, and it is the
+    column this page had none of. Its rows are the slowest this project
+    prints and its tables are read by subtracting one row from another --
+    a checked signing row less its unchecked one is what the check costs --
+    so an error that a ratio would divide away is an error a difference
+    keeps, and there was nothing beside a row to say how large it was.
+
+    Saved as `halves_apart`, which is the key `_results.py` already carries
+    for this statistic; the page has never printed the `spread` that key
+    stands against, so nothing here is a redefinition.
+
+    Contiguous halves rather than alternate rounds, as on the pages that
+    print it already: the rows of a table are measured minutes apart, and a
+    machine that drifts over a row's rounds will drift over a table's rows.
+    Two halves seconds apart say nothing about two runs a day apart, and
+    nothing here can see the second.
 
     A returned number and not a printed one: every row is a ratio against
     the quickest of its table, so the reference has to be in hand before
@@ -535,13 +574,23 @@ def benchmark(func: Callable[[], None], calls: int) -> float:
     `calls` is per function rather than shared: the slowest row here is
     four orders of magnitude off the reference, and one count for all of
     them would either sit for minutes on the slowest or measure the
-    fastest against the resolution of the clock.
+    fastest against the resolution of the clock. Each is picked so a round
+    lands near half a second -- long enough that a scheduler's slice is a
+    rounding error next to it, which is what the counts it replaces were
+    not.
     """
     # perf_counter and not time(): the wall clock can step backwards
-    start = time.perf_counter()
-    for _ in range(calls):
-        func()
-    return (time.perf_counter() - start) / calls * 1e6
+    rounds = []
+    for _ in range(ROUNDS):
+        start = time.perf_counter()
+        for _ in range(calls):
+            func()
+        rounds.append((time.perf_counter() - start) / calls * 1e6)
+    # halved on what the loop above produced rather than on `ROUNDS`, the
+    # two being the same number until somebody changes one
+    half = len(rounds) // 2
+    first, second = min(rounds[:half]), min(rounds[half:])
+    return min(first, second), abs(first - second)
 
 
 Rows = tuple[tuple[str, Callable[[], None], int], ...]
@@ -558,13 +607,23 @@ def measured(title: str, rows: Rows) -> Ratios:
     on the runs where another row won, and where btclib stands is its own
     place in the order.
     """
-    return Ratios(
-        title=title,
-        rows=[
-            Timing(label=label, us_per_call=benchmark(func, calls))
-            for label, func, calls in rows
-        ],
-    )
+    # the union, not `list[Timing]`: `Ratios` takes rows either way and a
+    # list is invariant. No row here is ever unavailable -- every comparand
+    # on this page implements every operation, which is what makes it a
+    # page -- so this is the annotation and not a case to handle
+    timings: list[Timing | Unavailable] = []
+    for label, func, calls in rows:
+        value, apart = benchmark(func, calls)
+        timings.append(
+            Timing(
+                label=label,
+                us_per_call=value,
+                halves_apart=apart,
+                calls=calls,
+                rounds=ROUNDS,
+            )
+        )
+    return Ratios(title=title, rows=timings)
 
 
 # the fixtures each comparand signs and verifies, built once from the pool
@@ -629,58 +688,57 @@ TABLES: tuple[tuple[str, Rows], ...] = (
     (
         "public key from a private key: a multiplication of the generator",
         (
-            ("btclib", pubkey_btclib, 200),
-            ("secp256k1lab", pubkey_lab, 100),
-            ("python-ecdsa", pubkey_ecdsa, 200),
-            ("pycoin", pubkey_pycoin, 20),
-            ("buidl.pecc", pubkey_buidl, 10),
+            ("btclib", pubkey_btclib, 2_700),
+            ("secp256k1lab", pubkey_lab, 400),
+            ("python-ecdsa", pubkey_ecdsa, 1_800),
+            ("pycoin", pubkey_pycoin, 90),
+            ("buidl.pecc", pubkey_buidl, 17),
         ),
     ),
     (
         "ECDSA sign, over a 32-byte digest",
         (
-            ("btclib, nogrind, noverify", dsa_sign_btclib_nogrind_noverify, 50),
-            ("btclib, nogrind, verify", dsa_sign_btclib_nogrind_verify, 10),
-            ("btclib, grind, noverify", dsa_sign_btclib_grind_noverify, 20),
-            ("btclib, grind, verify", dsa_sign_btclib_grind_verify, 10),
-            ("python-ecdsa, nogrind, noverify", dsa_sign_ecdsa, 100),
-            ("pycoin, nogrind, noverify", dsa_sign_pycoin, 20),
-            ("buidl.pecc, nogrind, noverify", dsa_sign_buidl, 10),
+            ("btclib, nogrind, noverify", dsa_sign_btclib_nogrind_noverify, 3_000),
+            ("btclib, nogrind, verify", dsa_sign_btclib_nogrind_verify, 500),
+            ("btclib, grind, noverify", dsa_sign_btclib_grind_noverify, 1_300),
+            ("btclib, grind, verify", dsa_sign_btclib_grind_verify, 500),
+            ("python-ecdsa, nogrind, noverify", dsa_sign_ecdsa, 1_700),
+            ("pycoin, nogrind, noverify", dsa_sign_pycoin, 88),
+            ("buidl.pecc, nogrind, noverify", dsa_sign_buidl, 17),
         ),
     ),
     (
         "ECDSA verify, over a 32-byte digest",
         (
-            ("btclib", dsa_verify_btclib, 50),
-            ("python-ecdsa", dsa_verify_ecdsa, 50),
-            ("pycoin", dsa_verify_pycoin, 10),
-            ("buidl.pecc", dsa_verify_buidl, 10),
+            ("btclib", dsa_verify_btclib, 750),
+            ("python-ecdsa", dsa_verify_ecdsa, 450),
+            ("pycoin", dsa_verify_pycoin, 28),
+            ("buidl.pecc", dsa_verify_buidl, 8),
         ),
     ),
     (
         "BIP340 sign, over a 32-byte message",
         (
-            ("btclib, noverify", ssa_sign_btclib_noverify, 50),
-            ("btclib, verify", ssa_sign_btclib_verify, 20),
-            ("secp256k1lab, verify", ssa_sign_lab, 50),
+            ("btclib, noverify", ssa_sign_btclib_noverify, 1_500),
+            ("btclib, verify", ssa_sign_btclib_verify, 500),
+            ("secp256k1lab, verify", ssa_sign_lab, 65),
             ("buidl.pecc, verify", ssa_sign_buidl, 5),
         ),
     ),
     (
         "BIP340 verify, over a 32-byte message",
         (
-            ("btclib", ssa_verify_btclib, 50),
-            ("secp256k1lab", ssa_verify_lab, 50),
-            ("buidl.pecc", ssa_verify_buidl, 10),
+            ("btclib", ssa_verify_btclib, 740),
+            ("secp256k1lab", ssa_verify_lab, 100),
+            ("buidl.pecc", ssa_verify_buidl, 7),
         ),
     ),
 )
 
-# what the run block claims about how these numbers were taken. Every row
-# here is timed once: the counts are small, these being the slowest rows
-# this project prints, and three rounds of the slowest would be a run
-# nobody waits for
-METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
+# what the run block claims about how these numbers were taken. `calls` is
+# per row and prints beside its row, the counts above spanning three orders
+# of magnitude and the sort putting rows of either end next to each other
+METHOD = f"{ROUNDS} rounds per row in two halves, minimum kept; calls per row"
 
 
 def main() -> None:
