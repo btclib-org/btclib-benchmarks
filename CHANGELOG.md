@@ -1244,6 +1244,20 @@ The release notes, which say what a user has to act on, are in
 
   Neither page moves until it is run. [ISS 42][iss42] ends in those two runs.
 
+- **`02-btclib-vs-btclib.py` gains `ellswift_xdh`.** `ecc/ellswift.py`
+  gates four public functions on the same dispatch every other row on this
+  page reads through, and only `decode_var` was timed: `create_var` and
+  `encode_var` draw a random field element on every call, which is why an
+  encoded form is built once, off the clock, as the fixture that feeds
+  `decode_var` rather than as a row of its own. `xdh` is deterministic
+  like `decode_var` — no field element is drawn inside it, only hashed —
+  so it is timed the same way, over a fixture key paired with the next
+  key's own encoding, the construction `dh_shared_secret` already uses for
+  its counterparty. Found while sizing [ISS 83][iss83]'s remaining
+  exclusives for a page of their own: `ellswift`'s split arithmetic is
+  this page's subject already, which is a better home for its
+  deterministic calls than a same-package ratio would have been. The page
+  is not re-measured here, and the new row carries no number until it is.
 - **`test.yml` no longer asks apt for a toolchain the runner already
   carries.** [ISS 96][iss96] traced three cancelled jobs in one evening to
   the same cause: `apt-get update` stalled on an upstream mirror and took
