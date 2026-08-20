@@ -10,11 +10,12 @@ from being seen.
 ```shell
 gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
   --jq '.required_status_checks | {strict, contexts}'
-# {"contexts":["Lint and type-check","test: every job passed"],
+# {"contexts":["Lint and type-check","test: every job passed",
+#              "Build the documentation"],
 #  "strict":true}
 ```
 
-Two contexts, and the second is an aggregate rather than a matrix cell.
+Three contexts, and the second is an aggregate rather than a matrix cell.
 `test.yml`'s `test-passed` job runs last and demands `success` of every
 job the run reports, `!cancelled()` in its `if:` being what makes a red
 cell reach it rather than leave it unreported -- while a cancellation of
@@ -49,6 +50,27 @@ that fails in a step of its own always did. That is why the hole stayed
 hidden until GitHub had an outage, and why the fix does not try to
 enumerate the ways a job can die: the job asks the API what this run's
 jobs concluded, and a conclusion is a conclusion however it was reached.
+
+The third is `docs.yml`'s only job, and it is named directly because
+there is only one — an aggregate over a single cell would be a job
+whose whole purpose is to repeat another's answer. It runs the
+`sphinx-build -W` command `.readthedocs.yaml` already runs, on the
+interpreter that file pins, so a cross-reference this project's
+`{include}`-based pages cannot resolve fails here rather than only on
+Read the Docs, after the merge, on a page nobody watches. That was not
+hypothetical: the pull request that filed [ISS 95][iss95] hit it twice,
+and only because the build was run by hand.
+
+[iss95]: https://github.com/btclib-org/btclib-benchmarks/issues/95
+
+Its `if:` declines two cases, and neither is a hole this rule can fall
+through. A draft pull request spends no runner, and a draft cannot merge
+anyway — marking it ready fires the workflow again. A `closed` event
+skips the job too, which is why the check reads as skipped on a pull
+request that has just merged: the run is triggered so that the merge
+cancels anything the ref's concurrency group is still holding, and it
+arrives at the merge rather than before it. On an open pull request the
+job runs, and there is no `paths` filter for it to sit out.
 
 `strict` requires a branch to be up to date with main before it merges.
 
