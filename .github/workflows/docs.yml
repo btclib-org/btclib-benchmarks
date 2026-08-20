@@ -1,0 +1,78 @@
+---
+name: docs
+
+# runs the same sphinx-build .readthedocs.yaml does, on the same
+# interpreter, so that a markdown link sphinx cannot resolve under -W
+# fails here rather than only on Read the Docs, after the merge, on a
+# page nobody watches. The uv sync differs -- see the step below
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # closed too, though the job below declines the real work on it: a
+    # merge or a close is neither a push nor a synchronize, so a run this
+    # ref's concurrency group is still holding survives either unless the
+    # closed event lands in that same group -- which this type is what
+    # makes it do, cancel-in-progress below turning the landing into the
+    # cancellation. A closed pull request has nothing left to ask this
+    # workflow, the merge commit being main's own push trigger's question
+    types: [opened, reopened, synchronize, ready_for_review, closed]
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # named literally, never through github.workflow: in a called workflow
+  # that expression is the *caller's* name, so two workflows called from
+  # one place would share a group and cancel each other
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: Build the documentation
+    # a draft pull request is work in progress and spends no runner here
+    # either. A closed one spends none either -- the trigger above takes
+    # the closed event only to supersede a run this ref's group is still
+    # holding
+    if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # 3.14, not .python-version's 3.13: that floor is set by two
+      # wrapper comparands this job never installs, and .readthedocs.yaml
+      # pins 3.14 for the same build run elsewhere -- one interpreter
+      # keeps "does the build pass" one question rather than two
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          python-version: "3.14"
+
+      # --only-group docs, not --no-default-groups --group docs: the
+      # comparands are this project's own dependencies rather than a
+      # group of their own, so the latter still installs every one of
+      # them -- coincurve and secp256k1 included, and neither publishes a
+      # cp314 wheel or builds from source under it, which failed the
+      # first version of this job. --only-group skips the project's own
+      # dependencies and the project itself, which is correct today: no
+      # page under docs/source carries an autodoc directive, so nothing
+      # sphinx reads here imports btclib. The day one does, the import
+      # fails loudly under -W rather than printing a bare title, which is
+      # this job's whole reason to exist -- and installing btclib for
+      # that day is this line's to grow, not the whole project's install
+      # to restore.
+      #
+      # --keep-going first, so one broken page reports every other
+      # problem in the same run instead of one per push
+      - name: Build the documentation
+        run: >-
+          uv run --locked --only-group docs
+          sphinx-build -W --keep-going -b html docs/source docs/build/html

@@ -1244,6 +1244,27 @@ The release notes, which say what a user has to act on, are in
 
   Neither page moves until it is run. [ISS 42][iss42] ends in those two runs.
 
+- **`docs.yml` builds the documentation, and nothing gated a merge on it
+  before.** `.readthedocs.yaml` runs `sphinx-build -W`, which turns a
+  docstring or a markdown link sphinx cannot resolve into a build
+  failure — but the only two workflows this repository had were
+  `lint.yml`, which never invokes sphinx, and `test.yml`, which tests
+  helpers rather than prose. [ISS 95][iss95] hit that hole twice by hand,
+  the second time on a pair of relative links between `CONTRIBUTING.md`
+  and `REVIEWING.md` that this repository's `{include}`-based pages
+  cannot resolve — a shape with no local gate to catch it, failing only
+  on Read the Docs, after the merge, on a page nobody was watching.
+
+  The new job runs the same `sphinx-build -W --keep-going` command on the
+  same interpreter `.readthedocs.yaml` pins, 3.14 rather than this
+  repository's own 3.13 floor — that floor being set by two wrapper
+  comparands the documentation build never installs, and one interpreter
+  is what keeps "does the build pass" one question between the two
+  places it now runs rather than two. It is a job for a maintainer to add
+  to `main`'s required status checks, `Build the documentation` named on
+  its own the way btclib and btclib-secp256k1 both name theirs;
+  `REPOSITORY.md`'s *Required checks on main* section is what to update
+  once it is.
 - **`02-btclib-vs-btclib.py` gains `ellswift_xdh`.** `ecc/ellswift.py`
   gates four public functions on the same dispatch every other row on this
   page reads through, and only `decode_var` was timed: `create_var` and
@@ -1282,4 +1303,5 @@ The release notes, which say what a user has to act on, are in
 [iss67]: https://github.com/btclib-org/btclib-benchmarks/issues/67
 [iss68]: https://github.com/btclib-org/btclib-benchmarks/issues/68
 [iss83]: https://github.com/btclib-org/btclib-benchmarks/issues/83
+[iss95]: https://github.com/btclib-org/btclib-benchmarks/issues/95
 [iss96]: https://github.com/btclib-org/btclib-benchmarks/issues/96
