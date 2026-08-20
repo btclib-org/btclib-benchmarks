@@ -212,6 +212,7 @@ _OPERATION_NAMES = (
     "bms_verify",
     "taproot_tweak",
     "ellswift_decode",
+    "ellswift_xdh",
 )
 
 # where each operation starts reading. Spread across the pool rather than
@@ -245,6 +246,7 @@ DRAW_SIZES = {
     "bms_verify": 15_000,
     "taproot_tweak": 25_000,
     "ellswift_decode": 25_000,
+    "ellswift_xdh": 25_000,
 }
 
 
@@ -309,6 +311,17 @@ BMS_SIGS = [
 # a fixture and never a row: decoding one is what is deterministic, and what
 # the dispatch is on
 ELLS = [ellswift.encode_var(pubkey) for pubkey in ELLSWIFT_KEYS]
+
+# the x-only ECDH is deterministic like the decode above it and unlike the
+# encoding that built ELLS: no field element is drawn inside the call, only
+# hashed. It needs a counterparty the same way dh_shared_secret does, each
+# key paired with the next one's encoding in its own slice
+ELLSWIFT_XDH_KEYS = _keys("ellswift_xdh")
+_ELLSWIFT_XDH_ELLS = [
+    ellswift.encode_var(pub_keyinfo_from_prv_key(prvkey)[0])
+    for prvkey in ELLSWIFT_XDH_KEYS
+]
+ELLSWIFT_XDH_COUNTERPARTIES = _ELLSWIFT_XDH_ELLS[1:] + _ELLSWIFT_XDH_ELLS[:1]
 
 # one cycle per operation, each exactly its slice long. `itertools.cycle`
 # rather than an index: a C-level iterator, the same cost in every row, and
@@ -386,6 +399,16 @@ BMS_VERIFY_CYCLE = cycle(
 )
 TAPROOT_CYCLE = cycle(TAPROOT_KEYS)
 ELLSWIFT_CYCLE = cycle(ELLS)
+ELLSWIFT_XDH_CYCLE = cycle(
+    list(
+        zip(
+            ELLSWIFT_XDH_KEYS,
+            _ELLSWIFT_XDH_ELLS,
+            ELLSWIFT_XDH_COUNTERPARTIES,
+            strict=True,
+        )
+    )
+)
 
 
 def python_arithmetic_only() -> None:
@@ -571,6 +594,17 @@ def ellswift_decode() -> None:
     ellswift.decode_var(next(ELLSWIFT_CYCLE))
 
 
+def ellswift_xdh() -> None:
+    """Time the x-only ECDH shared secret of two ElligatorSwift-encoded keys.
+
+    The pair with the row above: `decode_var` and `xdh` are the module's
+    two deterministic calls, `create_var` and `encode_var` being what
+    built the fixture rather than what either row times.
+    """
+    prvkey, own_ell, counterparty_ell = next(ELLSWIFT_XDH_CYCLE)
+    ellswift.xdh(own_ell, counterparty_ell, prvkey, 0)
+
+
 # every row is called once, through libsecp256k1, before anything is
 # timed: an operation whose fixture is wrong would otherwise be timed
 # rather than reported
@@ -589,6 +623,7 @@ for _op in (
     bms_verify,
     taproot_tweak,
     ellswift_decode,
+    ellswift_xdh,
 ):
     _op()
 
@@ -642,6 +677,7 @@ OPERATIONS = (
     ("bms_verify", bms_verify, 15, 1),
     ("taproot_tweak", taproot_tweak, 25, 2),
     ("ellswift_decode", ellswift_decode, 25, 3),
+    ("ellswift_xdh", ellswift_xdh, 25, 2),
 )
 
 
