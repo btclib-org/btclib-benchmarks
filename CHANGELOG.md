@@ -83,6 +83,26 @@ The release notes, which say what a user has to act on, are in
   excepted: the questions a review of *this* tree asks, which are about
   a measured number restated where no rerun corrects it.
 
+### Packaging and CI, before the benchmarks below
+
+- **A red documentation build now blocks a merge**, which is
+  [ISS 95][iss95]. `docs.yml` has run the `sphinx-build -W` command
+  `.readthedocs.yaml` runs since it was added, and nothing was gated on
+  its answer: `main`'s required contexts were the lint job and the test
+  aggregate, so a cross-reference this project's `{include}`-based pages
+  cannot resolve stayed a Read the Docs failure — after the merge, on a
+  page nobody watches. `Build the documentation` is the third context now,
+  and `REPOSITORY.md` carries the `gh api` output that says so, read back
+  after the change rather than written from the intention.
+
+  What was checked before requiring it is that the job cannot fail to
+  report: it has no `paths` filter, and the two cases its `if:` declines
+  are a draft pull request, which cannot merge and re-fires the workflow
+  when it is marked ready, and the `closed` event, which is why the check
+  reads skipped on a pull request that has just merged — that run exists
+  so the merge cancels what the ref's concurrency group still holds, and
+  it arrives at the merge rather than before it.
+
 ### The benchmarks
 
 - **Page 04 times each row in rounds and prints how far its halves sat
