@@ -100,6 +100,11 @@ protection's own review requirement for the maintainer; the ruleset
 bypass alone would not be enough, and turning it on would deadlock every
 merge instead, that requirement having no bypass list to be named in.
 
+What lands, therefore, is a squash GitHub composes at the button and
+signs with its own web-flow key. That the signer is GitHub rather than
+the maintainer costs nothing: `main-integrity` asks for a signature and
+not for a particular signer, and asks it of everyone.
+
 A third ruleset, `tag-integrity`, targets tags rather than `main` and so
 sits outside the aggregation above: `target: tag`, `refs/tags/v*`,
 `required_signatures`, **no bypass actor at all**. There is no
@@ -110,11 +115,6 @@ as every tag in this org is", and the ruleset now enforces that
 uniformly rather than leaving it to be remembered by hand. It carries no
 `deletion` or `non_fast_forward` rule, matching the sibling repositories
 that do gate a release on the tag.
-
-What lands, therefore, is a squash GitHub composes at the button and
-signs with its own web-flow key. That the signer is GitHub rather than
-the maintainer costs nothing: `main-integrity` asks for a signature and
-not for a particular signer, and asks it of everyone.
 
 ## Signed commits
 
