@@ -37,7 +37,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-# `import` cannot spell it: the five scripts are named for the pages
+# `import` cannot spell it: the six scripts are named for the pages
 # they publish, which begin with a number and hold hyphens. Nothing
 # imports them by statement -- a person runs `python scripts/<name>.py`
 # and the suite asks `importlib` for them by string, which is indifferent

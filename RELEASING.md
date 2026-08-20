@@ -49,7 +49,7 @@ because these scripts reach into a dispatch that is private and moves
 between releases. `project.dependencies` already floors it at the
 version that will carry those names.
 
-Delete that entry the day the release lands, re-lock, run the five
+Delete that entry the day the release lands, re-lock, run the six
 benchmarks again and render their pages — that is the whole of the
 change, and the run is what says the published wheel really does carry
 what main did.

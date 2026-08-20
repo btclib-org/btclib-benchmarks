@@ -559,11 +559,13 @@ def _columns(rows: list[list[str]], headings: list[str]) -> str:
 def rendered_provenance(provenance: Provenance) -> str:
     """Return the packages block, its notes under it.
 
-    Two of the five benchmarks have no table to print here: one compares
-    btclib with btclib and the other three packages, and a column of two
-    or three cells is a table only in the sense that it has edges. Those
-    say what they have to say in lines, which is what `notes` are, and a
-    Provenance with no columns is that rather than an empty one.
+    Three of the six benchmarks have no table to print here: one compares
+    btclib with btclib, one has three packages -- btclib, btclib-secp256k1
+    and python-ecdsa -- and one has a single comparand with no second
+    implementation to set beside it. A column of one to three cells is a
+    table only in the sense that it has edges. Those say what they have to
+    say in lines, which is what `notes` are, and a Provenance with no
+    columns is that rather than an empty one.
     """
     lines = provenance.notes
     if provenance.columns:
@@ -595,7 +597,7 @@ def _rendered_drift(measurement: Measurement) -> str | None:
 
     Nothing, on a page measured once: an absent line is a page that did
     not pay for a second pass, which is what every page but the cheapest
-    of the five is, and writing it as zero would claim two passes that
+    of the six is, and writing it as zero would claim two passes that
     agreed.
 
     Every number here is derived and none is stored, which is this
