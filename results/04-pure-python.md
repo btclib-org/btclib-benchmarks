@@ -25,7 +25,7 @@ tag, which is still a release somebody cut on a day.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-20 09:25 CEST (07:25 UTC)
+when    : 2026-08-20 15:08 CEST (13:08 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -36,6 +36,30 @@ python  : 3.13.14
 Microseconds per call, fastest row first, and a ratio against whichever row
 came out quickest — no row here is C, so none of them is a reference line and
 none is named in advance.
+
+**The `halves` column is new, and this page needed it more than the pages
+that had it first.** Each row is timed in rounds now; the rounds are halved,
+the quickest is what is published, and the column is how far the two halves'
+minima sat apart, in the same microseconds as the value beside it. So it
+says whether a row agreed with itself when measured twice, seconds apart —
+which is what a reader checks an ordering by before believing it.
+
+What it answers here is not only the ordering. This is the page whose tables
+are read by *subtracting*: an unchecked signing row taken from its checked
+one is what btclib's own verification costs, and a difference keeps an error
+that a ratio would divide away. Without the column, the two subtractions
+that must agree could disagree with nothing on the page to say so — which is
+what [ISS 111][i111] found them doing, the two checked rows having priced
+one check at two sizes a factor of two apart. The counts each row is
+averaged over are beside it for the same reason, and they are much larger
+than they were: the previous ones were chosen so the slowest rows here were
+bearable, which left the quickest running for milliseconds a scheduler could
+take a large share of.
+
+Read it as this run's agreement with itself and not as an error bar. Two
+halves seconds apart say nothing about two runs a day apart; [the wrappers
+page][wrappers] pays for a second pass and states that size, and this page
+does not.
 
 The inputs are every BIP340 vector the file publishes, cycled: each call takes
 the next, so a row is an average over inputs nobody here chose. btclib signs
@@ -81,7 +105,7 @@ between two rows.
 
 <!-- output: begin -->
 ```text
-method  : one run, kept whole — nothing repeated, no outlier discarded
+method  : 4 rounds per row in two halves, minimum kept; calls per row
 command : uv run python scripts/04-pure-python.py
 
 what a timing contains
@@ -91,42 +115,42 @@ what a timing contains
   each script builds its fixtures, which is before any clock
 
 public key from a private key: a multiplication of the generator
-                                      μs/call     vs best
-  btclib                               183.68        1.0x
-  python-ecdsa                         269.28        1.5x
-  secp256k1lab                        1270.36        6.9x
-  pycoin                              5536.40       30.1x
-  buidl.pecc                         29794.67      162.2x
+                                      μs/call     vs best   halves
+  btclib                               156.54        1.0x     0.57   (4x2,700 calls)
+  python-ecdsa                         298.64        1.9x     7.66   (4x1,800 calls)
+  secp256k1lab                        1401.12        9.0x     8.09   (4x400 calls)
+  pycoin                              6249.10       39.9x   156.49   (4x90 calls)
+  buidl.pecc                         30610.04      195.5x    77.49   (4x17 calls)
 
 ECDSA sign, over a 32-byte digest
-                                      μs/call     vs best
-  btclib, nogrind, noverify            161.85        1.0x
-  python-ecdsa, nogrind, noverify      292.09        1.8x
-  btclib, grind, noverify              380.51        2.4x
-  btclib, grind, verify               1013.90        6.3x
-  btclib, nogrind, verify             1483.03        9.2x
-  pycoin, nogrind, noverify           5703.13       35.2x
-  buidl.pecc, nogrind, noverify      29829.55      184.3x
+                                      μs/call     vs best   halves
+  btclib, nogrind, noverify            158.36        1.0x     0.46   (4x3,000 calls)
+  python-ecdsa, nogrind, noverify      309.31        2.0x     4.82   (4x1,700 calls)
+  btclib, grind, noverify              331.00        2.1x     1.76   (4x1,300 calls)
+  btclib, nogrind, verify              878.92        5.6x     1.97   (4x500 calls)
+  btclib, grind, verify               1097.43        6.9x     6.79   (4x500 calls)
+  pycoin, nogrind, noverify           6200.53       39.2x   181.26   (4x88 calls)
+  buidl.pecc, nogrind, noverify      30093.35      190.0x    86.02   (4x17 calls)
 
 ECDSA verify, over a 32-byte digest
-                                      μs/call     vs best
-  btclib                               659.41        1.0x
-  python-ecdsa                        1089.68        1.7x
-  pycoin                             17752.52       26.9x
-  buidl.pecc                         59596.86       90.4x
+                                      μs/call     vs best   halves
+  btclib                               665.93        1.0x     0.71   (4x750 calls)
+  python-ecdsa                        1090.33        1.6x     4.36   (4x450 calls)
+  pycoin                             19093.57       28.7x   249.30   (4x28 calls)
+  buidl.pecc                         59885.32       89.9x   161.99   (4x8 calls)
 
 BIP340 sign, over a 32-byte message
-                                      μs/call     vs best
-  btclib, noverify                     320.80        1.0x
-  btclib, verify                       976.72        3.0x
-  secp256k1lab, verify                7613.43       23.7x
-  buidl.pecc, verify                103897.65      323.9x
+                                      μs/call     vs best   halves
+  btclib, noverify                     327.49        1.0x     0.73   (4x1,500 calls)
+  btclib, verify                       984.93        3.0x     0.40   (4x500 calls)
+  secp256k1lab, verify                7597.90       23.2x    27.64   (4x65 calls)
+  buidl.pecc, verify                104089.80      317.8x    26.04   (4x5 calls)
 
 BIP340 verify, over a 32-byte message
-                                      μs/call     vs best
-  btclib                               673.34        1.0x
-  secp256k1lab                        5057.73        7.5x
-  buidl.pecc                         70935.72      105.3x
+                                      μs/call     vs best   halves
+  btclib                               655.86        1.0x     1.40   (4x740 calls)
+  secp256k1lab                        5057.53        7.7x     5.48   (4x100 calls)
+  buidl.pecc                         70303.72      107.2x   157.43   (4x7 calls)
 ```
 <!-- output: end -->
 
@@ -136,25 +160,32 @@ btclib's Python arithmetic leads every table here,
 `python-ecdsa` is second in each one it has a row in, and `buidl.pecc` is
 last in all five by a distance nothing on this machine would reorder. In
 every table they share, btclib and python-ecdsa are within a factor of each
-other rather than an order of magnitude, and which of the three tables is the
-closest is not a gap this run settles — everywhere else on this page the gaps
-are wide enough that the order is not in question, which is why the ratio
-column is the one to read and not the ranking.
+other rather than an order of magnitude, and the verification table is the
+closest of the three. That last is something this run settles rather than
+suggests, and it is the first thing the new column buys: the distance
+printed beside each of those rows is far smaller than the distance between
+them, so the ordering is the packages and not the afternoon. Everywhere
+else on this page the gaps are wider still, which is why the ratio column
+is the one to read and not the ranking.
 
-### Signing: btclib's own default is the row above it
+### Signing: btclib's default is the last row, not the first
 
-The one place another implementation's number comes out smaller than a
-btclib number is the signing table, and what is above btclib there is
-btclib's own default. btclib grinds for a low-r signature unless told
-not to — it signs until r fits in 32 bytes — so that row is not one
-signature but as many as this key and this message take, and nothing
-else in this file grinds. The two rows are one switch thrown both ways
-and are labelled as such: the comparable row is the other one, which is
-what every other implementation here produces, and it leads. Read as a
-pair they say what a caller who writes `dsa.sign_(msg, key)` waits for
-and what the signature underneath it costs. Read alone, the grinding row
-would answer a question nobody asked it — it is not this signature made
-slower, it is more than one of them.
+btclib is the only implementation in that table which grinds, and the only
+one which checks what it signed, so its rows are those two switches thrown
+every way and nothing beside them is either. The row a caller gets from
+`dsa.sign_(msg, key)` has both on and comes last; the row that compares
+with what every other implementation here produces has both off, and it
+leads.
+
+Neither is the other made slower. Grinding is more than one signature — it
+signs until r fits in 32 bytes — and the check is a verification the rows
+beside it never perform, so what separates btclib's rows from each other is
+work the comparands do not do rather than arithmetic they do worse. That is
+why python-ecdsa comes out ahead of btclib's checked rows while sitting
+behind its unchecked one, and why this table is read by subtracting one
+btclib row from another rather than by its ranking. Read alone, the
+grinding row answers a question nobody asked it: it is not this signature
+made slower, it is more than one of them.
 
 ### BIP340: why a teaching implementation is a comparand
 
@@ -216,6 +247,7 @@ comparands:
 [sp]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
 [i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [i55]: https://github.com/btclib-org/btclib-benchmarks/issues/55
+[i111]: https://github.com/btclib-org/btclib-benchmarks/issues/111
 
 <!-- The blocks above are rendered from the saved run beside this file,
      and their columns are sized from what is in them; rewrapping one to 80
