@@ -2,10 +2,10 @@
   "schema": 1,
   "benchmark": "03-libraries",
   "run": {
-    "when": "2026-08-16T23:33:41+02:00",
+    "when": "2026-08-20T09:21:25+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
-    "method": "3 rounds per row, minimum kept; nothing else repeated",
+    "method": "4 rounds per row in two halves, minimum kept; calls per row",
     "command": "uv run python scripts/03-libraries.py",
     "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
   },
@@ -20,7 +20,7 @@
       [
         "btclib",
         "2026.9",
-        "main@9d85d3e61467",
+        "main@5f7ad5422544",
         "libsecp256k1 enhanced"
       ],
       [
@@ -67,62 +67,77 @@
     {
       "kind": "ratios",
       "title": "1. ECDSA sign (32-byte digest)",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
-          "label": "btclib",
-          "us_per_call": 15.243753339163959,
-          "spread": 1.0193791566416621,
-          "rounds": 3,
+          "label": "btclib_nogrind_noverify",
+          "us_per_call": 15.033875820226967,
+          "halves_apart": 0.03152167977532372,
+          "rounds": 4,
           "calls": 50000
         },
         {
-          "label": "btclib_grind",
-          "us_per_call": 27.99282914493233,
-          "spread": 0.6142583559267223,
-          "rounds": 3,
+          "label": "btclib_nogrind_verify",
+          "us_per_call": 35.46506874990882,
+          "halves_apart": 0.039827100408729166,
+          "rounds": 4,
           "calls": 20000
         },
         {
-          "label": "ecdsa",
-          "us_per_call": 304.31030839681625,
-          "spread": 5.298825027421117,
-          "rounds": 3,
+          "label": "btclib_grind_noverify",
+          "us_per_call": 27.14250209974125,
+          "halves_apart": 0.012070799857610837,
+          "rounds": 4,
+          "calls": 20000
+        },
+        {
+          "label": "btclib_grind_verify",
+          "us_per_call": 47.44896106712986,
+          "halves_apart": 0.060238932686239366,
+          "rounds": 4,
+          "calls": 15000
+        },
+        {
+          "label": "ecdsa_nogrind_noverify",
+          "us_per_call": 291.14955000113696,
+          "halves_apart": 0.40345839806832373,
+          "rounds": 4,
           "calls": 5000
         },
         {
-          "label": "pycoin",
-          "us_per_call": 12.62976333964616,
-          "spread": 0.5034241592511535,
-          "rounds": 3,
+          "label": "pycoin_nogrind_noverify",
+          "us_per_call": 12.34794083982706,
+          "halves_apart": 0.0030541603337042034,
+          "rounds": 4,
           "calls": 50000
         },
         {
-          "label": "buidl",
-          "us_per_call": 30705.185001716018,
-          "spread": 459.9016811698675,
-          "rounds": 3,
+          "label": "buidl_nogrind_noverify",
+          "us_per_call": 30226.686660025734,
+          "halves_apart": 5.609159998130053,
+          "rounds": 4,
           "calls": 50
         },
         {
-          "label": "bitcoinlib",
-          "us_per_call": 192.099989624694,
-          "spread": 0.634031108347699,
-          "rounds": 3,
+          "label": "bitcoinlib_nogrind_noverify",
+          "us_per_call": 189.8759792511555,
+          "halves_apart": 1.0608383745420724,
+          "rounds": 4,
           "calls": 8000
         },
         {
-          "label": "embit",
-          "us_per_call": 14.232837497256696,
-          "spread": 0.0341941649094224,
-          "rounds": 3,
+          "label": "embit_nogrind_noverify",
+          "us_per_call": 14.117826660221908,
+          "halves_apart": 0.010321659792680293,
+          "rounds": 4,
           "calls": 50000
         },
         {
-          "label": "embit_grind",
-          "us_per_call": 29.814599989913404,
-          "spread": 0.19539166241884232,
-          "rounds": 3,
+          "label": "embit_grind_noverify",
+          "us_per_call": 29.559754150250228,
+          "halves_apart": 0.008106299355858937,
+          "rounds": 4,
           "calls": 20000
         }
       ]
@@ -130,349 +145,402 @@
     {
       "kind": "ratios",
       "title": "2. ECDSA verify (32-byte digest)",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 20.170127502642572,
-          "spread": 0.10421165730804205,
-          "rounds": 3,
+          "us_per_call": 19.802884180098772,
+          "halves_apart": 0.04058832011651248,
+          "rounds": 4,
           "calls": 50000
         },
         {
           "label": "ecdsa",
-          "us_per_call": 1145.0877083310238,
-          "spread": 41.043750010430585,
-          "rounds": 3,
+          "us_per_call": 1096.3990693320134,
+          "halves_apart": 4.699194333321884,
+          "rounds": 4,
           "calls": 3000
         },
         {
           "label": "pycoin",
-          "us_per_call": 13.94169582054019,
-          "spread": 0.06370584014803171,
-          "rounds": 3,
+          "us_per_call": 13.890345839899965,
+          "halves_apart": 0.039391660247929394,
+          "rounds": 4,
           "calls": 50000
         },
         {
           "label": "buidl",
-          "us_per_call": 60505.991680547595,
-          "spread": 1166.5566731244326,
-          "rounds": 3,
+          "us_per_call": 60066.27832015511,
+          "halves_apart": 38.30500005278736,
+          "rounds": 4,
           "calls": 25
         },
         {
           "label": "bitcoinlib",
-          "us_per_call": 227.1366011617439,
-          "spread": 2.323803691459574,
-          "rounds": 3,
+          "us_per_call": 221.73098814216374,
+          "halves_apart": 3.6222678588404165,
+          "rounds": 4,
           "calls": 7000
         },
         {
           "label": "embit",
-          "us_per_call": 24.30276000406593,
-          "spread": 0.4370433324947953,
-          "rounds": 3,
+          "us_per_call": 24.161836660059635,
+          "halves_apart": 0.01656584005104378,
+          "rounds": 4,
           "calls": 50000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "3. BIP340 sign (32-byte message)",
+      "title": "3. BIP340 sign (32-byte message, a fresh key)",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
-          "label": "btclib",
-          "us_per_call": 22.272358341142535,
-          "spread": 0.3768966579809785,
-          "rounds": 3,
+          "label": "btclib_noverify",
+          "us_per_call": 22.21626833983464,
+          "halves_apart": 0.050503319944255054,
+          "rounds": 4,
           "calls": 50000
         },
         {
-          "label": "buidl",
-          "us_per_call": 111995.91874610633,
-          "spread": 4720.622906461358,
-          "rounds": 3,
+          "label": "btclib_verify",
+          "us_per_call": 35.678037499989536,
+          "halves_apart": 0.019788899711180363,
+          "rounds": 4,
+          "calls": 30000
+        },
+        {
+          "label": "buidl_verify",
+          "us_per_call": 142279.3791993172,
+          "halves_apart": 3324.254100152757,
+          "rounds": 4,
+          "calls": 10
+        },
+        {
+          "label": "embit_noverify",
+          "us_per_call": 21.553916659904644,
+          "halves_apart": 0.007834180141799152,
+          "rounds": 4,
+          "calls": 50000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "4. BIP340 sign (32-byte message, the key held already)",
+      "group": "",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib_noverify",
+          "us_per_call": 8.614189999934752,
+          "halves_apart": 0.0031725000008009374,
+          "rounds": 4,
+          "calls": 50000
+        },
+        {
+          "label": "btclib_verify",
+          "us_per_call": 21.880145833226077,
+          "halves_apart": 0.04139306693105027,
+          "rounds": 4,
+          "calls": 30000
+        },
+        {
+          "label": "buidl_verify",
+          "us_per_call": 111516.38750015991,
+          "halves_apart": 1385.3979500709102,
+          "rounds": 4,
           "calls": 20
         },
         {
-          "label": "embit",
-          "us_per_call": 21.317121661268175,
-          "spread": 0.040074996650218964,
-          "rounds": 3,
+          "label": "embit_noverify",
+          "us_per_call": 21.24072915990837,
+          "halves_apart": 0.09591416019247845,
+          "rounds": 4,
           "calls": 50000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "4. BIP340 verify (32-byte message)",
+      "title": "5. BIP340 verify (32-byte message)",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 21.329687498509884,
-          "spread": 0.14257334172725677,
-          "rounds": 3,
+          "us_per_call": 21.399646660138387,
+          "halves_apart": 0.01882583979750052,
+          "rounds": 4,
           "calls": 50000
         },
         {
           "label": "buidl",
-          "us_per_call": 69173.50499890745,
-          "spread": 86.46667934954166,
-          "rounds": 3,
+          "us_per_call": 69000.12167985551,
+          "halves_apart": 60.75668032281101,
+          "rounds": 4,
           "calls": 25
         },
         {
           "label": "embit",
-          "us_per_call": 25.06977581884712,
-          "spread": 0.01575333997607231,
-          "rounds": 3,
+          "us_per_call": 25.110925000044517,
+          "halves_apart": 0.013962500088382512,
+          "rounds": 4,
           "calls": 50000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "5. BIP32 derive, seed to child, every chain BIP32 publishes",
+      "title": "6. BIP32 derive, seed to child, every chain BIP32 publishes",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 63.31756806466729,
-          "spread": 0.05222222922989772,
-          "rounds": 3,
+          "us_per_call": 62.03989583348933,
+          "halves_apart": 0.37048749994330876,
+          "rounds": 4,
           "calls": 30000
         },
         {
           "label": "pycoin",
-          "us_per_call": 48.2092500043412,
-          "spread": 0.14817222642402328,
-          "rounds": 3,
+          "us_per_call": 47.6144875002016,
+          "halves_apart": 0.037245833179142096,
+          "rounds": 4,
           "calls": 30000
         },
         {
           "label": "embit",
-          "us_per_call": 86.56966113485396,
-          "spread": 0.11543052581448876,
-          "rounds": 3,
+          "us_per_call": 85.94890560004083,
+          "halves_apart": 0.10951386648231676,
+          "rounds": 4,
           "calls": 15000
         },
         {
           "label": "buidl",
-          "us_per_call": 103814.63199155405,
-          "spread": 4959.485998066768,
-          "rounds": 3,
+          "us_per_call": 101675.44791693217,
+          "halves_apart": 10281.927083269693,
+          "rounds": 4,
           "calls": 12
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "6. base58check encode, a P2PKH address from a hash160",
+      "title": "7. base58check encode, a P2PKH address from a hash160",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 2.4112068756949157,
-          "spread": 0.01888478873297572,
-          "rounds": 3,
+          "us_per_call": 2.3469104149990017,
+          "halves_apart": 0.01494500000262633,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "pycoin",
-          "us_per_call": 3.649001665180549,
-          "spread": 0.017028545262292027,
-          "rounds": 3,
+          "us_per_call": 3.6559233300067717,
+          "halves_apart": 0.004467294929781929,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 2.1457677090074867,
-          "spread": 0.005190626252442598,
-          "rounds": 3,
+          "us_per_call": 2.0777247949445155,
+          "halves_apart": 0.012073955076630227,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 2.2796781244687736,
-          "spread": 0.013136455090716481,
-          "rounds": 3,
+          "us_per_call": 2.233258959968225,
+          "halves_apart": 0.012110415045754053,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "bitcoinlib",
-          "us_per_call": 2.541984999552369,
-          "spread": 0.005765410605818033,
-          "rounds": 3,
+          "us_per_call": 2.4752933300624136,
+          "halves_apart": 0.003737499937415123,
+          "rounds": 4,
           "calls": 100000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "7. base58check decode, a hash160 from a P2PKH address",
+      "title": "8. base58check decode, a hash160 from a P2PKH address",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 2.497733960626647,
-          "spread": 0.0077977043110877275,
-          "rounds": 3,
+          "us_per_call": 2.4556631250015926,
+          "halves_apart": 0.0033158300357172266,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "pycoin",
-          "us_per_call": 3.7652670848183334,
-          "spread": 0.012515831040218472,
-          "rounds": 3,
+          "us_per_call": 3.5282802100118715,
+          "halves_apart": 0.012685834954027086,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 2.588932500220835,
-          "spread": 0.005896459333598614,
-          "rounds": 3,
+          "us_per_call": 2.1815920850349357,
+          "halves_apart": 0.0035770850081462413,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 2.9255370795726776,
-          "spread": 0.026124169817194343,
-          "rounds": 3,
+          "us_per_call": 2.882919170006062,
+          "halves_apart": 0.010886664967983961,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "bitcoinlib",
-          "us_per_call": 4.303769171237946,
-          "spread": 0.013799578882753849,
-          "rounds": 3,
+          "us_per_call": 4.107609579950804,
+          "halves_apart": 0.035568750026868656,
+          "rounds": 4,
           "calls": 100000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "8. bech32 encode, a witness-v0 address from a 20-byte program",
+      "title": "9. bech32 encode, a witness-v0 address from a 20-byte program",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 7.939737079432235,
-          "spread": 0.03973750513978214,
-          "rounds": 3,
+          "us_per_call": 7.893241040001158,
+          "halves_apart": 0.0035547950392365024,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 26.302810416091233,
-          "spread": 0.4198714590165764,
-          "rounds": 3,
+          "us_per_call": 26.29034416502691,
+          "halves_apart": 0.12658500498218928,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 11.708914579357952,
-          "spread": 0.02647126093506813,
-          "rounds": 3,
-          "calls": 100000
-        },
-        {
-          "label": "bitcoinlib",
-          "us_per_call": 26.30838603945449,
-          "spread": 0.03460771054960787,
-          "rounds": 3,
-          "calls": 200000
-        }
-      ]
-    },
-    {
-      "kind": "ratios",
-      "title": "9. bech32 decode, a 20-byte program from a witness-v0 address",
-      "decimals": 1,
-      "rows": [
-        {
-          "label": "btclib",
-          "us_per_call": 7.001891670515761,
-          "spread": 0.010898534674197435,
-          "rounds": 3,
-          "calls": 200000
-        },
-        {
-          "label": "embit",
-          "us_per_call": 14.490968125173822,
-          "spread": 0.03544978913851082,
-          "rounds": 3,
-          "calls": 200000
-        },
-        {
-          "label": "buidl",
-          "us_per_call": 10.259775000158697,
-          "spread": 0.09645374957472086,
-          "rounds": 3,
+          "us_per_call": 11.524067500140518,
+          "halves_apart": 0.010960829968098551,
+          "rounds": 4,
           "calls": 100000
         },
         {
           "label": "bitcoinlib",
-          "us_per_call": 14.360164374811575,
-          "spread": 0.049615000607445836,
-          "rounds": 3,
+          "us_per_call": 26.251763539985404,
+          "halves_apart": 0.4725410399987595,
+          "rounds": 4,
           "calls": 200000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "10. bech32m encode, a witness-v1 address from a 32-byte program",
+      "title": "10. bech32 decode, a 20-byte program from a witness-v0 address",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 13.08007229003124,
-          "spread": 0.015993129927664995,
-          "rounds": 3,
+          "us_per_call": 6.946565000034752,
+          "halves_apart": 0.012248329949215986,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 40.27727478998713,
-          "spread": 0.7947877096012235,
-          "rounds": 3,
+          "us_per_call": 14.4800808349828,
+          "halves_apart": 0.6331206199683947,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 17.54331124946475,
-          "spread": 0.45068582985550165,
-          "rounds": 3,
+          "us_per_call": 10.175066660012817,
+          "halves_apart": 0.032949179876595736,
+          "rounds": 4,
+          "calls": 100000
+        },
+        {
+          "label": "bitcoinlib",
+          "us_per_call": 14.42156728997361,
+          "halves_apart": 0.049654795075184666,
+          "rounds": 4,
+          "calls": 200000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "11. bech32m encode, a witness-v1 address from a 32-byte program",
+      "group": "",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "btclib",
+          "us_per_call": 13.11352041499049,
+          "halves_apart": 0.0007750000077066943,
+          "rounds": 4,
+          "calls": 200000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 39.1835162499774,
+          "halves_apart": 0.09581312508089468,
+          "rounds": 4,
+          "calls": 200000
+        },
+        {
+          "label": "buidl",
+          "us_per_call": 16.984792920120526,
+          "halves_apart": 0.04975332994945347,
+          "rounds": 4,
           "calls": 100000
         }
       ]
     },
     {
       "kind": "ratios",
-      "title": "11. bech32m decode, a 32-byte program from a witness-v1 address",
+      "title": "12. bech32m decode, a 32-byte program from a witness-v1 address",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 11.708551249466836,
-          "spread": 0.04990500048734248,
-          "rounds": 3,
+          "us_per_call": 11.428272705015843,
+          "halves_apart": 0.0674768749740906,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 21.835273124743253,
-          "spread": 0.023728545056656003,
-          "rounds": 3,
+          "us_per_call": 21.891472499992233,
+          "halves_apart": 0.0055356250231852755,
+          "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 15.208980420138687,
-          "spread": 0.042352499440312386,
-          "rounds": 3,
+          "us_per_call": 15.173970420000842,
+          "halves_apart": 0.01097624990507029,
+          "rounds": 4,
           "calls": 100000
         }
       ]
