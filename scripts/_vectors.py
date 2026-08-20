@@ -16,8 +16,8 @@ The digests are checked here, on import, because a benchmark reading a
 drifted copy would print numbers over inputs nobody can look up.
 
 The second module in `scripts/` that is not a benchmark, after
-`_provenance.py`: five scripts and the suite need one answer to "what are the
-inputs", and six copies of a CSV parser is how they stop agreeing.
+`_provenance.py`: six scripts and the suite need one answer to "what are the
+inputs", and seven copies of a CSV parser is how they stop agreeing.
 """
 
 from __future__ import annotations
