@@ -69,6 +69,21 @@ The release notes, which say what a user has to act on, are in
 
 ### The benchmarks
 
+- **`bms_sign`'s paragraph says why its check cannot be declined**, where it
+  had asserted that the asymmetry was [ISS 28][iss28]'s answer and left the
+  reason out. The assertion was right and unsupported, which is the worse
+  half of being right: a reader had no way to tell a decision from an
+  oversight, and the two rows above that one do decline their check.
+
+  btclib's call site is where it is argued, and the argument is not about
+  cost. What the bindings perform for a recoverable signature is a recovery
+  rather than a verification, and what it establishes is the recovery id —
+  the one value the call is made for that nothing downstream re-derives. A
+  faulted r or s fails the first verification anybody makes; a wrong id
+  fails nobody, and is found by whoever relied on it. So the check answers
+  a question the caller has no other way to ask, and no argument declines
+  it. The page now carries that reason rather than the conclusion alone.
+
 - **Pages 02, 03 and 04 stop describing their own checked/noverify rows as
   a future run's work.** [ISS 23][iss23], [ISS 28][iss28], [ISS 53][iss53]
   and [ISS 55][iss55] each ended in a run, and that run is in the refresh

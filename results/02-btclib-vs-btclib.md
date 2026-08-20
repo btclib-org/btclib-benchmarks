@@ -60,11 +60,22 @@ argument that declines, and what its fast path performs is not a
 verification: it recovers the key from the signature and refuses one that
 is not the signer's, which reads the recovery id — the one value the call is
 made for that nothing downstream re-derives. The pure-Python arm performs no
-such check. So the check is paid on the libsecp256k1 side only,
-unconditionally, and no flag in a name shared by two columns could say so:
-what this row prints is a default of the bindings, folded into the price of
-the crossing rather than separable from it — which is [ISS 28][i28]'s
-answer, not a gap in it.
+such check. So the check is paid on the libsecp256k1 side only, and no flag
+in a name shared by two columns could say so: what this row prints is a
+default of the bindings folded into the price of the crossing rather than
+separable from it, and its ratio is the narrowest on this page for that
+reason rather than because the crossing buys least here.
+
+The two rows above decline their check and this one cannot, which is a
+decision rather than an omission, and btclib's call site is where it is
+argued. What the bindings perform here is not the verification those two
+decline: it is a recovery, and what it establishes is the recovery id — the
+one value this call is made for that nothing downstream re-derives. A
+faulted r or s fails the first verification anybody makes; a wrong id fails
+nobody, and is found by whoever relied on it. So the check answers a
+question the caller has no other way to ask, which is why no argument
+declines it and why this row prices a guarantee rather than choosing
+against one. [ISS 28][i28] is where that was settled.
 
 **`ssa_sign_held_noverify` is a new row, and its two columns do not save the
 same thing.** It signs under an `ssa.Signer`, which holds across calls the
