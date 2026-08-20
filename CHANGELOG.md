@@ -1298,11 +1298,11 @@ The release notes, which say what a user has to act on, are in
   pull request's run resolves to the base branch's ref rather than
   `refs/pull/N/merge`, landing it in the same group as the push the
   merge itself triggers. The two events fire about a second apart on
-  every merge, and after #99 landed, its own `test`, `lint` and `docs`
-  push runs for the merge commit were all cancelled within one to two
-  seconds of being created, before any job started -- required checks
-  reading `cancelled` for a commit the run that got to run never
-  tested. The group is now
+  every merge, and after [PR 99][pr99] landed, its own `test`, `lint`
+  and `docs` push runs for the merge commit were all cancelled within
+  one to two seconds of being created, before any job started --
+  required checks reading `cancelled` for a commit the run that got to
+  run never tested. The group is now
   `github.event.pull_request.number || github.ref`: a pull_request run
   of any action, closed included, groups by the pull request's own
   number instead, which still cancels that same pull request's own
@@ -1321,3 +1321,4 @@ The release notes, which say what a user has to act on, are in
 [iss83]: https://github.com/btclib-org/btclib-benchmarks/issues/83
 [iss95]: https://github.com/btclib-org/btclib-benchmarks/issues/95
 [iss96]: https://github.com/btclib-org/btclib-benchmarks/issues/96
+[pr99]: https://github.com/btclib-org/btclib-benchmarks/pull/99

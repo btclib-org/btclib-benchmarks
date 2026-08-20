@@ -49,8 +49,8 @@ jobs:
     name: Build the documentation
     # a draft pull request is work in progress and spends no runner here
     # either. A closed one spends none either -- the trigger above takes
-    # the closed event only to supersede a run this ref's group is still
-    # holding
+    # the closed event only to supersede a run this pull request's own
+    # group is still holding
     if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
