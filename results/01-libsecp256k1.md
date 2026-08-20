@@ -178,14 +178,6 @@ erratic thing. Neither column says anything about the *variability* of an
 operation, and none of these operations has any: they are the same arithmetic
 every call, and what varies is the machine around them.
 
-A maximum less a minimum is, however, still what [the libraries page][libs]
-prints, under `spread`, that page not having been re-measured since its own
-script moved to this statistic. The two headings are what says the two
-columns are not one number: they answer different questions and are not
-comparable in either direction, this one shrinking as rounds are added and
-that one growing. Both pages define the column they print where they
-introduce it.
-
 ### Public key parse
 
 <!-- tables: parse: begin -->

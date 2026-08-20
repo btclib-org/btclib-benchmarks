@@ -39,34 +39,32 @@ no 65-byte row because there would be nothing to compare — the
 uncompressed form hands both coordinates over and is read in Python either
 way, one code path with no dispatch in it.
 
-**The three signing rows below were measured before btclib's signing had a
-check**, and they are the only rows here that predate one. btclib verifies
-the signature it has just made before answering with it, by default and on
-both arms, `verify=False` being a caller declining it, and the lock carries
-that btclib.
-
-The script now declines it wherever a row can, and the two rows that can say
-so in their names: `dsa_sign_nogrind_noverify` and `ssa_sign_noverify`. That
-is what this table's ratio requires rather than a preference — the check is
-not the same work on the two arms, a fraction of a signature where
+**Two of the three signing rows below decline btclib's signing check
+explicitly, and say so in their own names.** btclib verifies the signature
+it has just made before answering with it, by default and on both arms,
+`verify=False` being a caller declining it, and the lock carries that
+btclib. `dsa_sign_nogrind_noverify` and `ssa_sign_noverify` pass it, and
+that is what this table's ratio requires rather than a preference — the
+check is not the same work on the two arms, a fraction of a signature where
 libsecp256k1 answers against a full verification where the Python does, so a
-row taking the default would divide one checked signing by another and move a
-long way with neither arithmetic having changed. What the default costs is
-priced where it is performed: [the wrappers table][wrappers] for the crossing,
-and the verification rows below for the Python. Those two rows are therefore
-the ones whose next run has least to correct — what they publish is a
-signature alone, and a signature alone is what they will publish again.
+row taking the default would divide one checked signing by another and move
+a long way with neither arithmetic having changed. What the default costs is
+priced where it is performed: [the wrappers table][wrappers] for the
+crossing, and the verification rows below for the Python. These two rows
+publish a signature alone regardless of what btclib's own default is, which
+is the point of naming the flag rather than reading it off btclib's current
+behaviour.
 
-`bms_sign` is the row with no such choice, and it is the one that will move.
-Recoverable signing takes no argument that declines, and what its fast path
-performs is not a verification: it recovers the key from the signature and
-refuses one that is not the signer's, which reads the recovery id — the one
-value the call is made for that nothing downstream re-derives. The
-pure-Python arm performs no such check. So the check is paid on the
-libsecp256k1 side only, no flag in a name shared by two columns could say so,
-and part of what this row prints after the next run is a default of the
-bindings rather than the price of the crossing. That row is [ISS 28][i28],
-and the run all three wait for is [ISS 23][i23]'s.
+`bms_sign` is the row with no such choice. Recoverable signing takes no
+argument that declines, and what its fast path performs is not a
+verification: it recovers the key from the signature and refuses one that
+is not the signer's, which reads the recovery id — the one value the call is
+made for that nothing downstream re-derives. The pure-Python arm performs no
+such check. So the check is paid on the libsecp256k1 side only,
+unconditionally, and no flag in a name shared by two columns could say so:
+what this row prints is a default of the bindings, folded into the price of
+the crossing rather than separable from it — which is [ISS 28][i28]'s
+answer, not a gap in it.
 
 **`ssa_sign_held_noverify` is a new row, and its two columns do not save the
 same thing.** It signs under an `ssa.Signer`, which holds across calls the
@@ -211,7 +209,6 @@ comparands:
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 [sp]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
-[i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [i28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [i42]: https://github.com/btclib-org/btclib-benchmarks/issues/42
 
