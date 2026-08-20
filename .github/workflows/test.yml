@@ -11,12 +11,20 @@ on:
     paths-ignore: ["*.md"]
   pull_request:
     # closed too, though every job below declines the real work on it: a
-    # merge or a close is neither a push nor a synchronize, so a run this
-    # ref's concurrency group is still holding survives either unless the
-    # closed event lands in that same group -- which this type is what
-    # makes it do, cancel-in-progress below turning the landing into the
-    # cancellation. A closed pull request has nothing left to ask this
-    # workflow, the merge commit being main's own push trigger's question
+    # merge or a close is neither a push nor a synchronize, so a run
+    # this pull request's own concurrency group is still holding
+    # survives either unless the closed event lands in that same group
+    # -- which this type is what makes it do, cancel-in-progress below
+    # turning the landing into the cancellation. That was meant to be
+    # *this* pull request's own group and nothing else's: github.ref for
+    # a closed, merged pull request resolves to the base branch's ref
+    # rather than refs/pull/N/merge, so grouping by github.ref alone put
+    # the closed run in the push trigger's own group instead, cancelling
+    # the run testing the actual merge commit one to two seconds after
+    # every merge -- observed on this repository's own main after #99
+    # merged. The concurrency block below groups a pull_request run by
+    # the pull request's own number instead, which cannot equal any
+    # push's github.ref under any action
     types: [opened, reopened, synchronize, ready_for_review, closed]
   workflow_call:
   workflow_dispatch:
@@ -25,7 +33,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: test-${{ github.ref }}
+  # github.event.pull_request.number, not github.ref alone, is what a
+  # pull_request run of any action groups by, so a closed run cannot
+  # resolve to the same group as a push to main -- the pull_request
+  # trigger's own comment above has the evidence. A push carries no
+  # pull_request context, so github.ref is still what groups it,
+  # unchanged
+  group: test-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:

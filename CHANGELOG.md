@@ -1292,6 +1292,22 @@ The release notes, which say what a user has to act on, are in
   software, so the step was asking apt for what the image had every time
   it ran. It is gone rather than retried: a request for nothing has
   nothing a retry improves on.
+- **A closed pull request's run no longer lands in its merge's own push
+  run's concurrency group.** `test.yml`, `lint.yml` and `docs.yml`
+  grouped by `github.ref` alone, and github.ref for a closed, merged
+  pull request's run resolves to the base branch's ref rather than
+  `refs/pull/N/merge`, landing it in the same group as the push the
+  merge itself triggers. The two events fire about a second apart on
+  every merge, and after #99 landed, its own `test`, `lint` and `docs`
+  push runs for the merge commit were all cancelled within one to two
+  seconds of being created, before any job started -- required checks
+  reading `cancelled` for a commit the run that got to run never
+  tested. The group is now
+  `github.event.pull_request.number || github.ref`: a pull_request run
+  of any action, closed included, groups by the pull request's own
+  number instead, which still cancels that same pull request's own
+  earlier run exactly as `closed` was added for, and cannot equal any
+  push's `github.ref`.
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
