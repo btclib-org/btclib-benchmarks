@@ -1244,6 +1244,20 @@ The release notes, which say what a user has to act on, are in
 
   Neither page moves until it is run. [ISS 42][iss42] ends in those two runs.
 
+- **`test.yml` no longer asks apt for a toolchain the runner already
+  carries.** [ISS 96][iss96] traced three cancelled jobs in one evening to
+  the same cause: `apt-get update` stalled on an upstream mirror and took
+  the step's whole thirty minutes with it, before any comparand was
+  installed and before the checkout did anything for the job. The step
+  existed for `pkg-config`, `autoconf`, `automake` and `libtool`, which
+  three of the wrapper comparands want to compile a libsecp256k1 of their
+  own. Both `ubuntu-latest` and `ubuntu-24.04-arm` — the whole matrix —
+  ship all four already, `actions/runner-images`' own manifests for
+  Ubuntu 24.04 and its arm64 image listing each among the preinstalled
+  software, so the step was asking apt for what the image had every time
+  it ran. It is gone rather than retried: a request for nothing has
+  nothing a retry improves on.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
@@ -1254,3 +1268,4 @@ The release notes, which say what a user has to act on, are in
 [iss67]: https://github.com/btclib-org/btclib-benchmarks/issues/67
 [iss68]: https://github.com/btclib-org/btclib-benchmarks/issues/68
 [iss83]: https://github.com/btclib-org/btclib-benchmarks/issues/83
+[iss96]: https://github.com/btclib-org/btclib-benchmarks/issues/96

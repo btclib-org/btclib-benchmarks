@@ -60,15 +60,18 @@ jobs:
           enable-cache: true
           python-version: ${{ matrix.python }}
 
-      # a toolchain, because three of the wrapper comparands compile a
-      # libsecp256k1 of their own here: secp256k1 ships no wheel at all
-      # and coincurve none for every cell, both wanting pkg-config, and
-      # electrum-ecc ships only an sdist and runs libsecp256k1's
-      # autogen.sh, which is what autoconf and automake are for
-      - name: Install the build prerequisites of the wrapper comparands
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y pkg-config libtool autoconf automake
+      # three of the wrapper comparands compile a libsecp256k1 of their
+      # own here and want a toolchain to do it: secp256k1 ships no wheel
+      # at all and coincurve none for every cell, both wanting
+      # pkg-config, and electrum-ecc ships only an sdist and runs
+      # libsecp256k1's autogen.sh, which is what autoconf, automake and
+      # libtool are for. No step asks apt for any of the four: both
+      # `ubuntu-latest` and `ubuntu-24.04-arm` carry all of them already
+      # -- actions/runner-images' own manifests for Ubuntu24.04 and its
+      # arm64 image list pkg-config 1.8.1, autoconf 2.71, automake 1.16.5
+      # and libtool 2.4.7 among the preinstalled software. ISS 96 is the
+      # thirty minutes and a red gate one hung `apt-get update` cost on a
+      # step that was asking for what the image already had
 
       # which of an index's two artifacts each comparand's install resolved
       # to, printed before the assertions that are about to be made against
