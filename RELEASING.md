@@ -19,9 +19,9 @@ git push origin v<version>
 
 Signed, as every tag in this org is.
 
-`gh release create` with HISTORY.md's section as the notes, if the
-release is worth a page; there is no workflow that does it, because
-there is no artifact for one to build.
+`gh release create` with RELEASE_NOTES.md's section as the notes, if
+the release is worth a page; there is no workflow that does it,
+because there is no artifact for one to build.
 
 ## Before a release, run every benchmark
 

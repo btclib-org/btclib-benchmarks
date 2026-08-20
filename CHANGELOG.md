@@ -2,11 +2,27 @@
 
 Every change of a release, in full: what changed, why, and what it cost.
 The release notes, which say what a user has to act on, are in
-[HISTORY.md][notes]; this file is the record behind them.
+[RELEASE_NOTES.md][notes]; this file is the record behind them.
 
-[notes]: https://github.com/btclib-org/btclib-benchmarks/blob/main/HISTORY.md
+[notes]: https://github.com/btclib-org/btclib-benchmarks/blob/main/RELEASE_NOTES.md
 
 ## v2026.9 (work in progress, not released yet)
+
+### A tag-integrity ruleset enforces signed tags org-wide
+
+- **`tag-integrity`, `target: tag`, `refs/tags/v*`: `required_signatures`,
+  no bypass actor.** This repository has no release to gate — RELEASING.md
+  says as much, "there is no release" — so unlike the sibling
+  repositories that publish to PyPI on a tag push, there was no
+  publish-authorizing artifact at stake. What was at stake is
+  consistency: RELEASING.md's tagging step already says "Signed, as
+  every tag in this org is", and the ruleset now enforces that uniformly
+  rather than leaving it to be remembered by hand. No `deletion` or
+  `non_fast_forward` rule, matching the sibling repositories. Created
+  directly by the maintainer, a live repository-infrastructure change
+  rather than a pull-request review — this entry documents it. Sibling
+  repository btclib filed the same question as issue
+  [btclib#1022](https://github.com/btclib-org/btclib/issues/1022).
 
 ### Claude reads a pull request against REVIEWING.md
 
@@ -1353,6 +1369,19 @@ The release notes, which say what a user has to act on, are in
   number instead, which still cancels that same pull request's own
   earlier run exactly as `closed` was added for, and cannot equal any
   push's `github.ref`.
+
+- **`HISTORY.md` is `RELEASE_NOTES.md` now.** Its own heading has always
+  read "Release notes"; the filename did not, and where a project splits
+  a changelog from its history the convention runs the other way --
+  [Keep a Changelog](https://keepachangelog.com/) names CHANGELOG.md as
+  the curated, human-facing list, which is what this file already was.
+  `CHANGELOG.md` keeps naming the old file in its own past entries, that
+  being what was true then; every live reference moved with the file --
+  `.gitattributes`' merge driver, the docs toctree, `pyproject.toml`'s
+  codespell glob, and the cross-file prose in `CONTRIBUTING.md`,
+  `RELEASING.md` and `REVIEWING.md`. Mirrors btclib-org/btclib
+  [ISS 1011](https://github.com/btclib-org/btclib/issues/1011) and its
+  fix, [PR 1039](https://github.com/btclib-org/btclib/pull/1039).
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
