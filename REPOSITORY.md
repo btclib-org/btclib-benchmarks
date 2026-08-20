@@ -71,7 +71,10 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 `main` is the only branch, and no change reaches it except through a pull
 request — no exception, and no push. Two rulesets carry that beside the
 classic protection above, rules aggregating across the two and the most
-restrictive combination winning wherever they overlap:
+restrictive combination winning wherever they overlap — a third,
+`tag-integrity`, is described further down and targets tags rather than
+`main`, so the command below lists it too without it being one of these
+two:
 
 ```shell
 gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
