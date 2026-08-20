@@ -18,7 +18,8 @@ Follow it in preference to the review habits you would otherwise bring.
 Two files it leans on, worth loading with it:
 
 - `CLAUDE.md` for the gates and for what a review of *this* tree has to
-  know, the two arithmetic paths under `curves/` and `ecc/` above all;
+  know, above all that measuring and rendering are two commands: a
+  figure typed into prose is one no rerun corrects;
 - `CONTRIBUTING.md` for the rules a finding cites, so that a finding
   names the line that states one.
 

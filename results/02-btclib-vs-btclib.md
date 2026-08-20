@@ -88,6 +88,19 @@ whichever arithmetic is on when the row runs. Written the obvious way, that
 row's pure-Python column printed a libsecp256k1 number, silently and
 convincingly, and the suite's own pure-Python probe is what said so.
 
+**`ellswift_xdh` is a new row, ElligatorSwift's x-only ECDH beside the
+decode above it.** `ellswift.py` gates four public functions on the same
+dispatch this page reads every other row through, and only one of them
+was a row: `create_var` and `encode_var` draw a random field element on
+every call, which is why an encoded form is built once as a fixture and
+never timed, `decode_var` being the deterministic half of that pair.
+`xdh` is deterministic too — no field element is drawn inside it, only
+hashed — so it is timed the same way `decode_var` is, over a fixture
+key paired with the next key's encoding in its own slice, the same
+construction `dh_shared_secret` already uses for its counterparty. It
+multiplies one point that is not the generator, so once measured it
+joins the wide group below rather than the narrow one decoding sits in.
+
 <!-- output: begin -->
 ```text
 btclib 2026.9 (wrapper 0.8.0.3), measured as μs/call, sorted on the ratio
@@ -177,7 +190,7 @@ C is the premise.
 
 ## More benchmarks
 
-Four other sets of benchmarks are published in `results/`, each with its own
+Five other sets of benchmarks are published in `results/`, each with its own
 comparands:
 
 - [the libsecp256k1 wrappers][wrappers] — four packages that wrap one C
@@ -188,11 +201,14 @@ comparands:
   bindings anywhere
 - [one key, every signature under it][reuse] — what the second verification
   under a key costs, which a table of fresh keys cannot show
+- [Silent Payments][sp] — what only `btclib_secp256k1` offers of BIP352,
+  which no other comparand here implements at all
 
 [wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
+[sp]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
 [i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [i28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [i42]: https://github.com/btclib-org/btclib-benchmarks/issues/42

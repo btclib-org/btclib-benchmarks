@@ -4,7 +4,7 @@ Timings of [btclib](https://github.com/btclib-org/btclib) and
 [btclib-secp256k1](https://github.com/btclib-org/btclib-secp256k1)
 against the packages they are usefully compared with.
 
-Five benchmarks, each answering a different question:
+Six benchmarks, each answering a different question:
 
 - **`02-btclib-vs-btclib.py`** — btclib against btclib: its pure-Python
   arithmetic against the libsecp256k1 that `btclib-secp256k1` bundles and
@@ -19,6 +19,9 @@ Five benchmarks, each answering a different question:
 - **`05-key-reuse.py`** — what the second signature under the same key
   costs: the other four time one verification with a fresh key, and a
   verifier never does
+- **`06-silentpayments.py`** — BIP352, which only `btclib-secp256k1`
+  implements of every comparand here: a payment made and found, and what
+  a recipient's setup costs before either
 
 ## Why this is its own repository
 
