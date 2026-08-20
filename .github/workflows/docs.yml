@@ -1,10 +1,10 @@
 ---
 name: docs
 
-# runs the same command .readthedocs.yaml does, on the same interpreter,
-# so that a docstring or a markdown link sphinx cannot resolve under -W
+# runs the same sphinx-build .readthedocs.yaml does, on the same
+# interpreter, so that a markdown link sphinx cannot resolve under -W
 # fails here rather than only on Read the Docs, after the merge, on a
-# page nobody watches
+# page nobody watches. The uv sync differs -- see the step below
 on:
   push:
     branches: [main]
@@ -47,22 +47,32 @@ jobs:
           persist-credentials: false
 
       # 3.14, not .python-version's 3.13: that floor is set by two
-      # wrapper comparands this workflow never installs, and
-      # .readthedocs.yaml pins 3.14 for the same build run elsewhere --
-      # one interpreter keeps "does the build pass" one question rather
-      # than two
+      # wrapper comparands this job never installs, and .readthedocs.yaml
+      # pins 3.14 for the same build run elsewhere -- one interpreter
+      # keeps "does the build pass" one question rather than two
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
           python-version: "3.14"
 
-      # autodoc imports every module it documents, so btclib has to be
-      # installed and not sphinx alone -- a requirements file without it
-      # turns a failed import into a silent bare title rather than a
-      # warning -W can catch. --keep-going first, so one broken module
-      # reports every other problem in the same run instead of one per push
+      # --only-group docs, not --no-default-groups --group docs: the
+      # comparands are this project's own dependencies rather than a
+      # group of their own, so the latter still installs every one of
+      # them -- coincurve and secp256k1 included, and neither publishes a
+      # cp314 wheel or builds from source under it, which failed the
+      # first version of this job. --only-group skips the project's own
+      # dependencies and the project itself, which is correct today: no
+      # page under docs/source carries an autodoc directive, so nothing
+      # sphinx reads here imports btclib. The day one does, the import
+      # fails loudly under -W rather than printing a bare title, which is
+      # this job's whole reason to exist -- and installing btclib for
+      # that day is this line's to grow, not the whole project's install
+      # to restore.
+      #
+      # --keep-going first, so one broken page reports every other
+      # problem in the same run instead of one per push
       - name: Build the documentation
         run: >-
-          uv run --locked --no-default-groups --group docs
+          uv run --locked --only-group docs
           sphinx-build -W --keep-going -b html docs/source docs/build/html
