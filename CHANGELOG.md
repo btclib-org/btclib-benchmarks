@@ -8,6 +8,21 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### A tag-integrity ruleset enforces signed tags org-wide
+
+- **`tag-integrity`, `target: tag`, `refs/tags/v*`: `required_signatures`,
+  no bypass actor.** This repository has no release to gate — RELEASING.md
+  says as much, "there is no release" — so unlike the sibling
+  repositories that publish to PyPI on a tag push, there was no
+  publish-authorizing artifact at stake. What was at stake is
+  consistency: RELEASING.md's tagging step already says "Signed, as
+  every tag in this org is", and the ruleset now enforces that uniformly
+  rather than leaving it to be remembered by hand. No `deletion` or
+  `non_fast_forward` rule, matching the sibling repositories. Created
+  directly by the maintainer, a live repository-infrastructure change
+  rather than a pull-request review — this entry documents it. Sibling
+  repository btclib filed the same question as issue #1022.
+
 ### Claude reads a pull request against REVIEWING.md
 
 - **`claude-review.yml`**, two jobs: one on every non-draft pull request,
