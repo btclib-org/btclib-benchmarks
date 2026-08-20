@@ -2,7 +2,7 @@
   "schema": 1,
   "benchmark": "04-pure-python",
   "run": {
-    "when": "2026-08-16T23:40:48+02:00",
+    "when": "2026-08-20T09:25:41+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "one run, kept whole — nothing repeated, no outlier discarded",
@@ -20,7 +20,7 @@
       [
         "btclib",
         "2026.9",
-        "main@9d85d3e61467",
+        "main@5f7ad5422544",
         "its delegation to btclib-secp256k1's cffi bindings switched off"
       ],
       [
@@ -61,115 +61,132 @@
     {
       "kind": "ratios",
       "title": "public key from a private key: a multiplication of the generator",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 184.0608345810324
+          "us_per_call": 183.6754200485302
         },
         {
           "label": "secp256k1lab",
-          "us_per_call": 1260.7229081913829
+          "us_per_call": 1270.3608399897348
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 268.7193744350225
+          "us_per_call": 269.2849999584723
         },
         {
           "label": "pycoin",
-          "us_per_call": 5631.970800459385
+          "us_per_call": 5536.404200393008
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 29482.745798304677
+          "us_per_call": 29794.666699308436
         }
       ]
     },
     {
       "kind": "ratios",
       "title": "ECDSA sign, over a 32-byte digest",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
-          "label": "btclib, one signature",
-          "us_per_call": 162.75249887257814
+          "label": "btclib, nogrind, noverify",
+          "us_per_call": 161.85499989660457
         },
         {
-          "label": "btclib, grinding (default)",
-          "us_per_call": 366.2875038571656
+          "label": "btclib, nogrind, verify",
+          "us_per_call": 1483.025000197813
         },
         {
-          "label": "python-ecdsa",
-          "us_per_call": 287.5974983908236
+          "label": "btclib, grind, noverify",
+          "us_per_call": 380.51459996495396
         },
         {
-          "label": "pycoin",
-          "us_per_call": 5675.1937489025295
+          "label": "btclib, grind, verify",
+          "us_per_call": 1013.9000005437993
         },
         {
-          "label": "buidl.pecc",
-          "us_per_call": 29526.170901954174
+          "label": "python-ecdsa, nogrind, noverify",
+          "us_per_call": 292.0874999836087
+        },
+        {
+          "label": "pycoin, nogrind, noverify",
+          "us_per_call": 5703.1292002648115
+        },
+        {
+          "label": "buidl.pecc, nogrind, noverify",
+          "us_per_call": 29829.554200114217
         }
       ]
     },
     {
       "kind": "ratios",
       "title": "ECDSA verify, over a 32-byte digest",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 780.2416617050767
+          "us_per_call": 659.4116799533367
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 1108.7574996054173
+          "us_per_call": 1089.6849998971447
         },
         {
           "label": "pycoin",
-          "us_per_call": 17877.091583795846
+          "us_per_call": 17752.516600012314
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 59181.20830319822
+          "us_per_call": 59596.86249989318
         }
       ]
     },
     {
       "kind": "ratios",
       "title": "BIP340 sign, over a 32-byte message",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
-          "label": "btclib",
-          "us_per_call": 326.28666143864393
+          "label": "btclib, noverify",
+          "us_per_call": 320.7950000069104
         },
         {
-          "label": "secp256k1lab",
-          "us_per_call": 7595.1433181762695
+          "label": "btclib, verify",
+          "us_per_call": 976.7249997821638
         },
         {
-          "label": "buidl.pecc",
-          "us_per_call": 103350.50821304321
+          "label": "secp256k1lab, verify",
+          "us_per_call": 7613.429999910295
+        },
+        {
+          "label": "buidl.pecc, verify",
+          "us_per_call": 103897.65000145417
         }
       ]
     },
     {
       "kind": "ratios",
       "title": "BIP340 verify, over a 32-byte message",
+      "group": "",
       "decimals": 1,
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 657.1800028905272
+          "us_per_call": 673.3424999401905
         },
         {
           "label": "secp256k1lab",
-          "us_per_call": 5057.214163243771
+          "us_per_call": 5057.728340034373
         },
         {
           "label": "buidl.pecc",
-          "us_per_call": 70408.52920617908
+          "us_per_call": 70935.72499870788
         }
       ]
     }

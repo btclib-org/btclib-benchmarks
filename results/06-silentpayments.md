@@ -12,6 +12,16 @@ such split anywhere in btclib, so this page is the whole of where it is
 priced: one comparand, and every ratio between two of its own calls rather
 than between two packages.
 
+## This run
+
+<!-- run: begin -->
+```text
+when    : 2026-08-20 09:34 CEST (07:34 UTC)
+machine : Apple M5, macOS 26.6 (build 25G72), arm64
+python  : 3.13.14
+```
+<!-- run: end -->
+
 ## What each table asks
 
 **A payment, made and found.** `create_outputs` is the sender's side and
@@ -59,13 +69,27 @@ Nothing here reaches past the module's own API into the C it wraps: a row
 is either its own call or `NA`, and this page has no `NA` — one comparand,
 and every one of its five relevant calls has a row.
 
-## This page is not measured yet
+## The benchmarks
 
-A rendered region is filled from a saved run, and no run of this script
-has been taken: `render.py` puts a page's three blocks between the
-markers it carries, and this page carries none yet. Adding them is part
-of publishing the first run rather than something to leave behind an
-empty fence.
+<!-- output: begin -->
+```text
+btclib-secp256k1    : 0.8.0.3
+
+method  : the quickest of ten rounds; the halves' gap is beside it
+command : uv run python scripts/06-silentpayments.py
+
+1. a payment, made and found
+                           μs/call     vs best   halves
+  scan_outputs               28.80       1.00x     0.00
+  create_outputs             43.37       1.51x     0.08
+
+2. the recipient's setup, before any scan
+                           μs/call     vs best   halves
+  prevouts_summary            3.72       1.00x     0.00
+  labeled_spend_pubkey        5.79       1.56x     0.00
+  label                       7.86       2.11x     0.00
+```
+<!-- output: end -->
 
 ## More benchmarks
 

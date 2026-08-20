@@ -4,7 +4,7 @@
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-16 23:22 CEST (21:22 UTC)
+when    : 2026-08-20 09:11 CEST (07:11 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -108,20 +108,22 @@ btclib 2026.9 (wrapper 0.8.0.3), measured as μs/call, sorted on the ratio
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/02-btclib-vs-btclib.py
 
-                      libsecp256k1   pure python     ratio
-dsa_sign                      15.2           161     10.5x
-bms_sign                      27.8           331     11.9x
-ssa_sign                      25.7           322     12.5x
-pubkey_from_prvkey            10.4           149     14.4x
-taproot_tweak                 15.6           234     15.0x
-generator_mult                8.23           141     17.1x
-pubkey_parse_33               3.50          74.6     21.4x
-ellswift_decode               5.51           132     24.0x
-bms_verify                    24.7           700     28.3x
-ssa_verify                    21.3           659     31.0x
-dsa_verify                    20.0           676     33.8x
-dsa_recover                   36.0          1300     36.1x
-dh_shared_secret              14.4           548     38.1x
+                             libsecp256k1   pure python     ratio
+bms_sign                             51.4           321      6.2x
+dsa_sign_nogrind_noverify            15.2           160     10.5x
+ssa_sign_noverify                    25.8           320     12.4x
+pubkey_from_prvkey                   10.3           148     14.4x
+taproot_tweak                        15.4           234     15.2x
+generator_mult                       8.14           154     19.0x
+pubkey_parse_33                      3.47          76.8     22.1x
+ellswift_decode                      5.51           133     24.1x
+bms_verify                           24.4           690     28.3x
+ssa_verify                           21.3           662     31.0x
+ssa_sign_held_noverify               9.34           317     33.9x
+dsa_verify                           19.8           672     34.0x
+dsa_recover                          35.8          1300     36.3x
+ellswift_xdh                         18.8           684     36.4x
+dh_shared_secret                     14.3           549     38.5x
 ```
 <!-- output: end -->
 

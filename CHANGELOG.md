@@ -69,6 +69,22 @@ The release notes, which say what a user has to act on, are in
 
 ### The benchmarks
 
+- **The wrappers page's three exclusive tables and all of Silent
+  Payments are published.** Both were prose with no numbers below them:
+  `results/01-libsecp256k1.md`'s "What only one of the four offers" and
+  the whole of `results/06-silentpayments.md` each said so explicitly,
+  a rendered region being filled from a saved run and neither having had
+  one yet. This is that run — `render.py` fills the regions the pull
+  requests that wrote the prose already opened for them, so nothing
+  below either heading is worded differently, only no longer empty.
+
+  `LIBSECP256K1_PINS` moves to the `btclib-secp256k1` commit this run
+  measured. The pin is keyed to the build it was read from and prints
+  `unrecorded` for any other rather than repeat one that has quietly
+  stopped being true, and the run that found `unrecorded` is what read
+  the new build and put the pin back — the library underneath it is
+  unchanged, still v0.8.0.
+
 - **The four benchmarks of btclib and btclib-secp256k1 live here**, and
   the comparands with them: `ecdsa`, `pycoin`, `buidl`, `embit`,
   `python-bitcoinlib`, `coincurve`, `secp256k1`, `electrum-ecc`,
