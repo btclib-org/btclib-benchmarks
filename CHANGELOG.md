@@ -21,7 +21,8 @@ The release notes, which say what a user has to act on, are in
   `non_fast_forward` rule, matching the sibling repositories. Created
   directly by the maintainer, a live repository-infrastructure change
   rather than a pull-request review — this entry documents it. Sibling
-  repository btclib filed the same question as issue #1022.
+  repository btclib filed the same question as issue
+  [btclib#1022](https://github.com/btclib-org/btclib/issues/1022).
 
 ### Claude reads a pull request against REVIEWING.md
 
