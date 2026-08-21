@@ -1792,6 +1792,48 @@ The release notes, which say what a user has to act on, are in
   ([btclib-org/.github#58](https://github.com/btclib-org/.github/issues/58)).
   Nothing about what a diff decides with changes — the gates exercise
   what the tree already held, so a review runs that either way.
+### `.yamllint.yaml` and `.taplo.toml` carried btclib's tree as well
+
+- **The two files `.pre-commit-config.yaml` points at for its reasoning
+  carried the same defect it did**, which is
+  [btclib-org/.github#40](https://github.com/btclib-org/.github/issues/40).
+  Both are copied byte-for-byte across the organization, and both stated
+  as fact things measured once in `btclib`. `.yamllint.yaml`'s comment
+  recorded a survey — how many findings each disabled rule produced,
+  what share of the action pins sat at or past 80 columns, what a limit
+  of 80 would report and how much of that was pins, the width of the
+  longest pin, how many yaml files "this tree" held — introduced with
+  "so nobody has to run the survey again", and closed by naming two
+  over-length shell lines in a `release.yml` this repository has never
+  had. Re-measured with the pinned yamllint against this tree and
+  against every other tree sharing the file, not one of those figures
+  held anywhere, `btclib` included; a third rule of the default set
+  fires here that the comment does not mention, and the default set is
+  not the size the comment gives it.
+
+- **`.taplo.toml` named mutation configuration under `.github` that this
+  repository has never had.** The same claim was found in this
+  repository's `.pre-commit-config.yaml` and rewritten under
+  [ISS 127](https://github.com/btclib-org/btclib-benchmarks/issues/127),
+  but the file that hook's own comment sends the
+  reader to for "the formatting choices and the reasoning" still
+  carried it, unswept, because it was out of that issue's scope. The
+  `[project]`-and-ruff example under `reorder_keys` went the same way:
+  `btclib-org/.github` shares this file and has no `pyproject.toml` at
+  all.
+
+- **What replaces them is a command and a reason.** The survey becomes
+  the two invocations that answer for whichever tree is asking — the
+  default set at the configured width, and what a limit of 80 would cost
+  — beside the reasons that do not vary between repositories:
+  dependabot writes one space before a pin's trailing tag, `on:` is the
+  boolean true in yaml 1.1, and a 40-character SHA with its tag has
+  spent most of an 80-column line before the action is named. For
+  `.taplo.toml`, four spaces rather than taplo's own default of two, so
+  that one indent covers every toml; which toml files this repository
+  has is `.pre-commit-config.yaml`'s to say, and it already says it.
+  Both files are still byte-identical to the copies in the repositories
+  that share them, which is the property they are kept for.
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
