@@ -25,7 +25,7 @@ tag, which is still a release somebody cut on a day.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-20 15:08 CEST (13:08 UTC)
+when    : 2026-08-21 02:45 CEST (00:45 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -116,41 +116,41 @@ what a timing contains
 
 public key from a private key: a multiplication of the generator
                                       μs/call     vs best   halves
-  btclib                               156.54        1.0x     0.57   (4x2,700 calls)
-  python-ecdsa                         298.64        1.9x     7.66   (4x1,800 calls)
-  secp256k1lab                        1401.12        9.0x     8.09   (4x400 calls)
-  pycoin                              6249.10       39.9x   156.49   (4x90 calls)
-  buidl.pecc                         30610.04      195.5x    77.49   (4x17 calls)
+  btclib                               137.96        1.0x     0.28   (4x2,700 calls)
+  python-ecdsa                         269.72        2.0x     2.08   (4x1,800 calls)
+  secp256k1lab                        1256.94        9.1x     2.68   (4x400 calls)
+  pycoin                              5610.96       40.7x    51.69   (4x90 calls)
+  buidl.pecc                         29420.44      213.2x   150.42   (4x17 calls)
 
 ECDSA sign, over a 32-byte digest
                                       μs/call     vs best   halves
-  btclib, nogrind, noverify            158.36        1.0x     0.46   (4x3,000 calls)
-  python-ecdsa, nogrind, noverify      309.31        2.0x     4.82   (4x1,700 calls)
-  btclib, grind, noverify              331.00        2.1x     1.76   (4x1,300 calls)
-  btclib, nogrind, verify              878.92        5.6x     1.97   (4x500 calls)
-  btclib, grind, verify               1097.43        6.9x     6.79   (4x500 calls)
-  pycoin, nogrind, noverify           6200.53       39.2x   181.26   (4x88 calls)
-  buidl.pecc, nogrind, noverify      30093.35      190.0x    86.02   (4x17 calls)
+  btclib, nogrind, noverify            156.95        1.0x     0.01   (4x3,000 calls)
+  python-ecdsa, nogrind, noverify      294.73        1.9x     1.42   (4x1,700 calls)
+  btclib, grind, noverify              325.68        2.1x     1.91   (4x1,300 calls)
+  btclib, nogrind, verify              870.37        5.5x     1.94   (4x500 calls)
+  btclib, grind, verify               1039.41        6.6x     0.88   (4x500 calls)
+  pycoin, nogrind, noverify           5950.61       37.9x    75.97   (4x88 calls)
+  buidl.pecc, nogrind, noverify      29970.88      191.0x     7.91   (4x17 calls)
 
 ECDSA verify, over a 32-byte digest
                                       μs/call     vs best   halves
-  btclib                               665.93        1.0x     0.71   (4x750 calls)
-  python-ecdsa                        1090.33        1.6x     4.36   (4x450 calls)
-  pycoin                             19093.57       28.7x   249.30   (4x28 calls)
-  buidl.pecc                         59885.32       89.9x   161.99   (4x8 calls)
+  btclib                               660.02        1.0x     0.56   (4x750 calls)
+  python-ecdsa                        1082.96        1.6x     1.84   (4x450 calls)
+  pycoin                             18658.30       28.3x    98.01   (4x28 calls)
+  buidl.pecc                         59548.50       90.2x   169.96   (4x8 calls)
 
 BIP340 sign, over a 32-byte message
                                       μs/call     vs best   halves
-  btclib, noverify                     327.49        1.0x     0.73   (4x1,500 calls)
-  btclib, verify                       984.93        3.0x     0.40   (4x500 calls)
-  secp256k1lab, verify                7597.90       23.2x    27.64   (4x65 calls)
-  buidl.pecc, verify                104089.80      317.8x    26.04   (4x5 calls)
+  btclib, noverify                     323.02        1.0x     0.26   (4x1,500 calls)
+  btclib, verify                       968.41        3.0x     1.21   (4x500 calls)
+  secp256k1lab, verify                7635.17       23.6x     7.90   (4x65 calls)
+  buidl.pecc, verify                104045.51      322.1x  1164.38   (4x5 calls)
 
 BIP340 verify, over a 32-byte message
                                       μs/call     vs best   halves
-  btclib                               655.86        1.0x     1.40   (4x740 calls)
-  secp256k1lab                        5057.53        7.7x     5.48   (4x100 calls)
-  buidl.pecc                         70303.72      107.2x   157.43   (4x7 calls)
+  btclib                               656.34        1.0x     0.26   (4x740 calls)
+  secp256k1lab                        5069.08        7.7x     3.86   (4x100 calls)
+  buidl.pecc                         70183.08      106.9x   308.47   (4x7 calls)
 ```
 <!-- output: end -->
 

@@ -406,11 +406,12 @@ def _build_of(dist_name: str) -> str:
 def _built_from(dist_name: str) -> str:
     """Say when this build was published, or where it came from instead.
 
-    btclib-secp256k1 resolves from its branch until the release these rows
-    are written against is on PyPI, and a date would be a claim about a
-    release that has not happened: what the column says for it is the
-    branch and the commit, which is what a reader has to look up to get
-    these rows again.
+    A build resolved from a branch has no publish date to report -- a
+    release that has not happened cannot be dated -- so the column names
+    the branch and the commit instead, which is what a reader has to look
+    up to get that build again. Every wrapper this script times now
+    resolves from a release, so this path exists for `_build_of`'s
+    general case rather than for a row currently on it.
     """
     build = _build_of(dist_name)
     if dist_name not in RELEASE_DATES:
@@ -758,13 +759,8 @@ PARSE_SERIALIZE = cycle(_slice(5, PUBKEYS))
 # years afterwards are two builds, and keyed by version this column stated
 # the sdist's date on a machine that had installed a wheel. It is the
 # column that made that mistake first, one column ahead of the pin.
-#
-# btclib-secp256k1 is absent on purpose rather than missing: it resolves
-# from its branch until the release these rows call for is on PyPI, and
-# there is no date to record for a release that has not happened.
-# `_built_from` prints the commit for it instead, and the day the source
-# entry in pyproject.toml goes, a line here is what replaces it
 RELEASE_DATES = {
+    "btclib-secp256k1": {"0.8.0.3": "2026-08-20"},
     "coincurve": {"21.0.0": "2025-03-08"},
     "secp256k1": {"0.14.0 wheel": "2026-01-29", "0.14.0 sdist": "2021-11-06"},
     "electrum-ecc": {"0.0.7": "2026-02-25"},
@@ -774,10 +770,10 @@ RELEASE_DATES = {
 # Where each row's libsecp256k1 came from, read from the build named
 # beside it:
 #
-# - btclib-secp256k1: the `secp256k1` submodule pin at main@d9933e49e793,
-#   6e2c8bc, which is upstream's v0.8.0 tag exactly -- the same commit its
-#   v0.8.0, v0.8.0.1 and v0.8.0.2 tags pinned, so those releases moved and
-#   the library did not
+# - btclib-secp256k1: the `secp256k1` submodule pin at v0.8.0.3, 6e2c8bc,
+#   which is upstream's v0.8.0 tag exactly -- the same commit its v0.8.0,
+#   v0.8.0.1 and v0.8.0.2 tags pinned, so this release moved too and the
+#   library still did not
 # - coincurve: `VENDORED_UPSTREAM_REF` in its pyproject.toml, 0cdc758a,
 #   which is upstream's v0.6.0
 # - secp256k1: two, one per artifact, which is the whole reason these are
@@ -801,7 +797,7 @@ RELEASE_DATES = {
 # installed. What made that guard miss was the key, not the pin: a version
 # that stands still while its artifacts change is a key that cannot fire.
 LIBSECP256K1_PINS = {
-    "btclib-secp256k1": {"main@bc36867fa1dc": "v0.8.0"},
+    "btclib-secp256k1": {"0.8.0.3": "v0.8.0"},
     "coincurve": {"21.0.0": "v0.6.0"},
     "secp256k1": {
         "0.14.0 wheel": "v0.6.0",

@@ -2,13 +2,13 @@
   "schema": 1,
   "benchmark": "01-libsecp256k1",
   "run": {
-    "when": "2026-08-20T09:37:40+02:00",
+    "when": "2026-08-21T01:54:10+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "10 rounds per row in two halves, minimum kept; calls per table",
     "command": "uv run python scripts/01-libsecp256k1.py",
     "machine": "Apple M5, macOS 26.6 (build 25G72), arm64",
-    "when_again": "2026-08-20T09:44:49+02:00"
+    "when_again": "2026-08-21T02:01:19+02:00"
   },
   "provenance": {
     "columns": [
@@ -22,7 +22,7 @@
       [
         "btclib-secp256k1",
         "0.8.0.3",
-        "main@bc36867fa1dc",
+        "2026-08-20",
         "v0.8.0",
         "cffi"
       ],
@@ -60,33 +60,33 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 0.233856562517758,
-          "us_per_call_again": 0.22376739500032272,
-          "halves_apart": 0.0004162500044913031,
+          "us_per_call": 0.23621197753527667,
+          "us_per_call_again": 0.22494468750664964,
+          "halves_apart": 0.0014402099623112008,
           "rounds": 10,
           "calls": 400000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 0.6208157274886617,
-          "us_per_call_again": 0.6097951050105621,
-          "halves_apart": 0.005096355016576126,
+          "us_per_call": 0.6139990624797065,
+          "us_per_call_again": 0.6118395824887557,
+          "halves_apart": 0.0014442700194194913,
           "rounds": 10,
           "calls": 400000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 1.1980202074846602,
-          "us_per_call_again": 1.1494080200282042,
-          "halves_apart": 0.006902502500452101,
+          "us_per_call": 1.1813913550577126,
+          "us_per_call_again": 1.1675107300106902,
+          "halves_apart": 0.004197394955554046,
           "rounds": 10,
           "calls": 400000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 0.22110156249254942,
-          "us_per_call_again": 0.21959437501209322,
-          "halves_apart": 0.0017999999909079634,
+          "us_per_call": 0.21601187501801178,
+          "us_per_call_again": 0.21451916501973756,
+          "halves_apart": 0.0006377100362442434,
           "rounds": 10,
           "calls": 400000
         }
@@ -100,33 +100,33 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 2.341112079884624,
-          "us_per_call_again": 2.3058333399239928,
-          "halves_apart": 0.023528760066255927,
+          "us_per_call": 2.3244254200835712,
+          "us_per_call_again": 2.3132366698700935,
+          "halves_apart": 0.0010520798969082534,
           "rounds": 10,
           "calls": 100000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 2.7254925000306685,
-          "us_per_call_again": 2.7049887499015313,
-          "halves_apart": 0.00956874995608814,
+          "us_per_call": 2.7051887498237193,
+          "us_per_call_again": 2.705238329945132,
+          "halves_apart": 0.0032475002808496356,
           "rounds": 10,
           "calls": 100000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 3.292516660003457,
-          "us_per_call_again": 3.2401595800183713,
-          "halves_apart": 0.00846833994728513,
+          "us_per_call": 3.2601249997969717,
+          "us_per_call_again": 3.249960000102874,
+          "halves_apart": 0.008912089979276061,
           "rounds": 10,
           "calls": 100000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 2.298799999989569,
-          "us_per_call_again": 2.2779974999139085,
-          "halves_apart": 0.003995419974671677,
+          "us_per_call": 2.272565000166651,
+          "us_per_call_again": 2.284356669988483,
+          "halves_apart": 0.004899999767076224,
           "rounds": 10,
           "calls": 100000
         }
@@ -140,41 +140,41 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 7.76916250033537,
-          "us_per_call_again": 7.690462500613648,
-          "halves_apart": 0.038408399268518245,
+          "us_per_call": 7.71993329981342,
+          "us_per_call_again": 7.699462497839704,
+          "halves_apart": 0.001416698796673721,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "coincurve_unchecked",
-          "us_per_call": 7.638745900476352,
-          "us_per_call_again": 7.563562499126419,
-          "halves_apart": 0.08841249946271823,
+          "us_per_call": 7.576191698899493,
+          "us_per_call_again": 7.578412498696707,
+          "halves_apart": 0.0027541012968868017,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 15.12350409902865,
-          "us_per_call_again": 15.049345800071023,
-          "halves_apart": 0.03146250091958791,
+          "us_per_call": 15.063699998427182,
+          "us_per_call_again": 15.083637501811609,
+          "halves_apart": 0.011783299851231277,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 16.82925829954911,
-          "us_per_call_again": 16.594429199176375,
-          "halves_apart": 0.008804201206658036,
+          "us_per_call": 16.727266600355506,
+          "us_per_call_again": 16.66447499883361,
+          "halves_apart": 0.00027919886633753777,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 7.693908299552277,
-          "us_per_call_again": 7.681341700663324,
-          "halves_apart": 0.0007791997632002889,
+          "us_per_call": 7.662537498981693,
+          "us_per_call_again": 7.6559375011129305,
+          "halves_apart": 0.010995799675582951,
           "rounds": 10,
           "calls": 10000
         }
@@ -188,41 +188,41 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 7.710012499592267,
-          "us_per_call_again": 7.693633298913483,
-          "halves_apart": 0.0004375004209586919,
+          "us_per_call": 7.719245899352245,
+          "us_per_call_again": 7.696666699484921,
+          "halves_apart": 0.03089990059379577,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "coincurve_unchecked",
-          "us_per_call": 7.587254099780694,
-          "us_per_call_again": 7.574595800542738,
-          "halves_apart": 0.017304200446233153,
+          "us_per_call": 7.601516600698233,
+          "us_per_call_again": 7.56809169834014,
+          "halves_apart": 0.012991699622943997,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 15.142383400234394,
-          "us_per_call_again": 15.050687499751803,
-          "halves_apart": 0.009679100185167044,
+          "us_per_call": 15.080620898515917,
+          "us_per_call_again": 15.094641700852662,
+          "halves_apart": 0.00811660138424486,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 16.88656250044005,
-          "us_per_call_again": 16.62154579971684,
-          "halves_apart": 0.0049583002692088485,
+          "us_per_call": 16.819737499463372,
+          "us_per_call_again": 16.68188750045374,
+          "halves_apart": 0.021512500825338066,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 7.70946249976987,
-          "us_per_call_again": 7.676658300624694,
-          "halves_apart": 0.01117080100812018,
+          "us_per_call": 7.67657909891568,
+          "us_per_call_again": 7.672912499401718,
+          "halves_apart": 0.014441701932812023,
           "rounds": 10,
           "calls": 10000
         }
@@ -236,57 +236,57 @@
       "rows": [
         {
           "label": "coincurve_octets",
-          "us_per_call": 10.522808399400674,
-          "us_per_call_again": 10.505275000468828,
-          "halves_apart": 0.023004101240076125,
+          "us_per_call": 10.556583301513456,
+          "us_per_call_again": 10.554395799408667,
+          "halves_apart": 0.007316697156056762,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "coincurve_object",
-          "us_per_call": 10.14799170079641,
-          "us_per_call_again": 10.145212500356138,
-          "halves_apart": 0.0003875000402331352,
+          "us_per_call": 10.142695799004287,
+          "us_per_call_again": 10.165820800466463,
+          "halves_apart": 0.01069999998435378,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1_octets",
-          "us_per_call": 14.00611669960199,
-          "us_per_call_again": 13.912774999334943,
-          "halves_apart": 0.011262501357123256,
+          "us_per_call": 13.981395799783058,
+          "us_per_call_again": 13.986341701820493,
+          "halves_apart": 0.02973330265376717,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1_object",
-          "us_per_call": 13.6109958999441,
-          "us_per_call_again": 13.515462499344721,
-          "halves_apart": 0.09140000038314611,
+          "us_per_call": 13.583370798733085,
+          "us_per_call_again": 13.585262498236261,
+          "halves_apart": 0.010558401118032634,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_octets",
-          "us_per_call": 22.84161249990575,
-          "us_per_call_again": 22.828754200600088,
-          "halves_apart": 0.03386669995961711,
+          "us_per_call": 22.818641702178866,
+          "us_per_call_again": 22.958504100097343,
+          "halves_apart": 0.20265829807613045,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_object",
-          "us_per_call": 22.471045899146702,
-          "us_per_call_again": 22.497220800141804,
-          "halves_apart": 0.0201999006094411,
+          "us_per_call": 22.524349999730475,
+          "us_per_call_again": 22.592433300451376,
+          "halves_apart": 0.030800001695752144,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_octets",
-          "us_per_call": 10.033200000179932,
-          "us_per_call_again": 10.026662501331884,
-          "halves_apart": 0.004004100628662854,
+          "us_per_call": 10.011720799957402,
+          "us_per_call_again": 10.025308298645541,
+          "halves_apart": 0.00923750048968941,
           "rounds": 10,
           "calls": 10000
         }
@@ -300,57 +300,57 @@
       "rows": [
         {
           "label": "coincurve_octets",
-          "us_per_call": 12.682320800377056,
-          "us_per_call_again": 12.657287500042003,
-          "halves_apart": 0.09584999934304506,
+          "us_per_call": 12.66135000041686,
+          "us_per_call_again": 12.705070900847204,
+          "halves_apart": 0.0015458004781976342,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "coincurve_object",
-          "us_per_call": 12.288658300531097,
-          "us_per_call_again": 12.265266600297764,
-          "halves_apart": 0.04275829851394519,
+          "us_per_call": 12.263324999366887,
+          "us_per_call_again": 12.273704097606242,
+          "halves_apart": 0.00871660013217479,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1_octets",
-          "us_per_call": 16.100858298887033,
-          "us_per_call_again": 16.025504100252874,
-          "halves_apart": 0.14850840234430507,
+          "us_per_call": 16.062420801608823,
+          "us_per_call_again": 16.076104101375677,
+          "halves_apart": 0.03707919968292117,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1_object",
-          "us_per_call": 15.771025000140073,
-          "us_per_call_again": 15.654341700428633,
-          "halves_apart": 0.2777375004370679,
+          "us_per_call": 15.695649999543093,
+          "us_per_call_again": 15.680341699044222,
+          "halves_apart": 0.012741700629705477,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_octets",
-          "us_per_call": 25.006591599958483,
-          "us_per_call_again": 25.020620800205506,
-          "halves_apart": 0.09681259980425239,
+          "us_per_call": 25.08284579962492,
+          "us_per_call_again": 25.081212501390837,
+          "halves_apart": 0.0066917011281475425,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_object",
-          "us_per_call": 24.67127080017235,
-          "us_per_call_again": 24.661454200395383,
-          "halves_apart": 0.1582083001267165,
+          "us_per_call": 24.6971582993865,
+          "us_per_call_again": 24.742566599161364,
+          "halves_apart": 0.005091700586490333,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_octets",
-          "us_per_call": 12.123145800433122,
-          "us_per_call_again": 12.112295800761785,
-          "halves_apart": 0.1258958989637904,
+          "us_per_call": 12.092345897690393,
+          "us_per_call_again": 12.119850001181476,
+          "halves_apart": 0.026929102023132145,
           "rounds": 10,
           "calls": 10000
         }
@@ -368,25 +368,25 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.548808399355039,
-          "us_per_call_again": 13.503516699711327,
-          "halves_apart": 0.01721660082694143,
+          "us_per_call": 13.549433398293331,
+          "us_per_call_again": 13.535720799700357,
+          "halves_apart": 0.010612400365062058,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 15.101287500874605,
-          "us_per_call_again": 15.036279200285207,
-          "halves_apart": 0.019604199042078108,
+          "us_per_call": 15.092487499350682,
+          "us_per_call_again": 15.054783300729468,
+          "halves_apart": 0.03233330207876861,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 12.98148339992622,
-          "us_per_call_again": 12.95959999988554,
-          "halves_apart": 0.0454415989224799,
+          "us_per_call": 12.952399998903275,
+          "us_per_call_again": 12.945895901066251,
+          "halves_apart": 0.0018084014300256968,
           "rounds": 10,
           "calls": 10000
         }
@@ -400,33 +400,33 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 13.061908300733194,
-          "us_per_call_again": 13.043429199024104,
-          "halves_apart": 0.007937599730212241,
+          "us_per_call": 13.0589707987383,
+          "us_per_call_again": 13.047058301162906,
+          "halves_apart": 0.027150101959705353,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.525495800422505,
-          "us_per_call_again": 13.498516600520816,
-          "halves_apart": 0.0018542006728239357,
+          "us_per_call": 13.569237501360476,
+          "us_per_call_again": 13.555183302378282,
+          "halves_apart": 0.039883298450149596,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 17.25564999942435,
-          "us_per_call_again": 17.28473330003908,
-          "halves_apart": 0.028254200879018754,
+          "us_per_call": 17.288212501443923,
+          "us_per_call_again": 17.33400830125902,
+          "halves_apart": 0.031029197270981967,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 12.996708299033344,
-          "us_per_call_again": 12.974362500244752,
-          "halves_apart": 0.03204590029781684,
+          "us_per_call": 12.965233399881981,
+          "us_per_call_again": 12.965637500747107,
+          "halves_apart": 0.016929098637774587,
           "rounds": 10,
           "calls": 10000
         }
@@ -444,25 +444,25 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 15.655370798776858,
-          "us_per_call_again": 15.624420800304504,
-          "halves_apart": 0.02865840069716974,
+          "us_per_call": 15.670674998546017,
+          "us_per_call_again": 15.664995898259802,
+          "halves_apart": 0.028754200320692647,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 17.12905000022147,
-          "us_per_call_again": 17.16175409965217,
-          "halves_apart": 0.03271250025136396,
+          "us_per_call": 17.17530840251129,
+          "us_per_call_again": 17.187095899134874,
+          "halves_apart": 0.014974895748309791,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 15.070554199337494,
-          "us_per_call_again": 15.051808400312439,
-          "halves_apart": 0.0031333009246736765,
+          "us_per_call": 15.049550001276657,
+          "us_per_call_again": 15.04703749960754,
+          "halves_apart": 0.018283299868926406,
           "rounds": 10,
           "calls": 10000
         }
@@ -476,33 +476,33 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 15.195812500314787,
-          "us_per_call_again": 15.158654100378044,
-          "halves_apart": 0.04248329933034256,
+          "us_per_call": 15.192995898541994,
+          "us_per_call_again": 15.173029201105237,
+          "halves_apart": 0.12188330292701899,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 15.675162499246651,
-          "us_per_call_again": 15.619766699091999,
-          "halves_apart": 0.0034917015000246465,
+          "us_per_call": 15.706758300075307,
+          "us_per_call_again": 15.663420801865868,
+          "halves_apart": 0.02491670020390302,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 19.30431660002796,
-          "us_per_call_again": 19.3823458001134,
-          "halves_apart": 0.038212499930523336,
+          "us_per_call": 19.37551249866374,
+          "us_per_call_again": 19.46380000154022,
+          "halves_apart": 0.0025792018277570605,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 15.069508299347945,
-          "us_per_call_again": 15.065104200039059,
-          "halves_apart": 0.033391700708307326,
+          "us_per_call": 15.059216701774858,
+          "us_per_call_again": 15.053137499489821,
+          "halves_apart": 0.0007165974238887429,
           "rounds": 10,
           "calls": 10000
         }
@@ -520,25 +520,25 @@
         },
         {
           "label": "secp256k1",
-          "us_per_call": 13.552783300110605,
-          "us_per_call_again": 13.539512499119155,
-          "halves_apart": 0.0019083003280684352,
+          "us_per_call": 13.557675000629388,
+          "us_per_call_again": 13.538845800212584,
+          "halves_apart": 0.025116698816418648,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 17.062808299669996,
-          "us_per_call_again": 17.053725000005215,
-          "halves_apart": 0.02312500000698492,
+          "us_per_call": 17.092241600039415,
+          "us_per_call_again": 17.101829199236818,
+          "halves_apart": 0.023045900161378086,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 13.285524999082554,
-          "us_per_call_again": 13.283924999996088,
-          "halves_apart": 0.003641701187007129,
+          "us_per_call": 13.270524999825284,
+          "us_per_call_again": 13.264716701814905,
+          "halves_apart": 0.023716699797660112,
           "rounds": 10,
           "calls": 10000
         }
@@ -552,33 +552,33 @@
       "rows": [
         {
           "label": "coincurve",
-          "us_per_call": 15.260449999186676,
-          "us_per_call_again": 15.208174999861512,
-          "halves_apart": 0.005320800119077873,
+          "us_per_call": 15.221445800852962,
+          "us_per_call_again": 15.212033299030736,
+          "halves_apart": 0.014262498007155955,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1",
-          "us_per_call": 15.67689590010559,
-          "us_per_call_again": 15.652841700648425,
-          "halves_apart": 0.01364159979857682,
+          "us_per_call": 15.678420901531352,
+          "us_per_call_again": 15.692649999982676,
+          "halves_apart": 0.029129098402338016,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc",
-          "us_per_call": 19.17892500059679,
-          "us_per_call_again": 19.125841700588353,
-          "halves_apart": 0.0017958998796530068,
+          "us_per_call": 19.174162499257363,
+          "us_per_call_again": 19.206166701042093,
+          "halves_apart": 0.02285000227857381,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1",
-          "us_per_call": 15.140283400251064,
-          "us_per_call_again": 15.126270799373742,
-          "halves_apart": 0.0030041002901270986,
+          "us_per_call": 15.117825000197627,
+          "us_per_call_again": 15.123370799119584,
+          "halves_apart": 0.008133301162160933,
           "rounds": 10,
           "calls": 10000
         }
@@ -592,73 +592,73 @@
       "rows": [
         {
           "label": "coincurve_nogrind_noverify",
-          "us_per_call": 26.5098832998774,
-          "us_per_call_again": 26.509529098984785,
-          "halves_apart": 0.009541699546389282,
+          "us_per_call": 26.57858749735169,
+          "us_per_call_again": 26.587566698435694,
+          "halves_apart": 0.038658402627334,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1_nogrind_noverify_octets",
-          "us_per_call": 26.418933300010394,
-          "us_per_call_again": 26.439908301108517,
-          "halves_apart": 0.031812500674277544,
+          "us_per_call": 26.487262500450015,
+          "us_per_call_again": 26.517287499154918,
+          "halves_apart": 0.042633299017325044,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1_nogrind_noverify_object",
-          "us_per_call": 26.021912500436883,
-          "us_per_call_again": 25.989587500225753,
-          "halves_apart": 0.0046124987420625985,
+          "us_per_call": 26.06573330122046,
+          "us_per_call_again": 26.129916700301692,
+          "halves_apart": 0.14177499688230455,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_nogrind_verify",
-          "us_per_call": 47.26277079898864,
-          "us_per_call_again": 47.30414169898722,
-          "halves_apart": 0.10419590107630938,
+          "us_per_call": 47.43392080126796,
+          "us_per_call_again": 47.624337501474656,
+          "halves_apart": 0.06663749809376895,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_grind_verify",
-          "us_per_call": 59.99482079932932,
-          "us_per_call_again": 60.132483299821615,
-          "halves_apart": 0.00044170155888423324,
+          "us_per_call": 60.2391374995932,
+          "us_per_call_again": 60.2589041023748,
+          "halves_apart": 0.059691601200029254,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_nogrind_noverify",
-          "us_per_call": 11.918120800692122,
-          "us_per_call_again": 11.911641700135078,
-          "halves_apart": 0.004916699253953993,
+          "us_per_call": 11.915845799376257,
+          "us_per_call_again": 11.91459170076996,
+          "halves_apart": 0.007608399027958512,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_nogrind_verify",
-          "us_per_call": 32.08204999973532,
-          "us_per_call_again": 32.10966250044294,
-          "halves_apart": 0.004862500645685941,
+          "us_per_call": 32.194458300364204,
+          "us_per_call_again": 32.1913833002327,
+          "halves_apart": 0.07073330052662641,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_grind_noverify",
-          "us_per_call": 23.926924999977928,
-          "us_per_call_again": 23.9507333986694,
-          "halves_apart": 0.013166699500288814,
+          "us_per_call": 23.983787500765175,
+          "us_per_call_again": 23.926508298609406,
+          "halves_apart": 0.033012498170137405,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_grind_verify",
-          "us_per_call": 44.25151659961557,
-          "us_per_call_again": 44.16656669927761,
-          "halves_apart": 0.09920430165948346,
+          "us_per_call": 44.303787499666214,
+          "us_per_call_again": 44.29065829899628,
+          "halves_apart": 0.020758400205522776,
           "rounds": 10,
           "calls": 10000
         }
@@ -676,65 +676,65 @@
         },
         {
           "label": "secp256k1_nogrind_noverify_octets",
-          "us_per_call": 26.353841699892655,
-          "us_per_call_again": 26.350850000744686,
-          "halves_apart": 0.033733299642335624,
+          "us_per_call": 26.44417920091655,
+          "us_per_call_again": 26.39930830046069,
+          "halves_apart": 0.0636332988506183,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1_nogrind_noverify_object",
-          "us_per_call": 26.023075000557583,
-          "us_per_call_again": 26.00532079959521,
-          "halves_apart": 0.060024998674634844,
+          "us_per_call": 26.06032080075238,
+          "us_per_call_again": 26.080666601774283,
+          "halves_apart": 0.10981249797623605,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_nogrind_verify",
-          "us_per_call": 44.95922500063898,
-          "us_per_call_again": 44.97261249925941,
-          "halves_apart": 0.06717079813824967,
+          "us_per_call": 45.139316699351184,
+          "us_per_call_again": 45.127495800261386,
+          "halves_apart": 0.024683299125172198,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_grind_verify",
-          "us_per_call": 57.797866698820144,
-          "us_per_call_again": 57.68971669895109,
-          "halves_apart": 0.03128330135950819,
+          "us_per_call": 57.89440419757739,
+          "us_per_call_again": 57.87417500105221,
+          "halves_apart": 0.04720830183941871,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_nogrind_noverify",
-          "us_per_call": 11.816291700233705,
-          "us_per_call_again": 11.82092079980066,
-          "halves_apart": 0.01568329898873344,
+          "us_per_call": 11.853845798759721,
+          "us_per_call_again": 11.814487498486415,
+          "halves_apart": 0.02062499988824129,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_nogrind_verify",
-          "us_per_call": 32.03425410029013,
-          "us_per_call_again": 32.000408400199376,
-          "halves_apart": 0.02045419969363138,
+          "us_per_call": 32.11022079922259,
+          "us_per_call_again": 32.04363340046257,
+          "halves_apart": 0.06780420080758631,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_grind_noverify",
-          "us_per_call": 23.96138339972822,
-          "us_per_call_again": 23.928083400824107,
-          "halves_apart": 0.05948330071987584,
+          "us_per_call": 24.04330419958569,
+          "us_per_call_again": 23.961637500906363,
+          "halves_apart": 0.011300001642666757,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_grind_verify",
-          "us_per_call": 44.255083399184514,
-          "us_per_call_again": 44.170887500513345,
-          "halves_apart": 0.07504160021198913,
+          "us_per_call": 44.33693329920061,
+          "us_per_call_again": 44.28752920066472,
+          "halves_apart": 0.0005333014996722341,
           "rounds": 10,
           "calls": 10000
         }
@@ -748,41 +748,41 @@
       "rows": [
         {
           "label": "coincurve_nogrind_noverify",
-          "us_per_call": 11.534116699476726,
-          "us_per_call_again": 11.526775000675116,
-          "halves_apart": 0.012733299809042364,
+          "us_per_call": 11.582395900040865,
+          "us_per_call_again": 11.571145898778923,
+          "halves_apart": 0.010216599912382662,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1_nogrind_noverify",
-          "us_per_call": 11.661970800196286,
-          "us_per_call_again": 11.64778749953257,
-          "halves_apart": 0.012254199828021228,
+          "us_per_call": 11.689799997839145,
+          "us_per_call_again": 11.664900000323541,
+          "halves_apart": 0.006420802674256265,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_nogrind_verify",
-          "us_per_call": 30.660879200149793,
-          "us_per_call_again": 30.62223329907283,
-          "halves_apart": 0.02579580032034201,
+          "us_per_call": 30.770754200057127,
+          "us_per_call_again": 30.771316698519517,
+          "halves_apart": 0.03212500014342723,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_nogrind_noverify",
-          "us_per_call": 11.927837500115857,
-          "us_per_call_again": 11.916966701392084,
-          "halves_apart": 0.012320799578446895,
+          "us_per_call": 11.948866699822247,
+          "us_per_call_again": 11.95082500053104,
+          "halves_apart": 0.0342790997819975,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_nogrind_verify",
-          "us_per_call": 24.875558400526643,
-          "us_per_call_again": 24.85684580024099,
-          "halves_apart": 0.001291598891839385,
+          "us_per_call": 24.907016698853113,
+          "us_per_call_again": 24.92151250189636,
+          "halves_apart": 0.11531660275068134,
           "rounds": 10,
           "calls": 10000
         }
@@ -796,49 +796,49 @@
       "rows": [
         {
           "label": "coincurve_aux_verify",
-          "us_per_call": 42.950708299758844,
-          "us_per_call_again": 42.859312500513624,
-          "halves_apart": 0.019983400125056505,
+          "us_per_call": 43.126233300426975,
+          "us_per_call_again": 43.146133300615475,
+          "halves_apart": 0.030458299443125725,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1_noaux_noverify",
-          "us_per_call": 22.490054099762347,
-          "us_per_call_again": 22.437991699553095,
-          "halves_apart": 0.08267090015579015,
+          "us_per_call": 22.557204100303352,
+          "us_per_call_again": 22.539783298270777,
+          "halves_apart": 0.03654589818324894,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "coincurve_noaux_verify",
-          "us_per_call": 42.81030410056701,
-          "us_per_call_again": 42.73208749946207,
-          "halves_apart": 0.10127929854206741,
+          "us_per_call": 43.04034159868024,
+          "us_per_call_again": 42.98434999946039,
+          "halves_apart": 0.009879303979687393,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_aux_verify",
-          "us_per_call": 48.538083299354184,
-          "us_per_call_again": 48.46193340054015,
-          "halves_apart": 0.033349999284837395,
+          "us_per_call": 48.69245419977233,
+          "us_per_call_again": 48.7307959003374,
+          "halves_apart": 0.031283299904316664,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_aux_noverify",
-          "us_per_call": 15.667116599797737,
-          "us_per_call_again": 15.665458398871124,
-          "halves_apart": 0.0024043009034357965,
+          "us_per_call": 15.659504200448282,
+          "us_per_call_again": 15.688150000642054,
+          "halves_apart": 0.031754100928081286,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_aux_verify",
-          "us_per_call": 28.925637499196455,
-          "us_per_call_again": 28.900066699134186,
-          "halves_apart": 0.0022208012524060905,
+          "us_per_call": 29.00349580158945,
+          "us_per_call_again": 28.97684999916237,
+          "halves_apart": 0.019170797895640135,
           "rounds": 10,
           "calls": 10000
         }
@@ -852,41 +852,41 @@
       "rows": [
         {
           "label": "coincurve_aux_verify",
-          "us_per_call": 27.884341600292828,
-          "us_per_call_again": 27.872487499553245,
-          "halves_apart": 0.018662599904928356,
+          "us_per_call": 28.001570899505168,
+          "us_per_call_again": 27.980754201416858,
+          "halves_apart": 0.0075791002018377185,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "secp256k1_noaux_noverify",
-          "us_per_call": 7.756799999333452,
-          "us_per_call_again": 7.740429100522307,
-          "halves_apart": 0.006050000956747681,
+          "us_per_call": 7.780058300704696,
+          "us_per_call_again": 7.799387499107979,
+          "halves_apart": 0.02204999909736216,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "electrum_ecc_aux_verify",
-          "us_per_call": 31.958516700251494,
-          "us_per_call_again": 31.869299999380015,
-          "halves_apart": 0.05514989898074418,
+          "us_per_call": 32.00617500115186,
+          "us_per_call_again": 32.00706249917857,
+          "halves_apart": 0.02981669967994094,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_aux_noverify",
-          "us_per_call": 8.1891915993765,
-          "us_per_call_again": 8.13679580023745,
-          "halves_apart": 0.013358400610741228,
+          "us_per_call": 8.162937499582767,
+          "us_per_call_again": 8.197262501926161,
+          "halves_apart": 0.020599999697878957,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "btclib_secp256k1_aux_verify",
-          "us_per_call": 21.292229200480506,
-          "us_per_call_again": 21.26806669984944,
-          "halves_apart": 0.15550419921055436,
+          "us_per_call": 21.360058299615048,
+          "us_per_call_again": 21.353770801215433,
+          "halves_apart": 0.03088329976890236,
           "rounds": 10,
           "calls": 10000
         }
@@ -900,17 +900,17 @@
       "rows": [
         {
           "label": "rfc6979",
-          "us_per_call": 3.003429199452512,
-          "us_per_call_again": 3.0164541996782646,
-          "halves_apart": 0.00847910123411566,
+          "us_per_call": 3.006616700440645,
+          "us_per_call_again": 3.007345800870098,
+          "halves_apart": 0.0003207998815923929,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "bip340",
-          "us_per_call": 8.945970800414216,
-          "us_per_call_again": 8.93003750097705,
-          "halves_apart": 0.01980420056497678,
+          "us_per_call": 8.911849997821264,
+          "us_per_call_again": 8.93889169965405,
+          "halves_apart": 0.10237910319119692,
           "rounds": 10,
           "calls": 10000
         }
@@ -924,17 +924,17 @@
       "rows": [
         {
           "label": "add",
-          "us_per_call": 12.412104100803845,
-          "us_per_call_again": 12.404795800102875,
-          "halves_apart": 0.007470899436157197,
+          "us_per_call": 12.397754201083444,
+          "us_per_call_again": 12.407779099885374,
+          "halves_apart": 0.011424999684095383,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "add_check",
-          "us_per_call": 11.975216699647717,
-          "us_per_call_again": 11.97437499940861,
-          "halves_apart": 0.0018666003597900271,
+          "us_per_call": 11.985520800226368,
+          "us_per_call_again": 11.988291700254194,
+          "halves_apart": 0.005441700341179967,
           "rounds": 10,
           "calls": 10000
         }
@@ -948,17 +948,17 @@
       "rows": [
         {
           "label": "reserialize",
-          "us_per_call": 0.49201917005120777,
-          "us_per_call_again": 0.49392999993870035,
-          "halves_apart": 0.003619789931690376,
+          "us_per_call": 0.4932389600435272,
+          "us_per_call_again": 0.49246374997892417,
+          "halves_apart": 0.00456270994618535,
           "rounds": 10,
           "calls": 200000
         },
         {
           "label": "parse_serialize",
-          "us_per_call": 0.5040722949343035,
-          "us_per_call_again": 0.5020289599633543,
-          "halves_apart": 0.00102166501164902,
+          "us_per_call": 0.500774375104811,
+          "us_per_call_again": 0.49256958009209484,
+          "halves_apart": 0.0005566648906096816,
           "rounds": 10,
           "calls": 200000
         }
