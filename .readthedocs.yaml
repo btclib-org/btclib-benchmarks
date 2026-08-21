@@ -3,50 +3,72 @@
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 #
 # The dotted name is the canonical one; readthedocs.yml is honored too,
-# but documented as deprecated, and "include *.yml" would drag it into
-# the sdist beside the Jekyll configuration.
+# but documented as deprecated. btclib's copy of this line goes on to say
+# that "include *.yml" would drag the file into the sdist beside the
+# Jekyll configuration; there is no site served from this root, and
+# MANIFEST.in here excludes this file by name rather than sweeping the
+# root with a glob.
 #
-# The build has to install btclib itself, not sphinx alone: every autodoc
-# directive in docs/source imports its module, a failed import is a
-# sphinx warning rather than an error, and a "requirements:
-# docs/requirements.txt" install therefore publishes 15 bare module
-# titles with no API beneath them, silently. The same build with btclib
-# importable emits 89 signatures, measured on this tree.
+# No read the docs project is subscribed to this repository, and
+# REPOSITORY.md says so under "No Read the Docs". The file is here
+# because docs.yml runs what it declares: the sphinx build gates a pull
+# request whether or not anything publishes the result, and a
+# declaration a service would read is what keeps that command in one
+# place instead of only inside a workflow step. It has to be true now
+# rather than corrected on the day something subscribes.
+#
+# Which is why the sibling files are the wrong thing to copy from, and
+# this one was a copy of btclib's, down to prose about installing btclib
+# so that autodoc can import it. Nothing under docs/source carries an
+# autodoc directive -- `grep -rn automodule docs/source` answers with
+# nothing -- and conf.py records why: `[tool.setuptools] packages` is
+# empty, this project installs nothing, and the version is read out of
+# pyproject.toml because there is no distribution to ask for metadata.
+# There is no import here for -W to turn into a build error. What -W
+# catches instead is a markdown link or a cross-reference sphinx cannot
+# resolve, which is the whole of what these `{include}`-based pages can
+# get wrong.
 
 # Required
 version: 2
 
-# the interpreter is declared rather than left to whatever read the docs
-# defaults to: conf.py reads the version out of pyproject.toml with
-# tomllib, which is standard library from 3.11 on. Which version above that
-# floor is `.python-version`'s to say, 3.14 -- these docs are built twice,
-# here and by docs.yml, and one interpreter is what keeps the build read on
-# the website and the build that gates a merge from being two different
-# questions
+# 3.14, and not `.python-version`'s 3.13: that floor is set by
+# comparands a documentation build never installs, and docs.yml pins 3.14
+# for this same build, so one interpreter keeps "does the build pass" a
+# single question
 build:
   os: ubuntu-24.04
   tools:
     python: "3.14"
   # build.commands rather than the sphinx: and python: keys, which cannot
-  # express this and are rejected when it is present.
-  # autodoc has to import btclib, so btclib has to be installed, and what
-  # read the docs can express natively is "pip install ." plus a
-  # requirements file. uv installs the docs dependency group instead,
-  # from uv.lock, which is why there is no docs/requirements.txt: the
-  # group in pyproject.toml is the single declaration and the lock pins
-  # it, where a requirements file would be unpinned and kept in step by a
-  # header asking a human to do it.
-  # uv itself is not pinned, deliberately: no dependabot ecosystem watches
-  # this file, so a pin here is a version nobody bumps, and --locked makes
-  # the uv version irrelevant to what gets installed -- uv.lock decides
-  # that, and a uv too old to read the lock fails loudly rather than
-  # resolving something else.
-  # -W turns a failed import into a failed build, which is the point
-  # of the whole file; --keep-going comes first so one broken module
-  # reports every other problem in the same run instead of one per push
+  # express installing a dependency group and are rejected when it is
+  # present. uv installs the docs group from uv.lock, which is why there
+  # is no docs/requirements.txt: the group in pyproject.toml is the
+  # single declaration and the lock pins it, where a requirements file
+  # would be unpinned and kept in step by a header asking a human to do
+  # it.
+  # uv itself is not pinned, deliberately: no dependabot ecosystem
+  # watches this file, so a pin here is a version nobody bumps, and
+  # --locked makes the uv version irrelevant to what gets installed --
+  # uv.lock decides that, and a uv too old to read the lock fails loudly
+  # rather than resolving something else.
+  # --only-group docs, and not the siblings' --no-default-groups --group
+  # docs, for the reason docs.yml gives at its own build step: the
+  # comparands are this project's own dependencies rather than a group of
+  # their own, so --no-default-groups still installs coincurve and
+  # secp256k1, neither of which publishes a cp314 wheel or builds from
+  # source without pkg-config and a toolchain. That is not a prediction
+  # -- the sibling command run on this tree under 3.14 fails building
+  # secp256k1 from source, which is also what failed the first version of
+  # docs.yml's job. --only-group skips the project and its dependencies,
+  # correct while no page imports anything; the day one does, this line
+  # grows the install rather than the whole project's being restored.
+  # -W keeps a link sphinx cannot resolve from passing as a warning;
+  # --keep-going comes first so one broken page reports every other
+  # problem in the same run instead of one per push
   commands:
     - pip install uv
-    - uv sync --locked --no-default-groups --group docs
+    - uv sync --locked --only-group docs
     - >-
-      uv run --locked --no-default-groups --group docs
+      uv run --locked --only-group docs
       sphinx-build -W --keep-going -b html docs/source $READTHEDOCS_OUTPUT/html
