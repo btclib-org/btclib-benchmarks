@@ -15,14 +15,15 @@ pin rather than repeating one that has quietly stopped being true. A wrapper
 recording its own vendored revision at build time would end the recording
 here.
 
-`btclib-secp256k1` is the one row with a commit where the others have a
-date: it resolves from its branch until the release these rows are written
-against is published, so what identifies that build is the commit, and that
-is what its pin is keyed to. Two of the others are releases whose version
-identifies them. The fourth is not, and the pair of columns is why both are
-here: `secp256k1` serves an sdist carrying one libsecp256k1 and wheels,
-re-published under that same version years afterwards, carrying another, so
+All four rows are releases now. `btclib-secp256k1` moved to its 0.8.0.3
+PyPI release with this run, joining `coincurve` and `electrum-ecc`, each
+identified by its version alone. `secp256k1` is the fourth pattern the
+pair of columns exists for: its sdist and its wheels, re-published under
+that same version years afterwards, carry two different libraries, so
 the version names a release and the date names which of its builds ran.
+A row resolved from a branch instead prints the commit here, the version
+standing still while the branch moves -- none of the four is on one at
+the moment.
 `uv run python scripts/artifacts.py` says which artifact each comparand here
 resolved to on the machine reading it.
 
