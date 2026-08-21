@@ -1835,6 +1835,7 @@ The release notes, which say what a user has to act on, are in
   has is `.pre-commit-config.yaml`'s to say, and it already says it.
   Both files are still byte-identical to the copies in the repositories
   that share them, which is the property they are kept for.
+
 ### `.readthedocs.yaml` was btclib's file, and could not have run here
 
 - **The file is this repository's own now**, which is the data point
