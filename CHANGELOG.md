@@ -114,8 +114,9 @@ The release notes, which say what a user has to act on, are in
   move with it, keyed on the release rather than the branch's commit —
   the submodule underneath is unchanged, still v0.8.0, the same commit
   v0.8.0, v0.8.0.1 and v0.8.0.2 carried. The run was taken overnight,
-  the machine given the two hours cold that `CONTRIBUTING.md` asks a
-  measurement start from and its usual cooldown between the six scripts.
+  the machine cold for two hours before the first script and given its
+  usual cooldown between the six -- `CONTRIBUTING.md` asks for that
+  practice, not a duration; two hours is how long this run waited.
 
 - **Page 04 times each row in rounds and prints how far its halves sat
   apart**, which is [ISS 111][iss111]. Its two checked signing rows priced
