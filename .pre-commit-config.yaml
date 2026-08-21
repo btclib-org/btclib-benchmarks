@@ -448,11 +448,12 @@ repos:
       #
       # `--check` and never the write. Rendering in CI would be the coupling
       # the split between measuring and publishing exists to remove, a
-      # heading's rewording put behind a machine. This reads five JSON files
-      # and five markdown files, imports no benchmark, compiles no comparand,
-      # takes no measurement and writes nothing -- the same category as
-      # asking a formatter whether the file it would write is the file that
-      # is there, which several hooks above already are.
+      # heading's rewording put behind a machine. This reads a JSON file and
+      # a markdown file per script under results/, imports no benchmark,
+      # compiles no comparand, takes no measurement and writes nothing --
+      # the same category as asking a formatter whether the file it would
+      # write is the file that is there, which several hooks above already
+      # are.
       #
       # `language: python` with no dependencies because it needs none:
       # `render.py`, `_results.py` and `_provenance.py` are stdlib only. So
