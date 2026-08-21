@@ -1465,6 +1465,34 @@ The release notes, which say what a user has to act on, are in
   [ISS 1011](https://github.com/btclib-org/btclib/issues/1011) and its
   fix, [PR 1039](https://github.com/btclib-org/btclib/pull/1039).
 
+### The release checklist was silently skipping two benchmarks
+
+- **Numbers in prose stop being counted where nothing re-derives
+  them**, which is [ISS 120][iss120]. `CLAUDE.md` and `CONTRIBUTING.md`
+  already carried the rule — "Never state a number in prose — not a
+  timing, not a ratio, not a count of anything" — and it was not fully
+  followed: a sweep across `CLAUDE.md`, `RELEASING.md`, `REVIEWING.md`,
+  `REPOSITORY.md`, `CONTRIBUTING.md` and `README.md` removed or
+  rephrased every count of something that can grow or shrink, following
+  the pattern `REPOSITORY.md`'s "Three contexts" already used correctly
+  — backed by a live command and its captured output right beside it,
+  left untouched.
+
+  Two of the counts found had already gone stale, not merely fragile.
+  RELEASING.md's pre-release check said "Running all four by hand" and
+  its code block ran exactly four of the six benchmark scripts, missing
+  `05-key-reuse.py` and `06-silentpayments.py` — while the same file's
+  next section said "run the six benchmarks again", two counts for one
+  set in one file. The checklist now runs every one. And
+  `REPOSITORY.md`'s "Token permissions" section said "one job elevates
+  it: `test.yml`'s `test-passed` adds `actions: read`" and "no job
+  holds a write scope of any kind" — `claude-review.yml`'s `review` and
+  `mention` jobs both add `pull-requests: write`, which the second
+  sentence was wrong about too. Both now name what actually holds the
+  elevated scope instead of counting it.
+
+[iss120]: https://github.com/btclib-org/btclib-benchmarks/issues/120
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
