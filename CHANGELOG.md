@@ -8,6 +8,35 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### CONTRIBUTING.md sends a contributor to the organization standard
+
+- **The standard is `README.md` in `btclib-org/.github`**, and nothing
+  in this tree named it. It states the toolchain, the lint gate, the
+  workflow set and the branch rules once for this repository and its
+  siblings, each with the alternative it was decided against, and it
+  claims to be linked from each repository's `CONTRIBUTING.md`; every
+  mention of that repository here either pointed at an issue filed
+  there or deep-linked one
+  subsection of it to justify one setting, reached only by somebody
+  already reading the paragraph that carries it; not one of them told
+  a reader the document exists.
+  `git grep -n 'btclib-org/\.github'` is what re-derives them, a list
+  here going stale the next time one is written. So a contributor
+  following `CONTRIBUTING.md` to `REPOSITORY.md` to `CLAUDE.md` was
+  never told a document above them existed, and a rule stated only there
+  was one they could not find. [ISS 52 (btclib-org/.github)][gh52].
+
+  The pointer is in `CONTRIBUTING.md` and not in `REPOSITORY.md` or
+  `CLAUDE.md`: the audit and the normalizing checklist that standard
+  carries are performed *holding* it, so the reader who arrives without
+  it is the contributor, and `CONTRIBUTING.md` is the file that reader
+  is already in — and the one of the three `docs/source/contributing.md`
+  includes, so it is also the one rendered. Hence an absolute
+  github.com destination, which is what a cross-repository link is
+  written as here: a relative one resolves against the rendered site.
+
+[gh52]: https://github.com/btclib-org/.github/issues/52
+
 ### Secret scanning, push protection and Dependabot security updates
 
 - **The three settings are now `enabled`.** All three are free on a
