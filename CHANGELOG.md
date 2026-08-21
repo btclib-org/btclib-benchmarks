@@ -1688,6 +1688,16 @@ The release notes, which say what a user has to act on, are in
   --all-files` is the whole of that measurement, re-derivable at any
   time rather than recorded as a number here.
 
+- **The pattern's link text steps over a nested image**, because a badge
+  is `[![alt](src)](href)` and a link text written `[^]]*` stops at the
+  `]` that closes the alt text — so a scan anchored on it checks the
+  image `src` and never the badge's own destination. That was the
+  hook's first shape, and it left every badge destination unchecked in
+  the sibling repositories, whose READMEs carry rows of them. There is
+  no badge in this tree to demonstrate it on; the hook is here in the
+  same form as everywhere else, which is the point of the rule being
+  the organization's.
+
 - **It enforces a convention rather than catching a defect**, which is
   the part worth writing down. Unlike the three publishing
   repositories, this repository has no link-resolving transform in
