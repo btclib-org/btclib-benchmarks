@@ -213,6 +213,48 @@ repository's contents, so no job holds a scope wider than commenting on
 a pull request — which is a smaller surface than the other btclib-org
 repositories have, and the reason there is no `publishing` section here.
 
+What those declarations sit on top of is a repository setting, and it is
+read back rather than assumed:
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks/actions/permissions/workflow
+# {"default_workflow_permissions":"read",
+#  "can_approve_pull_request_reviews":false}
+```
+
+`read`, so a job that declares nothing gets nothing beyond reading the
+tree, and the workflow-level blocks above are the braces rather than the
+belt. `can_approve_pull_request_reviews` is false, which matters as much:
+a run that can approve a pull request is a way around the rule that
+somebody other than the author approves.
+
+What the call cannot say is whether either value is this repository's own
+or the organization's, no endpoint reporting an override and none
+clearing one: [the standard's tokens
+section](https://github.com/btclib-org/.github/blob/main/README.md#tokens-publishing-scanning)
+is where that is argued, and what this file adds is which of the two
+states this repository is in.
+
+It is **untested**, and the date is what makes it so: this repository
+already held `read` when the organization default moved there on
+21 August 2026, so it was not among the ones that could be *seen*
+following the move, and an override set before that day reads back
+exactly like an inheritance does. Nobody has recorded setting one here,
+which is weaker than knowing there is none — `bitcoin-core-rpc` is the
+repository where one was found, by that same move, and its
+`REPOSITORY.md` records it as pinned.
+
+So whoever moves the organization default reads this repository back
+afterwards rather than assuming it followed, and moves it by hand where
+it did not:
+
+```shell
+gh api -X PUT \
+  repos/btclib-org/btclib-benchmarks/actions/permissions/workflow \
+  -f default_workflow_permissions=read \
+  -F can_approve_pull_request_reviews=false
+```
+
 ## Security and analysis
 
 ```shell
