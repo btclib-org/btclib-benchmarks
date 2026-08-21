@@ -1710,6 +1710,34 @@ The release notes, which say what a user has to act on, are in
   render. That is why the root files here link by absolute url, and it
   is why this hook is prophylaxis rather than a fix.
 
+### A review runs what a diff decides with
+
+- **`REVIEWING.md` asks a review to execute what a diff adds, when what
+  it adds decides an outcome by matching or computing** — a regex, a
+  grep, a pattern in a hook, a script, a query. The cases to run are the
+  shapes the diff's own prose claims to cover and the shapes the tree
+  actually holds. A claim the prose makes about the tree takes the same
+  treatment, "every link here is already `./`-prefixed" being one `git
+  grep`'s worth of evidence and the reason a change is offered as safe.
+  The section says what it is not: not a re-run of the gates, which run
+  what the rest of the tree already exercises, not a test suite written
+  inside a review, and not a hand trace standing in for a run that was
+  out of reach — which a summary says in those words rather than letting
+  the trace read as a run.
+
+- **What earned it is the review of `local-link-prefix` here**, the
+  entry above. That review traced the pattern against the tracked
+  markdown files and acked. The leading clause `\[[^]]*\]\(` cannot
+  cross the `]` that closes an image's alt text, so on the badge shape
+  `[![alt](./src)](./href)` it examines the image source and never the
+  destination the link itself carries; the sibling review that ran the
+  clause against a real line found that
+  ([btclib-org/bitcoin-core-rpc#192](https://github.com/btclib-org/bitcoin-core-rpc/pull/192)),
+  and tracing it did not. Nothing changes here on account of it — the
+  destinations in this tree are absolute urls, which the entry above
+  measures rather than assumes — but the ack rested on a reading where a
+  run was available, which is what the standard now refuses.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
