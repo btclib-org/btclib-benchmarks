@@ -583,6 +583,16 @@ def labelled(label: str, value: str) -> str:
     fails where the line is built, with the width it came to, rather than
     publishing a line that runs off the column every other line respects.
 
+    Args:
+        label: what the line is about, padded to `LABEL` columns so that
+            the colons of a block line up.
+        value: what it says, taken as it is: a value too long is the
+            failure below rather than something to shorten here, the
+            renderer having no way to know which half is expendable.
+
+    Returns:
+        the line, padded and joined, and only where it fits.
+
     Raises:
         ValueError: if the line would print wider than `LINE` columns.
     """

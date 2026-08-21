@@ -81,11 +81,19 @@ repos:
       # nothing. That is the whole reason the meta hooks are in this
       # file, and overruling one of them would be an odd way to keep them
       #
-      # its converse stays off for the same reason now: no module here
-      # opens with "#!/usr/bin/env python3" any more -- a house header
-      # that was never a claim the file is a script, none of them being
-      # executable, and deleted rather than kept as a line nothing checks
-      # - id: check-shebang-scripts-are-executable
+      # its converse is on, and is the reason no file under `scripts/`
+      # opens with "#!/usr/bin/env python3": a shebang is read by the
+      # kernel only when the file is exec'd directly, which needs the
+      # executable bit the hook above finds on nothing, and every script
+      # here is invoked through the interpreter instead --
+      # "uv run python scripts/03-libraries.py", which is how
+      # CONTRIBUTING.md documents each of them. So the line would announce
+      # an interpreter nothing consults, and it would cost this guard.
+      # Unlike the hook above, this one selects on types [text] and so
+      # matches every file whether or not any carries a shebang: what it
+      # enforces is the pair, and the day a file needs one it also needs
+      # chmod +x
+      - id: check-shebang-scripts-are-executable
       # no byte order mark anywhere today, and the same kind of guard as
       # check-executables-have-shebangs: what it costs is one line, what
       # it buys is that an editor on another platform cannot quietly add
@@ -404,6 +412,26 @@ repos:
         args: [--fix]
       - id: ruff-format
         name: ruff format (in place fixes)
+  # ruff's D family checks that a docstring exists, and this checks that it
+  # describes the arguments and the return value the signature declares --
+  # the half that goes wrong in silence when a signature changes and the
+  # prose under it does not. The configuration is in pyproject.toml, next
+  # to the ruff one.
+  #
+  # Scoped to `scripts/`, which is where every function this repository
+  # writes lives: the six benchmarks included, a fixture builder whose
+  # docstring no longer matches its parameters being how a row starts
+  # measuring something other than what the page says it does. Not
+  # `tests/`, where mypy does run: a test takes fixtures rather than
+  # arguments and has no caller to hold a contract with, so the sections
+  # this asks for would be written for nobody
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 0.9.1
+    hooks:
+      - id: pydoclint
+        name: pydoclint (arguments and return values)
+        args: [--config=pyproject.toml]
+        files: ^scripts/.*\.py$
   # the other half of pyproject.toml's unspecified-encoding, which reads
   # `open` and the pathlib and tempfile spellings and stops there. A child
   # process decoded through `text=True` takes the locale's encoding by

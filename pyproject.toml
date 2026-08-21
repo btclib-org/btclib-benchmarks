@@ -222,6 +222,12 @@ extend-ignore-re = ['`[^`]*`']
 # checked on the one property a test can hold them to -- that they load,
 # that their comparands agree -- and measured by a person
 source = ["scripts", "tests"]
+# what is measured here is mostly parsing and provenance, and both are
+# written as a walk with an early exit: statement coverage calls a loop
+# fully covered once its body has run, and never asks whether the loop
+# ever ended without finding what it looked for. That missing exit is
+# the shape a wrong default hides in, so the gate is over branches too
+branch = true
 # the six benchmarks themselves. Naming them here rather than leaving
 # them to fail the gate is the same decision as the `source` comment
 # above, said in the form coverage understands: measured by a person, and
@@ -390,6 +396,43 @@ max-complexity = 10
 # ruff-format reflows code and never a comment or a docstring, so 88 is
 # what it can enforce and this is the rest
 max-doc-length = 80
+
+# what holds a docstring under scripts/ to the signature it sits over,
+# ruff having no rule for a missing argument: pydocstyle below asks that
+# a docstring exists, and this asks that what it says about the
+# arguments and the return value is still true. Run as a hook, over
+# scripts/ only; see the comment there for the scope
+[tool.pydoclint]
+# the sections the docstrings here already use, and the ones a reader of
+# the source sees rendered as sections rather than as indented prose
+style = "google"
+# the types are in the signature, and mypy is strict: repeating them in
+# the docstring is a second place to be wrong
+arg-type-hints-in-docstring = false
+check-return-types = false
+# the tool's own default, written out because it is the opposite of what
+# btclib-secp256k1 chose and is a decision rather than an oversight.
+# There the sections are a published wheel's only documentation -- a
+# caller reading help() has no source to fall back on -- so a one-line
+# docstring hiding five parameters is a gap. Here nothing is published
+# and nothing imports these modules: the scripts are read as source, and
+# their docstrings are one "Return the pool's secret keys."-shaped line
+# each. Set to false, this asks for a Returns section under every one of
+# them, which writes the summary a second time in the same docstring.
+# What is left checked is the drift the hook is for: a docstring that
+# does document its arguments, held against the signature it claims to
+# describe. The strict setting's findings are issue 128, listed there
+# rather than here so that flipping this is a decision made with the
+# list in front of it
+skip-checking-short-docstrings = true
+
+# and this one is off, deliberately. It compares the Raises section with
+# the `raise` statements of the body, and what these helpers raise comes
+# mostly from what they call -- a comparand's parser, json, bytes.fromhex
+# -- so what a caller catches is not what the body raises. Kept on, it
+# would force each docstring to document its own body instead of its
+# contract, which is the opposite of what these sections are for
+skip-checking-raises = true
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
