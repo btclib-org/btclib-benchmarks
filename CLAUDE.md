@@ -91,6 +91,12 @@ which machine ran it.
 
 ## Non-obvious facts that will otherwise waste a session
 
+- **The suite, the lint gate and the documentation build are the
+  required checks on a pull request**, named by the rule `REPOSITORY.md`
+  reads back from the endpoint. So code does not reach a review without
+  having passed them or passing them beside it on the same sha, and a
+  reviewer may rely on that rather than establishing it again;
+  `REVIEWING.md` has what the reliance takes.
 - **The comparands are `dependencies`, not a `bench` group**, and that
   inversion is why this repository exists. In btclib and
   btclib_secp256k1 they were third-party packages in the lock of a
