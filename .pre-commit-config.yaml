@@ -249,6 +249,48 @@ repos:
       - id: markdownlint-cli2
         name: markdownlint-cli2 (in place fixes)
         args: [--fix]
+  # how a link destination is spelled, which markdownlint has no rule
+  # for. The rule is the organization's: btclib-org/.github's README
+  # states it, and the measurement behind it -- myst renders the
+  # destination of a link it cannot resolve verbatim, so the publishing
+  # repositories can key their built-html grep on one pattern only if
+  # there is one spelling to key on (btclib-org/.github#20).
+  #
+  # Here it enforces a convention rather than catching a defect, and the
+  # difference is what this comment is for. This repository has no
+  # link-resolving transform in docs/source/conf.py and suppresses no
+  # myst warning, so a relative link out of an included root file is a
+  # myst.xref_missing warning and docs.yml's -W fails the build on it --
+  # measured with a fresh environment, `[a](./REVIEWING.md)` and
+  # `[a](REVIEWING.md)` each taking sphinx-build -E -W --keep-going to
+  # exit 1 where the tree without them exits 0, and REVIEWING.md being a
+  # page this documentation does render. That is why the root files here
+  # link by absolute url, and why this hook found nothing to change.
+  #
+  # Carried even so, for the reason the standard gives: a rule with one
+  # repository exempted is a rule somebody has to remember the exemption
+  # for, and prose moves between these repositories. `pinned-rev` above
+  # is the same arrangement -- the same hook in each repository, there
+  # being no shared hook repository to write it in once.
+  #
+  # The pattern's first branch asks for a whole `[text](destination)`
+  # whose "[" is not preceded by a backtick, so prose can quote the
+  # refused shape in a code span, as the paragraph above does. The
+  # second reads a link reference definition, `[label]: page.md`, which
+  # carries no "(" -- this file's siblings write many, every one of them
+  # an absolute url -- and is anchored at the start of the line, because
+  # a reference *use* followed by a colon is ordinary prose and an
+  # unanchored pattern reported two lines of CHANGELOG.md. What pygrep
+  # cannot see is a fenced block, being line based -- an example of the
+  # refused shape inside one fails this hook, and the code span is the
+  # way round it
+  - repo: local
+    hooks:
+      - id: local-link-prefix
+        name: a local markdown link destination begins with ./
+        language: pygrep
+        entry: '(?<!`)(?:\[[^]]*\]\(|^ {0,3}\[[^]]+\]:\s*)(?!\./|#|[A-Za-z][A-Za-z0-9+.-]*:)[^)\s]'
+        types: [markdown]
   # what ruff-format is for Python, on the structured files ruff does not
   # read: yaml, and the jsonc that carries a comment. Before yamllint below,
   # so the linter judges the formatted file and not the one that was typed.

@@ -1668,6 +1668,38 @@ The release notes, which say what a user has to act on, are in
 
 [iss134]: https://github.com/btclib-org/btclib-benchmarks/issues/134
 
+### The organization's link-destination rule is enforced here too
+
+- **A `local-link-prefix` hook refuses a markdown link whose
+  destination is local and does not begin `./`**, which is
+  [btclib-org/.github#20](https://github.com/btclib-org/.github/issues/20).
+  The rule is the organization's, and the standard states it with the
+  measurement behind it: MyST renders the destination of a link it
+  cannot resolve verbatim, so the publishing repositories can key their
+  built-html grep on one pattern only if there is one spelling to key
+  on. This repository is named among the standard's reference
+  implementations, so a rule it did not carry would be a rule with an
+  exemption to remember.
+
+- **Nothing here had to change to pass it.** Every markdown destination
+  in this tree is already an absolute url, the reference-style
+  definitions included, and the hook reports nothing:
+  `uv run --locked --only-group lint pre-commit run local-link-prefix
+  --all-files` is the whole of that measurement, re-derivable at any
+  time rather than recorded as a number here.
+
+- **It enforces a convention rather than catching a defect**, which is
+  the part worth writing down. Unlike the three publishing
+  repositories, this repository has no link-resolving transform in
+  `docs/source/conf.py` and suppresses no MyST warning, so a relative
+  link out of an included root file is a `myst.xref_missing` warning
+  and `docs.yml`'s `-W` fails the build on it. Measured with a fresh
+  environment: `[a](./REVIEWING.md)` and `[a](REVIEWING.md)` each take
+  `sphinx-build -E -W --keep-going` to exit 1, where the tree without
+  them exits 0 — and `REVIEWING.md` is a page this documentation does
+  render. That is why the root files here link by absolute url, and it
+  is why this hook is prophylaxis rather than a fix.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
