@@ -103,6 +103,19 @@ The release notes, which say what a user has to act on, are in
   so the merge cancels what the ref's concurrency group still holds, and
   it arrives at the merge rather than before it.
 
+- **`check-json` now runs**, `.vscode` excluded, which is
+  [.github#11](https://github.com/btclib-org/.github/issues/11). The
+  hook was dropped when every tracked json file was under `.vscode` and
+  jsonc, which a json parser rejects at the first comment; that stopped
+  being the tree when `results/` and `vectors/` gained their own json,
+  and `.claude/settings.json` joined them, none of the three under
+  prettier's `files` allowlist either — so nothing in the gate parsed
+  any of them. `pretty-format-json` is not added beside it:
+  `results/*.json` is `scripts/_results.py`'s own output and
+  `vectors/*.json` is vendored and pinned by sha256, so a formatter
+  would be a second writer of a file that already has one, or would
+  break a digest a byte-for-byte reformat cannot preserve.
+
 ### The benchmarks
 
 - **btclib now resolves from its 2026.8.21 release, not the `main`

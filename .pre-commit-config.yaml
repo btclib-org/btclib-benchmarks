@@ -96,11 +96,30 @@ repos:
       # floor here is 3.10, so every line it would add is dead on arrival
       # - id: fix-encoding-pragma
       - id: check-yaml
-      # no check-json: every json file here is under `.vscode`, which is
-      # jsonc and carries comments a json parser rejects, so the hook
-      # matched nothing and check-hooks-apply above said so. prettier
-      # below is what parses those two, and what would fail on a broken
-      # one
+      - id: check-json
+        # `.vscode` is jsonc, not json: VSCode reads a comment in its own
+        # settings.json and extensions.json, and a json parser rejects the
+        # file at the first one. Excluded here for the reason it was once
+        # dropped for altogether -- it is not a gap, prettier below is
+        # given that directory and fails on what it cannot parse, which is
+        # the question this hook asks. What check-json now reaches instead
+        # is `results/*.json`, `vectors/*.json` and .claude/settings.json,
+        # none of them jsonc and none of them under prettier's `files`
+        # allowlist -- so this is the only parser in the gate for any of
+        # the three
+        exclude: ^\.vscode/
+      # no pretty-format-json beside it, and not by the same reasoning as
+      # the exclude above: `results/*.json` is `scripts/_results.py`'s
+      # output (json.dumps(..., indent=2, ensure_ascii=False), read there),
+      # so a formatter with its own idea of indent or key order is a
+      # second writer of a file a script already owns, and the two
+      # disagreeing is a diff nobody asked for on every run that follows a
+      # benchmark. `vectors/*.json` is the opposite problem with the same
+      # answer: vendored copies vectors/README.md pins to a sha256 each,
+      # checked in scripts/_vectors.py on import, so a reformat would
+      # break the digest as surely as hand-editing a byte would. Neither
+      # file is this hook's to rewrite; check-json above still answers
+      # the question worth asking of both, which is whether they parse
       - id: check-merge-conflict
       - id: check-vcs-permalinks
       - id: detect-private-key
