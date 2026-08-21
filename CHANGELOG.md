@@ -105,6 +105,20 @@ The release notes, which say what a user has to act on, are in
 
 ### The benchmarks
 
+- **btclib now resolves from its 2026.8.21 release, not the `main`
+  branch commit.** The floor named `"2026.9"` as a placeholder before
+  that release existed; the release that actually shipped is numbered
+  lower than the guess, PEP 440 comparing `(2026, 8, 21)` below
+  `(2026, 9)`, so the floor is corrected to `>=2026.8.21` rather than
+  left standing on a number the release never carried. Verified rather
+  than assumed: `grind=` on `dsa.sign_` and the `_libsecp256k1_available`
+  switch, the private dispatch these scripts reach into, both exist
+  under the installed release, and the full suite passes against it.
+  `[tool.uv.sources]`'s branch entry for `btclib` is gone, matching the
+  `btclib-secp256k1` half of this same transition below. The six pages
+  still carry `btclib`'s old main-branch provenance; refreshing them
+  under the release is a separate pull request.
+
 - **btclib-secp256k1 is measured at its 0.8.0.3 release, not the `main`
   branch commit, and all six pages are refreshed under it.** The floor
   in `pyproject.toml` named the release before it shipped and
