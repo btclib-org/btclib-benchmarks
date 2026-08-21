@@ -26,11 +26,10 @@ ci:
   skip: [mypy]
 
 repos:
-  # this file checking itself, and the only two hooks here with no
-  # environment to install. A `files` or `exclude` pattern that stops
-  # matching anything is a hook that has quietly stopped running, which is
-  # the shape of issue #145 one level up: the rule is still written down
-  # and no longer enforced
+  # this file checking itself. A `files` or `exclude` pattern that stops
+  # matching anything is a hook that has quietly stopped running -- the
+  # rule stays written down in this file and stops being enforced, with
+  # nothing else here positioned to notice
   - repo: meta
     hooks:
       - id: check-hooks-apply
@@ -101,7 +100,7 @@ repos:
       - id: fix-byte-order-marker
       # this one *adds* "# -*- coding: utf-8 -*-" to every Python file.
       # UTF-8 has been the default source encoding since Python 3 and the
-      # floor here is 3.10, so every line it would add is dead on arrival
+      # floor here is 3.11, so every line it would add is dead on arrival
       # - id: fix-encoding-pragma
       - id: check-yaml
       - id: check-json
@@ -136,26 +135,33 @@ repos:
       # the hook's default, *_test.py, with neither args nor exclude.
       # What it is for is the one failure mode a test suite cannot report
       # on itself -- a file named so that pytest never collects it is not
-      # a red test, it is no test, and the count in the report is the only
-      # thing that moves.
+      # a red test, it is no test.
       # test_*.py, i.e. --pytest-test-first, would guard the same thing,
       # pytest's default `python_files` collecting both; *_test.py, the
-      # convention the 71 test modules follow, needs no args. No
-      # exclude, and the hook's own exemptions, conftest.py and
-      # __init__.py, are what keep it that way: shared test code lives in
-      # the package __init__ -- the vector loaders in tests/__init__.py,
-      # helpers in the __init__ of tests/script and tests/script_engine.
-      # Naming a loader module vectors_test.py instead would be this
-      # hook's failure mode written by hand: a name that says "test" to
-      # every reader, on the one module with none
+      # convention every module under tests/ follows, needs no args. No
+      # exclude, and the hook's own exemption for conftest.py is what
+      # keeps it that way: tests/conftest.py holds no test of its own,
+      # only the sys.path insert that lets a test import
+      # scripts/_vectors.py, so exempting its name from the pattern costs
+      # nothing. The __init__.py exemption goes unused -- there is no
+      # tests/__init__.py, tests/ is not a package, and the vector
+      # loading a package __init__ would hold in btclib is
+      # scripts/_vectors.py's job here, outside tests/ entirely.
+      # tests/vectors_test.py is this hook's boundary case met rather
+      # than avoided: the name reads as a loader, and is in fact the
+      # suite that holds every vendored vector to the digest
+      # vectors/README.md publishes for it
       - id: name-tests-test
       - id: check-toml
       # only files being *added* are measured, the hook intersecting its
-      # arguments with git's added set, so the 9 MB of
-      # script_assets_test.json already vendored does not trip it and the
-      # next one that size does. The default 500 KB is left alone: it is
-      # the threshold at which a blob deserves a sentence in
-      # tests/_data/README.md saying where it came from
+      # arguments with git's added set, so a large file already tracked
+      # does not trip it and the next one that size does. The default
+      # 500 KB is left alone: uv.lock, the largest file this repository
+      # tracks, sits under it, and every vendored vector is smaller
+      # still, so the threshold has not yet forced a decision about
+      # where a blob's provenance goes. It already has an answer for
+      # when it does: vectors/README.md names where each vendored vector
+      # came from and pins it to a sha256, whatever its size
       - id: check-added-large-files
       # there are none, and a submodule is the one dependency that would
       # not be in uv.lock, not be pinned by dependabot, and not be
@@ -232,8 +238,9 @@ repos:
         # hook here corrects; dropping --force-exclude would make
         # [tool.typos.files] silent, because pre-commit passes filenames
         # and typos honours its own exclude list only under that flag --
-        # measured, without it the normative BIP39 italian wordlist takes
-        # 18 corrections into English
+        # measured, without it typos rewrites a misspelling already
+        # present in the vendored Wycheproof file, corrupting the copy
+        # against the digest vectors/README.md publishes for it
         args: [--write-changes, --force-exclude]
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.23.2
@@ -265,8 +272,8 @@ repos:
       - id: prettier
         name: prettier (yaml and jsonc, in place fixes)
         files: ^(.*\.ya?ml|\.vscode/.*\.json|\.markdownlint\.jsonc)$
-  # the same for toml, which here is pyproject.toml and the mutation
-  # sessions under .github: .taplo.toml holds the formatting choices and the
+  # the same for toml, which here is pyproject.toml and
+  # results/machine.toml: .taplo.toml holds the formatting choices and the
   # reasoning for them, as .yamllint.yaml does for the width of a yaml line.
   # uv.lock is toml to identify and therefore matched by the hook's own
   # types, and it is uv's file to write. It runs before toml-comment-width
@@ -336,7 +343,7 @@ repos:
   # check-github-workflows is not added beside it: actionlint already
   # reads every workflow and goes further than the schema does, into
   # expressions, contexts and runner labels
-  # .readthedocs.yaml is the same argument again: 2.7 KB that check-yaml
+  # .readthedocs.yaml is the same argument again: a file that check-yaml
   # reads as yaml and nothing reads as a build definition, on a service
   # whose failure mode is a docs build that stops happening
   - repo: https://github.com/python-jsonschema/check-jsonschema
@@ -344,17 +351,18 @@ repos:
     hooks:
       - id: check-dependabot
       - id: check-readthedocs
-  # the workflows are 3, 6 and 8 KB of yaml with expressions in it, and
-  # nothing validated them: an unknown key, a typo in a context reference,
-  # an action input that does not exist, a job depending on a job that is
-  # not there are all things a run discovers by failing.
+  # the workflows carry expressions and logic no schema reads, and
+  # nothing else here validated them: an unknown key, a typo in a
+  # context reference, an action input that does not exist, a job
+  # depending on a job that is not there are all things a run discovers
+  # by failing.
   # The Python packaging of actionlint rather than the upstream hook, whose
   # only non-docker id is language: golang, i.e. a go toolchain on every
   # machine that commits and on pre-commit.ci
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    # not below actionlint 1.7.12: its list of runner labels is compiled
-    # in, and 1.7.9 does not know macos-26-intel, which the test matrix
-    # runs on
+    # not below actionlint 1.7.7: its list of runner labels is compiled
+    # in, and versions before it do not know ubuntu-24.04-arm, which the
+    # test matrix runs on
     rev: v1.7.12.24
     hooks:
       - id: actionlint
@@ -379,9 +387,11 @@ repos:
   # restored into the job that builds what gets published, an expression
   # interpolated into a shell script, a trigger that runs a fork's code
   # with write access. The default persona is the gate; --persona=auditor
-  # adds advice (12 notes today, none of them a defect: 8 in release.yml
-  # and 4 in test.yml, all of them unnamed jobs) and is worth
-  # running by hand rather than on every commit
+  # adds advice, none of it a defect -- today concentrated in
+  # claude-review.yml, a secret read outside a dedicated environment and
+  # a job short a concurrency limit or a documented permission, with one
+  # further note in test.yml -- and is worth running by hand rather than
+  # on every commit
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.29.0
     hooks:
@@ -548,10 +558,11 @@ repos:
         additional_dependencies: [setuptools]
   - repo: https://github.com/regebro/pyroma
     # the newest *stable* tag: 5.1b1 and 5.1b2 sit above it, and
-    # `pre-commit autoupdate` offers a prerelease as readily as a release,
-    # having no notion of one -- it did so here and in pull request #315
-    # before it. What a beta of the packaging checker would gate is the
-    # release workflow, on a judgement its own author has not settled yet
+    # `pre-commit autoupdate` offers a prerelease as readily as a
+    # release, having no notion of one -- the bitcoin-core-rpc incident
+    # above is exactly this failure mode, pyroma included. What a beta
+    # of the packaging checker would gate is the release workflow, on a
+    # judgement its own author has not settled yet
     rev: "5.0.1"
     hooks:
       - id: pyroma
