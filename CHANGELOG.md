@@ -28,6 +28,30 @@ The release notes, which say what a user has to act on, are in
   secret-scanning alert turned up on enabling. From
   [btclib-org/.github#5](https://github.com/btclib-org/.github/issues/5).
 
+### The default workflow-token permission is recorded, and untested
+
+- **`REPOSITORY.md`'s *Token permissions* section covered only the
+  `permissions:` blocks the workflows declare; the repository setting
+  underneath them was not mentioned.** It now carries the call that
+  reads that setting back and the answer it gives — `read`, with
+  `can_approve_pull_request_reviews` false, the field that decides
+  whether a run can approve a pull request and so whether the rule that
+  somebody other than the author approves has a way around it. What the
+  call cannot answer is whether either value is this repository's own or
+  the organization's: no endpoint reports an override and none clears
+  one, which the organization standard argues and the section links to
+  rather than repeats. What the section adds is which of the two states
+  this repository is in, and it is untested rather than known good — it
+  already held `read` when the organization default moved there on
+  21 August 2026, so it was never among the ones that could be seen
+  following the move, and an override set before that day reads back
+  exactly like an inheritance. The consequence is recorded with the
+  `PUT` that acts on it: whoever moves the organization default reads
+  this repository back afterwards and moves it by hand where it did not
+  follow. Documentation only — nothing was set, and the read-back is the
+  same object before and after. From
+  [btclib-org/.github#23](https://github.com/btclib-org/.github/issues/23).
+
 ### A tag-integrity ruleset enforces signed tags org-wide
 
 - **`tag-integrity`, `target: tag`, `refs/tags/v*`: `required_signatures`,
