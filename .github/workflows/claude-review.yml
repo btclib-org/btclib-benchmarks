@@ -114,7 +114,7 @@ jobs:
           fi
       - name: Review against REVIEWING.md
         id: review
-        uses: anthropics/claude-code-action@d40ddef4c030e508327d6e35a9c45f3368482c50 # v1
+        uses: anthropics/claude-code-action@653c70eb8a3e02371eabde8cc38849ae54ce6a19 # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
@@ -221,6 +221,6 @@ jobs:
             exit 1
           fi
       - name: Answer the mention
-        uses: anthropics/claude-code-action@d40ddef4c030e508327d6e35a9c45f3368482c50 # v1
+        uses: anthropics/claude-code-action@653c70eb8a3e02371eabde8cc38849ae54ce6a19 # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
