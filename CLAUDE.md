@@ -18,8 +18,8 @@ comment, is `REVIEWING.md` — and `/review` is that file as a command.
 ## Commands
 
 ```shell
-uv sync --locked                            # installs the comparands, and
-                                            # compiles two of them
+uv sync --locked                            # installs the comparands,
+                                            # compiling those that need it
 uv run pytest                               # the suite, gated at 100%
 uv run pre-commit run --all-files           # every lint hook, what CI runs
 uv run python scripts/03-libraries.py  # a benchmark, by hand
@@ -42,7 +42,7 @@ Do not use Fable unless explicitly instructed.
 
 ## What this repository is
 
-Six benchmarks, one question each:
+The benchmarks, one question each:
 
 - `scripts/02-btclib-vs-btclib.py` — btclib's libsecp256k1 path against its own
   pure-Python arithmetic
@@ -60,7 +60,7 @@ Six benchmarks, one question each:
 
 `scripts/_provenance.py`, `scripts/_inputs.py` and `scripts/artifacts.py`
 are what the suite covers. `scripts/_results.py` and `scripts/render.py`
-are the other two non-benchmarks, and they are outside the gate on purpose
+are the non-benchmarks besides those, and they are outside the gate on purpose
 — see below.
 
 ## Measuring and publishing are two commands
@@ -101,7 +101,7 @@ which machine ran it.
   cp314 wheel and neither builds without `pkg-config`. 3.11 is the
   floor: `secp256k1lab` declares it and `scripts/04-pure-python.py` imports
   it unguarded. Raising either means checking a package index first.
-  Those two comparands and no others hold the ceiling: `electrum-ecc`
+  `coincurve` and `secp256k1` and no others hold the ceiling: `electrum-ecc`
   compiles from an sdist on every platform and what it builds is
   `py3-none`, so it installs on any interpreter.
 - **`btclib` resolves from `main`, not PyPI**, through
@@ -121,7 +121,8 @@ which machine ran it.
   pure-Python row to switch for.
 - **The wrapper rows carry the libsecp256k1 revision each package
   vendors**, `LIBSECP256K1_PINS` in `01-libsecp256k1.py` holding
-  it: three of the four link the library into a cffi extension, where
+  it: most of the wrapper rows link the library into a cffi extension
+  (`electrum-ecc` reaches it through ctypes instead), where
   nothing at run time can say which revision that was. Each pin is keyed
   by the build it was read from, so an upgraded comparand prints
   `unrecorded` instead of a pin that has quietly stopped being true. Go
@@ -134,8 +135,8 @@ which machine ran it.
   other side. A tag in neither set is `unrecorded` rather than a guess.
   Do not key a pin on a version again without checking that the version
   has one artifact.
-- **Coverage measures `_provenance.py` and the suite, and omits the six
-  benchmarks** — covering a timing function means running it, and a
+- **Coverage measures `_provenance.py` and the suite, and omits the
+  benchmark scripts** — covering a timing function means running it, and a
   measurement inside CI is a number that means nothing.
 
 ## Conventions to match

@@ -28,14 +28,16 @@ because there is no artifact for one to build.
 The suite proves the scripts load and that their comparands agree. It
 cannot prove they still *measure* anything, and that is exactly what
 rots: a comparand renames a method, a backend stops being found, an
-implementation gets a fast path. Running all four by hand is the only
+implementation gets a fast path. Running every one by hand is the only
 check there is, and a release is the moment to do it.
 
 ```shell
+uv run python scripts/01-libsecp256k1.py
 uv run python scripts/02-btclib-vs-btclib.py
 uv run python scripts/03-libraries.py
 uv run python scripts/04-pure-python.py
-uv run python scripts/01-libsecp256k1.py
+uv run python scripts/05-key-reuse.py
+uv run python scripts/06-silentpayments.py
 ```
 
 Read each header before its numbers: the versions, and where each
@@ -49,7 +51,7 @@ because these scripts reach into a dispatch that is private and moves
 between releases. `project.dependencies` already floors it at the
 version that will carry those names.
 
-Delete that entry the day the release lands, re-lock, run the six
-benchmarks again and render their pages — that is the whole of the
+Delete that entry the day the release lands, re-lock, run every
+benchmark again and render their pages — that is the whole of the
 change, and the run is what says the published wheel really does carry
 what main did.

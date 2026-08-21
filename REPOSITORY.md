@@ -26,8 +26,9 @@ means the matrix can gain or lose a cell without anyone editing branch
 protection; naming the cells would mean this list going stale the first
 time it changed.
 
-What it judges is therefore not what `needs` waits for, and the two are
-the same set only while that workflow has two jobs. So the rule is that
+What it judges is therefore not what `needs` waits for, and the two sets
+coincide only for as long as `test-passed` is the workflow's only other
+job. So the rule is that
 whatever the gate can see it has to wait for: it allows exactly one
 unfinished job, which is itself, and a job of the run outside its
 `needs` turns it red until it is added there. Counted rather than
@@ -91,12 +92,12 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 ```
 
 `main` is the only branch, and no change reaches it except through a pull
-request — no exception, and no push. Two rulesets carry that beside the
-classic protection above, rules aggregating across the two and the most
-restrictive combination winning wherever they overlap — a third,
-`tag-integrity`, is described further down and targets tags rather than
-`main`, so the command below lists it too without it being one of these
-two:
+request — no exception, and no push. `main-integrity` and
+`main-self-merge` carry that beside the classic protection above, rules
+aggregating across rulesets and the most restrictive combination winning
+wherever they overlap — `tag-integrity`, described further down, targets
+tags rather than `main`, so the command below lists it too without it
+enforcing anything on `main` itself:
 
 ```shell
 gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
@@ -107,8 +108,8 @@ gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
 
 - `main-integrity` — required signatures, required linear history, no
   force pushes, no deletions — with **no bypass actor at all**, which is
-  what makes those four true of an administrator too.
-- `main-self-merge` — require a pull request, one approving review,
+  what makes every one of those true of an administrator too.
+- `main-self-merge` — require a pull request, an approving review,
   stale reviews dismissed, conversations resolved — bypassed by the
   maintainer in **`pull_request` mode**, and naming `squash` as the only
   merge method it will accept.
@@ -202,13 +203,15 @@ subject.
 ## Token permissions
 
 Every workflow declares `permissions: contents: read` at the top level,
-and one job elevates it: `test.yml`'s `test-passed` adds `actions:
+and some jobs elevate it: `test.yml`'s `test-passed` adds `actions:
 read`, which is what lets it ask the run what its own jobs concluded
 rather than trust the needs context — the reason is under *Required
-checks on main* above. Nothing in this repository publishes, attests, or
-writes to the repository itself, so no job holds a write scope of any
-kind — which is a smaller surface than the other btclib-org repositories
-have, and the reason there is no `publishing` section here.
+checks on main* above; `claude-review.yml`'s `review` and `mention` jobs
+add `pull-requests: write`, which is what posting a review or a reply
+takes. Nothing in this repository publishes, attests, or writes to the
+repository's contents, so no job holds a scope wider than commenting on
+a pull request — which is a smaller surface than the other btclib-org
+repositories have, and the reason there is no `publishing` section here.
 
 ## What is not configured, and why
 
@@ -221,7 +224,7 @@ have, and the reason there is no `publishing` section here.
   group builds, so the sphinx gate is runnable, but no service is
   subscribed to this repository.
 - **No CodeQL.** It analyses a library's own code for vulnerabilities;
-  what is here is six scripts that time other people's packages, and
+  what is here is scripts that time other people's packages, and
   the packages they time are analysed where they live.
 - **No scheduled workflow.** Nothing here should run without someone
   asking: a benchmark on a shared runner is a number produced under

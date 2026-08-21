@@ -236,9 +236,9 @@ because that document, and not this one, is where the rule lives.
   they never conflict and a rebase can put back a line the branch had
   removed.
 - A new or changed workflow: the conventions in `CLAUDE.md`, and
-  `REPOSITORY.md` before any rule or setting is touched. This repository
-  runs two workflows and requires two checks, so a job added to either
-  is a check the branch rule does not know about.
+  `REPOSITORY.md` before any rule or setting is touched. A job added to
+  a workflow without a matching entry in branch protection is a check
+  the branch rule does not know about.
 
 ## The verdict
 
