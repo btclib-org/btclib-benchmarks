@@ -1792,6 +1792,7 @@ The release notes, which say what a user has to act on, are in
   ([btclib-org/.github#58](https://github.com/btclib-org/.github/issues/58)).
   Nothing about what a diff decides with changes — the gates exercise
   what the tree already held, so a review runs that either way.
+
 ### `.yamllint.yaml` and `.taplo.toml` carried btclib's tree as well
 
 - **The two files `.pre-commit-config.yaml` points at for its reasoning
