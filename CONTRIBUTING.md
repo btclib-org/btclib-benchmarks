@@ -18,13 +18,14 @@ git tag, having no release on any index.
 
 ## Running a benchmark
 
-btclib and btclib-secp256k1 resolve from their `main` branches until the
-releases these scripts are written against are on PyPI, and **a branch in
-`uv.lock` is a commit, not a branch**: `uv sync --locked` reinstalls the
-revision the lock names and never looks at what `main` has become. So a
-measurement taken without asking for the upgrade is a measurement of
-whatever was current the day the lock was last written, which is not what a
-page about `main` claims. Ask for it first, every time:
+btclib-secp256k1 resolves from its released floor now; btclib still
+resolves from its `main` branch until the release these scripts are
+written against is on PyPI, and **a branch in `uv.lock` is a commit, not
+a branch**: `uv sync --locked` reinstalls the revision the lock names and
+never looks at what `main` has become. So a measurement taken without
+asking for the upgrade is a measurement of whatever was current the day
+the lock was last written, which is not what a page about `main` claims.
+Ask for it first, every time:
 
 ```shell
 uv lock --upgrade-package btclib --upgrade-package btclib-secp256k1
