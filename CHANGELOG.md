@@ -85,6 +85,47 @@ The release notes, which say what a user has to act on, are in
 
 ### Packaging and CI, before the benchmarks below
 
+- **Coverage is gated over branches and not statements alone.**
+  `[tool.coverage.run]` gains `branch = true`, one of the three gaps
+  [btclib-org/.github#7](https://github.com/btclib-org/.github/issues/7)
+  found between this repository and the organization's standard. What is
+  measured here is the helpers rather than the timing loops, and they are
+  walks with an early exit — the tag of a wheel, the parents of a module's
+  path, the lines of a `WHEEL` file: statement coverage calls such a loop
+  fully covered once its body has run, and never asks whether it ever
+  ended without finding what it was looking for. The suite already
+  reaches both ways out of every one of them, so the gate moved and the
+  tree did not: no test was written for this and no `pragma: no cover`
+  either.
+
+- **pydoclint holds a docstring to the signature under it**, over
+  `scripts/` and not `tests/`, where mypy does run — a test takes
+  fixtures rather than arguments and has no caller to keep a contract
+  with. `[tool.pydoclint]` leaves `skip-checking-short-docstrings` at its
+  default, which is the opposite of `btclib-secp256k1`'s choice and a
+  decision rather than a copy: there the sections are a published wheel's
+  only documentation, where nothing here is published and nothing imports
+  these modules. Set the other way it would ask for a `Returns:` section
+  under every one-line `"""Return ..."""` docstring in the tree, writing
+  each summary a second time; those findings are [ISS 128][iss128], so
+  that flipping it later is a decision made with the list in front of it.
+  What the hook checks as configured is drift, and it found one on the
+  run that added it: `_results.labelled` documented what it raises and
+  neither of its two arguments nor its return value, and now documents
+  all three.
+
+- **`check-shebang-scripts-are-executable` runs, where it had been a
+  commented-out line.** The comment beside it was btclib's, carried over
+  with the file and describing btclib's tree — modules that had once
+  opened with `#!/usr/bin/env python3` and no longer did. Nothing under
+  `scripts/` here has ever had a shebang or the executable bit, which is
+  what `grep -l '^#!' scripts/*.py` and `find scripts -perm -u+x` say, so
+  the hook passes on the tree it was added to. What it buys is that the
+  pair cannot come apart later: every script here is run through the
+  interpreter, `uv run python scripts/03-libraries.py`, so a shebang added
+  to one would announce an interpreter nothing consults unless a
+  `chmod +x` came with it.
+
 - **A red documentation build now blocks a merge**, which is
   [ISS 95][iss95]. `docs.yml` has run the `sphinx-build -W` command
   `.readthedocs.yaml` runs since it was added, and nothing was gated on
@@ -1532,4 +1573,5 @@ The release notes, which say what a user has to act on, are in
 [iss95]: https://github.com/btclib-org/btclib-benchmarks/issues/95
 [iss96]: https://github.com/btclib-org/btclib-benchmarks/issues/96
 [iss111]: https://github.com/btclib-org/btclib-benchmarks/issues/111
+[iss128]: https://github.com/btclib-org/btclib-benchmarks/issues/128
 [pr99]: https://github.com/btclib-org/btclib-benchmarks/pull/99
