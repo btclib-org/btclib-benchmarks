@@ -1738,6 +1738,37 @@ The release notes, which say what a user has to act on, are in
   measures rather than assumes — but the ack rested on a reading where a
   run was available, which is what the standard now refuses.
 
+### A gate already run on this sha is relied on, not repeated
+
+- **`REVIEWING.md` states the condition, and it is the sha and the
+  record rather than who is reviewing.** Where the gates have been run
+  on this very commit — the required checks running beside a review, or
+  an author handing over a branch they gated and stated the result of —
+  the review relies on that run and names whose it is; where there is no
+  such run it runs them itself, and a gate that fails is still the
+  strongest finding available. A run on another tree is not a run on
+  this one, so a rebase voids it, the branch having been gated before
+  the tree moved under the gate.
+
+- **`CLAUDE.md` carries which checks this repository is gated on**, read
+  back from the branch rule rather than copied from a sibling: the
+  suite, the lint gate and the documentation build. That is the fact the
+  reliance rests on, and it belongs in a file a pull request can be
+  reviewed against.
+
+- **What earned it is `claude-review.yml`'s prompt**, whose reason for
+  not running the gates was that a second run of them would cost a
+  runner slot. That is an argument about price, and a reviewer reading
+  it generalizes it into "running costs, so do not run" — the
+  disposition the entry above records. The prompt now carries the
+  instruction and points at `CLAUDE.md` for why the reliance is sound,
+  which is also what keeps its hunk small: a pull request editing that
+  file cannot be reviewed at all, the action refusing to run under a
+  workflow differing from the default branch's copy
+  ([btclib-org/.github#58](https://github.com/btclib-org/.github/issues/58)).
+  Nothing about what a diff decides with changes — the gates exercise
+  what the tree already held, so a review runs that either way.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
