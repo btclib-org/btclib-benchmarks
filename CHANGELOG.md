@@ -15,8 +15,11 @@ The release notes, which say what a user has to act on, are in
   workflow set and the branch rules once for this repository and its
   siblings, each with the alternative it was decided against, and it
   claims to be linked from each repository's `CONTRIBUTING.md`; the only
-  mentions of that repository here were `CHANGELOG.md` and
-  `REPOSITORY.md` citing issue numbers filed there. So a contributor
+  mentions of that repository here were every one of them an
+  issue-number citation — in a hook comment, `CHANGELOG.md` and
+  `REPOSITORY.md` — and not one of them a pointer to the standard.
+  `git grep -n 'btclib-org/\.github'` is what re-derives them, a list
+  here going stale the next time one is cited. So a contributor
   following `CONTRIBUTING.md` to `REPOSITORY.md` to `CLAUDE.md` was
   never told a document above them existed, and a rule stated only there
   was one they could not find. [ISS 52 (btclib-org/.github)][gh52].
