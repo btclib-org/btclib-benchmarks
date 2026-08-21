@@ -125,7 +125,7 @@ pull_requests = "https://github.com/btclib-org/btclib-benchmarks/pulls"
 [dependency-groups]
 test = ["coverage", "pytest", "pytest-cov", "pytest-randomly"]
 lint = ["mypy", "pre-commit", "ruff>=0.16"]
-build = ["check-manifest", "check-wheel-contents", "pyroma", "twine"]
+build = ["check-manifest", "pyroma", "twine"]
 docs = ["myst-parser", "sphinx", "sphinx_rtd_theme"]
 dev = [
     { include-group = "test" },

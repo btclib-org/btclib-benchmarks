@@ -1650,6 +1650,24 @@ The release notes, which say what a user has to act on, are in
 
 [iss127]: https://github.com/btclib-org/btclib-benchmarks/issues/127
 
+### The build dependency group named a tool nothing runs
+
+- **`check-wheel-contents` is gone from `build` in `pyproject.toml`.**
+  [ISS 134][iss134]: no pre-commit hook, no workflow step and no `[tool]` table
+  anywhere in the tree runs it, unlike the tools left beside it in the group —
+  `check-manifest` and `pyroma` are hooks of `.pre-commit-config.yaml`, and
+  `twine` is already a name REPOSITORY.md and `MANIFEST.in` give for a tool
+  meant to be run by hand rather than wired into one. Nothing here builds a
+  wheel for it to inspect either: RELEASING.md records that there is no
+  release, and `[tool.setuptools] packages = []` means an install would put
+  nothing on the path, so a workflow wiring the tool in later would only ever
+  inspect a wheel this repository never produces. REPOSITORY.md's own sentence
+  on why the group exists already named only what remains beside it, checked
+  rather than assumed, and needs no change now that the group it describes
+  matches it.
+
+[iss134]: https://github.com/btclib-org/btclib-benchmarks/issues/134
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
