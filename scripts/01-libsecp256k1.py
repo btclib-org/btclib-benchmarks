@@ -760,7 +760,7 @@ PARSE_SERIALIZE = cycle(_slice(5, PUBKEYS))
 # the sdist's date on a machine that had installed a wheel. It is the
 # column that made that mistake first, one column ahead of the pin.
 RELEASE_DATES = {
-    "btclib-secp256k1": {"0.8.0.3": "2026-08-20"},
+    "btclib-secp256k1": {"0.8.0.4": "2026-08-21"},
     "coincurve": {"21.0.0": "2025-03-08"},
     "secp256k1": {"0.14.0 wheel": "2026-01-29", "0.14.0 sdist": "2021-11-06"},
     "electrum-ecc": {"0.0.7": "2026-02-25"},
@@ -770,10 +770,10 @@ RELEASE_DATES = {
 # Where each row's libsecp256k1 came from, read from the build named
 # beside it:
 #
-# - btclib-secp256k1: the `secp256k1` submodule pin at v0.8.0.3, 6e2c8bc,
-#   which is upstream's v0.8.0 tag exactly -- the same commit its v0.8.0,
-#   v0.8.0.1 and v0.8.0.2 tags pinned, so this release moved too and the
-#   library still did not
+# - btclib-secp256k1: the `secp256k1` submodule pin at v0.8.0.4, 6e2c8bc,
+#   which is upstream's v0.8.0 tag exactly -- the same commit v0.8.0,
+#   v0.8.0.1, v0.8.0.2 and v0.8.0.3 tags all pinned, so this release
+#   moved too and the library still did not
 # - coincurve: `VENDORED_UPSTREAM_REF` in its pyproject.toml, 0cdc758a,
 #   which is upstream's v0.6.0
 # - secp256k1: two, one per artifact, which is the whole reason these are
@@ -797,7 +797,7 @@ RELEASE_DATES = {
 # installed. What made that guard miss was the key, not the pin: a version
 # that stands still while its artifacts change is a key that cannot fire.
 LIBSECP256K1_PINS = {
-    "btclib-secp256k1": {"0.8.0.3": "v0.8.0"},
+    "btclib-secp256k1": {"0.8.0.4": "v0.8.0"},
     "coincurve": {"21.0.0": "v0.6.0"},
     "secp256k1": {
         "0.14.0 wheel": "v0.6.0",
