@@ -8,6 +8,27 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### REPOSITORY.md stops counting the contexts it prints above
+
+- **"Three contexts, and the second is an aggregate rather than a matrix
+  cell" is now "`test: every job passed` is an aggregate rather than a
+  matrix cell".** The count said nothing the code block three lines
+  above it does not already show, and it named the aggregate by
+  position — "the second" — which is the list's order and not its
+  content, so a context added ahead of it silently makes the sentence
+  point at the wrong one. Naming the check is what the paragraph is
+  about anyway. The paragraph is also the argument *against* keeping a
+  list of contexts anywhere a person maintains: naming the aggregate
+  "means the matrix can gain or lose a cell without anyone editing
+  branch protection", and a file making that case while opening with a
+  tally of the same list had written down the maintenance it had just
+  finished avoiding. The `gh api ... required_status_checks` command
+  printed beside it re-derives the list on demand, which is the shape
+  the organization standard asks for and the shape the rest of this
+  file already uses. [ISS 142][gh142]
+
+[gh142]: https://github.com/btclib-org/btclib-benchmarks/issues/142
+
 ### CONTRIBUTING.md sends a contributor to the organization standard
 
 - **The standard is `README.md` in `btclib-org/.github`**, and nothing
