@@ -157,6 +157,7 @@ from secp256k1lab.secp256k1 import G as LAB_G
 # secp256k1lab is on no index and is taken from a git tag, which is still a
 # release someone cut on a day, so it is recorded like the other four
 RELEASE_DATES = {
+    "btclib": ("2026.8.21", "2026-08-21"),
     "secp256k1lab": ("1.0.0", "2025-03-26"),
     "ecdsa": ("0.19.2", "2026-03-26"),
     "pycoin": ("0.92718.20260405", "2026-04-05"),
@@ -167,11 +168,14 @@ RELEASE_DATES = {
 def _released(dist_name: str) -> str:
     """Say when this build was published, or where it came from instead.
 
-    btclib resolves from its branch until 2026.9 is on PyPI, and a date would
-    be a claim about a release that has not happened: what the column says for
-    it is the branch and the commit, which is what a reader has to look up to
-    get these rows again. `scripts/03-libraries.py` prints the same
-    column by the same rule, over an overlapping set of packages.
+    A build resolved from a branch has no publish date to report -- a
+    release that has not happened cannot be dated -- so the column names
+    the branch and the commit instead, which is what a reader has to look
+    up to get that build again. Every package this script prices now
+    resolves from a release, so this path exists for a future comparand
+    rather than for a row currently on it. `scripts/03-libraries.py`
+    prints the same column by the same rule, over an overlapping set of
+    packages.
     """
     if not (recorded := RELEASE_DATES.get(dist_name)):
         # the branch and the commit, without the repository the package

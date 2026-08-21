@@ -104,11 +104,6 @@ which machine ran it.
   `coincurve` and `secp256k1` and no others hold the ceiling: `electrum-ecc`
   compiles from an sdist on every platform and what it builds is
   `py3-none`, so it installs on any interpreter.
-- **`btclib` resolves from `main`, not PyPI**, through
-  `[tool.uv.sources]`, and that entry is temporary. These scripts reach
-  into btclib's *dispatch*, which is private and moves between releases.
-  The floor already names `>=2026.9`; deleting the source entry the day
-  that release lands is the whole of the change.
 - **Every timing lives behind `main()`.** Importing a script must run
   its fixtures and its cross-comparand assertions and time nothing —
   that is what makes the suite possible. `02-btclib-vs-btclib.py` and
