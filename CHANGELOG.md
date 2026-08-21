@@ -1593,6 +1593,63 @@ The release notes, which say what a user has to act on, are in
 
 [iss120]: https://github.com/btclib-org/btclib-benchmarks/issues/120
 
+### `.pre-commit-config.yaml` carried more of btclib's tree than two comments
+
+- **Two comment blocks were byte-for-byte copies of btclib's own file**,
+  which is [ISS 127][iss127]: `name-tests-test`'s comment named "the 71
+  test modules" — a count forbidden on its own and wrong here besides —
+  and described `tests/__init__.py` and the `__init__` of
+  `tests/script`/`tests/script_engine`, none of which exist in this
+  tree; vector loading is `scripts/_vectors.py`'s job here, outside
+  `tests/` entirely. `check-added-large-files`' comment named a 9 MB
+  `script_assets_test.json` this repository has never vendored. Both
+  rewritten for what is true here without a count: `tests/vectors_test.py`
+  is the boundary case the first hook's own reasoning describes, met
+  rather than avoided, and `vectors/README.md` — not a threshold — is
+  where a vendored file's provenance already goes regardless of size.
+
+- **A diff of this file against `btclib`'s, `bitcoin-core-rpc`'s and
+  `btclib-secp256k1`'s, followed by checking every comment block
+  identical across two or more of the four against this tree, found
+  several more.** The meta-hooks comment claimed exactly two hooks here
+  install no environment, where `pygrep` and `system`-language hooks
+  install none either. The pinned-rev hook cited "issue #145 one level
+  up", unresolvable in `btclib-org/.github`, whose issues do not reach
+  that number. `typos`' comment cited a BIP39 Italian wordlist this
+  repository does not vendor; measured, what `--force-exclude` actually
+  guards here is a misspelling (`empyt`) already inside the vendored
+  Wycheproof file. The disabled `fix-encoding-pragma` line cited a 3.10
+  floor where `requires-python` reads `>=3.11`. `taplo`'s comment cited
+  mutation-testing configuration under `.github` that this repository
+  has never had; the second file it formats besides `pyproject.toml` is
+  `results/machine.toml`. The `actionlint` hooks' comments cited three
+  workflows sized 3, 6 and 8 KB and a version floor keyed to recognizing
+  `macos-26-intel`, where this tree has four workflows of other sizes
+  and a runner label its matrix actually uses, `ubuntu-24.04-arm`,
+  first recognized at actionlint 1.7.7. `zizmor`'s `--persona=auditor`
+  comment cited a `release.yml` this repository has never had and
+  "unnamed jobs", where the jobs holding today's findings are named;
+  run here, the findings sit in `claude-review.yml` and `test.yml`
+  instead. `pyroma`'s comment claimed the prerelease-tag incident "did
+  so here" in a pull request numbered past this repository's own
+  history; the real, checkable instance of that incident is the
+  `bitcoin-core-rpc` one narrated two hooks above it, which the comment
+  now points to instead of inventing one here. A stated size for
+  `.readthedocs.yaml`, checked and found imprecise, was dropped rather
+  than corrected, for the same reason as the two counts above.
+
+  Method: `git show origin/main:.pre-commit-config.yaml` from each of
+  the three sibling repositories, comment blocks extracted and compared
+  for an exact match against this file's own, each match checked
+  against this tree by running what it named rather than by reading it
+  — `typos`, `zizmor --persona=auditor` and `actionlint`'s runner-label
+  history among the commands actually run. A block identical across
+  repositories is not wrong for being shared — the shared files are
+  identical on purpose — only for asserting something that turns out
+  false of one of the trees sharing it.
+
+[iss127]: https://github.com/btclib-org/btclib-benchmarks/issues/127
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
