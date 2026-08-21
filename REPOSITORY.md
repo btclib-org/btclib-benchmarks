@@ -15,7 +15,7 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 #  "strict":true}
 ```
 
-Three contexts, and the second is an aggregate rather than a matrix cell.
+`test: every job passed` is an aggregate rather than a matrix cell.
 `test.yml`'s `test-passed` job runs last and demands `success` of every
 job the run reports, `!cancelled()` in its `if:` being what makes a red
 cell reach it rather than leave it unreported -- while a cancellation of
