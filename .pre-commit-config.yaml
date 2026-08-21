@@ -273,9 +273,15 @@ repos:
   # is the same arrangement -- the same hook in each repository, there
   # being no shared hook repository to write it in once.
   #
-  # The pattern's first branch asks for a whole `[text](destination)`
-  # whose "[" is not preceded by a backtick, so prose can quote the
-  # refused shape in a code span, as the paragraph above does. The
+  # The pattern's first branch asks for a whole `[text](destination)`,
+  # its link text stepping over a nested image because a badge is
+  # "[![alt](src)](href)" and a link text written "[^]]*" stops at the
+  # "]" closing the alt text -- which left every badge destination
+  # unchecked in this hook's first shape. There is no badge in this
+  # repository's markdown to demonstrate that on; the siblings that have
+  # them are where it was measured. The lookbehind refuses a "["
+  # preceded by a backtick, "!" or "[", so prose can quote the refused
+  # shape in a code span, as the paragraph above does. The
   # second reads a link reference definition, `[label]: page.md`, which
   # carries no "(" -- this file's siblings write many, every one of them
   # an absolute url -- and is anchored at the start of the line, because
@@ -289,7 +295,14 @@ repos:
       - id: local-link-prefix
         name: a local markdown link destination begins with ./
         language: pygrep
-        entry: '(?<!`)(?:\[[^]]*\]\(|^ {0,3}\[[^]]+\]:\s*)(?!\./|#|[A-Za-z][A-Za-z0-9+.-]*:)[^)\s]'
+        # one line, and no literal space in it -- "\x20" is the space the
+        # reference branch allows -- so yamllint reads the value as a
+        # single unbreakable word and its 100-column rule exempts it. A
+        # block scalar rather than a quoted one for the same reason a
+        # folded scalar was rejected: folding joins lines with a space,
+        # which would land inside the regex
+        entry: |-
+          (?<![`!\[])(?:!?\[(?:[^]]|\]\([^)]*\))*\]\(|^\x20{0,3}\[[^]]+\]:\s*)(?!\./|#|[A-Za-z][A-Za-z0-9+.-]*:)[^)\s]
         types: [markdown]
   # what ruff-format is for Python, on the structured files ruff does not
   # read: yaml, and the jsonc that carries a comment. Before yamllint below,
