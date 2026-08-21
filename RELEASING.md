@@ -43,15 +43,3 @@ uv run python scripts/06-silentpayments.py
 Read each header before its numbers: the versions, and where each
 package came from. A row whose backend has silently changed is a
 number that means something other than what its label says.
-
-## The one entry with a date on it
-
-`[tool.uv.sources]` resolves `btclib` from `main` rather than from PyPI,
-because these scripts reach into a dispatch that is private and moves
-between releases. `project.dependencies` already floors it at the
-version that will carry those names.
-
-Delete that entry the day the release lands, re-lock, run every
-benchmark again and render their pages — that is the whole of the
-change, and the run is what says the published wheel really does carry
-what main did.

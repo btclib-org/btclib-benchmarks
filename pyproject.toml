@@ -44,16 +44,15 @@ requires-python = ">=3.11"
 # working tree instead is a different question, and scripts/README.md
 # says how to ask it without making it the default.
 dependencies = [
-    # 2026.9 is not on PyPI yet, and this floor names it deliberately:
-    # what these scripts reach into is btclib's *dispatch*, which is
-    # private and moves between releases -- `grind=` on dsa.sign_ and the
-    # `_libsecp256k1_available` switch are both in main and in no
-    # published wheel. Pinned to the last release the scripts would not
-    # run at all. Until the release lands, [tool.uv.sources] below
-    # resolves this from the branch, which is the reference these rows
-    # are written against; dropping that entry is the whole of what
-    # release day costs here
-    "btclib>=2026.9",
+    # `grind=` on dsa.sign_ and the `_libsecp256k1_available` switch --
+    # btclib's private *dispatch*, which these scripts reach into -- shipped
+    # in 2026.8.21. The floor named "2026.9" before that release existed, a
+    # placeholder for whichever one carried them; the actual release is
+    # numbered lower than the guess, PEP 440 comparing (2026, 8, 21) below
+    # (2026, 9). [tool.uv.sources] stood in for it with the branch, and now
+    # that it is out the source entry is gone and this floor is the whole
+    # of the pin
+    "btclib>=2026.8.21",
     # `ssa.Signer` and the parsed-key entry points these rows call
     # shipped in 0.8.0.3 -- the floor named the release before it
     # existed, [tool.uv.sources] stood in for it below, and now that it
@@ -145,17 +144,6 @@ required-version = ">=0.12.3"
 # the one comparand with no release on any index, pinned to the tag its
 # own pyproject.toml calls 1.0.0
 secp256k1lab = { git = "https://github.com/secp256k1lab/secp256k1lab", tag = "v1.0.0" }
-# temporary, and the one line in this file with a date on it: btclib
-# 2026.9 is what these scripts are written against and is not published
-# yet, so the branch stands in for the release. Delete this entry the day
-# the release lands -- the floor above already names the version, so
-# nothing else here changes, and `uv lock` then resolves it from PyPI
-# like every other comparand.
-# A branch and not a commit on purpose: what this is standing in for is
-# "the next release", which is what main is, and pinning a commit would
-# freeze the reference at whatever main happened to be the day this was
-# written
-btclib = { git = "https://github.com/btclib-org/btclib", branch = "main" }
 
 [tool.setuptools]
 # the scripts are the deliverable, and they are modules rather than a
