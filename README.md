@@ -4,7 +4,7 @@ Timings of [btclib](https://github.com/btclib-org/btclib) and
 [btclib-secp256k1](https://github.com/btclib-org/btclib-secp256k1)
 against the packages they are usefully compared with.
 
-Six benchmarks, each answering a different question:
+The benchmarks, each answering a different question:
 
 - **`02-btclib-vs-btclib.py`** — btclib against btclib: its pure-Python
   arithmetic against the libsecp256k1 that `btclib-secp256k1` bundles and
@@ -17,7 +17,7 @@ Six benchmarks, each answering a different question:
   wrappers of the same C library: `coincurve` and `secp256k1-py` through
   cffi, `electrum-ecc` through ctypes
 - **`05-key-reuse.py`** — what the second signature under the same key
-  costs: the other four time one verification with a fresh key, and a
+  costs: the rest time one verification with a fresh key, and a
   verifier never does
 - **`06-silentpayments.py`** — BIP352, which only `btclib-secp256k1`
   implements of every comparand here: a payment made and found, and what
@@ -62,8 +62,8 @@ and neither builds from source without `pkg-config` and a C toolchain. A
 benchmark that cannot install its comparands measures nothing, so
 `.python-version` pins 3.13 where the rest of this org pins 3.14.
 
-Raise the pin when both publish a `cp314` wheel. Neither of the other two
-wrappers holds any part of it: `btclib-secp256k1` publishes past `cp313`
+Raise the pin when both publish a `cp314` wheel. No other wrapper
+holds any part of it: `btclib-secp256k1` publishes past `cp313`
 already, and `electrum-ecc` has no wheel on PyPI at all — it compiles at
 install time, and what it builds is tagged `py3-none`, the C being
 reached through ctypes rather than linked into an extension.
@@ -74,9 +74,10 @@ unguarded.
 
 ### Installing the comparands needs a build toolchain
 
-Three of them compile a libsecp256k1 of their own: `coincurve` and
-`secp256k1` want `pkg-config`, and `electrum-ecc`, shipped as an sdist
-carrying libsecp256k1 as a submodule, runs its `autogen.sh` — so
+`coincurve`, `secp256k1` and `electrum-ecc` each compile a libsecp256k1
+of their own: the first two want `pkg-config`, and `electrum-ecc`,
+shipped as an sdist carrying libsecp256k1 as a submodule, runs its
+`autogen.sh` — so
 `autoconf`, `automake` and `libtool` have to be there as well. That cost
 is what makes the wrapper rows honest: each times the build that
 `pip install` produced, not whatever system library happened to be
@@ -114,7 +115,7 @@ a person does, on a machine whose state they know.
 
 ### The same C library is not the same binary
 
-`01-libsecp256k1.py` compares four packages that all wrap
+`01-libsecp256k1.py` compares the packages that all wrap
 `bitcoin-core/secp256k1`, which is true of the API and not of what is
 linked: each vendors a revision of its own, and they are not the same
 revision. So that script prints, per row, which one is underneath it and
@@ -124,7 +125,7 @@ stale one is not the comparison the table looks like, and where
 
 ## One run of each, published
 
-`results/` carries what the five scripts printed in one sitting on one
+`results/` carries what the scripts printed in one sitting on one
 machine, each file keeping the header its script printed above the
 numbers — the versions, where each package came from, and the backend
 every comparand resolved to — because that header is what makes a table
@@ -136,6 +137,7 @@ ratio against its fastest row, never against btclib's:
 - [every pure-Python implementation][pure]
 - [the libsecp256k1 wrappers][wrappers]
 - [one key, every signature under it][reuse]
+- [BIP352, the one comparand that implements it][silentpayments]
 
 The machine is named in each file. They are a record of one run, not a
 claim about anyone else's hardware:
@@ -156,6 +158,7 @@ against.
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
+[silentpayments]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
 
 ## Licence
 

@@ -47,7 +47,7 @@ Each script prints what it is about to measure — every package's version
 and where it was imported from — before any number. Read that header:
 a table without it cannot be checked.
 
-**One script at a time, and not in a loop over the six.** Each run
+**One script at a time, and not in a loop over the rest.** Each run
 saturates the machine for minutes, and the next one started immediately
 after measures a hot machine rather than the operation: measured that way,
 the pure-Python columns of `02-btclib-vs-btclib.py` came out up to three
@@ -58,10 +58,11 @@ statistic it is belongs to the page. `01-libsecp256k1.py`,
 `halves_apart`, how far the minima of the halves of a row's rounds sat
 apart, so a wide one is a row whose own estimate moved while it was being
 measured; `spread`, the slowest round less the quickest, is the key a run
-saved before that carries, and it answers a different question. The two
-that save neither, `02-btclib-vs-btclib.py` and `05-key-reuse.py`, time
-each row once and print no such column at all — an absent one is a page
-that did not measure it rather than a row that did not move. Each page
+saved before that carries, and it answers a different question. The
+scripts that save neither, `02-btclib-vs-btclib.py` and
+`05-key-reuse.py`, time each row once and print no such column at
+all — an absent one is a page that did not measure it rather than a
+row that did not move. Each page
 defines the column it prints, in the prose beside its tables. Read it
 before believing an ordering — and note that neither can see the machine
 drifting between one run and the next, which is why the machine is given
@@ -70,10 +71,10 @@ time to cool between scripts rather than watched for it afterwards.
 Drift itself is measured on one page. `01-libsecp256k1.py` times every
 table twice in one invocation, idle in between, publishes the first pass
 and states in its run block how far apart the two passes began, how many
-rows came out quicker the second time, and by how much. It is the cheapest
-of the six, which is why it is the one that pays for a second pass; the
-other five state nothing, and an absent line there is a page that did not
-pay for one rather than a page whose two passes agreed.
+rows came out quicker the second time, and by how much. It is the
+cheapest of the benchmarks, which is why it is the one that pays for a
+second pass; the rest state nothing, and an absent line there is a page
+that did not pay for one rather than a page whose two passes agreed.
 
 Read the count before the magnitudes. Rows moving one way in the great
 majority is a difference between the two passes rather than noise between
@@ -105,8 +106,9 @@ uv run python scripts/render.py 05-key-reuse  # one of them
 uv run python scripts/render.py --check       # name what is stale, write none
 ```
 
-`render.py` puts the three blocks into the page between the markers it
-carries, and touches nothing else in it. So the prose around the numbers
+`render.py` puts the numbers, the packages block and the run block into
+the page between the markers it carries, and touches nothing else in
+it. So the prose around the numbers
 — the headings, the paragraph explaining a column, the analysis — is
 edited and re-published without measuring again, which is the whole
 reason the two are separate: a reworded heading otherwise costs either a
@@ -132,9 +134,9 @@ from, a bare `linux_*` one being a tag no index serves and therefore a
 build made where it is installed.
 
 CI runs it before the suite, on every cell, which is where it earns its
-place: `uv.lock` carries no aarch64 wheel for one comparand, so three of
-the six jobs assert the pages' claims against a library compiled on the
-runner. It records and asserts nothing — an index gaining a wheel changes
+place: `uv.lock` carries no aarch64 wheel for one comparand, so some of
+the matrix jobs assert the pages' claims against a library compiled on
+the runner. It records and asserts nothing — an index gaining a wheel changes
 every line it prints and breaks nothing.
 
 `results/machine.toml` overrides the one line a run may get wrong, which
