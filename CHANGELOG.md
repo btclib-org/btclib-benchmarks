@@ -8,6 +8,26 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### Secret scanning, push protection and Dependabot security updates
+
+- **The three settings are now `enabled`.** All three are free on a
+  public repository and off by default; the alignment audit of 21
+  August 2026 found them off here while every other repository in the
+  organization had them on. Push protection is the one that matters
+  most — it refuses the push rather than reporting a secret that
+  already reached the remote — and this repository has no
+  `detect-secrets` hook standing in the way, unlike `btclib`,
+  `btclib-secp256k1` and `bitcoin-core-rpc`. Enabled with a `PATCH`
+  carrying `security_and_analysis` for the first two and a `PUT` each
+  to `vulnerability-alerts` and `automated-security-fixes` for the
+  third; read back afterwards rather than trusted from the 200,
+  `secret_scanning_non_provider_patterns` and
+  `secret_scanning_validity_checks` — a different, plan-gated pair —
+  confirmed still `disabled`, as the standard says they will stay.
+  `REPOSITORY.md` records the read-back command. No existing
+  secret-scanning alert turned up on enabling. From
+  [btclib-org/.github#5](https://github.com/btclib-org/.github/issues/5).
+
 ### A tag-integrity ruleset enforces signed tags org-wide
 
 - **`tag-integrity`, `target: tag`, `refs/tags/v*`: `required_signatures`,
@@ -143,6 +163,19 @@ The release notes, which say what a user has to act on, are in
   reads skipped on a pull request that has just merged — that run exists
   so the merge cancels what the ref's concurrency group still holds, and
   it arrives at the merge rather than before it.
+
+- **`check-json` now runs**, `.vscode` excluded, which is
+  [.github#11](https://github.com/btclib-org/.github/issues/11). The
+  hook was dropped when every tracked json file was under `.vscode` and
+  jsonc, which a json parser rejects at the first comment; that stopped
+  being the tree when `results/` and `vectors/` gained their own json,
+  and `.claude/settings.json` joined them, none of the three under
+  prettier's `files` allowlist either — so nothing in the gate parsed
+  any of them. `pretty-format-json` is not added beside it:
+  `results/*.json` is `scripts/_results.py`'s own output and
+  `vectors/*.json` is vendored and pinned by sha256, so a formatter
+  would be a second writer of a file that already has one, or would
+  break a digest a byte-for-byte reformat cannot preserve.
 
 ### The benchmarks
 

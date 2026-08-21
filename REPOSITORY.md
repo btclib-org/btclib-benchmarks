@@ -213,6 +213,53 @@ repository's contents, so no job holds a scope wider than commenting on
 a pull request — which is a smaller surface than the other btclib-org
 repositories have, and the reason there is no `publishing` section here.
 
+## Security and analysis
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks --jq '.security_and_analysis'
+# {"dependabot_security_updates":{"status":"enabled"},
+#  "secret_scanning":{"status":"enabled"},
+#  "secret_scanning_non_provider_patterns":{"status":"disabled"},
+#  "secret_scanning_push_protection":{"status":"enabled"},
+#  "secret_scanning_validity_checks":{"status":"disabled"}}
+```
+
+Three settings, all free on a public repository, off by default, and
+now on: secret scanning, its push protection, and Dependabot security
+updates. Push protection is the one that matters most — it refuses the
+push rather than reporting a secret that already reached the remote —
+and this repository has no `detect-secrets` hook standing in the way it
+does on `btclib`, `btclib-secp256k1` and `bitcoin-core-rpc`, so nothing
+local caught a leaked fixture before this did.
+
+`secret_scanning_non_provider_patterns` and
+`secret_scanning_validity_checks` are a different pair: a `PATCH`
+answers them with 200 while leaving them `disabled`, paid Secret
+Protection being what they need. They are not the three above and stay
+off deliberately — read back, not merely patched, which is what the
+command above is for.
+
+Dependabot security updates is a separate `PUT`, to
+`vulnerability-alerts` and then `automated-security-fixes`, neither of
+which `security_and_analysis` itself accepts:
+
+```shell
+gh api -X PUT repos/btclib-org/btclib-benchmarks/vulnerability-alerts
+gh api -X PUT \
+  repos/btclib-org/btclib-benchmarks/automated-security-fixes
+```
+
+Read back with no existing secret-scanning alert on this repository:
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks/secret-scanning/alerts \
+  --jq 'length'
+# 0
+```
+
+From the alignment audit of 21 August 2026,
+[btclib-org/.github#5](https://github.com/btclib-org/.github/issues/5).
+
 ## What is not configured, and why
 
 - **No PyPI publishing, and no release workflow.** Nothing is installed
