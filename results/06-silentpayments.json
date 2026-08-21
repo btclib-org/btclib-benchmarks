@@ -2,7 +2,7 @@
   "schema": 1,
   "benchmark": "06-silentpayments",
   "run": {
-    "when": "2026-08-20T09:34:15+02:00",
+    "when": "2026-08-21T03:06:22+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "the quickest of ten rounds; the halves' gap is beside it",
@@ -26,15 +26,15 @@
       "rows": [
         {
           "label": "create_outputs",
-          "us_per_call": 43.37037500081351,
-          "halves_apart": 0.08431249880231917,
+          "us_per_call": 45.70364999817684,
+          "halves_apart": 0.40069170063361526,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "scan_outputs",
-          "us_per_call": 28.79951669892762,
-          "halves_apart": 0.0004624016582965851,
+          "us_per_call": 30.09665830177255,
+          "halves_apart": 0.05974579835310578,
           "rounds": 10,
           "calls": 10000
         }
@@ -48,22 +48,22 @@
       "rows": [
         {
           "label": "prevouts_summary",
-          "us_per_call": 3.7230125002679415,
-          "halves_apart": 0.0047999987145885825,
+          "us_per_call": 3.8866541988681997,
+          "halves_apart": 0.00989580003079027,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "label",
-          "us_per_call": 7.864941700245253,
-          "halves_apart": 0.002220799797216344,
+          "us_per_call": 8.144629100570455,
+          "halves_apart": 0.09899589931592345,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "labeled_spend_pubkey",
-          "us_per_call": 5.794354199315421,
-          "halves_apart": 0.00020830048015341163,
+          "us_per_call": 6.0368375008692965,
+          "halves_apart": 0.01332079991698265,
           "rounds": 10,
           "calls": 10000
         }

@@ -16,7 +16,7 @@ than between two packages.
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-20 09:34 CEST (07:34 UTC)
+when    : 2026-08-21 03:06 CEST (01:06 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -80,14 +80,14 @@ command : uv run python scripts/06-silentpayments.py
 
 1. a payment, made and found
                            μs/call     vs best   halves
-  scan_outputs               28.80       1.00x     0.00
-  create_outputs             43.37       1.51x     0.08
+  scan_outputs               30.10       1.00x     0.06
+  create_outputs             45.70       1.52x     0.40
 
 2. the recipient's setup, before any scan
                            μs/call     vs best   halves
-  prevouts_summary            3.72       1.00x     0.00
-  labeled_spend_pubkey        5.79       1.56x     0.00
-  label                       7.86       2.11x     0.00
+  prevouts_summary            3.89       1.00x     0.01
+  labeled_spend_pubkey        6.04       1.55x     0.01
+  label                       8.14       2.10x     0.10
 ```
 <!-- output: end -->
 

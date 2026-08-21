@@ -105,6 +105,18 @@ The release notes, which say what a user has to act on, are in
 
 ### The benchmarks
 
+- **btclib-secp256k1 is measured at its 0.8.0.3 release, not the `main`
+  branch commit, and all six pages are refreshed under it.** The floor
+  in `pyproject.toml` named the release before it shipped and
+  `[tool.uv.sources]` stood in for it with the branch; now that it is on
+  PyPI the source entry is gone and the floor is the whole of the pin.
+  `RELEASE_DATES` and `LIBSECP256K1_PINS` in `scripts/01-libsecp256k1.py`
+  move with it, keyed on the release rather than the branch's commit —
+  the submodule underneath is unchanged, still v0.8.0, the same commit
+  v0.8.0, v0.8.0.1 and v0.8.0.2 carried. The run was taken overnight,
+  the machine given the two hours cold that `CONTRIBUTING.md` asks a
+  measurement start from and its usual cooldown between the six scripts.
+
 - **Page 04 times each row in rounds and prints how far its halves sat
   apart**, which is [ISS 111][iss111]. Its two checked signing rows priced
   one check at two sizes a factor of two apart, where the check runs once

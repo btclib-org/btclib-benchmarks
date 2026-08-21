@@ -4,7 +4,7 @@
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-20 09:11 CEST (07:11 UTC)
+when    : 2026-08-21 02:15 CEST (00:15 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
 ```
@@ -118,21 +118,21 @@ method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/02-btclib-vs-btclib.py
 
                              libsecp256k1   pure python     ratio
-bms_sign                             51.4           321      6.2x
-dsa_sign_nogrind_noverify            15.2           160     10.5x
-ssa_sign_noverify                    25.8           320     12.4x
-pubkey_from_prvkey                   10.3           148     14.4x
-taproot_tweak                        15.4           234     15.2x
-generator_mult                       8.14           154     19.0x
-pubkey_parse_33                      3.47          76.8     22.1x
-ellswift_decode                      5.51           133     24.1x
-bms_verify                           24.4           690     28.3x
-ssa_verify                           21.3           662     31.0x
-ssa_sign_held_noverify               9.34           317     33.9x
-dsa_verify                           19.8           672     34.0x
-dsa_recover                          35.8          1300     36.3x
-ellswift_xdh                         18.8           684     36.4x
-dh_shared_secret                     14.3           549     38.5x
+bms_sign                             50.7           322      6.4x
+dsa_sign_nogrind_noverify            15.0           159     10.6x
+ssa_sign_noverify                    25.4           316     12.4x
+pubkey_from_prvkey                   10.1           150     14.9x
+taproot_tweak                        15.2           232     15.3x
+generator_mult                       8.09           139     17.2x
+pubkey_parse_33                      3.40          74.0     21.7x
+ellswift_decode                      5.40           134     24.9x
+bms_verify                           24.1           685     28.5x
+ssa_verify                           21.0           655     31.3x
+ssa_sign_held_noverify               9.26           313     33.8x
+dsa_verify                           19.5           667     34.1x
+ellswift_xdh                         18.6           687     36.9x
+dsa_recover                          35.3          1310     37.1x
+dh_shared_secret                     14.2           547     38.5x
 ```
 <!-- output: end -->
 
