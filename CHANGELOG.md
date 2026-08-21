@@ -1491,6 +1491,18 @@ The release notes, which say what a user has to act on, are in
   sentence was wrong about too. Both now name what actually holds the
   elevated scope instead of counting it.
 
+### The render-check comment still counted five result files
+
+- **`.pre-commit-config.yaml`'s `render-check` hook comment said "five
+  JSON files and five markdown files"**, which is [ISS 122][iss122]: the
+  same sweep that closed [ISS 120][iss120] missed this one, a hook
+  comment rather than a prescriptive doc. `results/` has held six pairs
+  since `06-silentpayments.py` landed. Rephrased to "a JSON file and a
+  markdown file per script under `results/`" rather than bumped to six,
+  so a seventh benchmark doesn't strand the comment again.
+
+[iss122]: https://github.com/btclib-org/btclib-benchmarks/issues/122
+
 [iss120]: https://github.com/btclib-org/btclib-benchmarks/issues/120
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
