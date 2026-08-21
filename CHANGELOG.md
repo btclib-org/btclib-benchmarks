@@ -1865,6 +1865,45 @@ The release notes, which say what a user has to act on, are in
   Both files are still byte-identical to the copies in the repositories
   that share them, which is the property they are kept for.
 
+### `.readthedocs.yaml` was btclib's file, and could not have run here
+
+- **The file is this repository's own now**, which is the data point
+  [btclib-org/.github#26](https://github.com/btclib-org/.github/issues/26)
+  does not cover rather than one of the publishing repositories it
+  compares. It was a byte-for-byte copy of btclib's, and every claim
+  its header made was about btclib: that the build has to install the
+  package so that autodoc can import it, and that a sphinx-only install
+  would publish bare module titles with no API beneath them. Nothing
+  under `docs/source` carries an autodoc directive — `grep -rn
+  automodule docs/source` answers with nothing — and `conf.py` records
+  why in its own docstring: `[tool.setuptools] packages` is empty, this
+  project installs nothing, and the version is read out of
+  `pyproject.toml` because there is no distribution to ask for metadata.
+  There was no import here for that file's `-W` to turn into a build
+  error, which its comment called the point of the whole file.
+
+- **Its build command was one this tree cannot run.** `uv sync --locked
+  --no-default-groups --group docs` installs the project's own
+  dependencies, and here the comparands *are* those dependencies rather
+  than a group of their own — so coincurve and secp256k1 come with them,
+  and neither publishes a cp314 wheel or builds from source without
+  pkg-config and a toolchain. Run on this tree under 3.14 it fails
+  building secp256k1, which is also how the first version of `docs.yml`'s
+  job failed. That job has used `--only-group docs` since, with the
+  reasoning beside it; this file now runs the same command, so the
+  declaration and the gate are one build again instead of a passing gate
+  standing next to a declaration nothing had executed.
+
+- **The header says why the file is here at all.** No read the docs
+  project is subscribed to this repository — `REPOSITORY.md` says so
+  under "No Read the Docs" — so `docs.yml` is the only reader it has,
+  which is exactly why it has to be true now rather than corrected on the
+  day something subscribes, and why the sibling files are the wrong thing
+  to copy from. btclib's sdist clause went with the rest: `MANIFEST.in`
+  here excludes this file by name rather than sweeping the root with a
+  glob, and there is no site served from this root for the clause to be
+  about.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
