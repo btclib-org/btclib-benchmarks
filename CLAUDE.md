@@ -30,17 +30,7 @@ uv run python scripts/artifacts.py          # which artifact each comparand
 
 `CONTRIBUTING.md` carries each of these with its reasoning.
 
-## Model
-
-The default model for this repository is Sonnet. Switch to Opus only
-for architectural decisions with conflicting constraints -- design
-choices with non-obvious trade-offs, refactors with unclear
-dependencies, diagnosis where the symptom does not point to the
-cause. Use `/model opus` for the session, then switch back to Sonnet.
-
-Do not use Fable unless explicitly instructed.
-
-## What this repository is
+## Architecture
 
 The benchmarks, one question each:
 
@@ -88,6 +78,61 @@ Three rules follow, and breaking any of them puts the coupling back:
 
 `results/machine.toml` overrides the one line a process may get wrong,
 which machine ran it.
+
+## The primary checkout is the maintainer's
+
+**Never work in it.** No edit, no `git add`, no commit, no branch switch,
+no rebase, no `git stash`, no `pre-commit run` — the hooks fix files in
+place. It is the maintainer's window on the tree: whatever is open in
+their editor, whatever they have half-staged, and the branch they are
+looking at are theirs, and one working tree has one index and one HEAD to
+lose. Reading it is fine — `git log`, `git show`, `git diff`, `gh`, and a
+`git fetch`, which writes refs and leaves the work tree alone.
+
+**Every session works in a worktree**, its own, from the first edit:
+
+```shell
+WT=<scratchpad>/wt<issue>
+git worktree add -b <branch> "$WT" origin/main
+cd "$WT" && uv sync --locked          # a second venv, about a minute
+# edit, gate and commit here, then
+git push origin HEAD:refs/heads/<branch>
+git worktree remove --force "$WT"     # removing it is part of finishing
+```
+
+The venv is the whole of the cost, and it buys the thing that matters: a
+commit cannot contain work that was never in it. Expect `origin/main` to
+move while you work, so `git fetch && git rebase origin/main` before
+pushing, resolving in favour of *both* sides (their change and yours,
+both CHANGELOG.md bullets).
+
+**Never `git stash` in a worktree either: `refs/stash` is shared.** A
+worktree isolates files, not refs. The stash is a single ref in the
+common `.git`, so `git stash push` pushes onto the same stack every other
+session pops from — and on a clean tree it creates nothing, so the `git
+stash pop` that follows applies and *drops* whatever another session
+shelved. Commit to your own branch instead: a branch is per-worktree in
+the way the stash only looks to be. What is already lost is still in the
+object store — `git fsck --unreachable` names the commit and `git stash
+store <sha>` puts the ref back.
+
+**Do not rewrite `refs/heads/main`, or advance it with work that is not
+yours.** `git update-ref`, or a push carrying another session's commits,
+leaves every working tree's files alone and moves the base under them, so
+their next commit — built on the older copy — reverts what just landed.
+Your own branch is what you push, and the pull request is what moves
+`main`: CONTRIBUTING.md's *Pull requests* has how a branch under review is
+corrected and how it is merged.
+
+## Model
+
+The default model for this repository is Sonnet. Switch to Opus only
+for architectural decisions with conflicting constraints -- design
+choices with non-obvious trade-offs, refactors with unclear
+dependencies, diagnosis where the symptom does not point to the
+cause. Use `/model opus` for the session, then switch back to Sonnet.
+
+Do not use Fable unless explicitly instructed.
 
 ## Non-obvious facts that will otherwise waste a session
 
@@ -156,6 +201,32 @@ which machine ran it.
   not how it got here, negative results included. Markdown at 80 columns.
 - pytest is strict: a warning is an error, an unregistered marker is an
   error, an xfail that passes is a failure.
+
+## What a review of this tree checks that a generic one would not
+
+Each of these is a question, and the document that answers it is named
+because that document, and not this one, is where the rule lives.
+
+- Does the diff **restate a measured number** anywhere but where the
+  benchmark wrote it? Measuring and rendering are two commands on
+  purpose: a benchmark writes the data and `scripts/render.py` writes
+  the page from it, so a figure typed into prose is one no rerun
+  corrects. `README.md` states the split and `CONTRIBUTING.md` both
+  commands.
+- Does a change to a benchmark keep it **comparable to what it is
+  compared against**? A number is only a result beside the run it is
+  read against, and a benchmark edited without its comparands rerun
+  produces a table whose rows no longer answer the same question.
+- Does the diff **state a count** of anything? `CONTRIBUTING.md` says why
+  it must not.
+- If the branch was rebased: do `CHANGELOG.md` and `RELEASE_NOTES.md`
+  say what the branch meant them to say? They are `merge=union`, so
+  they never conflict and a rebase can put back a line the branch had
+  removed.
+- A new or changed workflow: the conventions in `CLAUDE.md`, and
+  `REPOSITORY.md` before any rule or setting is touched. A job added to
+  a workflow without a matching entry in branch protection is a check
+  the branch rule does not know about.
 
 ## Verifying
 
