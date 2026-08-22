@@ -8,6 +8,26 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### dependabot.yml describes the ecosystems this repository has
+
+- **The trailing comment about a `bundler` ecosystem is gone, and the
+  header stops counting.** The file ended with nine lines explaining a
+  `package-ecosystem: bundler` block tracking `btclib.org`'s `Gemfile` —
+  a block that is not in the file, for a `Gemfile` this repository does
+  not have, judged by a `website.yml` that does not exist here either.
+  It is `btclib`'s comment, and there it sits above the block it
+  describes; whoever derived this file from that one correctly dropped
+  the ecosystem and left its paragraph behind. The header compounded it
+  from the other end — "three of the four ecosystems this repo has",
+  over two `package-ecosystem:` blocks — so both ends of the file
+  overstated it, in the same direction, and neither was checked by
+  anything. `grep -c 'package-ecosystem' .github/dependabot.yml` is what
+  answers it now: the header says which ecosystems dependabot can update
+  here and which one it cannot, without a number that can drift from
+  what the file holds. [ISS 132][gh132]
+
+[gh132]: https://github.com/btclib-org/btclib-benchmarks/issues/132
+
 ### REPOSITORY.md stops counting the contexts it prints above
 
 - **"Three contexts, and the second is an aggregate rather than a matrix
