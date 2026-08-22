@@ -8,6 +8,19 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### A TODO is an issue, and ruff refuses one in the tree
+
+- **`FIX` joins `select`.** Work that is not finished belongs where it
+  can be searched, assigned and closed, and not in a comment beside code
+  that reads as finished — a marker in the tree is a backlog nobody
+  queries and nobody closes.
+
+  A ratchet rather than a cleanup: `ruff check --select FIX` found
+  nothing here before the rule was taken, so what it buys is the next
+  one. btclib and btclib-secp256k1 already select it; `TD`, which
+  disciplines the format of a marker this refuses outright, is left out
+  here as it is there.
+
 ### README.md carries the badges this repository can honestly show
 
 - **Badges, where there were none.** A reader deciding whether to trust
