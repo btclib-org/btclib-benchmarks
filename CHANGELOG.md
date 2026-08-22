@@ -33,8 +33,8 @@ The release notes, which say what a user has to act on, are in
   set had here was a `comments-indentation` warning in
   `.github/dependabot.yml`, inside the trailing comment about a
   `bundler` ecosystem this repository does not have; #132 removed that
-  comment for its own reasons a few hours earlier, and took the warning
-  with it. `git ls-files '*.yml' '*.yaml' | xargs uvx yamllint` is clean
+  comment for its own reasons thirteen minutes before this, and took the
+  warning with it. `git ls-files '*.yml' '*.yaml' | xargs uvx yamllint` is clean
   before and after.
 
 ### dependabot.yml describes the ecosystems this repository has
