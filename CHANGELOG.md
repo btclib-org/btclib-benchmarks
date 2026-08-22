@@ -28,6 +28,7 @@ The release notes, which say what a user has to act on, are in
   points at rather than restates. This tree was already clean under it,
   so the hook costs nothing today and exists to keep the next one from
   being written.
+
 ### The uv floor stays under what Dependabot's updater bundles
 
 - **`required-version` was `>=0.12.3`, above the uv Dependabot runs**
