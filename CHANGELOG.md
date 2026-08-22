@@ -8,6 +8,26 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### CONTRIBUTING.md carries every gate's command
+
+- **The documentation build had no command anywhere a contributor
+  reads** (issue #131). *The gates* listed `pytest` and `pre-commit`,
+  and `main` requires three contexts: the third is `docs.yml`'s
+  `sphinx-build -W --keep-going`, which has held pull requests here and
+  was learnable only by having one held. `sphinx-build` appeared nowhere
+  in the file.
+
+  The organization's standard says `CONTRIBUTING.md` carries each CI
+  job's command literally, so a workflow change that does not update it
+  makes the file wrong rather than stale. No workflow changed here --
+  the gap dates from the change that made the documentation build
+  required and updated `REPOSITORY.md` alone -- but it is the same
+  drift, and the same fix: the command is in the file, copied from the
+  workflow, with `-W` explained, since a sphinx warning being an error
+  is the part that surprises. The `gh api ... required_status_checks`
+  command sits beside the three, so which contexts are required stays
+  something the file re-derives rather than asserts.
+
 ### .yamllint.yaml turns the default rule set back on
 
 - **The file listed two rules and extended nothing**

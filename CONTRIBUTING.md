@@ -162,7 +162,23 @@ person runs, not by a gate.
 ```shell
 uv run pytest                      # the suite, gated at 100% coverage
 uv run pre-commit run --all-files  # every lint hook, which is what CI runs
+uv run --locked --only-group docs \
+  sphinx-build -W --keep-going -b html docs/source docs/build/html
 ```
+
+Three commands, and `main` requires the three contexts they are:
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
+  --jq '.required_status_checks.checks[].context'
+```
+
+is what says so, and is where that list is read rather than kept. The
+third is the one a contributor met by having a pull request held: `-W`
+turns a sphinx warning into an error, so a heading level skipped, a
+reference that resolves to nothing, or a page reachable from no toctree
+is a red check and not a note in a log. `--keep-going` is what makes the
+first one not also be the only one reported.
 
 A fixture that is a key or a signature trips detect-secrets, correctly: it
 cannot tell a private key published in a BIP from a credential. Record the
