@@ -341,7 +341,13 @@ explicit-preview-rules = true
 # pyproject.toml puts it. PTH is not here, and that is the one deliberate
 # subtraction: btclib selects it, and the handful of files this project
 # opens -- the vendored vectors, a saved run, a page being rendered -- are
-# reached through `pathlib` already, so the rule would have nothing to say
+# reached through `pathlib` already, so the rule would have nothing to say.
+# FIX is what refuses a TODO or a FIXME in the tree: work that is not
+# finished belongs in an issue, where it is searchable, assignable and
+# closeable, and not in a comment beside code that reads as finished. TD
+# is the other half of that pair and is left out, as it is everywhere in
+# the organization -- it disciplines the format of a marker this refuses
+# outright
 select = [
     "A",
     "B",
@@ -353,6 +359,7 @@ select = [
     "E",
     "ERA",
     "F",
+    "FIX",
     "FURB",
     "I",
     "ISC",
