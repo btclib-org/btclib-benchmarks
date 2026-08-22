@@ -28,6 +28,31 @@ The release notes, which say what a user has to act on, are in
   points at rather than restates. This tree was already clean under it,
   so the hook costs nothing today and exists to keep the next one from
   being written.
+### The uv floor stays under what Dependabot's updater bundles
+
+- **`required-version` was `>=0.12.3`, above the uv Dependabot runs**
+  (btclib-org/.github#27). `dependabot-core` pins its uv-ecosystem
+  updater to a version in `uv/Dockerfile` -- `0.12.1` today -- and runs
+  `uv lock` with exactly that regardless of this key, refusing rather
+  than upgrading itself when the key asks for more. A floor above the
+  pin makes every lock update Dependabot attempts a silent no-op,
+  security ones included. Nothing goes red; the ecosystem is configured
+  and produces nothing.
+
+  The comment beside it was wrong in the way that made the value wrong:
+  it said the floor was "the rev of the uv-lock hook in
+  `.pre-commit-config.yaml`", and that rev is `0.12.5`, newer still, and
+  moves on pre-commit.ci's own schedule under nobody's control here.
+  Anchoring the floor to it guarantees the floor climbs past whatever
+  Dependabot bundles. The three sibling repositories all record the real
+  constraint; this was the copy left behind, and
+  `btclib-secp256k1#299` is where the same comment was corrected there.
+
+  `>=0.11.31`, which is what `btclib` and `bitcoin-core-rpc` carry. The
+  committed lock is `revision = 3`, the same revision those two lock at
+  that same floor, so nothing about this tree needs more. Lowering it
+  does not lower what CI runs: `setup-uv` given no version input reads
+  this key, and a bare minimum specifier makes it install the latest uv.
 
 ### claude-review.yml stops counting the required checks
 
