@@ -135,10 +135,26 @@ dev = [
 ]
 
 [tool.uv]
-# the rev of the uv-lock hook in .pre-commit-config.yaml, so the hook and
-# every other uv command write the lock in one format. setup-uv reads this
-# key when given no version input, so CI needs no second pin
-required-version = ">=0.12.3"
+# the oldest uv Dependabot's own uv-ecosystem updater bundles: it runs
+# `uv lock` with exactly that version regardless of this key, and refuses
+# rather than upgrading itself when the key asks for more, so any higher
+# floor silently stops every lock update it attempts, security ones
+# included. The pin is `FROM ghcr.io/astral-sh/uv:...` in
+# dependabot-core's uv/Dockerfile, and only a human bumping that file
+# moves the ceiling out -- btclib's issue #485 is this same failure
+# caught there first. Not the rev of the uv-lock hook in
+# .pre-commit-config.yaml, which is newer and moves on pre-commit.ci's
+# own schedule: this floor only has to be low enough for Dependabot and
+# to understand the committed lock, which is `revision = 3` and is what
+# the sibling repositories run at this same floor. Declared here it holds
+# for every uv command rather than that one updater alone, so an older uv
+# on a developer's machine says so instead of rewriting the lock in a
+# format the runners then fail to read -- uv is pre-1.0 and changes that
+# format. It also reaches CI without a second pin: setup-uv, given no
+# version input, reads this key, and a bare minimum specifier makes it
+# install the latest uv, so the runners are never behind the floor and
+# there is nothing here to go stale
+required-version = ">=0.11.31"
 
 [tool.uv.sources]
 # the one comparand with no release on any index, pinned to the tag its
