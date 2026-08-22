@@ -8,6 +8,25 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### _provenance.py's example is a comparand that is still pinned
+
+- **`from_a_declared_source`'s docstring named `btclib` as the
+  `[tool.uv.sources]` case, and `btclib` has not been one since #123**
+  [ISS 130][gh130]. That change dropped its source entry when the
+  release it was standing in for came out, so `btclib` now resolves from
+  a plain index requirement like every comparand but one. The sentence
+  stayed mechanically true and stopped being an example of what it
+  illustrates, which is the failure mode a docstring has and a gate does
+  not read.
+
+  `secp256k1lab` is the example now, and it is the only one available:
+  `[tool.uv.sources]` has exactly the one entry, pinned to a tag rather
+  than a branch. `sed -n '/^\[tool.uv.sources\]/,/^\[/p' pyproject.toml`
+  is what says so, in the tree that is asking, and is what would have
+  caught this had the docstring cited it rather than a name.
+
+[gh130]: https://github.com/btclib-org/btclib-benchmarks/issues/130
+
 ### CONTRIBUTING.md carries every gate's command
 
 - **The documentation build had no command anywhere a contributor

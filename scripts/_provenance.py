@@ -170,9 +170,10 @@ def from_a_declared_source(dist_name: str) -> bool:
     Those are the two origins that need no saying, being what a declared
     source gives: pyproject.toml names an index requirement or
     `[tool.uv.sources]` names a revision, and either way the version number
-    beside the name carries it -- btclib's own says which, a release being
-    dated to the day where a build off `main` is not. Printing them is a
-    parenthesis that never varies.
+    beside the name carries it -- `secp256k1lab`'s says which, being the
+    version its own pyproject.toml carries at the tag pinned there where
+    a released comparand's is the one the index published. Printing them
+    is a parenthesis that never varies.
 
     What is not declared is a path installed over the top, and that is
     worth a line of its own. No `PackageNotFoundError` to catch here: this
