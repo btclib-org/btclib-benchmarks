@@ -8,6 +8,41 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### Which of section 7's conventions this suite tests is declared
+
+- **`tests/README.md` declares it, and `conventions_test.py` says the
+  declaration is true** (btclib-org/.github#32). The table is empty and
+  the "Not tested here" line carries the whole of it, which is the answer
+  rather than an omission: this repository ships no importable package,
+  so five of the conventions are properties of a thing that is not here,
+  and the other three — the copyright header, the changelog, the build
+  system — are conventions it does hold and does not check.
+
+  The suite checks a different set, which section 7 does not list because
+  it belongs here alone: that every benchmark imports without timing
+  anything, that every measured package answers the vendored vectors
+  before its numbers are believed, that the provenance report each
+  benchmark prints is true, and that a row claiming a pure-Python path
+  has one. Section 7's closing rule is what those are.
+
+  Four defects in the module were found by being the fourth repository
+  to carry it, each of them invisible in a tree that tests some of the
+  conventions and declares a table with rows in it. The fourth is the
+  coverage gate: a parametrized test over no rows is *skipped*, so its
+  body never runs and the gate reads that as lines nothing exercises.
+  The row checks are comprehensions now, whose assertion runs on an
+  empty table and whose message names every row that failed rather than
+  one; and the two readers the rows would have driven -- the section
+  slicer and the test scan -- are exercised on text and modules written
+  for them, the way `standalone_test.py` in bitcoin-core-rpc drives its
+  own docstring scan for the same reason. The guard asserted
+  the *table* was not empty, where an empty table is a statement; the
+  "Not tested here" list is long enough here to wrap **inside** a name,
+  which `strip()` around each name could not repair; and a retitled
+  heading raised while the module was being imported, so what a reader
+  got was a collection error rather than the test written to name it.
+  The three siblings carry the same code and the first two latently.
+
 ### A Dependabot pull request can be reviewed
 
 - **`allowed_bots` names the one bot that opens pull requests here**

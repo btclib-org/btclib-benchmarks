@@ -9,6 +9,10 @@ include pyproject.toml uv.lock
 include .python-version
 recursive-include scripts *.py
 recursive-include tests *.py
+# tests/README.md too: it declares which of the organization
+# standard's conventions this suite tests, which is prose about what
+# ships beside it rather than repository furniture
+recursive-include tests *.md
 # the vendored vectors and the file that says where they came from, which
 # the benchmarks and the suite both read and check the digests of.
 # WYCHEPROOF_COPYING has no extension and is named in full: it is the
