@@ -8,6 +8,28 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### The review documents are the organization's, not this tree's
+
+- **`REVIEWING.md` is now a section 14 verbatim file**
+  (btclib-org/.github#94). It already differed from its siblings' only in
+  its H1 and in the section whose title says it is not generic, so that
+  section moves to `CLAUDE.md` and the rest becomes one file the
+  organization's suite compares. `.claude/commands/review.md` goes the
+  same way.
+
+- **`CLAUDE.md` and `CONTRIBUTING.md` take the skeleton every repository
+  takes.** This tree's headings were already most of it; what changes is
+  that `## What this repository is` is now `## Architecture`, the
+  primary-checkout rule arrives — it was the one repository of the four
+  aligned ones without it — and the four sections that are the
+  organization's rather than this tree's are byte-identical everywhere.
+
+- **A reference to another repository is `owner/repo#123`**, where this
+  file asked for `ISS 123` and `PR 45`. One repository's spelling in a
+  document every repository now shares is a spelling the others do not
+  use; the rule that replaces it is the one every tracker here already
+  follows.
+
 ### One cell gates a merge, and the sweep moved to a weekly cron
 
 - **The gate is `ubuntu-latest` on the interpreter `.python-version`
