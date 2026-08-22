@@ -8,6 +8,23 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### claude-review.yml stops counting the required checks
+
+- **"The four required checks stay what they are" was a count, and here
+  it was the wrong one** (btclib-org/.github#22). `main` requires three
+  contexts in this repository; the sentence is `btclib`'s, where four is
+  right, and it travelled with the workflow. Neither the count nor its
+  wrongness is checked by anything: `actionlint` reads the workflow,
+  `zizmor` reads it for injection, and a comment beside them reads as
+  authoritative for sitting there.
+
+  What the paragraph is for survives without the number -- that this job
+  is not a required check and must not become one, a model's judgement
+  not being a branch rule -- so it now says the required checks stay what
+  they are and sends the reader to `REPOSITORY.md` and the endpoint for
+  which ones those are. Found by the workflow-comment sweep that issue
+  asks for.
+
 ### _provenance.py's example is a comparand that is still pinned
 
 - **`from_a_declared_source`'s docstring named `btclib` as the
