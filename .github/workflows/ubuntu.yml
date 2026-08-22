@@ -1,0 +1,140 @@
+---
+name: ubuntu
+
+# every ubuntu cell this project is asked about, once a week: both
+# architectures, every interpreter it supports. One of them is the merge
+# gate's own -- `ubuntu-latest` on the interpreter `.python-version`
+# pins, which is the `coverage` job of test.yml -- and the rest are cells
+# no commit waits for.
+#
+# What the gate does not refuse is the point of this workflow rather
+# than a cost it hides. A regression on 3.11, on 3.12 or on aarch64 is
+# not refused before a merge; it sits on main until this runs, at most
+# six days. What it buys is every pull request: the concurrent-job
+# ceiling REPOSITORY.md records belongs to the organization rather than
+# to this repository, so a matrix on each commit here is a slot a
+# reviewer elsewhere waits behind.
+#
+# The gate's own cell is in the matrix below rather than subtracted from
+# it. A hole would have to be re-derived from test.yml before this matrix
+# could be read at all, and re-running one cell a week is cheaper than
+# that (btclib-org/.github#85).
+#
+# What a matrix buys, on a project whose own code is a handful of stdlib
+# helpers, is almost entirely the comparands under them. Several of those
+# are a libsecp256k1 each -- some resolved from a wheel, some compiled on
+# the runner out of an sdist, one reached through ctypes -- so which
+# architecture the interpreter targets decides which artifact the suite
+# then holds to the vendored vectors. That is a different question from
+# the one the helpers answer, and the `Record which artifact` step below
+# is what keeps the two apart in a log. macos.yml is the same argument on
+# the platform whose images resolve differently again.
+
+on:
+  schedule:
+    # the day and the time are section 10's grid in btclib-org/.github
+    # and not this file's to restate. Why this and macos.yml want
+    # separate days is macos.yml's own comment, beside its schedule.
+    # Only the default branch schedules workflows, so on any other branch
+    # this is reachable through the dispatch below alone
+    - cron: "16 4 * * 5"
+  # workflow_dispatch alone, where the sibling repositories also offer
+  # workflow_call: that trigger exists so a release can gate a
+  # publication on a platform, and this project publishes nothing --
+  # `[tool.setuptools] packages = []`, no index, no release.yml, and
+  # REPOSITORY.md says why. A trigger nothing can pull is a trigger
+  # nobody can test; it is one line to add on the day a caller exists.
+  #
+  # So this is the escape hatch and the only one: the matrix on demand,
+  # for a branch that moves a floor in pyproject.toml, the lock under it,
+  # or anything an interpreter version reaches
+  workflow_dispatch:
+
+# least privilege for the GITHUB_TOKEN: everything running in a job
+# (actions, dependencies, the comparands' own build scripts) can read the
+# token, so it must not be able to write to the repository. That last one
+# is not hypothetical here -- three comparands run a configure script and
+# a make from an sdist in this job
+permissions:
+  contents: read
+
+# cancel superseded runs: the subject here is the commit, which a newer
+# one supersedes. Named literally rather than with github.workflow, which
+# in a called workflow is the caller's name -- the convention holds even
+# where nothing calls this yet, so the day something does there is
+# nothing to remember
+concurrency:
+  group: ubuntu-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite-ubuntu:
+    name: Run the suite on ${{ matrix.python }}, ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # every cell to the end: which interpreter fails on which image is
+      # the whole answer, and stopping at the first one hides the rest
+      fail-fast: false
+      matrix:
+        # both images. What differs between them is the architecture the
+        # interpreter and every comparand under it are built for, and
+        # `ubuntu-24.04-arm` is the only place this project is asked
+        # about aarch64 at all
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+        # both ends are set by a comparand rather than chosen. 3.13 is
+        # the ceiling: coincurve and secp256k1 publish no cp314 wheel,
+        # and this project installs its comparands rather than mocking
+        # them. 3.11 is the floor: secp256k1lab declares it, and
+        # scripts/04-pure-python.py imports that unguarded
+        python:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+    # far above what a run of the suite needs, the sdist builds below
+    # included, and it bounds a hung job rather than a slow one: the
+    # queueing this workflow exists to move happens before a job starts
+    # and is not counted here
+    timeout-minutes: 30
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # see the checkout of the coverage job in test.yml
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+
+      # no step installs a C toolchain: see the toolchain comment on the
+      # coverage job of test.yml, which is about both of the images above
+
+      # which of an index's two artifacts each comparand's install
+      # resolved to, and here it is the aarch64 half of that record that
+      # earns the step. `uv.lock` carries no aarch64 wheel for
+      # `secp256k1`, so on `ubuntu-24.04-arm` -- the aarch64 half of the
+      # matrix above -- its libsecp256k1 is compiled on the runner, and
+      # the sdist that builds it downloads a revision four years older
+      # than the one its wheels carry. Those cells therefore hold the
+      # pages' claims against a different binary from the one the pages
+      # are measured on, and the tag this prints is what says so instead
+      # of leaving the next aarch64-only divergence to be blamed on the
+      # wrapper.
+      # Recorded and not asserted, for the reason the same step gives in
+      # test.yml
+      - name: Record which artifact each comparand's install resolved to
+        run: |
+          uv run --locked --no-default-groups --group test \
+            python scripts/artifacts.py
+
+      # --no-cov, against the --cov that `addopts` carries: what a cell
+      # here asks is whether an (image, interpreter) pair passes, and the
+      # coverage job of test.yml is where the 100% ratchet is measured
+      # and gated. Instrumenting these cells as well would measure the
+      # same lines over again for nothing
+      - name: Run pytest
+        run: uv run --locked --no-default-groups --group test pytest --no-cov

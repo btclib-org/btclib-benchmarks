@@ -1,0 +1,137 @@
+---
+name: macos
+
+# the macOS half of the platform sweep, and ubuntu.yml's header is the
+# argument for both: why the gate runs one cell, what a sentinel then
+# owes, and why the ubuntu matrix keeps the gate's own cell rather than
+# cutting it out.
+#
+# What macOS adds is the one platform this project is never otherwise
+# asked about. The gate is ubuntu, and no Windows sentinel exists for the
+# reason REPOSITORY.md records, so these cells are the whole of what says
+# whether the comparands install and answer the vendored vectors anywhere
+# but Linux. They resolve differently here too, and differently again
+# between the two images: `secp256k1` publishes an arm64 wheel and no
+# x86_64 one, so the same version is a download on one image and a
+# compile on the other, and the `Record which artifact` step below is
+# what puts that in the log rather than in a guess.
+#
+# It gates no commit and no merge -- a macOS regression sits on main for
+# at most a week -- and nothing calls it, this project having nothing to
+# publish; see ubuntu.yml's own trigger for that.
+
+on:
+  schedule:
+    # the day and the time are section 10's grid in btclib-org/.github
+    # and not this file's to restate. What is local is why this and
+    # ubuntu.yml want separate days at all: a platform sentinel here is
+    # two images times every interpreter, and two exhaustive matrices in
+    # one morning is the queue this design exists to avoid.
+    # Only the default branch schedules workflows, so on any other branch
+    # this is reachable through the dispatch below alone
+    - cron: "16 4 * * 6"
+  # the escape hatch, and the only trigger besides the schedule: see
+  # ubuntu.yml, where the absence of a workflow_call is argued once
+  workflow_dispatch:
+
+# least privilege for the GITHUB_TOKEN: everything running in a job
+# (actions, dependencies, the comparands' own build scripts) can read the
+# token, so it must not be able to write to the repository
+permissions:
+  contents: read
+
+# cancel superseded runs: the subject here is the commit, which a newer
+# one supersedes. Named literally rather than with github.workflow, which
+# in a called workflow is the caller's name
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite-macos:
+    name: Run the suite on ${{ matrix.python }}, ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # every cell to the end: which interpreter fails on which image is
+      # the whole answer, and stopping at the first one hides the rest
+      fail-fast: false
+      matrix:
+        # both images. One is Apple silicon and the other Intel, and on
+        # this platform the difference is not only which architecture the
+        # interpreter targets: it decides whether `secp256k1` arrives as
+        # a wheel or as a build, which is the divergence the record step
+        # below prints
+        os:
+          - macos-26-intel
+          - macos-latest
+        # every interpreter this project supports, the one the gate runs
+        # included, and the two ends are a comparand's rather than a
+        # choice: see the matrix of ubuntu.yml, where that is written
+        # down once
+        python:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+    # far above what a run of the suite needs, the sdist builds below
+    # included, and it bounds a hung job rather than a slow one: what
+    # this workflow exists to move is queueing, which happens before a
+    # job starts and is not counted here
+    timeout-minutes: 30
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # see the checkout of the coverage job in test.yml
+          persist-credentials: false
+
+      # where the ubuntu images hand this project its C toolchain for
+      # free -- the toolchain comment on the coverage job of test.yml is
+      # that argument -- the macOS ones hand it half. `pkgconf` is in
+      # actions/runner-images' macOS toolset, which is what `secp256k1`
+      # demands before it will build at all; autoconf, automake and
+      # libtool are in no macOS toolset or image manifest, and
+      # `electrum-ecc` needs all three, its sdist carrying libsecp256k1
+      # with a configure.ac and no generated `configure`, so its build
+      # runs autogen.sh. Without them the install fails with the wrapper
+      # named and the missing tool guessed at, which is the failure this
+      # step spends thirty seconds not having.
+      #
+      # What the images carry is theirs to answer rather than this
+      # comment's to keep true, and the answer is one query per tool:
+      #
+      #     gh api -X GET search/code --jq .total_count \
+      #       -f q='autoconf repo:actions/runner-images path:images/macos'
+      #
+      # zero for each of the three, against a hit in both the toolset and
+      # every image manifest when the same query is asked of
+      # `path:images/ubuntu`. Harmless on the day that changes: brew
+      # installing what is already installed is a no-op, not an error
+      - name: Install the autotools the macOS images do not carry
+        run: brew install autoconf automake libtool
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+
+      # which of an index's two artifacts each comparand's install
+      # resolved to, and here it is the Intel image that earns the step:
+      # `uv.lock` carries a `macosx_11_0_arm64` wheel for `secp256k1` and
+      # no x86_64 one, so on `macos-26-intel` its libsecp256k1 is
+      # compiled on the runner out of an sdist whose bundled revision is
+      # years behind the one the wheels carry. Those cells hold the
+      # pages' claims against a different binary from the one the pages
+      # are measured on, and the tag this prints is what says so instead
+      # of leaving the next Intel-only divergence to be blamed on the
+      # wrapper.
+      # Recorded and not asserted, for the reason the same step gives in
+      # test.yml
+      - name: Record which artifact each comparand's install resolved to
+        run: |
+          uv run --locked --no-default-groups --group test \
+            python scripts/artifacts.py
+
+      # --no-cov for the reason ubuntu.yml gives beside its own
+      - name: Run pytest
+        run: uv run --locked --no-default-groups --group test pytest --no-cov
