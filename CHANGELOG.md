@@ -8,6 +8,35 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### .yamllint.yaml turns the default rule set back on
+
+- **The file listed two rules and extended nothing**
+  (btclib-org/.github#68), and yamllint enables no rule a configuration
+  does not name -- so `line-length` and `document-start` were the only
+  rules that had ever run here. Indentation, trailing whitespace,
+  duplicate keys, colon spacing and the rest of the default set were
+  off, while the file's own comment named `comments` and `truthy` as the
+  exceptions and read as though the rest were on.
+
+  Three things kept it out of sight, and each generalizes past this
+  file: the comment said otherwise; the gate stayed green, because
+  removing a check cannot make a conformant tree fail; and the file is
+  shared byte-for-byte across the organization, so the defect travelled
+  by being copied rather than by being written twice. `extends: default`
+  is back, the two exceptions are named under `rules:` as explicit
+  `disable`s where a reader sees them, and the hook's own name follows
+  -- "yamllint (line width and document start)" was an accurate
+  description of the defect, and is now "yamllint (the default rule set,
+  less two)".
+
+  It costs this tree nothing today. The one finding the whole default
+  set had here was a `comments-indentation` warning in
+  `.github/dependabot.yml`, inside the trailing comment about a
+  `bundler` ecosystem this repository does not have; #132 removed that
+  comment for its own reasons a few hours earlier, and took the warning
+  with it. `git ls-files '*.yml' '*.yaml' | xargs uvx yamllint` is clean
+  before and after.
+
 ### dependabot.yml describes the ecosystems this repository has
 
 - **The trailing comment about a `bundler` ecosystem is gone, and the
