@@ -8,6 +8,74 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### One cell gates a merge, and the sweep moved to a weekly cron
+
+- **The gate is `ubuntu-latest` on the interpreter `.python-version`
+  pins, and nothing else** (btclib-org/.github#85). `test.yml` ran two
+  images across three interpreters on every commit, and every one of
+  those cells installs every comparand, some of which compile a
+  libsecp256k1 out of an sdist before a single test runs. The
+  concurrent-job ceiling `REPOSITORY.md` now records belongs to the
+  organization rather than to this repository, so what a reviewer here
+  waited for was mostly a slot, and what a reviewer in a sibling
+  repository waited for was this.
+
+  What it costs is a regression on `3.11`, on `3.12` or on aarch64 no
+  longer being refused before a merge: it sits on `main` until the
+  sentinel for it runs, at most a week. That is the trade the platform
+  workflows of the sibling repositories were already making, applied
+  here for the first time.
+
+- **`ubuntu.yml` and `macos.yml` take the sweep, whole.** Each is two
+  images across every interpreter this project supports, once a week and
+  on demand. `ubuntu.yml`'s matrix keeps the gate's own cell rather than
+  subtracting it: a matrix with a hole in it is one whose shape has to be
+  re-derived from another file before it can be read, and re-running one
+  cell a week is cheaper than that.
+
+  macOS is new here rather than moved, and it is where the comparands
+  resolve differently: `secp256k1` publishes an arm64 wheel and no
+  x86_64 one, so the same version is a download on one image and a
+  compile on the other, which the `Record which artifact` step puts in
+  the log. It costs a `brew install autoconf automake libtool` per cell
+  — `electrum-ecc` publishes no wheel anywhere and its sdist runs
+  libsecp256k1's `autogen.sh`, and the three tools are in the Ubuntu
+  images and in no macOS one.
+
+- **No `windows.yml`, where the sibling repositories have one**, and
+  that is a finding rather than an omission: two comparands cannot be
+  installed on a Windows runner at all, so every cell would be red on
+  `uv sync`. `REPOSITORY.md` carries the evidence and the command that
+  re-derives it.
+
+- **`links.yml`, `codeql.yml` and `latest.yml`.** Each answers a
+  question nothing else here asked. `links` reads the URLs that rot
+  without anybody touching the tree — `vectors/README.md` publishes an
+  upstream URL beside every digest, and the pages under `results/` cite
+  the comparands they measured. `codeql` reads the workflow files, which
+  this change multiplies, and the helpers under `scripts/` that parse
+  vendored vectors and saved runs; GitHub's default setup is
+  `not-configured` on this repository, which is what lets an advanced
+  workflow upload at all. `latest` upgrades every dependency past its
+  floor and runs the suite and the lint gate against the result — and
+  here every dependency is a comparand, so it is the premise of the
+  comparison being checked rather than the tooling: what `pip install`
+  gives a user today, which `--locked` everywhere else deliberately
+  does not measure.
+
+- **No `mutation.yml`.** The subject exists — the helpers the coverage
+  ratchet holds at 100% are exactly where "was it executed" and "would
+  the suite notice" come apart — but the configuration that says what to
+  mutate is not in the tree, and a workflow with no subject is one that
+  can only ever be red or vacuous.
+
+- **Every cron sits at minute `:16`**, this repository's minute on the
+  organization's grid; the day belongs to the workflow and the hour
+  separates a day's second run. Section 10 of `btclib-org/.github` is the
+  calendar, and no schedule comment here restates it. `:00` is left empty
+  on purpose: it is the minute the rest of GitHub also asks for, and a
+  long queue can drop a scheduled run outright.
+
 ### A TODO is an issue, and ruff refuses one in the tree
 
 - **`FIX` joins `select`.** Work that is not finished belongs where it

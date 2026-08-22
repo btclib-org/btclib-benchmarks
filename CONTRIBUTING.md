@@ -142,11 +142,12 @@ same library — so this prints the tags of the wheel each install came
 from, a bare `linux_*` one being a tag no index serves and therefore a
 build made where it is installed.
 
-CI runs it before the suite, on every cell, which is where it earns its
-place: `uv.lock` carries no aarch64 wheel for one comparand, so some of
-the matrix jobs assert the pages' claims against a library compiled on
-the runner. It records and asserts nothing — an index gaining a wheel changes
-every line it prints and breaks nothing.
+CI runs it before every run of the suite, which is where it earns its
+place: `uv.lock` carries no aarch64 wheel for one comparand, so the
+weekly sentinels below assert the pages' claims against a library
+compiled on the runner rather than the one an index serves. It records
+and asserts nothing — an index gaining a wheel changes every line it
+prints and breaks nothing.
 
 `results/machine.toml` overrides the one line a run may get wrong, which
 machine it was taken on. Edit it when that stops being true; every run
@@ -197,6 +198,37 @@ second copy of the same tools to a workflow.
 
 Check exit codes rather than filtered output — `pre-commit run | grep -v
 Passed` hides a failure.
+
+## What waits for a merge, and what answers weekly
+
+A merge waits for one cell of the suite: `ubuntu-latest` on the
+interpreter `.python-version` pins, which is where coverage is measured
+and where the 100% ratchet is enforced. Everything exhaustive is a
+scheduled workflow instead — the images and interpreters the gate does
+not run, the resolution at latest, the links, the analysis. Which
+workflows those are is
+
+```shell
+ls .github/workflows/
+```
+
+rather than a list here, and each one says in its own header what it
+answers for. The day each of them runs is section 10 of the repository
+standard this file opens by naming: one calendar covering every
+repository in the organization is one thing to remember rather than one
+per tree, and a day repeated here is a day that goes stale here.
+
+What that costs is worth stating rather than discovering. A regression
+that only shows on `3.11`, on aarch64 or on macOS is not refused before
+a merge; it sits on `main` until the sentinel for it runs, at most a
+week (btclib-org/.github#85). What it buys is every review: the
+concurrent-job ceiling `REPOSITORY.md` records belongs to the
+organization rather than to this repository, and a matrix on each commit
+here is a slot a reviewer elsewhere waits behind.
+
+What a cron runs is the suite, the lint gate, the link check and the
+code analysis, and never a benchmark — the section below is where that
+rule and its reason live.
 
 ## What the suite can and cannot check
 

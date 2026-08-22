@@ -22,8 +22,8 @@ cell reach it rather than leave it unreported -- while a cancellation of
 the run itself, superseded by a newer push under the workflow's
 concurrency group, skips the gate instead of reaching it, a skip
 satisfying this required check the same as a pass. Naming the aggregate
-means the matrix can gain or lose a cell without anyone editing branch
-protection; naming the cells would mean this list going stale the first
+means `test.yml` can gain or lose a job without anyone editing branch
+protection; naming its jobs would mean this list going stale the first
 time it changed.
 
 What it judges is therefore not what `needs` waits for, and the two sets
@@ -302,6 +302,51 @@ gh api repos/btclib-org/btclib-benchmarks/secret-scanning/alerts \
 From the alignment audit of 21 August 2026,
 [btclib-org/.github#5](https://github.com/btclib-org/.github/issues/5).
 
+## Code scanning, and which setup performs it
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks/code-scanning/default-setup \
+  --jq '{state, languages, query_suite}'
+# {"languages":["actions","python"],"query_suite":"default",
+#  "state":"not-configured"}
+```
+
+`state: not-configured` is what has to stay true, and it is the one
+setting `codeql.yml` depends on: default setup and an advanced workflow
+are exclusive, and the collision is at the upload rather than at the
+start — a run would build its database, be refused the SARIF, and report
+failure. The `languages` and `query_suite` fields are what the setting
+*would* analyse if it were turned on, which is why `codeql.yml` matches
+them: turning it on and off again then changes nothing but which file
+the configuration is read from.
+
+The alerts, once there are runs to produce them:
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks/code-scanning/alerts \
+  --jq 'length'
+```
+
+## The concurrent-job ceiling
+
+```shell
+gh api orgs/btclib-org --jq '{plan: .plan.name}'
+# {"plan":"free"}
+```
+
+Twenty concurrent jobs is what GitHub's documented usage limits give
+that plan, and they belong to the organization rather than to this
+repository: every repository in it draws on the same twenty. So a matrix
+on every commit here is a slot a reviewer in a sibling repository waits
+behind, which is the whole argument for a merge that waits on one cell
+and a sweep that runs weekly
+([btclib-org/.github#85](https://github.com/btclib-org/.github/issues/85)).
+Every workflow and document that spends against the ceiling points here
+rather than repeating the number, `claude-review.yml` excepted while
+btclib-org/.github#91 is open: a pull request that edits that file is
+refused a review by it, so its copy of the number cannot be taken out
+here.
+
 ## What is not configured, and why
 
 - **No PyPI publishing, and no release workflow.** Nothing is installed
@@ -312,9 +357,36 @@ From the alignment audit of 21 August 2026,
 - **No Read the Docs.** `.readthedocs.yaml` is present and the `docs`
   group builds, so the sphinx gate is runnable, but no service is
   subscribed to this repository.
-- **No CodeQL.** It analyses a library's own code for vulnerabilities;
-  what is here is scripts that time other people's packages, and
-  the packages they time are analysed where they live.
-- **No scheduled workflow.** Nothing here should run without someone
-  asking: a benchmark on a shared runner is a number produced under
-  conditions nobody recorded.
+- **No benchmark on a schedule.** Several workflows here run weekly and
+  none of them times anything; `CONTRIBUTING.md`'s "What the suite can
+  and cannot check" is where that rule and its reason are written down.
+- **No `windows.yml`, where the other repositories have one.** Two
+  comparands cannot be installed on a Windows runner at all, so every
+  cell of that matrix would be red on `uv sync` and the workflow could
+  never go green. `secp256k1` publishes no Windows wheel, and its sdist
+  refuses outright without `pkg-config` before running libsecp256k1's
+  `configure`, an autotools shell script; `electrum-ecc` publishes no
+  wheel anywhere and skips compiling libsecp256k1 on `win32`, so it
+  installs and then fails to import for want of the library it wraps.
+  The two halves of the first, re-derived:
+
+  ```shell
+  curl -s https://pypi.org/pypi/secp256k1/json |
+    jq '[.urls[].filename | select(test("win"))] | length'
+  # 0
+  gh api -X GET search/code --jq .total_count \
+    -f q='pkgconf repo:actions/runner-images path:images/windows'
+  # 0
+  ```
+
+  The day both answers stop being zero, this workflow is `macos.yml`
+  with the images and the schedule swapped.
+- **No `mutation.yml`, and no mutation configuration.** The subject
+  exists — the helper modules under `scripts/` are what the 100%
+  ratchet in `[tool.coverage.report]` holds, and mutation testing is
+  exactly the question coverage does not answer of them — but a
+  workflow whose configuration is not in the tree is a workflow with
+  nothing to run. Adding the `cosmic-ray` dependency group and the
+  scope, the test command and the operator filters that go with it is a
+  decision about what to mutate, made with the survivor list in front of
+  whoever makes it.

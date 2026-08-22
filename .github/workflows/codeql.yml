@@ -1,0 +1,159 @@
+---
+name: codeql
+
+# Code scanning, as a file rather than as a repository setting. GitHub's
+# default setup analyses a language set at a query suite from a workflow
+# it generates and does not show; here the languages, the suite, the
+# schedule and the action versions are read the way the rest of CI is
+# read, with every action pinned to a commit SHA.
+#
+# Nothing has to be turned off first, which is the one thing to check
+# before adding this file to a repository -- default setup and an
+# advanced workflow are exclusive, and the collision is at the upload
+# rather than at the start, so a run would build its database and then be
+# refused. Asked here:
+#
+#     gh api repos/btclib-org/btclib-benchmarks/code-scanning/default-setup
+#
+# it answers `state: not-configured`, and REPOSITORY.md is where that is
+# recorded with the rest of what is set outside the tree. Turning the
+# setting on is what would make every analysis here red.
+#
+# What there is to analyse, on a repository that ships no importable
+# package, is two things and they are not the same size. The workflow
+# files are the larger one: this tree runs third-party build scripts on a
+# runner and has just grown a set of scheduled workflows, and an
+# expression interpolated into a `run:` block is the finding the actions
+# queries make. The Python is the helpers under `scripts/` -- they parse
+# vendored JSON and CSV, a saved run and a rendered page, which is the
+# shape the python queries are about.
+
+on:
+  # main and the schedule below, and no pull_request trigger: the
+  # concurrent-job ceiling REPOSITORY.md records is the organization's
+  # and not this repository's, and the point of btclib-org/.github#85 is
+  # that a merge waits for one cell. So the analysis lands on the merge
+  # commit rather than before it, and it is not a required check --
+  # REPOSITORY.md's "Required checks on main" is where that list lives.
+  # What still reads a branch before it merges is lint.yml: zizmor is a
+  # pre-commit hook and reads exactly these files for an injected
+  # expression, which is the finding this workflow would otherwise be
+  # alone in making. What a merge defers is the rest, for the time
+  # between that merge and the next run, which for main is the merge
+  # itself
+  push:
+    # a merge creates a commit that no pull request analysed, and an
+    # alert is attributed to a branch: the default branch is where code
+    # scanning reports what is open, so without a run here there is no
+    # baseline
+    branches: [main]
+  schedule:
+    # a weekly run is what a push trigger cannot replace: a query pack
+    # updates without anybody touching the repository, so the analysis of
+    # an unchanged tree is a different answer this week than last.
+    # The day and the time are section 10's grid in btclib-org/.github
+    # and not this file's to restate.
+    # Only the default branch schedules workflows, so on any other branch
+    # this is reachable through the dispatch below alone
+    - cron: "16 4 * * 2"
+  # the escape hatch, and with no pull_request trigger above it is the
+  # only way to analyse a branch before it is merged: worth reaching for
+  # on one that touches a workflow, which is what the actions queries
+  # read
+  workflow_dispatch:
+
+# least privilege for the GITHUB_TOKEN, which everything running in a job
+# can read. contents: read is the whole of what the workflow needs; the
+# job below declares the two it needs on top of that, so the write is
+# held by one job rather than by the file
+permissions:
+  contents: read
+
+# cancel superseded runs on the same branch. Named literally rather than
+# through github.workflow, as everywhere else here: in a called workflow
+# that expression is the caller's name
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    # the language is in the name because it is what a failure is about:
+    # one job per language, so a red check names which analysis broke
+    # instead of a matrix cell to open. It also lets the two run at once
+    name: Analyze ${{ matrix.language }} with CodeQL
+    # no draft condition, where every job of test.yml carries one: this
+    # workflow does not run on a pull request at all, so there is no
+    # draft to skip and `github.event.pull_request.draft` is an
+    # expression that could only read empty here
+    runs-on: ubuntu-latest
+    permissions:
+      # where the alerts are uploaded to; the one write in this workflow
+      security-events: write
+      contents: read
+      # what the `actions` analysis reads: the workflow files are its
+      # source, and analyze queries the run's own metadata
+      actions: read
+    strategy:
+      # so one language's failure does not hide the other's result
+      fail-fast: false
+      matrix:
+        # what CodeQL supports of what is here. The tree is Python,
+        # workflows, markdown, toml and vendored test vectors, and the
+        # first two of those are the ones it has queries for
+        language: [actions, python]
+    # far above what an analysis of this tree needs, the same way the
+    # gate bounds the suite: what it buys is that a hung job releases the
+    # runner rather than holding it for six hours.
+    # `gh run list --workflow=codeql.yml --limit 1` is what re-measures it
+    timeout-minutes: 30
+    steps:
+      # every action is pinned to a commit SHA, the tag in the comment: a
+      # tag, let alone a branch, is a name its owner can move, and these
+      # run in the one job here that can write security events
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # see the checkout of the coverage job in test.yml
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
+        with:
+          languages: ${{ matrix.language }}
+          # `none` is the only mode either language has: neither is
+          # compiled, so the database is built from the sources without a
+          # build. Said out loud rather than left to be inferred, since
+          # the value is what an autobuild step would otherwise be needed
+          # for. Nothing is installed first either, and here that is a
+          # decision rather than an omission: this project's declared
+          # dependencies are the comparands it measures, three of which
+          # compile a libsecp256k1 on the runner, and none of which
+          # this analysis is about -- an alert against a comparand
+          # belongs to the project that publishes it
+          build-mode: none
+          # `queries` is deliberately unset, which is the default query
+          # suite: the init action has no query_suite input, its
+          # `queries` input adding queries to the default suite instead
+          # (`security-extended` being the widening default setup calls
+          # `extended`). Passing nothing is therefore the analysis the
+          # setting would have performed, and the note is here because
+          # "no input" is otherwise indistinguishable from "nobody
+          # decided"
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
+        with:
+          # what keeps the two languages' results apart in the same
+          # commit's analysis: without a distinct category the second
+          # upload replaces the first rather than adding to it
+          category: /language:${{ matrix.language }}
+
+  # no aggregate job, where test.yml has one and the sibling repositories
+  # have one here too. An aggregate exists to give branch protection a
+  # single context to require in place of a matrix cell whose name
+  # changes with the matrix, and nothing requires this workflow -- but
+  # nothing requires the siblings' aggregates either, so that alone does
+  # not tell the two apart. btclib-org/.github#90 asks the organization
+  # to rule on which reading of section 10 is the standard's; this file
+  # follows whichever answer that issue reaches

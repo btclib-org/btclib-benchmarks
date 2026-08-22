@@ -4,7 +4,17 @@ name: test
 # what is tested here is the scripts' helpers -- the backend probes, the
 # table formatting -- and never a timing: a measurement is the one thing
 # a test cannot assert, and no workflow in this repository runs a
-# benchmark. tests/README.md says which helper each test judges
+# benchmark. tests/README.md says which helper each test judges.
+#
+# One cell is what a merge waits for: `ubuntu-latest` on the interpreter
+# `.python-version` pins. The images and the interpreters it does not run
+# are ubuntu.yml's and macos.yml's, and ubuntu.yml's matrix keeps this
+# cell rather than subtracting it -- a matrix with the gate's cell cut
+# out of it is one whose shape has to be re-derived from this file before
+# it can be read. What the trade costs is stated once, in ubuntu.yml's
+# header: a regression on 3.11, on 3.12 or on aarch64 is not refused
+# before a merge and sits on main until the sentinel for it runs
+# (btclib-org/.github#85)
 on:
   push:
     branches: [main]
@@ -43,60 +53,68 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  suite:
-    name: Run the suite on ${{ matrix.python }}, ${{ matrix.os }}
+  coverage:
+    name: Run the suite, gated at 100% coverage
     # a draft pull request is work in progress and spends no runner here
     # either. A closed one spends none either -- the trigger above takes
     # the closed event only to supersede a run this pull request's own
     # group is still holding
     if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        # both ends are set by a comparand rather than chosen. 3.13 is
-        # the ceiling: coincurve and secp256k1 publish no cp314 wheel,
-        # and this project installs its comparands rather than mocking
-        # them. 3.11 is the floor: secp256k1lab declares it, and
-        # scripts/04-pure-python.py imports that unguarded
-        os: [ubuntu-latest, ubuntu-24.04-arm]
-        python: ["3.11", "3.12", "3.13"]
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # checkout leaves the token in .git/config by default, where
+          # anything running afterwards can read it, and any step
+          # archiving the workspace would carry it out of the job. No job
+          # in any workflow here performs an authenticated git operation,
+          # so nothing needs it to stay.
+          # This is the checkout every other workflow here cites: the one
+          # on the gate, which runs on every pull request
           persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
-          python-version: ${{ matrix.python }}
+          # no python-version, where the sentinels pass a matrix cell:
+          # `.python-version` is the one place the reference interpreter
+          # is named and uv reads it, so a number written here would be a
+          # second copy of it. That file also carries why it says 3.13
+          # where the rest of the organization says 3.14 -- a comparand's
+          # wheels rather than a preference -- and the range the
+          # sentinels sweep has its own ends for the same kind of reason
 
-      # three of the wrapper comparands compile a libsecp256k1 of their
-      # own here and want a toolchain to do it: secp256k1 ships no wheel
-      # at all and coincurve none for every cell, both wanting
-      # pkg-config, and electrum-ecc ships only an sdist and runs
+      # one comparand builds a libsecp256k1 of its own on this cell:
+      # `electrum-ecc` publishes no wheel anywhere, so its sdist runs
       # libsecp256k1's autogen.sh, which is what autoconf, automake and
-      # libtool are for. No step asks apt for any of the four: both
-      # `ubuntu-latest` and `ubuntu-24.04-arm` carry all of them already
-      # -- actions/runner-images' own manifests for Ubuntu24.04 and its
+      # libtool are for. The other wrappers resolve to wheels here and
+      # build on the sentinels' other images instead -- `secp256k1`
+      # wants pkg-config when it does, and ubuntu.yml and macos.yml
+      # each name the cell where that happens. Four
+      # tools, and no step asks apt for any of them: both `ubuntu-latest`
+      # and `ubuntu-24.04-arm` carry all four already --
+      # actions/runner-images' own manifests for Ubuntu24.04 and its
       # arm64 image list pkg-config 1.8.1, autoconf 2.71, automake 1.16.5
       # and libtool 2.4.7 among the preinstalled software. ISS 96 is the
       # thirty minutes and a red gate one hung `apt-get update` cost on a
-      # step that was asking for what the image already had
+      # step that was asking for what the image already had.
+      # This is the toolchain comment ubuntu.yml cites. macos.yml carries
+      # one of its own instead of citing this: the macOS images list
+      # pkgconf and none of the three autotools, so what is free here is
+      # a step there
 
-      # which of an index's two artifacts each comparand's install resolved
-      # to, printed before the assertions that are about to be made against
-      # it. `uv.lock` carries no aarch64 wheel for `secp256k1`, so on
-      # `ubuntu-24.04-arm` -- three of these six cells -- its libsecp256k1
-      # is compiled on the runner, and the sdist that builds it downloads a
-      # revision four years older than the one its wheels carry. Those
-      # three jobs therefore assert the pages' claims against a different
-      # binary from the one the pages are measured on, and the tag this
-      # prints is what says so instead of leaving the next aarch64-only
-      # divergence to be blamed on the wrapper.
+      # which of an index's two artifacts each comparand's install
+      # resolved to, printed before the assertions that are about to be
+      # made against it. On this one cell every comparand that publishes
+      # a wheel at all publishes one, so what the record buys is the day
+      # that stops being true: an index dropping a cell is a different
+      # binary under an unchanged version, and this is what says so
+      # instead of leaving the divergence to be blamed on the wrapper.
+      # The cells where it is already not true are the sentinels', and
+      # each of those files names the divergence its own images print.
       #
       # Recorded and not asserted, which is the line this stays on the
       # right side of: it reads installed metadata and times nothing, so it
@@ -107,6 +125,11 @@ jobs:
           uv run --locked --no-default-groups --group test \
             python scripts/artifacts.py
 
+      # --cov is not repeated here: `addopts` in pyproject.toml carries
+      # it, and `fail_under = 100` is what makes this job the gate rather
+      # than one more run of the suite. The sentinels pass `--no-cov`
+      # against that same `addopts`, this being the one cell where the
+      # ratchet is measured
       - name: Run pytest
         run: uv run --locked --no-default-groups --group test pytest
 
@@ -118,7 +141,7 @@ jobs:
     # jobs. So the rule the gate depends on is that whatever it can see it
     # has to wait for -- a job added outside this list is judged without
     # being waited for, and turns the gate red until it is added here
-    needs: [suite]
+    needs: [coverage]
     # the closed one for the same reason, added at the trigger above:
     # a closed pull request skips uniformly rather than tripping this
     # gate over a job it deliberately never ran
