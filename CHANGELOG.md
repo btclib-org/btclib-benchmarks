@@ -8,6 +8,24 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### README.md carries the badges this repository can honestly show
+
+- **Badges, where there were none.** A reader deciding whether to trust
+  a benchmark had nothing on the page to decide with: not whether the
+  suite passes, not whether the lint gate does, not whether the
+  documentation builds.
+
+  Shorter than a sibling library's block, and by subtraction rather than
+  by omission — the comment beside it names each one that is missing
+  and why. Nothing here is published to an index and nothing here is served
+  by Read the Docs, so the PyPI version, the download count, the
+  development status, the supported interpreters and the documentation
+  build have no state to report. A badge that cannot turn red is the
+  thing that block is for keeping out.
+
+  Every image and every link target was fetched before landing, and each
+  answered 200.
+
 ### Which of section 7's conventions this suite tests is declared
 
 - **`tests/README.md` declares it, and `conventions_test.py` says the

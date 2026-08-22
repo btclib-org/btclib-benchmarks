@@ -1,5 +1,28 @@
 # btclib-benchmarks
 
+<!-- The badges are what the reader decides with: the first line says
+whether it can be used, the second whether it works. A badge that reports
+no state -- "we use ruff", "we use uv" -- reports a choice instead, and
+those are in CONTRIBUTING.md, beside the prose that says how the choice
+is enforced. One badge per line keeps a change to one line and every line
+inside MD013.
+This block is shorter than a sibling library's, and by subtraction rather
+than by omission: nothing here is published to an index and nothing here
+is served by Read the Docs, so the PyPI version, the download count, the
+development status, the supported interpreters and the documentation
+build have no state to report. What is left is what this repository
+actually has. -->
+[![license](https://img.shields.io/github/license/btclib-org/btclib-benchmarks.svg)](https://github.com/btclib-org/btclib-benchmarks/blob/main/LICENSE)
+
+[![test workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml)
+[![lint workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml)
+[![docs workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/btclib-org/btclib-benchmarks/main.svg)](https://results.pre-commit.ci/latest/github/btclib-org/btclib-benchmarks/main)
+
+[![GitHub repository: btclib-org/btclib-benchmarks](https://img.shields.io/badge/GitHub-btclib--org%2Fbtclib--benchmarks-181717?logo=github)](https://github.com/btclib-org/btclib-benchmarks/)
+
+---
+
 Timings of [btclib](https://github.com/btclib-org/btclib) and
 [btclib-secp256k1](https://github.com/btclib-org/btclib-secp256k1)
 against the packages they are usefully compared with.
