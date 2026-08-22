@@ -166,15 +166,15 @@ uv run --locked --only-group docs \
   sphinx-build -W --keep-going -b html docs/source docs/build/html
 ```
 
-Three commands, and `main` requires the three contexts they are:
+One command per context `main` requires, which is
 
 ```shell
 gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
   --jq '.required_status_checks.checks[].context'
 ```
 
-is what says so, and is where that list is read rather than kept. The
-third is the one a contributor met by having a pull request held: `-W`
+to read rather than a list to keep here. The documentation build is the
+one a contributor used to meet by having a pull request held: `-W`
 turns a sphinx warning into an error, so a heading level skipped, a
 reference that resolves to nothing, or a page reachable from no toctree
 is a red check and not a note in a log. `--keep-going` is what makes the

@@ -11,7 +11,7 @@ The release notes, which say what a user has to act on, are in
 ### CONTRIBUTING.md carries every gate's command
 
 - **The documentation build had no command anywhere a contributor
-  reads** (issue #131). *The gates* listed `pytest` and `pre-commit`,
+  reads** [ISS 131][gh131]. *The gates* listed `pytest` and `pre-commit`,
   and `main` requires three contexts: the third is `docs.yml`'s
   `sphinx-build -W --keep-going`, which has held pull requests here and
   was learnable only by having one held. `sphinx-build` appeared nowhere
@@ -25,8 +25,10 @@ The release notes, which say what a user has to act on, are in
   drift, and the same fix: the command is in the file, copied from the
   workflow, with `-W` explained, since a sphinx warning being an error
   is the part that surprises. The `gh api ... required_status_checks`
-  command sits beside the three, so which contexts are required stays
-  something the file re-derives rather than asserts.
+  command sits with them, so which contexts are required stays something
+  the file re-derives rather than asserts.
+
+[gh131]: https://github.com/btclib-org/btclib-benchmarks/issues/131
 
 ### .yamllint.yaml turns the default rule set back on
 
