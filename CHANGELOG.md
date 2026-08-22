@@ -8,6 +8,27 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### A markdown line does not end inside a word
+
+- **A `pygrep` hook refuses a line that ends at a word's own hyphen**
+  (btclib-org/.github#71). Markdown joins two source lines with a space,
+  so a word wrapped there renders with the hyphen and then a space
+  inside it -- "read-any-" and "number-of-times" on consecutive lines
+  come out as "read-any- number-of-times". The source looks correct,
+  which is why reading a diff does not find one, and nothing here read
+  the output: markdownlint has no rule for it, the width rules read a
+  line rather than what two lines become, and `sphinx-build -W` is not
+  asked whether a token means anything.
+
+  It is a local hook for the reason `local-link-prefix` beside it is
+  one: nothing off the shelf does it and the pattern is one line. The
+  rule and what the hook cannot see -- a code span whose content breaks
+  at a `/` or a `.` renders the same way and has no hyphen to match --
+  are in section 4 of the organization standard, which the comment
+  points at rather than restates. This tree was already clean under it,
+  so the hook costs nothing today and exists to keep the next one from
+  being written.
+
 ### claude-review.yml stops counting the required checks
 
 - **"The four required checks stay what they are" was a count, and here
