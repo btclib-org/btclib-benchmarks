@@ -393,18 +393,23 @@ fail_under = 100.0
 strict = true
 show_column_numbers = true
 show_error_codes = true
+# the organization's list, section 6 of btclib-org/.github, the same in
+# every repository that runs mypy (btclib-org/.github#165). A code that
+# finds nothing here stays: it is a ratchet for the next line it would
+# catch, not a cleanup of this one
 enable_error_code = [
     "deprecated",
     "exhaustive-match",
+    "explicit-override",
     "ignore-without-code",
     "mutable-override",
-    "narrowed-type-not-subtype",
     "possibly-undefined",
     "redundant-expr",
     "redundant-self",
     "truthy-bool",
     "truthy-iterable",
     "unimported-reveal",
+    "unused-awaitable",
 ]
 warn_unreachable = true
 # the oldest interpreter this project supports, which `requires-python`
