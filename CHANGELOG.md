@@ -8,6 +8,28 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### The shared configuration files are the organization's copies
+
+- **`LICENSE` carries the `MIT License` title and no year range**
+  (btclib-org/.github#94). `COPYRIGHT` names the holder without a year,
+  so a range here is the line the two would disagree over the first
+  January nobody remembered.
+- **`CODE_OF_CONDUCT.md` is the copy GitHub falls back to** for a
+  repository of the organization carrying none of its own. One that does
+  carry it carries the same one, or the organization advertises two
+  policies.
+- **`document-start` is an error rather than the default set's warning**
+  (btclib-org/.github#96). The hook runs plain `yamllint`, with no
+  `--strict`, and a warning exits 0 there: at the inherited level the
+  rule reported the convention and gated nothing.
+
+  ```shell
+  git ls-files '*.yml' '*.yaml' \
+    | xargs -I{} sh -c 'head -1 {} | grep -q "^---" || echo {}'
+  ```
+
+  answers with nothing here, so raising it costs this tree no edit.
+
 ### AUTHORS.md points at this repository's contributors
 
 - **The contributor graph named is this repository's**, where it was
