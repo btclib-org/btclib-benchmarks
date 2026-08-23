@@ -138,12 +138,17 @@ pull_requests = "https://github.com/btclib-org/btclib-benchmarks/pulls"
 [dependency-groups]
 test = ["coverage", "pytest", "pytest-cov", "pytest-randomly"]
 lint = ["mypy", "pre-commit", "ruff>=0.16"]
-build = ["check-sdist", "pyroma", "twine"]
+# what inspects the distribution before it would be published -- and here
+# nothing is published, so this is a lint of the packaging. Named `check`,
+# not `build`, the name section 1 of btclib-org/.github keeps for the tools
+# that build a distribution, a frontend and the wheel repairers, which
+# btclib-secp256k1 holds under it beside a `check` like this one
+check = ["check-sdist", "pyroma", "twine"]
 docs = ["myst-parser", "sphinx", "sphinx_rtd_theme"]
 dev = [
     { include-group = "test" },
     { include-group = "lint" },
-    { include-group = "build" },
+    { include-group = "check" },
     { include-group = "docs" },
 ]
 

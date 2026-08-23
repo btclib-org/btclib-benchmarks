@@ -351,7 +351,7 @@ here.
 
 - **No PyPI publishing, and no release workflow.** Nothing is installed
   from this project: `[tool.uv.build-backend] module-name = []`, and the
-  scripts are run from a checkout. The `build` dependency group exists so
+  scripts are run from a checkout. The `check` dependency group exists so
   that `check-sdist`, `pyroma` and `twine` can still inspect the
   distribution and its metadata, which is a lint of the packaging rather
   than a step toward a release.
