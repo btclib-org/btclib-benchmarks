@@ -8,6 +8,91 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### The build backend is uv_build, and there is no include list
+
+- **`[build-system]` asks for `uv_build>=0.12.5,<0.13`**, the pin btclib
+  carries and the reason with it: below the minor the sdist holds this
+  file verbatim and no `pyproject.toml.orig` beside it, which is a second
+  answer to what the sdist carries, and the ceiling is the next minor,
+  which is where uv's versioning policy puts a breaking change. That a
+  pure-Python project of this organization uses this backend is
+  btclib-org/.github#118. The `setuptools>=77` floor went with the
+  backend and so did the comment under it: 77 is the setuptools release
+  that learned PEP 639, and with no setuptools in the build it is a bound
+  on nothing.
+- **`MANIFEST.in` is deleted, and what the sdist carries is glob patterns
+  in `[tool.uv.build-backend]`.** The backend reads no include list, so a
+  file that looks like one governs nothing. Built both ways, the two
+  archives hold the same files:
+
+  ```shell
+  uv build --sdist -o dist-after
+  diff <(tar tzf dist-before/*.tar.gz | sed 's|^[^/]*/||' | sort) \
+       <(tar tzf dist-after/*.tar.gz | sed 's|^[^/]*/||' | sort)
+  ```
+
+  names setuptools' `btclib_benchmarks.egg-info/` and `setup.cfg`,
+  `MANIFEST.in` itself, and the `pyproject.toml.orig` the floor is pinned
+  for — plus the trailing slash one backend writes on a directory member
+  and the other does not. Unpacked and compared with `diff -r`, what
+  differs besides those is the files this change edits and `PKG-INFO`,
+  which no tree holds and each backend writes for itself.
+- **The distribution's metadata is what the migration does change.**
+  `PKG-INFO` carries the same fields in another order, less setuptools'
+  `Dynamic: license-file` and plus an `Author:` beside the
+  `Author-email:` both write; `Metadata-Version` is `2.4` either way.
+  Those fields are what `pyroma` and `twine` are in the `build` group to
+  read, so the difference is worth having written down rather than
+  discovered by whoever asks where an `Author:` came from.
+- **`module-name = []` says what `[tool.setuptools] packages = []`
+  said.** The wheel is metadata and the licence files and nothing else,
+  as it was, `top_level.txt` being the one member setuptools wrote that
+  no longer appears. The key is not optional: left out, it means
+  `project.name` normalized under the default `src/` root, and the build
+  fails on a module this repository does not have, there being no
+  importable package here.
+- **`check-manifest` leaves the lint gate and `check-sdist` takes its
+  place**, in the hook list and in the `build` dependency group. The old
+  hook gated a tree against a setuptools include list; the new one
+  registers a backend plugin for `uv_build`, reads
+  `[tool.uv.build-backend]` and asks the question both ways round — what
+  is tracked and not in the sdist, and what is in the sdist and not
+  tracked. `[tool.check-sdist] git-only` therefore holds only what no
+  include pattern adds in the first place, and `source-exclude` answers
+  what a build leaves under a directory taken whole — the documentation
+  gate's output under `docs/`, and the egg-info the hook's own
+  `--inject-junk` plants under `tests/` while it runs.
+- **`pyroma` carries the backend in its own hook environment.** It
+  builds this project to read its metadata and its command line says
+  nothing about how: it asks `build` for the metadata without isolation
+  first and falls back to an isolated build when that raises. Under the
+  old backend the first attempt always won for a reason outside this
+  tree — `setuptools>=61` is a dependency of `pyroma`, so the backend was
+  already importable — and `uv_build` is not one, so the fallback asked
+  pre-commit.ci for a virtual environment, whose interpreter has no
+  `ensurepip`. Run through pre-commit on this tree, the hook prints
+  `Creating isolated environment: venv+pip...` without the dependency and
+  does not print it with, rating the project 10/10 either way, a local
+  interpreter being able to create the environment pre-commit.ci cannot.
+  The specifier has to stay `[build-system]`'s, `build` skipping
+  isolation only where the environment satisfies what `pyproject.toml`
+  requires.
+- **The prose that named the old backend follows it.** Wherever a
+  comment or a paragraph stated `[tool.setuptools] packages = []`, named
+  `check-manifest` among the tools, or said what `MANIFEST.in` excluded,
+  it now names the table that decides the same thing.
+
+  ```shell
+  git grep -n 'MANIFEST\|check-manifest\|setuptools' \
+    -- . ':!uv.lock' ':!CHANGELOG.md'
+  ```
+
+  leaves nothing stale behind it. What it still matches is prose about
+  the arrangement this change makes — the include language the glob
+  patterns replace, and whose dependency `setuptools` is, which is why
+  `pyroma` has to be handed the backend — rather than a rule this tree
+  has stopped following.
+
 ### A link out of a rendered root file resolves to the page that renders it
 
 - **`docs/source/conf.py` carries the transform the publishing

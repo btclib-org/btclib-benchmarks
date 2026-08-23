@@ -1,11 +1,21 @@
 [build-system]
-# 77 is the floor for the PEP 639 metadata below, and for both halves of
-# it at once: the SPDX string form of `project.license` and
-# `project.license-files` arrived in setuptools 77.0.0. An isolated build
-# resolving anything older fails on the syntax rather than ignoring it,
-# which is what the bound is for
-requires = ["setuptools>=77"]
-build-backend = "setuptools.build_meta"
+# what a distribution carries is glob patterns in the
+# [tool.uv.build-backend] table below, beside the rest of the
+# configuration, in place of the separate include and exclude language
+# of a MANIFEST.in.
+#
+# The pin is btclib's, inherited with its reason. Under 0.12 the sdist
+# carries this file verbatim, comments and all, and no second copy of
+# it: built with uv_build==0.11.31 there is no pyproject.toml.orig in
+# the archive. From 0.12.0 on the member is a normalized copy with the
+# verbatim one beside it under that name, so a floor below the minor
+# would leave what the sdist holds with two answers. The ceiling is the
+# next minor, which is where uv's versioning policy puts a breaking
+# change, this backend releasing with uv and versioned by it. That a
+# pure-Python project of this organization uses this backend at all is
+# btclib-org/.github#118
+requires = ["uv_build>=0.12.5,<0.13"]
+build-backend = "uv_build"
 
 [project]
 name = "btclib-benchmarks"
@@ -125,7 +135,7 @@ pull_requests = "https://github.com/btclib-org/btclib-benchmarks/pulls"
 [dependency-groups]
 test = ["coverage", "pytest", "pytest-cov", "pytest-randomly"]
 lint = ["mypy", "pre-commit", "ruff>=0.16"]
-build = ["check-manifest", "pyroma", "twine"]
+build = ["check-sdist", "pyroma", "twine"]
 docs = ["myst-parser", "sphinx", "sphinx_rtd_theme"]
 dev = [
     { include-group = "test" },
@@ -161,21 +171,105 @@ required-version = ">=0.11.31"
 # own pyproject.toml calls 1.0.0
 secp256k1lab = { git = "https://github.com/secp256k1lab/secp256k1lab", tag = "v1.0.0" }
 
-[tool.setuptools]
-# the scripts are the deliverable, and they are modules rather than a
-# package: nothing imports them, and `py_modules` would put them at the
-# root of site-packages, which is not somewhere four benchmark scripts
-# belong. So nothing is installed -- this project is run from a checkout,
-# which is what `uv run` in README.md does
-packages = []
+[tool.uv.build-backend]
+# no module, so the wheel is metadata and the licence files and nothing
+# else: the scripts under scripts/ are the deliverable and they are not
+# a package -- nothing imports them, and a module list naming them would
+# put benchmarks at the root of site-packages. So nothing is installed;
+# this project is run from a checkout, which is what `uv run` in
+# README.md does. The key is not optional: left out it means
+# `project.name` normalized under the default `src/` root, and the build
+# fails on a module that is not there.
+#
+# The empty list is measured rather than promised: uv's documentation
+# gives the list form for a namespace package with more than one root
+# module and describes no empty one, so what bounds this is the ceiling
+# in [build-system] above. With the key the wheel holds dist-info and
+# nothing else; without it the build fails, and both were run
+module-name = []
+# what the sdist carries beyond what the backend puts there by itself --
+# pyproject.toml, PKG-INFO, and the files `project.readme` and
+# `project.license-files` name. Patterns are anchored, so `*.md` is the
+# root's own markdown and reaches neither the pages under results/ nor
+# the vendored vectors' README, and `/**` is what recurses.
+#
+# The sdist is not how this project is used -- the scripts are run from
+# a checkout -- but it is what check-sdist, pyroma and twine inspect,
+# and a distribution that omits the thing it is named after would pass
+# none of them. So the benchmarks, the suite, the vendored vectors and
+# the runs the README links to ship, and the repository furniture that
+# means nothing outside a checkout does not: the hook configuration, the
+# editor and agent workspaces and the workflows are named by no pattern
+# here, and [tool.check-sdist] git-only below is where that absence is
+# declared.
+#
+# vectors/ and results/ are taken whole rather than by suffix:
+# WYCHEPROOF_COPYING is the licence of one of the vendored vectors and
+# has no extension to list, and a run writes its page and its JSON in
+# one command, so a suffix list is a way for one of a pair to go missing
+source-include = [
+    "*.md",
+    ".python-version",
+    "uv.lock",
+    "docs/**",
+    "results/**",
+    "scripts/**",
+    "tests/**",
+    "vectors/**",
+]
+# exclusions win over the inclusions above, and are unanchored unless a
+# pattern starts with "/": a bare name matches at any depth, and
+# everything below a match goes with it.
+#
+# check-sdist reads this list for the uv backend, so a tracked file a
+# pattern here takes out is not reported as one the sdist is missing,
+# and does not have to be named again in [tool.check-sdist] below
+source-exclude = [
+    # where CONTRIBUTING.md's documentation gate writes, under a
+    # directory `docs/**` otherwise sweeps whole: with the gate's output
+    # in place the sdist carries none of it
+    "/docs/build",
+    # a cache a linter or type checker writes beside the file it has
+    # just checked. The ones the gates here write land at the root,
+    # which no pattern above reaches; these answer the copy that lands
+    # under a directory taken whole -- planted under tests/ and
+    # scripts/, neither reaches the sdist. __pycache__, *.pyc and *.pyo
+    # are the backend's own default excludes, and are not repeated here
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    # the same kind of leftover, and this one is not hypothetical: the
+    # check-sdist hook runs with --inject-junk, whose list plants an
+    # egg-info under tests/ for the length of the run, where `tests/**`
+    # would otherwise ship it
+    "*.egg-info",
+]
 
-[tool.check-manifest]
-ignore = [
-    ".vscode/*",
-    # Claude Code's own workspace config, same argument as .vscode/* above.
-    # A tree rather than a flat directory -- the settings sit beside a
-    # commands/ directory -- so the pattern is one level deeper
-    ".claude/**",
+[tool.check-sdist]
+# tracked files the sdist is meant not to carry. What
+# [tool.uv.build-backend] source-exclude names is not repeated here:
+# check-sdist reads that list for the uv backend, so this holds only
+# what no include pattern adds in the first place -- the files the lint
+# hooks read, the workspaces of an editor and of an agent, and what git
+# and a documentation service read. Patterns are gitignore's, so a
+# directory covers what is under it at any depth.
+#
+# The hook's own default ignore list carries .github and
+# .pre-commit-config.yaml, so neither the workflows nor the file that
+# lists the hooks is named here; it carries .readthedocs.yml, with the
+# extension this tree does not use, which is why .readthedocs.yaml is.
+# Emptying this list and running the hook names the files these patterns
+# cover and nothing besides
+git-only = [
+    ".claude/",
+    ".gitattributes",
+    ".gitignore",
+    ".markdownlint.jsonc",
+    ".readthedocs.yaml",
+    ".secrets.baseline",
+    ".taplo.toml",
+    ".vscode/",
+    ".yamllint.yaml",
 ]
 
 [tool.pytest.ini_options]
