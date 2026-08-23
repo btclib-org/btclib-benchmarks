@@ -87,6 +87,20 @@ the record behind.
   what section 14 says every repository's copy carries, and an attribute
   on a path the tree does not hold is inert.
 
+- **`.gitattributes` is byte-for-byte the organization's copy, and the
+  wordlist line is gone (#162).** Section 14 names the file among those
+  compared up to `## This repository in particular`, and this copy had a
+  reworded comment above the same `merge=union` lines, then a
+  `-whitespace` rule for `btclib/mnemonic/_data/electrum_portuguese.txt`,
+  a path `git ls-files` does not answer for here: it arrived with
+  btclib's file in the commit that created this repository, and its
+  comment named a `.pre-commit-config.yaml` exclusion that no commit of
+  this tree has carried. `git check-attr merge CHANGELOG.md
+  RELEASE_NOTES.md` answers `union` for both before and after, and
+  `git check-attr whitespace` on that path answers `unspecified` where
+  it answered `unset` by a rule with nothing to reach. The sweep is
+  btclib-org/.github#102.
+
 - **`COPYRIGHT` leaves the sdist and the wheel.** `license-files` was
   `["LICENSE", "COPYRIGHT", "AUTHORS.md"]`, and btclib-org/.github#135
   decides the file is a repository file and not a distributed one: the
