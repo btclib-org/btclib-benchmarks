@@ -8,6 +8,20 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### CLAUDE.md holds only what no document for a human can
+
+- **The commands and the gates left it for `CONTRIBUTING.md`**
+  (btclib-org/.github#94), which is where a human looks for them and
+  where `REVIEWING.md` sends a reviewer. The review checks left it for
+  `REVIEWING.md`'s last section, for the same reason.
+- **The workflow conventions are section 10's**, and the prose style is
+  section 9's, so this file points at them rather than carrying a second
+  wording of each. `.gitattributes` points there too, where it used to
+  send a reader here for the reasoning behind `merge=union`.
+- What is left is what a document for a human cannot hold: the
+  architecture, the primary-checkout rule, the model, and the facts a
+  session pays for by not knowing.
+
 ### CONTRIBUTING.md is the organization's file down to its last section
 
 - **The shared part is copied rather than reworded**
