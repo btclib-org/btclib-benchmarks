@@ -1,12 +1,109 @@
+<!-- markdownlint-disable MD022 MD032 -->
+<!-- This file is merge=union, so a rebase joins two sections and drops
+     the blank line between them without a conflict: the rule is off
+     here for the duration of btclib-org/.github#33, and goes back on
+     when that queue is empty. btclib-org/.github#138 is the record. -->
+
 # Changelog
 
-Every change of a release, in full: what changed, why, and what it cost.
-The release notes, which say what a user has to act on, are in
-[RELEASE_NOTES.md][notes]; this file is the record behind them.
-
-[notes]: https://github.com/btclib-org/btclib-benchmarks/blob/main/RELEASE_NOTES.md
+Every change, in full: what changed, why, and what it cost. The headings
+are `project.version`, a released *state of the benchmarks* rather than
+a release -- `CONTRIBUTING.md`'s *A version, and no release* has what
+that means here, and why there are no release notes for this file to be
+the record behind.
 
 ## v2026.9 (work in progress, not released yet)
+
+### What a tier-2 repository carries, and what it does not
+
+- **This file stops asking for the blank line a union merge drops.**
+  MD022 and MD032 are off for `CHANGELOG.md` alone, by a comment at its
+  head and not by an edit to `.markdownlint.jsonc`, which is section 14's
+  verbatim copy: a rebase of two branches that each appended a section
+  joins them without the blank line between, and the rule would then fail
+  the gate on a file that never conflicted. btclib-org/.github#138 is the
+  record, and the comment says when it goes back on.
+
+- **`claude-review.yml` reports red on anything but an ack of this
+  head.** The job ended at a step testing whether the action had run at
+  all, so a `CHANGES REQUESTED`, a run that posted no comment, and an ack
+  naming a sha the branch had moved past each left the check green --
+  btclib-org/.github#146 measured that guard and nothing past it in every
+  copy of the workflow. The step btclib-org/.github carries at `18e6c64`
+  is here now, with its comment: it reads the last verdict `claude[bot]`
+  posted on the pull request and fails unless it is an `ACK` whose sha is
+  a prefix of the head. Two lines of the comment are this copy's, where
+  the original named its own pull request and its own `README.md` as the
+  standard. Run outside the workflow against this repository's own pull
+  requests, with `REPO`, `NUMBER` and `HEAD_SHA` in the environment: on
+  PR 165 and PR 160 at their heads it prints `the review acked <sha>`
+  and exits 0; with any other head it exits 1 naming both shas; on
+  PR 161, where no `claude[bot]` comment was posted, it exits 1 saying
+  so. Still not a required check, and red there gates nothing. The two
+  copies differ beyond this step -- the header, the checkout comment,
+  the action's pin, `allowed_bots` and the prompt are each this
+  repository's -- and those stay as they were.
+
+- **`CODE_OF_CONDUCT.md` is gone, and the inherited copy is what GitHub
+  shows.** Section 14 of the standard no longer lists it and section 2
+  no longer asks for one: the file was a pointer to the PSF code of
+  conduct, and the copy in btclib-org/.github is displayed for a public
+  repository carrying none (btclib-org/.github#123). The entry further
+  down this file that calls it the copy GitHub falls back to describes
+  the tree between that landing and this one. Nothing linked it: on the
+  tree before this, `git grep -n CODE_OF_CONDUCT` answered nothing.
+
+- **`SECURITY.md` is gone, and what it said that no inherited policy can
+  say is in `README.md`.** Section 2 of the standard makes the file tier
+  1's row, a policy a reporter reads from the sdist of a package that
+  publishes; this repository publishes nothing, so GitHub shows
+  btclib-org/.github's. What that copy cannot state, btclib-org/.github#116
+  names, and it is now `README.md`'s *What a benchmark can get wrong, and
+  where a defect is reported*: that a number
+  printed without the provenance header is not a result of this project,
+  that a defect in a comparand belongs upstream and the two btclib-org
+  packages have policies of their own, and that the private route for a
+  defect in this tree is the inherited policy's. Not carried over: the
+  claim that every script signs with the integer 1, which
+  `scripts/_inputs.py` contradicts -- the keys are a pool derived from a
+  seed -- and `CONTRIBUTING.md`'s *Writing a row* has why that key was
+  wrong.
+
+- **`RELEASING.md` and `RELEASE_NOTES.md` are gone, and `project.version`
+  is explained where a contributor reads.** Section 2 of the standard
+  says a tier-2 repository carries neither (btclib-org/.github#150): the
+  first opened *There is no release* and then said how to cut one, for a
+  tree with no tag and no release, and the second had nothing to be on
+  top of. What the first said that is worth keeping -- that the version
+  heads this file, that a tag is signed and `tag-integrity` refuses one
+  that is not, and that every benchmark is run by hand before one --
+  is `CONTRIBUTING.md`'s *A version, and no release*, and `README.md`
+  says under *Running them* that nothing is released. `REPOSITORY.md`'s
+  `tag-integrity` paragraph cites that section where it cited
+  `RELEASING.md`; `docs/source/release_notes_link.md` and its toctree
+  line go, a `{include}` of an absent file being a `-W` failure; and
+  `[tool.typos.type.verbatim]` stops naming the file. `.gitattributes`
+  keeps `RELEASE_NOTES.md merge=union`: the two `merge=union` lines are
+  what section 14 says every repository's copy carries, and an attribute
+  on a path the tree does not hold is inert.
+
+- **`COPYRIGHT` leaves the sdist and the wheel.** `license-files` was
+  `["LICENSE", "COPYRIGHT", "AUTHORS.md"]`, and btclib-org/.github#135
+  decides the file is a repository file and not a distributed one: the
+  holder a consumer needs is in `LICENSE`, and `COPYRIGHT` is the source
+  of a header rather than a statement to a consumer. Measured on
+  `uv build` before and after: the wheel's `dist-info/licenses/` goes
+  from `AUTHORS.md`, `COPYRIGHT` and `LICENSE` to `AUTHORS.md` and
+  `LICENSE`, `METADATA`'s `License-File` lines with it, and the sdist's
+  root loses `COPYRIGHT` and the files this entry deletes, nothing else.
+  `[tool.check-sdist]` `git-only` gains the name, that hook otherwise
+  answering `Git only: COPYRIGHT`.
+
+- **mypy is strict and the gate runs it, measured rather than assumed**
+  (btclib-org/.github#112). `[tool.mypy]` has `strict = true` and no
+  `files`, and the `mypy` hook passes `scripts tests`, which is every
+  directory holding a `.py` file but `docs/source/`, whose `conf.py`
+  btclib's hook leaves out the same way. Nothing changed.
 
 ### The build backend is uv_build, and there is no include list
 

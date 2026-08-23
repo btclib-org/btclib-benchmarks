@@ -11,5 +11,4 @@
 contributing_link
 reviewing_link
 changelog_link
-release_notes_link
 ```

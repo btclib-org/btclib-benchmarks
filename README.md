@@ -62,7 +62,9 @@ actually about, and btclib's own lock carries nothing it does not use.
 
 ## Running them
 
-Nothing is installed: the scripts are run from a checkout.
+Nothing is installed, and nothing is released: the scripts are run from
+a checkout, and `CONTRIBUTING.md`'s *A version, and no release* is what
+the version in `pyproject.toml` is for.
 
 ```shell
 uv sync --locked
@@ -182,6 +184,33 @@ against.
 [wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 [silentpayments]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
+
+## What a benchmark can get wrong, and where a defect is reported
+
+The failure this repository is built to avoid is **measuring something
+other than what the table says**. Every script prints the version and
+the provenance of each package before any number — released, git ref,
+editable, or shadowed on `sys.path` — and asserts that every comparand
+agrees with btclib before timing any of them. A number produced without
+that header is not a result from this project; treat it as unverified.
+
+A vulnerability in a package this project measures belongs upstream,
+with the package that has it. Dependabot alerts raised here are alerts
+against a comparand, which is the reason under *Why this is its own
+repository*: an advisory should name the project the package actually
+belongs to. For the two btclib-org packages, report through their own
+policies, [btclib's][btclib-security] and
+[btclib-secp256k1's][secp256k1-security]. For anything about *this*
+repository — a script that runs something it should not, a workflow
+with a permission it does not need — open an issue, or, if it should not
+be public first, take the private route in the security policy GitHub
+shows for this repository, which is the organization's, inherited from
+[btclib-org/.github](https://github.com/btclib-org/.github): this tree
+carries no `SECURITY.md` of its own, publishing nothing an archive
+would carry one in.
+
+[btclib-security]: https://github.com/btclib-org/btclib/blob/main/SECURITY.md
+[secp256k1-security]: https://github.com/btclib-org/btclib-secp256k1/blob/main/SECURITY.md
 
 ## Licence
 

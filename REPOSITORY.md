@@ -134,11 +134,11 @@ not for a particular signer, and asks it of everyone.
 A third ruleset, `tag-integrity`, targets tags rather than `main` and so
 sits outside the aggregation above: `target: tag`, `refs/tags/v*`,
 `required_signatures`, **no bypass actor at all**. There is no
-publish-on-tag workflow here to protect — RELEASING.md says as much,
-"there is no release" — so the reason is consistency rather than a
-publish trigger: RELEASING.md's own tagging step already says "Signed,
-as every tag in this org is", and the ruleset now enforces that
-uniformly rather than leaving it to be remembered by hand. It carries no
+publish-on-tag workflow here to protect — there is no release, as
+`CONTRIBUTING.md`'s *A version, and no release* says — so the reason is
+consistency rather than a publish trigger: that section's tagging step
+says "Signed, as every tag in this organization is", and the ruleset
+enforces that rather than leaving it to be remembered by hand. It carries no
 `deletion` or `non_fast_forward` rule, matching the sibling repositories
 that do gate a release on the tag.
 
