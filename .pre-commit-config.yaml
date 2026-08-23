@@ -109,24 +109,37 @@ repos:
         # file at the first one. Excluded here for the reason it was once
         # dropped for altogether -- it is not a gap, prettier below is
         # given that directory and fails on what it cannot parse, which is
-        # the question this hook asks. What check-json now reaches instead
-        # is `results/*.json`, `vectors/*.json` and .claude/settings.json,
+        # the question this hook asks. What check-json reaches instead is
+        # `results/*.json`, `vectors/*.json` and .claude/settings.json,
         # none of them jsonc and none of them under prettier's `files`
-        # allowlist -- so this is the only parser in the gate for any of
-        # the three
+        # allowlist -- so this is the only parser in the gate for the
+        # first two, and the one pretty-format-json below shares the third
+        # with
         exclude: ^\.vscode/
-      # no pretty-format-json beside it, and not by the same reasoning as
-      # the exclude above: `results/*.json` is `scripts/_results.py`'s
-      # output (json.dumps(..., indent=2, ensure_ascii=False), read there),
-      # so a formatter with its own idea of indent or key order is a
-      # second writer of a file a script already owns, and the two
-      # disagreeing is a diff nobody asked for on every run that follows a
-      # benchmark. `vectors/*.json` is the opposite problem with the same
-      # answer: vendored copies vectors/README.md pins to a sha256 each,
-      # checked in scripts/_vectors.py on import, so a reformat would
-      # break the digest as surely as hand-editing a byte would. Neither
-      # file is this hook's to rewrite; check-json above still answers
-      # the question worth asking of both, which is whether they parse
+      # pretty-format-json reaches the json written by hand, which is
+      # .claude/settings.json, and the exclude keeps it off the rest for a
+      # reason that is not the one above: `results/*.json` is
+      # `scripts/_results.py`'s output
+      # (json.dumps(..., indent=2, ensure_ascii=False), read there), so a
+      # formatter with its own idea of indent or key order is a second
+      # writer of a file a script already owns, and the two disagreeing
+      # is a diff nobody asked for on every run that follows a benchmark.
+      # `vectors/*.json` is the opposite problem with the same answer:
+      # vendored copies vectors/README.md pins to a sha256 each, checked
+      # in scripts/_vectors.py on import, so a reformat would break the
+      # digest as surely as hand-editing a byte would. Neither file is
+      # this hook's to rewrite; check-json above still answers the
+      # question worth asking of both, which is whether they parse.
+      # `.vscode/` is jsonc, which this hook cannot read any more than
+      # check-json can, and prettier's. What is left is what the hook is
+      # for, at its defaults -- two-space indent and sorted keys, nothing
+      # reading that file back in an order.
+      # --autofix because every other fixing hook here corrects rather
+      # than reports
+      - id: pretty-format-json
+        name: pretty-format-json (in place fixes)
+        args: [--autofix]
+        exclude: ^(\.vscode|results|vectors)/
       - id: check-merge-conflict
       - id: check-vcs-permalinks
       - id: detect-private-key

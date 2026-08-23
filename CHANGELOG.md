@@ -16,6 +16,24 @@ the record behind.
 
 ### What a tier-2 repository carries, and what it does not
 
+- **`links.yml` accepts every status lychee accepts unasked, and passes
+  no `--cache`.** `--accept 200,206,429` replaced lychee's default of
+  `100..=103,200..=299` rather than extending it, so a 201, a 202 or a
+  204 read as a dead link to the weekly run, and the 206 the list spent
+  a slot on was one the default already covered; the list is now that
+  default with 429 added, a rate limit being an answer from a host that
+  is alive (btclib-org/.github#110). `--cache --max-cache-age 1d` went:
+  no step restored `.lycheecache` across runs, so the flag decided
+  nothing, and the comment beside it credited the cache with keeping a
+  throttling host from reading as dead — a mechanism the job did not
+  have (btclib-org/.github#111). Restoring the cache was the other
+  answer and was refused: the schedule is weekly and the age one day,
+  so a restored cache would be discarded whole on every run. Measured
+  on this tree with lychee 0.24.2: `lychee --help` gives the default
+  range, and `lychee --offline --no-progress` over the workflow's globs
+  reports more links in Total than Unique with no cache anywhere, the
+  deduplication within a run being lychee's own.
+
 - **This file stops asking for the blank line a union merge drops.**
   MD022 and MD032 are off for `CHANGELOG.md` alone, by a comment at its
   head and not by an edit to `.markdownlint.jsonc`, which is section 14's
@@ -869,11 +887,16 @@ the record behind.
   being the tree when `results/` and `vectors/` gained their own json,
   and `.claude/settings.json` joined them, none of the three under
   prettier's `files` allowlist either — so nothing in the gate parsed
-  any of them. `pretty-format-json` is not added beside it:
-  `results/*.json` is `scripts/_results.py`'s own output and
-  `vectors/*.json` is vendored and pinned by sha256, so a formatter
-  would be a second writer of a file that already has one, or would
-  break a digest a byte-for-byte reformat cannot preserve.
+  any of them. `pretty-format-json` runs beside it, over the json
+  written by hand and nothing else: `results/*.json` is
+  `scripts/_results.py`'s own output and `vectors/*.json` is vendored
+  and pinned by sha256, so a formatter would be a second writer of a
+  file that already has one, or would break a digest a byte-for-byte
+  reformat cannot preserve, and both directories are excluded with
+  that reason beside the hook. `.claude/settings.json` is neither, and
+  section 4's syntax bullet lists the hook, so declining it altogether
+  left that file to nobody (btclib-org/.github#130); at the hook's
+  defaults, with `--autofix`, it passes over the tree unchanged.
 
 ### The benchmarks
 
