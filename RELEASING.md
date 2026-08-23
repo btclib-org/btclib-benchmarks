@@ -1,8 +1,8 @@
 # Releasing
 
 There is no release. Nothing here is published to an index, and
-`[tool.setuptools] packages = []` means an install would put nothing on
-the path anyway: the scripts are run from a checkout.
+`[tool.uv.build-backend] module-name = []` means an install would put
+nothing on the path anyway: the scripts are run from a checkout.
 
 What `project.version` is for, then, is the CHANGELOG heading — a
 released *state of the benchmarks*, so that a table someone kept can be

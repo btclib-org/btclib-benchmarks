@@ -32,7 +32,7 @@ name: deps-latest
 # Scope: what uv resolves. Not the pre-commit hook revisions, which are
 # pinned in .pre-commit-config.yaml and bumped by pre-commit.ci's weekly
 # pull request -- that pull request runs the merge gate, so ruff,
-# check-manifest, pyroma and the other pinned hooks already have their
+# check-sdist, pyroma and the other pinned hooks already have their
 # sentinel. mypy is the exception and the reason the lint job below is
 # here at all: its hook is local and shells out to uv, so it is the lock
 # that pins it. Not sphinx at latest either: docs.yml builds the

@@ -5,8 +5,8 @@
 """Sphinx configuration.
 
 The version is read out of pyproject.toml rather than from installed
-metadata: this project installs nothing, `[tool.setuptools] packages`
-being empty, so there is no distribution to ask.
+metadata: this project installs nothing, `[tool.uv.build-backend]
+module-name` being empty, so there is no distribution to ask.
 """
 
 from __future__ import annotations

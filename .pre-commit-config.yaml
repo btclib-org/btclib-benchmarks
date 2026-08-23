@@ -348,7 +348,7 @@ repos:
   # below, which reads a comment line and is the one thing here a formatter
   # does not settle -- taplo aligns a comment that trails a value and
   # rewraps none. taplo-lint is not enabled beside this: it validates
-  # against a schema catalogue it fetches, and pyroma and check-manifest
+  # against a schema catalogue it fetches, and pyroma and check-sdist
   # below read the metadata offline
   - repo: https://github.com/ComPWA/taplo-pre-commit
     rev: v0.9.3
@@ -444,11 +444,11 @@ repos:
         # so that every machine and pre-commit.ci check what CI checks --
         # the runner image happens to carry shellcheck, so leaving it to
         # chance meant CI checking more than a commit did.
-        # Pinned, unlike the setuptools below, because nothing bumps an
-        # additional dependency: pre-commit.ci moves rev, dependabot has no
-        # pre-commit ecosystem. That is the point rather than the cost -- a
-        # shellcheck release adding a check would otherwise turn a pull
-        # request red for having changed nothing
+        # Pinned, because nothing bumps an additional dependency:
+        # pre-commit.ci moves rev, dependabot has no pre-commit ecosystem.
+        # That is the point rather than the cost -- a shellcheck release
+        # adding a check would otherwise turn a pull request red for having
+        # changed nothing
         additional_dependencies:
           - shellcheck-py==0.11.0.1
           - pyflakes==3.4.0
@@ -611,21 +611,21 @@ repos:
     hooks:
       # keep uv.lock in sync with pyproject.toml
       - id: uv-lock
-  - repo: https://github.com/mgedmin/check-manifest
-    rev: "0.51"
+  # what is tracked and not in the sdist, and what is in the sdist and not
+  # tracked, both ways round, against the patterns of
+  # [tool.uv.build-backend]. Nothing is configured here: the hook's own
+  # manifest already passes --no-isolation and --inject-junk and installs
+  # uv, which is the whole of what this needs. --no-isolation is what
+  # pre-commit.ci requires -- an isolated build environment cannot be
+  # created there (no ensurepip in the interpreter, read-only virtualenv
+  # app data) -- and it costs nothing to build without one, the backend
+  # being the copy bundled in that uv. --inject-junk drops a cache
+  # directory and an egg-info beside the sources for the length of the
+  # run, which is what the exclusions in [tool.uv.build-backend] answer
+  - repo: https://github.com/henryiii/check-sdist
+    rev: v1.6.0
     hooks:
-      - id: check-manifest
-        description: Check the completeness of MANIFEST.in for Python packages.
-        language: python
-        pass_filenames: false
-        always_run: true
-        # check-manifest builds an sdist with "python -m build"; on
-        # pre-commit.ci build cannot create its isolated environment (no
-        # ensurepip in the interpreter, read-only virtualenv app data), so
-        # build the sdist in the hook environment itself, which just needs
-        # the build requirements (setuptools) to be available
-        args: [--no-build-isolation]
-        additional_dependencies: [setuptools]
+      - id: check-sdist
   - repo: https://github.com/regebro/pyroma
     # the newest *stable* tag: 5.1b1 and 5.1b2 sit above it, and
     # `pre-commit autoupdate` offers a prerelease as readily as a
@@ -636,3 +636,25 @@ repos:
     rev: "5.0.1"
     hooks:
       - id: pyroma
+        # the backend, in pyroma's own environment, because pyroma builds
+        # this project to read its metadata and its command line has no
+        # way to say how. It asks `build` for the metadata without
+        # isolation first and falls back to an isolated build when that
+        # raises, and an isolated build is a virtual environment
+        # pre-commit.ci cannot create -- the interpreter there has no
+        # ensurepip, which is the same constraint the check-sdist hook
+        # above answers with --no-isolation. Under setuptools the first
+        # attempt always won for a reason that had nothing to do with
+        # this project: setuptools>=61 is a dependency of pyroma, so the
+        # backend was already importable. uv_build is not, so without
+        # this line the fallback is taken and pre-commit.ci goes red
+        # while every local run stays green.
+        #
+        # The specifier is [build-system]'s, and has to stay it: `build`
+        # skips isolation only when the environment satisfies what
+        # pyproject.toml requires, so a version here outside that range
+        # puts the fallback back. Not pinned, unlike the additional
+        # dependencies above: what this has to match is a range rather
+        # than a release, and the isolated build it replaces would have
+        # resolved the same range itself
+        additional_dependencies: ["uv_build>=0.12.5,<0.13"]
