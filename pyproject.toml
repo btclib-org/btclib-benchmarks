@@ -26,9 +26,12 @@ version = "2026.9"
 description = "Benchmarks of btclib and btclib_secp256k1 against their comparands"
 readme = "README.md"
 # PEP 639: a SPDX expression and the files it refers to, replacing the
-# deprecated license table and the License :: classifier
+# deprecated license table and the License :: classifier. COPYRIGHT is
+# not among them: LICENSE carries the holder for whoever has the archive,
+# and the notice's source text is a repository file, named under
+# [tool.check-sdist] below
 license = "MIT"
-license-files = ["LICENSE", "COPYRIGHT", "AUTHORS.md"]
+license-files = ["LICENSE", "AUTHORS.md"]
 authors = [{ name = "The btclib developers", email = "devs@btclib.org" }]
 requires-python = ">=3.11"
 # the comparands are dependencies here, where in btclib and
@@ -258,10 +261,15 @@ source-exclude = [
 # .pre-commit-config.yaml, so neither the workflows nor the file that
 # lists the hooks is named here; it carries .readthedocs.yml, with the
 # extension this tree does not use, which is why .readthedocs.yaml is.
+# COPYRIGHT is the source the notice-rgx below is transcribed from, and
+# a header's source is read by the gate and by nobody who installs the
+# package: a repository file, so it left `license-files` and is named
+# here instead (btclib-org/.github#135).
 # Emptying this list and running the hook names the files these patterns
 # cover and nothing besides
 git-only = [
     ".claude/",
+    "COPYRIGHT",
     ".gitattributes",
     ".gitignore",
     ".markdownlint.jsonc",
@@ -316,7 +324,7 @@ extend-ignore-re = ['[0-9A-Za-z+/]{26,}={0,2}']
 buidl = "buidl"
 
 [tool.typos.type.verbatim]
-extend-glob = ["CHANGELOG.md", "RELEASE_NOTES.md", ".pre-commit-config.yaml"]
+extend-glob = ["CHANGELOG.md", ".pre-commit-config.yaml"]
 extend-ignore-re = ['`[^`]*`']
 
 [tool.coverage.run]

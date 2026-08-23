@@ -393,6 +393,34 @@ one they were taken under.
 not wired into CI, and deliberately: a page is written by a command a
 person runs, not by a gate.
 
+### A version, and no release
+
+There is no release. Nothing here is published to an index, and
+`[tool.uv.build-backend] module-name = []` means an install would put
+nothing on the path anyway: the scripts are run from a checkout. So
+this tree carries no `RELEASING.md` and no `RELEASE_NOTES.md`: section 2
+of the standard has why a tier-2 repository carries neither, and a file
+whose content is its own absence is this paragraph instead.
+
+What `project.version` is for, then, is the `CHANGELOG.md` heading: a
+released *state of the benchmarks*, so that a table someone kept can be
+placed against the versions that produced it. Cutting one is a signed
+tag, as every tag in this organization is, and `REPOSITORY.md`'s
+`tag-integrity` ruleset refuses an unsigned one:
+
+```shell
+git tag -s v<version> -m "v<version>"
+git push origin v<version>
+```
+
+Before tagging, run every benchmark by hand, one at a time. The suite
+proves the scripts load and that their comparands agree; it cannot prove
+they still *measure* anything, and that is exactly what rots — a
+comparand renames a method, a backend stops being found, an
+implementation gets a fast path. Read each header before its numbers: a
+row whose backend has silently changed is a number that means something
+other than what its label says.
+
 ### What the suite can and cannot check
 
 It cannot check a measurement. A timing is a property of the machine, not
