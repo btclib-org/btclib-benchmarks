@@ -257,17 +257,20 @@ repos:
   # there is one spelling to key on (btclib-org/.github#20).
   #
   # Here it enforces a convention rather than catching a defect, and the
-  # difference is what this comment is for. This repository has no
-  # link-resolving transform in docs/source/conf.py and suppresses no
-  # myst warning, so a relative link out of an included root file is a
-  # myst.xref_missing warning and docs.yml's -W fails the build on it --
-  # measured with a fresh environment, `[a](./REVIEWING.md)` and
-  # `[a](REVIEWING.md)` each taking sphinx-build -E -W --keep-going to
-  # exit 1 where the tree without them exits 0, and REVIEWING.md being a
-  # page this documentation does render. That is why the root files here
-  # link by absolute url, and why this hook found nothing to change.
+  # difference is what this comment is for. docs/source/conf.py resolves a
+  # link out of an included root file to the page that renders it, so the
+  # `./CONTRIBUTING.md` REVIEWING.md carries -- and which this hook holds
+  # to that spelling -- becomes a link to this documentation's own
+  # contributing page. A target no page here renders is left to myst,
+  # which reports it and takes docs.yml's -W with it: measured with a
+  # fresh environment, `[a](./REPOSITORY.md)` takes sphinx-build -E -W
+  # --keep-going to exit 1 where the tree without it exits 0. So a root
+  # file's link to anything this documentation does not render is written
+  # as an absolute url, and the ones it does render are what this hook has
+  # to check.
   #
-  # Carried even so, for the reason the standard gives: a rule with one
+  # Carried whole in every repository, for the reason the standard
+  # gives: a rule with one
   # repository exempted is a rule somebody has to remember the exemption
   # for, and prose moves between these repositories. `pinned-rev` above
   # is the same arrangement -- the same hook in each repository, there

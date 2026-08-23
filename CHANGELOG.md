@@ -8,6 +8,25 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### A link out of a rendered root file resolves to the page that renders it
+
+- **`docs/source/conf.py` carries the transform the publishing
+  repositories carry.** `REVIEWING.md` is the same file in every
+  repository of the organization and links to `./CONTRIBUTING.md`, which
+  is the correct spelling where the file is read — the GitHub view — and
+  resolves against `docs/source/` when sphinx renders it. MyST turns a
+  target it cannot resolve into an anchor on the page it is already on,
+  so suppressing the warning would leave the link and silence the only
+  thing that says it goes nowhere. The transform answers such a link from
+  the shims themselves, and leaves a target no page renders to MyST,
+  where `-W` fails the build.
+
+- **The shims are `*_link.md`**, as they are in the sibling repositories.
+  With the shim named `docs/source/contributing.md`, MyST resolved
+  `./CONTRIBUTING.md` to the docname `CONTRIBUTING` and sphinx reported
+  an unknown source document; renamed, MyST finds nothing at that path
+  and the transform answers instead. Both spellings were measured.
+
 ### A workflow's name says what it is a sentinel of
 
 - **`ubuntu.yml`, `macos.yml` and `latest.yml` are now `os-ubuntu.yml`,
@@ -459,8 +478,9 @@ The release notes, which say what a user has to act on, are in
   `CLAUDE.md`: the audit and the normalizing checklist that standard
   carries are performed *holding* it, so the reader who arrives without
   it is the contributor, and `CONTRIBUTING.md` is the file that reader
-  is already in — and the one of the three `docs/source/contributing.md`
-  includes, so it is also the one rendered. Hence an absolute
+  is already in — and the one of the three that
+  `docs/source/contributing_link.md` includes, so it is also the one
+  rendered. Hence an absolute
   github.com destination, which is what a cross-repository link is
   written as here: a relative one resolves against the rendered site.
 
@@ -2181,16 +2201,15 @@ The release notes, which say what a user has to act on, are in
   the organization's.
 
 - **It enforces a convention rather than catching a defect**, which is
-  the part worth writing down. Unlike the three publishing
-  repositories, this repository has no link-resolving transform in
-  `docs/source/conf.py` and suppresses no MyST warning, so a relative
-  link out of an included root file is a `myst.xref_missing` warning
-  and `docs.yml`'s `-W` fails the build on it. Measured with a fresh
-  environment: `[a](./REVIEWING.md)` and `[a](REVIEWING.md)` each take
-  `sphinx-build -E -W --keep-going` to exit 1, where the tree without
-  them exits 0 — and `REVIEWING.md` is a page this documentation does
-  render. That is why the root files here link by absolute url, and it
-  is why this hook is prophylaxis rather than a fix.
+  the part worth writing down. `docs/source/conf.py` resolves a link out
+  of an included root file to the page that renders it, and leaves a
+  target no page renders to MyST, which reports it and takes
+  `docs.yml`'s `-W` with it. Measured with a fresh environment:
+  `[a](./REPOSITORY.md)` takes `sphinx-build -E -W --keep-going` to exit
+  1, where the tree without it exits 0. So a root file's link to
+  anything this documentation does not render is written as an absolute
+  url, and the ones it does render are what this hook holds to one
+  spelling.
 
 ### A review runs what a diff decides with
 
