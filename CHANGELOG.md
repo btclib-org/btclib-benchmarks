@@ -2251,11 +2251,11 @@ The release notes, which say what a user has to act on, are in
   this one, so a rebase voids it, the branch having been gated before
   the tree moved under the gate.
 
-- **`CLAUDE.md` carries which checks this repository is gated on**, read
-  back from the branch rule rather than copied from a sibling: the
-  suite, the lint gate and the documentation build. That is the fact the
-  reliance rests on, and it belongs in a file a pull request can be
-  reviewed against.
+- **`CONTRIBUTING.md`'s last section carries which checks this
+  repository is gated on**, read back from the branch rule rather than
+  copied from a sibling: the suite, the lint gate and the documentation
+  build. That is the fact the reliance rests on, and it belongs in the
+  file a reviewer is sent to for the gates of a tree.
 
 - **What earned it is `claude-review.yml`'s prompt**, whose reason for
   not running the gates was that a second run of them would cost a
