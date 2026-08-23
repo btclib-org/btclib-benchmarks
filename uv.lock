@@ -140,7 +140,7 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-build = [
+check = [
     { name = "check-sdist" },
     { name = "pyroma" },
     { name = "twine" },
@@ -195,7 +195,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-build = [
+check = [
     { name = "check-sdist" },
     { name = "pyroma" },
     { name = "twine" },

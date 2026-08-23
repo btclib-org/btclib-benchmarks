@@ -139,6 +139,17 @@ the record behind.
 
 ### The build backend is uv_build, and there is no include list
 
+- **The group holding `check-sdist`, `pyroma` and `twine` is `check`,
+  not `build`.** Section 1 of btclib-org/.github names `build` for the
+  tools that build a distribution — a frontend, and the wheel repairers
+  `btclib-secp256k1` holds under that name beside a `check` group of
+  inspectors — and `check` for what inspects one before it is
+  published, which is all this group ever held (btclib-org/.github#129).
+  `dev` includes it under the new name, `uv.lock` renames the group and
+  moves no pin, and no workflow or documented command asks for the
+  group on its own: `git grep -n -- '-group build' -- ':!CHANGELOG.md'`
+  answers no line.
+
 - **`[build-system]` asks for `uv_build>=0.12.5,<0.13`**, the pin btclib
   carries and the reason with it: below the minor the sdist holds this
   file verbatim and no `pyproject.toml.orig` beside it, which is a second
@@ -170,7 +181,7 @@ the record behind.
   `PKG-INFO` carries the same fields in another order, less setuptools'
   `Dynamic: license-file` and plus an `Author:` beside the
   `Author-email:` both write; `Metadata-Version` is `2.4` either way.
-  Those fields are what `pyroma` and `twine` are in the `build` group to
+  Those fields are what `pyroma` and `twine` are in the `check` group to
   read, so the difference is worth having written down rather than
   discovered by whoever asks where an `Author:` came from.
 - **`module-name = []` says what `[tool.setuptools] packages = []`
@@ -181,7 +192,7 @@ the record behind.
   fails on a module this repository does not have, there being no
   importable package here.
 - **`check-manifest` leaves the lint gate and `check-sdist` takes its
-  place**, in the hook list and in the `build` dependency group. The old
+  place**, in the hook list and in the `check` dependency group. The old
   hook gated a tree against a setuptools include list; the new one
   registers a backend plugin for `uv_build`, reads
   `[tool.uv.build-backend]` and asks the question both ways round — what
