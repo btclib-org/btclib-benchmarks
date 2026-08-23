@@ -8,6 +8,22 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### CONTRIBUTING.md is the organization's file down to its last section
+
+- **The shared part is copied rather than reworded**
+  (btclib-org/.github#94). This tree's own text said the same things in
+  its own words — where an issue is filed, the prose style, one subject
+  per pull request, how a review is conducted, how a change lands — and
+  a second wording is the one that goes stale. The bytes above
+  `## This repository in particular` are now the standard's, which is
+  what `tests/verbatim_test.py` there compares.
+
+- **Below that heading is what the shared part cannot say**: the
+  environment and the three gates, which of them a merge waits for and
+  what only reports, how a benchmark is run, how a run is published, how
+  an install's artifact is read back, what the suite can and cannot
+  check, and what a row has to do.
+
 ### The shared configuration files are the organization's copies
 
 - **`LICENSE` carries the `MIT License` title and no year range**
