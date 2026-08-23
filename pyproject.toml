@@ -392,7 +392,6 @@ fail_under = 100.0
 [tool.mypy]
 strict = true
 show_column_numbers = true
-show_error_codes = true
 # the organization's list, section 6 of btclib-org/.github, the same in
 # every repository that runs mypy (btclib-org/.github#165). A code that
 # finds nothing here stays: it is a ratchet for the next line it would
@@ -494,8 +493,6 @@ extend-select = ["unspecified-encoding"]
 ignore = [
     "undocumented-magic-method",
     "undocumented-public-init",
-    "incorrect-blank-line-before-class",
-    "multi-line-summary-second-line",
     "line-too-long",
     "too-many-arguments",
     "too-many-statements",
@@ -545,20 +542,19 @@ style = "google"
 # the docstring is a second place to be wrong
 arg-type-hints-in-docstring = false
 check-return-types = false
-# the tool's own default, written out because it is the opposite of what
-# btclib-secp256k1 chose and is a decision rather than an oversight.
-# There the sections are a published wheel's only documentation -- a
-# caller reading help() has no source to fall back on -- so a one-line
-# docstring hiding five parameters is a gap. Here nothing is published
-# and nothing imports these modules: the scripts are read as source, and
-# their docstrings are one "Return the pool's secret keys."-shaped line
-# each. Set to false, this asks for a Returns section under every one of
-# them, which writes the summary a second time in the same docstring.
-# What is left checked is the drift the hook is for: a docstring that
-# does document its arguments, held against the signature it claims to
-# describe. The strict setting's findings are issue 128, listed there
-# rather than here so that flipping this is a decision made with the
-# list in front of it
+# the tool's own default, written out because section 4 of
+# btclib-org/.github leaves the value to each repository and asks for
+# the reason beside it. What decides it is the form the contract takes
+# here: a summary line saying what comes back -- "Return the pool's
+# secret keys." -- with a paragraph under it where there is more to
+# say. pydoclint reads a section and not a sentence, so false asks for
+# a Returns section under a summary that already states the return,
+# which writes it a second time in the same docstring. What is left
+# checked is the drift the hook is for: a docstring that does document
+# its arguments, held against the signature it claims to describe. The
+# strict setting's findings are issue 128, listed there rather than
+# here so that flipping this is a decision made with the list in front
+# of it
 skip-checking-short-docstrings = true
 
 # and this one is off, deliberately. It compares the Raises section with

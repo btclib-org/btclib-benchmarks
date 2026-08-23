@@ -626,19 +626,37 @@ repos:
       - id: uv-lock
   # what is tracked and not in the sdist, and what is in the sdist and not
   # tracked, both ways round, against the patterns of
-  # [tool.uv.build-backend]. Nothing is configured here: the hook's own
-  # manifest already passes --no-isolation and --inject-junk and installs
-  # uv, which is the whole of what this needs. --no-isolation is what
-  # pre-commit.ci requires -- an isolated build environment cannot be
-  # created there (no ensurepip in the interpreter, read-only virtualenv
-  # app data) -- and it costs nothing to build without one, the backend
-  # being the copy bundled in that uv. --inject-junk drops a cache
+  # [tool.uv.build-backend]. --no-isolation is in the hook's own entry and
+  # is what pre-commit.ci requires: an isolated build environment cannot
+  # be created there, the interpreter having no ensurepip and the
+  # virtualenv app data being read-only. --inject-junk drops a cache
   # directory and an egg-info beside the sources for the length of the
-  # run, which is what the exclusions in [tool.uv.build-backend] answer
+  # run, which is what the exclusions in [tool.uv.build-backend] answer.
+  #
+  # --installer=pip is what makes the archive the gate compares against
+  # git one [build-system] admits, which is section 12 of
+  # btclib-org/.github. Without it check-sdist drives `uv build`, and that
+  # is not PEP 517 for this backend: uv builds with the copy bundled in
+  # the running uv whatever the environment holds, so what packs the
+  # archive is the uv the manifest installs unpinned, and naming the
+  # backend below decides nothing. With it check-sdist runs `build
+  # --no-isolation`, which reads the environment and refuses one outside
+  # `requires`, saying "ERROR Missing dependencies". What that keeps is
+  # the environment inside `requires` and not the two specifiers equal: a
+  # `requires` widened past the line below leaves it satisfying the wider
+  # range and green.
+  #
+  # `args:` and `additional_dependencies:` each replace the manifest's
+  # list rather than adding to it, which is why --inject-junk is written
+  # again here; the uv the manifest installs goes with it, and
+  # --installer=pip does not ask for one. The specifier is
+  # [build-system]'s and has to stay it, as pyroma's below is
   - repo: https://github.com/henryiii/check-sdist
     rev: v1.6.0
     hooks:
       - id: check-sdist
+        args: [--inject-junk, --installer=pip]
+        additional_dependencies: ["uv_build>=0.12.5,<0.13"]
   - repo: https://github.com/regebro/pyroma
     # the newest *stable* tag: 5.1b1 and 5.1b2 sit above it, and
     # `pre-commit autoupdate` offers a prerelease as readily as a
