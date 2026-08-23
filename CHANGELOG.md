@@ -14,6 +14,52 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### The configuration decides what it says it decides
+
+- **`[tool.ruff.lint] ignore` names no rule the declared convention
+  already disables.** `incorrect-blank-line-before-class` (D203) and
+  `multi-line-summary-second-line` (D213) go:
+  `[tool.ruff.lint.pydocstyle] convention = "pep257"` settles both pairs,
+  and beside a declared convention such an entry changes no diagnostic
+  and silences no warning. Measured with ruff 0.16.4 over a class
+  docstring shaped to trip both pairs: with the convention declared ruff
+  prints no incompatibility warning, without it prints one per pair
+  (btclib-org/.github#178).
+
+- **`[tool.mypy]` no longer sets `show_error_codes`.** mypy has error
+  codes on already, and there is no such option: `Options` carries
+  `hide_error_codes`, `False` before a config file is read, and
+  `config_parser.py`'s generic `show_`/`hide_` inversion is what accepts
+  the key at all. Read from mypy 2.3.1, which `uv.lock` pins
+  (btclib-org/.github#191).
+
+- **`check-sdist` builds the archive with the backend `[build-system]`
+  admits.** `uv build` never consults the environment for `uv_build`: it
+  packs with the copy bundled in the running uv, which the hook's own
+  manifest installs unpinned, so `additional_dependencies` naming the
+  backend decides nothing on that path. `args: [--inject-junk,
+  --installer=pip]` puts check-sdist on `build --no-isolation`, which
+  reads the environment and refuses one outside `requires`. Measured
+  through the hook: a specifier disagreeing with `requires` fails with
+  `ERROR Missing dependencies`, the agreeing one passes, and a `requires`
+  widened past the hook's line passes as well — what the failure keeps is
+  the environment inside `requires`, not the two specifiers equal
+  (btclib-org/.github#197).
+
+- **The `[tool.pydoclint]` comment gives the form the contract takes
+  here.** `skip-checking-short-docstrings` is each repository's to set
+  and what decides it is that form, section 4 of the standard: these
+  docstrings say what a call returns in a summary line, and pydoclint
+  reads a section and not a sentence. The half arguing that nothing here
+  is published goes, that being a cost rather than the criterion
+  (btclib-org/.github#198).
+
+- **`.gitattributes` is the standard's copy.** Section 14 makes the file
+  verbatim, and the standard's text says that both `merge=union` lines
+  are in every copy, a tree carrying no `RELEASE_NOTES.md` included,
+  because an attribute on a path the tree does not hold matches nothing.
+  This tree carries none (btclib-org/.github#192).
+
 ### mypy's optional error codes are the organization's list
 
 - **`enable_error_code` is section 6's list, the same in every
