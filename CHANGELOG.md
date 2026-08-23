@@ -14,6 +14,15 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### mypy's optional error codes are the organization's list
+
+- **`enable_error_code` is section 6's list, the same in every
+  repository that runs mypy** (btclib-org/.github#165).
+  `explicit-override` and `unused-awaitable` join, and neither reports
+  anything on this tree; `narrowed-type-not-subtype` goes, the locked
+  mypy enabling it by default. The comment beside the list says whose
+  it is and why a code that finds nothing stays.
+
 ### What a tier-2 repository carries, and what it does not
 
 - **`REVIEWING.md` says the reviewer runs the whole suite, every time.**
