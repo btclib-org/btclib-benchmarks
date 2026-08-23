@@ -8,6 +8,13 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### AUTHORS.md points at this repository's contributors
+
+- **The contributor graph named is this repository's**, where it was
+  btclib's. A shared pointer is accurate only while one graph stays a
+  superset of the other, and the first person to contribute here and
+  nowhere else went uncredited in silence (btclib-org/.github#94).
+
 ### The review documents are the organization's, not this tree's
 
 - **`REVIEWING.md` is now a section 14 verbatim file**
