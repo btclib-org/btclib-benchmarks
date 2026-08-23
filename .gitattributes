@@ -5,25 +5,12 @@
 # order base-then-ours, and it is built into git — nobody has to configure
 # anything for it to apply.
 #
-# It applies to rebases too, which is where it earns its keep here, and it
-# has a price worth knowing: these two files now never conflict at all, so
+# It applies to rebases too, which is where it earns its keep, and it has
+# a price worth knowing: these two files then never conflict at all, so
 # the same existing entry edited on two branches merges in silence rather
-# than being flagged. That is why neither file states how many entries it
-# has — a count is exactly such an edit, and union would have kept both
-# numbers. Section 9 of the btclib-org standard carries the rest of the
-# reasoning, and CONTRIBUTING.md's "Documentation and comments" is where
-# this tree points at it.
+# than being flagged. That is why neither states how many entries it has —
+# a count is exactly such an edit, and union would have kept both numbers.
+# Section 9 of the organization standard, btclib-org/.github's README.md,
+# is where this rule is recorded.
 CHANGELOG.md merge=union
 RELEASE_NOTES.md merge=union
-
-# Electrum's Portuguese word-list is Monero's, and the blank lines of the
-# licence header it opens with end in a space upstream. Our copy being byte
-# for byte upstream's is a property that can be checked, so those six bytes
-# stay: `.pre-commit-config.yaml` excludes the file from trailing-whitespace
-# for that reason, which covers the hook and nothing else. git enforces the
-# same rule on its own, and does more than report it — `git apply
-# --whitespace=fix` strips them, saying only "1 line applied after fixing
-# whitespace errors", and `git diff --check` calls them an error of ours.
-# `-whitespace` turns both off, for the one path whose bytes are not ours to
-# choose.
-btclib/mnemonic/_data/electrum_portuguese.txt -whitespace
