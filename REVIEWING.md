@@ -7,15 +7,16 @@ review is not about.
 
 This is the reviewer's half of [CONTRIBUTING.md](./CONTRIBUTING.md),
 which is the author's. It does not restate the rules a review cites —
-those are in that file, in REPOSITORY.md and in CLAUDE.md, and a finding
-names the line that states them rather than a copy kept here.
+most are in the organization's standard, the rest in that file, in
+REPOSITORY.md and in CLAUDE.md — and a finding names the line that
+states them rather than a copy kept here.
 
 **This file is the same in every repository of the organization**, and
 deliberately so: a review that means one thing here and another there is
 not a standard. Section 14 of that standard is what says so, and
-`tests/verbatim_test.py` is what compares the copies. So nothing written
-here may be true of one tree only — what is true of one tree is
-`CLAUDE.md`'s to say, and the section below hands it over.
+`tests/verbatim_test.py` of that repository is what compares the copies.
+So nothing written here may be true of one tree only, down to the last
+section: that one is this tree's, and the comparison stops at it.
 
 It is for whoever reviews: a contributor reading somebody else's pull
 request, the maintainer, an agent session that starts with the pull
@@ -46,6 +47,20 @@ directions:
   as a nit, if it is worth saying at all.
 - **Work the diff never set out to do is not a finding either.** It is
   an issue; the section below is the whole of what to do with it.
+- **Prose that does not land is a finding only where it decides
+  something.** Squash carries the branch's commit messages into the
+  landing commit, so those are tree prose and answer for themselves like
+  any other. A pull request's body does not land: it is read once, by
+  whoever presses the button. A false claim there is worth a round when
+  it is the account the landing rests on — what the change costs, what
+  it leaves owed — and is not worth one when correcting it changes
+  neither `main` nor a decision.
+
+  The reason to draw the line is that a body describes a tip that keeps
+  moving: a measurement written into it is stale by the next commit, and
+  a round spent restating it buys nothing that the next round does not
+  undo. Where a figure is worth having, the command that re-derives it
+  belongs there instead of the figure.
 
 ## What is under review
 
@@ -181,15 +196,15 @@ in the browser — no checkout, no editor, one click:
 
 *Add suggestion to batch* takes several of them into one commit, which
 is what to use when a review leaves more than one.
-`CONTRIBUTING.md` states the same thing from the author's side, as
-something they may apply directly through the interface.
+The author may apply one directly through the interface, which is why a
+suggestion is offered where a description would do.
 
 Two properties make this the right shape here and not merely a
 convenience: the commit GitHub writes is signed with its web-flow key,
 and `main` requires a valid signature rather than one particular
 signer; and it lands as a commit of its own on top of the branch,
-which is the shape `CONTRIBUTING.md` asks a correction to take, so the
-shas the review is attached to survive it.
+which is the shape section 11 of the standard asks a correction to take,
+so the shas the review is attached to survive it.
 
 Two properties decide when not to:
 
@@ -255,18 +270,19 @@ What this is not:
 
 ## The gates are the evidence
 
-Run them on that sha, and read **exit codes, not filtered output** — a
-pipe into `grep -v Passed` hides the failure it was meant to find. **What
-the gates of this tree are is `CLAUDE.md`'s**, and so is every way a run
-of them lies — a suite run over a subset that is not the coverage gate, a
-hook set that is not the whole of what CI runs. A reviewer who names a
+Run them on that sha, and read exit codes rather than filtered output —
+a pipe into `grep -v Passed` hides the failure it was meant to find.
+**What the gates of this tree are is `CONTRIBUTING.md`'s last
+section**, and so is every way a run of them lies — a suite run over a
+subset that is not the coverage gate, a hook set that is not the whole
+of what CI runs. A reviewer who names a
 gate this repository does not have has reported nothing.
 
 **Unless they have already been run on this sha and that run is on the
 record.** Then rely on it, and say whose it is. Two runs qualify: the
 workflows of the required checks, running beside a review on the same
-commit — `CLAUDE.md` names which checks those are — and an author handing
-over a branch they gated themselves and said so. What is relied on is
+commit — `CONTRIBUTING.md` names which checks those are — and an author
+handing over a branch they gated themselves and said so. What is relied on is
 that those gates run and hold the merge, not the colour of a check, which
 stays none of a reviewer's business for the reason below.
 
@@ -302,23 +318,26 @@ document that answers it is named because that document, and not this
 one, is where the rule lives.
 
 - Does the diff **state a count** of anything — of files, of entries, of
-  findings, of seconds? `CONTRIBUTING.md` says why it must not, and only
-  some of those are caught by a test.
+  findings, of seconds? Section 9 of the standard says why it must not,
+  and only some of those are caught by a test.
 - If the branch was rebased: does `CHANGELOG.md` still say what the
   branch meant it to say, and the release notes with it where the
-  repository has them? Section 14 marks them `merge=union`, so they never
+  repository has them? Section 9 marks them `merge=union`, so they never
   conflict and a rebase can put back a line the branch had removed.
-- A new or changed workflow: the conventions in `CLAUDE.md`, and
+- A new or changed workflow: section 10 of the standard, and
   `REPOSITORY.md` before any rule or setting is touched. A renamed job
   is a required check renamed out of existence.
-- Is a reference to another repository **qualified**? A bare `#123`
-  resolves inside the repository it is written in, so a cross-repository
-  reference is `org/repo#123` or it points somewhere else in silence.
+- Is a reference to another repository **qualified**? Section 9 of the
+  standard has the rule and its one exemption, and a bare number is the
+  shape that breaks it.
+- Does the pull request's **title** say what it closes, and does its
+  description close what the title says? Section 11 has the rule, and it
+  is the one most often found broken after the fact.
 
-**What this tree checks beyond these is `CLAUDE.md`'s**, that being the
-file whose subject is what cannot be read off the tree. A repository
-whose `CLAUDE.md` says nothing about reviewing has nothing further to
-check, which is an answer and not a gap.
+**What this tree checks beyond these is the last section of this file**,
+which is that repository's own. A repository whose last section names
+nothing further has nothing further to check, which is an answer and not
+a gap.
 
 ## The verdict
 
@@ -335,8 +354,8 @@ ACK <sha>
 ```
 
 Nothing else is an ack — not "looks good", and not a forge approval,
-which `CONTRIBUTING.md` records GitHub as refusing to the author of the
-pull request. That refusal is why the record of a review here is a
+which section 11 of the standard records GitHub as refusing to the author
+of the pull request. That refusal is why the record of a review here is a
 comment at all. It names the sha because an ack belongs to a tree and
 not to a branch.
 
@@ -370,8 +389,9 @@ before its child, and otherwise the oldest.
 ## Re-review
 
 The delta is `git diff <old-sha>..<new-sha>`, and there is one to read
-because `CONTRIBUTING.md` has corrections added as commits rather than
-amended in: the shas the review was attached to are still there.
+because section 11 of the standard has corrections added as commits
+rather than amended in: the shas the review was attached to are still
+there.
 
 - **Resolve every thread the author addressed, and only those.** A
   thread they declined stays open only if it is still blocking; where
@@ -403,3 +423,43 @@ amended in: the shas the review was attached to are still there.
 Ack when every blocking finding is closed, the gates passed locally on
 that sha, and the diff answers its issues. Non-blocking findings and
 nits do not hold an ack — say that they are left to the author.
+
+## This repository in particular
+
+Everything above is the same file in every repository of the
+organization; everything below is this one's, and the comparison stops at
+this heading.
+
+What this tree publishes is measurements, so what a review here checks
+beyond the generic is what makes a number mean something. Each of these
+is a question, and the document that answers it is named because that
+document, and not this one, is where the rule lives.
+
+- **Does the diff state a measured number in prose?** A comment, a
+  docstring, a `CHANGELOG.md` entry and `README.md` are all places a
+  figure can be typed and nothing re-derives it; the tables come from
+  running the scripts. `CONTRIBUTING.md`'s *Writing a row* has the rule.
+  A page under `results/` is not this finding: the `render-check` hook
+  holds each of those to its saved run, so a page and its numbers are
+  something a gate already decides.
+- **Do a page's numbers move without the code they measure moving, or
+  the other way round?** A row is a result only beside the run it is read
+  against. A benchmark edited without its comparands re-run publishes
+  rows that have stopped answering the same question, and a page
+  re-rendered from a fresh run moves every number in it at once — so a
+  diff that moves the numbers and touches neither the scripts nor the
+  packages block is one to ask about, and a diff that changes a timed
+  function while leaving the page alone is the same question from the
+  other side.
+- **Does a changed row still owe what a row owes?** Its assertions at
+  module level rather than inside a timing, its input taken from a
+  published test vector, the backend it resolved to named, its loop count
+  per row where a table mixes Python with C, and its sort on the
+  measurement rather than on btclib. `CONTRIBUTING.md`'s *Writing a row*
+  carries each with the reason that chose it, most of them written after
+  a row was published wrong.
+- **Does a workflow run a benchmark?** None does, and
+  `CONTRIBUTING.md`'s *What the suite can and cannot check* is why: a
+  shared runner disagrees with a laptop by more than most of the
+  differences these pages report, so a timing taken there measures the
+  runner. A new or changed workflow is where this arrives.

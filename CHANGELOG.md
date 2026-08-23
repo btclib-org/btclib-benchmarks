@@ -55,19 +55,23 @@ The release notes, which say what a user has to act on, are in
 
 ### The review documents are the organization's, not this tree's
 
-- **`REVIEWING.md` is now a section 14 verbatim file**
-  (btclib-org/.github#94). It already differed from its siblings' only in
-  its H1 and in the section whose title says it is not generic, so that
-  section moves to `CLAUDE.md` and the rest becomes one file the
-  organization's suite compares. `.claude/commands/review.md` goes the
-  same way.
+- **`REVIEWING.md` is the organization's file down to its last section**
+  (btclib-org/.github#94). The head is the standard's bytes: it had been
+  brought to something that read like them and was not them, differing
+  wherever it named `CLAUDE.md` for a fact the standard names a section
+  for. What a review of *this* tree checks is back under
+  `## This repository in particular`, which is where
+  `tests/verbatim_test.py` stops comparing, rather than in `CLAUDE.md`,
+  which a human reviewing a pull request has no reason to open.
+
+- **`.claude/commands/review.md` is the standard's copy.** It is the
+  invocation and not a second copy of the standard, so a fact about this
+  tree written into it is a fact in the file that cannot hold one.
 
 - **`CLAUDE.md` and `CONTRIBUTING.md` take the skeleton every repository
   takes.** This tree's headings were already most of it; what changes is
-  that `## What this repository is` is now `## Architecture`, the
-  primary-checkout rule arrives — it was the one repository of the four
-  aligned ones without it — and the four sections that are the
-  organization's rather than this tree's are byte-identical everywhere.
+  that `## What this repository is` is now `## Architecture` and that the
+  primary-checkout rule arrives.
 
 - **A reference to another repository is `owner/repo#123`**, where this
   file asked for `ISS 123` and `PR 45`. One repository's spelling in a
