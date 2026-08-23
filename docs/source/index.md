@@ -8,8 +8,8 @@
 :maxdepth: 2
 :hidden:
 
-contributing
-reviewing
-changelog
-release_notes
+contributing_link
+reviewing_link
+changelog_link
+release_notes_link
 ```

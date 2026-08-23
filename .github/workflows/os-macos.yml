@@ -1,10 +1,10 @@
 ---
-name: macos
+name: os-macos
 
-# the macOS half of the platform sweep, and ubuntu.yml's header is the
-# argument for both: why the gate runs one cell, what a sentinel then
-# owes, and why the ubuntu matrix keeps the gate's own cell rather than
-# cutting it out.
+# the macOS half of the platform sweep, and os-ubuntu.yml's header is
+# the argument for both: why the gate runs one cell, what a sentinel
+# then owes, and why the ubuntu matrix keeps the gate's own cell rather
+# than cutting it out.
 #
 # What macOS adds is the one platform this project is never otherwise
 # asked about. The gate is ubuntu, and no Windows sentinel exists for the
@@ -18,20 +18,20 @@ name: macos
 #
 # It gates no commit and no merge -- a macOS regression sits on main for
 # at most a week -- and nothing calls it, this project having nothing to
-# publish; see ubuntu.yml's own trigger for that.
+# publish; see os-ubuntu.yml's own trigger for that.
 
 on:
   schedule:
     # the day and the time are section 10's grid in btclib-org/.github
     # and not this file's to restate. What is local is why this and
-    # ubuntu.yml want separate days at all: a platform sentinel here is
+    # os-ubuntu.yml want separate days at all: a platform sentinel here is
     # two images times every interpreter, and two exhaustive matrices in
     # one morning is the queue this design exists to avoid.
     # Only the default branch schedules workflows, so on any other branch
     # this is reachable through the dispatch below alone
     - cron: "16 4 * * 6"
   # the escape hatch, and the only trigger besides the schedule: see
-  # ubuntu.yml, where the absence of a workflow_call is argued once
+  # os-ubuntu.yml, where the absence of a workflow_call is argued once
   workflow_dispatch:
 
 # least privilege for the GITHUB_TOKEN: everything running in a job
@@ -44,7 +44,7 @@ permissions:
 # one supersedes. Named literally rather than with github.workflow, which
 # in a called workflow is the caller's name
 concurrency:
-  group: macos-${{ github.ref }}
+  group: os-macos-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -66,7 +66,7 @@ jobs:
           - macos-latest
         # every interpreter this project supports, the one the gate runs
         # included, and the two ends are a comparand's rather than a
-        # choice: see the matrix of ubuntu.yml, where that is written
+        # choice: see the matrix of os-ubuntu.yml, where that is written
         # down once
         python:
           - "3.11"
@@ -132,6 +132,6 @@ jobs:
           uv run --locked --no-default-groups --group test \
             python scripts/artifacts.py
 
-      # --no-cov for the reason ubuntu.yml gives beside its own
+      # --no-cov for the reason os-ubuntu.yml gives beside its own
       - name: Run pytest
         run: uv run --locked --no-default-groups --group test pytest --no-cov

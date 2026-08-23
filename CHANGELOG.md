@@ -8,21 +8,115 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### A link out of a rendered root file resolves to the page that renders it
+
+- **`docs/source/conf.py` carries the transform the publishing
+  repositories carry.** `REVIEWING.md` is the same file in every
+  repository of the organization and links to `./CONTRIBUTING.md`, which
+  is the correct spelling where the file is read — the GitHub view — and
+  resolves against `docs/source/` when sphinx renders it. MyST turns a
+  target it cannot resolve into an anchor on the page it is already on,
+  so suppressing the warning would leave the link and silence the only
+  thing that says it goes nowhere. The transform answers such a link from
+  the shims themselves, and leaves a target no page renders to MyST,
+  where `-W` fails the build.
+
+- **The shims are `*_link.md`**, as they are in the sibling repositories.
+  With the shim named `docs/source/contributing.md`, MyST resolved
+  `./CONTRIBUTING.md` to the docname `CONTRIBUTING` and sphinx reported
+  an unknown source document; renamed, MyST finds nothing at that path
+  and the transform answers instead. Both spellings were measured.
+
+### A workflow's name says what it is a sentinel of
+
+- **`ubuntu.yml`, `macos.yml` and `latest.yml` are now `os-ubuntu.yml`,
+  `os-macos.yml` and `deps-latest.yml`.** A prefix groups a family and a
+  name states its own subject: `latest` alone does not say the latest
+  what, where the workflow is the sentinel that upgrades every dependency
+  past its floor. The `name:` key and the concurrency group of each
+  follow the file, and so does every mention of one in the tree.
+- **No job name moves.** Those are the contexts a status check carries
+  and the branch rule names, and renaming one renames a required check
+  out of existence.
+
+### CLAUDE.md holds only what no document for a human can
+
+- **The commands and the gates left it for `CONTRIBUTING.md`**
+  (btclib-org/.github#94), which is where a human looks for them and
+  where `REVIEWING.md` sends a reviewer. The review checks left it for
+  `REVIEWING.md`'s last section, for the same reason.
+- **The workflow conventions are section 10's**, and the prose style is
+  section 9's, so this file points at them rather than carrying a second
+  wording of each. `.gitattributes` points there too, where it used to
+  send a reader here for the reasoning behind `merge=union`.
+- What is left is what a document for a human cannot hold: the
+  architecture, the primary-checkout rule, the model, and the facts a
+  session pays for by not knowing.
+
+### CONTRIBUTING.md is the organization's file down to its last section
+
+- **The shared part is copied rather than reworded**
+  (btclib-org/.github#94). This tree's own text said the same things in
+  its own words — where an issue is filed, the prose style, one subject
+  per pull request, how a review is conducted, how a change lands — and
+  a second wording is the one that goes stale. The bytes above
+  `## This repository in particular` are now the standard's, which is
+  what `tests/verbatim_test.py` there compares.
+
+- **Below that heading is what the shared part cannot say**: the
+  environment and the three gates, which of them a merge waits for and
+  what only reports, how a benchmark is run, how a run is published, how
+  an install's artifact is read back, what the suite can and cannot
+  check, and what a row has to do.
+
+### The shared configuration files are the organization's copies
+
+- **`LICENSE` carries the `MIT License` title and no year range**
+  (btclib-org/.github#94). `COPYRIGHT` names the holder without a year,
+  so a range here is the line the two would disagree over the first
+  January nobody remembered.
+- **`CODE_OF_CONDUCT.md` is the copy GitHub falls back to** for a
+  repository of the organization carrying none of its own. One that does
+  carry it carries the same one, or the organization advertises two
+  policies.
+- **`document-start` is an error rather than the default set's warning**
+  (btclib-org/.github#96). The hook runs plain `yamllint`, with no
+  `--strict`, and a warning exits 0 there: at the inherited level the
+  rule reported the convention and gated nothing.
+
+  ```shell
+  git ls-files '*.yml' '*.yaml' \
+    | xargs -I{} sh -c 'head -1 {} | grep -q "^---" || echo {}'
+  ```
+
+  answers with nothing here, so raising it costs this tree no edit.
+
+### AUTHORS.md points at this repository's contributors
+
+- **The contributor graph named is this repository's**, where it was
+  btclib's. A shared pointer is accurate only while one graph stays a
+  superset of the other, and the first person to contribute here and
+  nowhere else went uncredited in silence (btclib-org/.github#94).
+
 ### The review documents are the organization's, not this tree's
 
-- **`REVIEWING.md` is now a section 14 verbatim file**
-  (btclib-org/.github#94). It already differed from its siblings' only in
-  its H1 and in the section whose title says it is not generic, so that
-  section moves to `CLAUDE.md` and the rest becomes one file the
-  organization's suite compares. `.claude/commands/review.md` goes the
-  same way.
+- **`REVIEWING.md` is the organization's file down to its last section**
+  (btclib-org/.github#94). The head is the standard's bytes: it had been
+  brought to something that read like them and was not them, differing
+  wherever it named `CLAUDE.md` for a fact the standard names a section
+  for. What a review of *this* tree checks is back under
+  `## This repository in particular`, which is where
+  `tests/verbatim_test.py` stops comparing, rather than in `CLAUDE.md`,
+  which a human reviewing a pull request has no reason to open.
+
+- **`.claude/commands/review.md` is the standard's copy.** It is the
+  invocation and not a second copy of the standard, so a fact about this
+  tree written into it is a fact in the file that cannot hold one.
 
 - **`CLAUDE.md` and `CONTRIBUTING.md` take the skeleton every repository
   takes.** This tree's headings were already most of it; what changes is
-  that `## What this repository is` is now `## Architecture`, the
-  primary-checkout rule arrives — it was the one repository of the four
-  aligned ones without it — and the four sections that are the
-  organization's rather than this tree's are byte-identical everywhere.
+  that `## What this repository is` is now `## Architecture` and that the
+  primary-checkout rule arrives.
 
 - **A reference to another repository is `owner/repo#123`**, where this
   file asked for `ISS 123` and `PR 45`. One repository's spelling in a
@@ -48,12 +142,12 @@ The release notes, which say what a user has to act on, are in
   workflows of the sibling repositories were already making, applied
   here for the first time.
 
-- **`ubuntu.yml` and `macos.yml` take the sweep, whole.** Each is two
-  images across every interpreter this project supports, once a week and
-  on demand. `ubuntu.yml`'s matrix keeps the gate's own cell rather than
-  subtracting it: a matrix with a hole in it is one whose shape has to be
-  re-derived from another file before it can be read, and re-running one
-  cell a week is cheaper than that.
+- **`os-ubuntu.yml` and `os-macos.yml` take the sweep, whole.** Each is
+  two images across every interpreter this project supports, once a week
+  and on demand. `os-ubuntu.yml`'s matrix keeps the gate's own cell
+  rather than subtracting it: a matrix with a hole in it is one whose
+  shape has to be re-derived from another file before it can be read, and
+  re-running one cell a week is cheaper than that.
 
   macOS is new here rather than moved, and it is where the comparands
   resolve differently: `secp256k1` publishes an arm64 wheel and no
@@ -70,7 +164,7 @@ The release notes, which say what a user has to act on, are in
   `uv sync`. `REPOSITORY.md` carries the evidence and the command that
   re-derives it.
 
-- **`links.yml`, `codeql.yml` and `latest.yml`.** Each answers a
+- **`links.yml`, `codeql.yml` and `deps-latest.yml`.** Each answers a
   question nothing else here asked. `links` reads the URLs that rot
   without anybody touching the tree — `vectors/README.md` publishes an
   upstream URL beside every digest, and the pages under `results/` cite
@@ -182,8 +276,8 @@ The release notes, which say what a user has to act on, are in
 
   Without it a Dependabot pull request is the one class that can never
   carry the ack of record `REVIEWING.md` requires — the class whose whole
-  value is landing promptly, `latest.yml` having reported on the same
-  upgrade the day before. Measured on btclib-org/bitcoin-core-rpc#207,
+  value is landing promptly, `deps-latest.yml` having reported on the
+  same upgrade the day before. Measured on btclib-org/bitcoin-core-rpc#207,
   the first Dependabot pull request opened after the credential guard
   landed.
 
@@ -384,8 +478,9 @@ The release notes, which say what a user has to act on, are in
   `CLAUDE.md`: the audit and the normalizing checklist that standard
   carries are performed *holding* it, so the reader who arrives without
   it is the contributor, and `CONTRIBUTING.md` is the file that reader
-  is already in — and the one of the three `docs/source/contributing.md`
-  includes, so it is also the one rendered. Hence an absolute
+  is already in — and the one of the three that
+  `docs/source/contributing_link.md` includes, so it is also the one
+  rendered. Hence an absolute
   github.com destination, which is what a cross-repository link is
   written as here: a relative one resolves against the rendered site.
 
@@ -2106,16 +2201,15 @@ The release notes, which say what a user has to act on, are in
   the organization's.
 
 - **It enforces a convention rather than catching a defect**, which is
-  the part worth writing down. Unlike the three publishing
-  repositories, this repository has no link-resolving transform in
-  `docs/source/conf.py` and suppresses no MyST warning, so a relative
-  link out of an included root file is a `myst.xref_missing` warning
-  and `docs.yml`'s `-W` fails the build on it. Measured with a fresh
-  environment: `[a](./REVIEWING.md)` and `[a](REVIEWING.md)` each take
-  `sphinx-build -E -W --keep-going` to exit 1, where the tree without
-  them exits 0 — and `REVIEWING.md` is a page this documentation does
-  render. That is why the root files here link by absolute url, and it
-  is why this hook is prophylaxis rather than a fix.
+  the part worth writing down. `docs/source/conf.py` resolves a link out
+  of an included root file to the page that renders it, and leaves a
+  target no page renders to MyST, which reports it and takes
+  `docs.yml`'s `-W` with it. Measured with a fresh environment:
+  `[a](./REPOSITORY.md)` takes `sphinx-build -E -W --keep-going` to exit
+  1, where the tree without it exits 0. So a root file's link to
+  anything this documentation does not render is written as an absolute
+  url, and the ones it does render are what this hook holds to one
+  spelling.
 
 ### A review runs what a diff decides with
 
@@ -2157,11 +2251,11 @@ The release notes, which say what a user has to act on, are in
   this one, so a rebase voids it, the branch having been gated before
   the tree moved under the gate.
 
-- **`CLAUDE.md` carries which checks this repository is gated on**, read
-  back from the branch rule rather than copied from a sibling: the
-  suite, the lint gate and the documentation build. That is the fact the
-  reliance rests on, and it belongs in a file a pull request can be
-  reviewed against.
+- **`CONTRIBUTING.md`'s last section carries which checks this
+  repository is gated on**, read back from the branch rule rather than
+  copied from a sibling: the suite, the lint gate and the documentation
+  build. That is the fact the reliance rests on, and it belongs in the
+  file a reviewer is sent to for the gates of a tree.
 
 - **What earned it is `claude-review.yml`'s prompt**, whose reason for
   not running the gates was that a second run of them would cost a

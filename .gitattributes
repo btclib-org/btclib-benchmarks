@@ -10,7 +10,9 @@
 # the same existing entry edited on two branches merges in silence rather
 # than being flagged. That is why neither file states how many entries it
 # has — a count is exactly such an edit, and union would have kept both
-# numbers. CLAUDE.md carries the rest of the reasoning.
+# numbers. Section 9 of the btclib-org standard carries the rest of the
+# reasoning, and CONTRIBUTING.md's "Documentation and comments" is where
+# this tree points at it.
 CHANGELOG.md merge=union
 RELEASE_NOTES.md merge=union
 

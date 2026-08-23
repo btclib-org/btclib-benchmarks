@@ -379,7 +379,7 @@ here.
   # 0
   ```
 
-  The day both answers stop being zero, this workflow is `macos.yml`
+  The day both answers stop being zero, this workflow is `os-macos.yml`
   with the images and the schedule swapped.
 - **No `mutation.yml`, and no mutation configuration.** The subject
   exists — the helper modules under `scripts/` are what the 100%
