@@ -1,5 +1,5 @@
 ---
-name: latest
+name: deps-latest
 
 # the dependency sentinel: everything uv resolves, upgraded to the newest
 # release that satisfies pyproject.toml, and then put through the suite
@@ -72,16 +72,17 @@ permissions:
 # workflow, but that expression is the caller's name when something does,
 # and the convention is what keeps the groups distinct
 concurrency:
-  group: latest-${{ github.ref }}
+  group: deps-latest-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # one image and the two ends of the interpreter range, where ubuntu.yml
-  # runs both images and everything between: the variable here is which
-  # release of each comparand the resolver picks, and holding the
-  # platform still is what makes a red column mean that and only that. A
-  # red cell here with ubuntu.yml green is an upgrade; red in both is the
-  # platform. One variable each, and the pair reads as a difference.
+  # one image and the two ends of the interpreter range, where
+  # os-ubuntu.yml runs both images and everything between: the variable
+  # here is which release of each comparand the resolver picks, and
+  # holding the platform still is what makes a red column mean that and
+  # only that. A red cell here with os-ubuntu.yml green is an upgrade;
+  # red in both is the platform. One variable each, and the pair reads
+  # as a difference.
   #
   # The low end earns its place rather than being symmetry: a comparand
   # dropping 3.11 does not fail to resolve, it resolves to an older
@@ -139,7 +140,7 @@ jobs:
       # wrote that lock, so this asserts nothing moved between the two
       # and keeps the convention that no uv command in these workflows
       # installs from a lock it has not checked.
-      # --no-cov for the reason ubuntu.yml gives beside its own
+      # --no-cov for the reason os-ubuntu.yml gives beside its own
       - name: Run pytest
         run: uv run --locked --no-default-groups --group test pytest --no-cov
 

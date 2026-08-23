@@ -8,11 +8,11 @@ name: test
 #
 # One cell is what a merge waits for: `ubuntu-latest` on the interpreter
 # `.python-version` pins. The images and the interpreters it does not run
-# are ubuntu.yml's and macos.yml's, and ubuntu.yml's matrix keeps this
-# cell rather than subtracting it -- a matrix with the gate's cell cut
-# out of it is one whose shape has to be re-derived from this file before
-# it can be read. What the trade costs is stated once, in ubuntu.yml's
-# header: a regression on 3.11, on 3.12 or on aarch64 is not refused
+# are os-ubuntu.yml's and os-macos.yml's, and os-ubuntu.yml's matrix
+# keeps this cell rather than subtracting it -- a matrix with the gate's
+# cell cut out of it is one whose shape has to be re-derived from this
+# file before it can be read. What the trade costs is stated once, in
+# os-ubuntu.yml's header: a regression on 3.11, on 3.12 or on aarch64 is not refused
 # before a merge and sits on main until the sentinel for it runs
 # (btclib-org/.github#85)
 on:
@@ -92,8 +92,8 @@ jobs:
       # libsecp256k1's autogen.sh, which is what autoconf, automake and
       # libtool are for. The other wrappers resolve to wheels here and
       # build on the sentinels' other images instead -- `secp256k1`
-      # wants pkg-config when it does, and ubuntu.yml and macos.yml
-      # each name the cell where that happens. Four
+      # wants pkg-config when it does, and os-ubuntu.yml and
+      # os-macos.yml each name the cell where that happens. Four
       # tools, and no step asks apt for any of them: both `ubuntu-latest`
       # and `ubuntu-24.04-arm` carry all four already --
       # actions/runner-images' own manifests for Ubuntu24.04 and its
@@ -101,8 +101,8 @@ jobs:
       # and libtool 2.4.7 among the preinstalled software. ISS 96 is the
       # thirty minutes and a red gate one hung `apt-get update` cost on a
       # step that was asking for what the image already had.
-      # This is the toolchain comment ubuntu.yml cites. macos.yml carries
-      # one of its own instead of citing this: the macOS images list
+      # This is the toolchain comment os-ubuntu.yml cites. os-macos.yml
+      # carries one of its own instead of citing this: the macOS images list
       # pkgconf and none of the three autotools, so what is free here is
       # a step there
 

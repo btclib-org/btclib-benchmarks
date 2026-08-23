@@ -1,5 +1,5 @@
 ---
-name: ubuntu
+name: os-ubuntu
 
 # every ubuntu cell this project is asked about, once a week: both
 # architectures, every interpreter it supports. One of them is the merge
@@ -27,14 +27,14 @@ name: ubuntu
 # architecture the interpreter targets decides which artifact the suite
 # then holds to the vendored vectors. That is a different question from
 # the one the helpers answer, and the `Record which artifact` step below
-# is what keeps the two apart in a log. macos.yml is the same argument on
-# the platform whose images resolve differently again.
+# is what keeps the two apart in a log. os-macos.yml is the same argument
+# on the platform whose images resolve differently again.
 
 on:
   schedule:
     # the day and the time are section 10's grid in btclib-org/.github
-    # and not this file's to restate. Why this and macos.yml want
-    # separate days is macos.yml's own comment, beside its schedule.
+    # and not this file's to restate. Why this and os-macos.yml want
+    # separate days is os-macos.yml's own comment, beside its schedule.
     # Only the default branch schedules workflows, so on any other branch
     # this is reachable through the dispatch below alone
     - cron: "16 4 * * 5"
@@ -64,7 +64,7 @@ permissions:
 # where nothing calls this yet, so the day something does there is
 # nothing to remember
 concurrency:
-  group: ubuntu-${{ github.ref }}
+  group: os-ubuntu-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

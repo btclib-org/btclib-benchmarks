@@ -8,6 +8,18 @@ The release notes, which say what a user has to act on, are in
 
 ## v2026.9 (work in progress, not released yet)
 
+### A workflow's name says what it is a sentinel of
+
+- **`ubuntu.yml`, `macos.yml` and `latest.yml` are now `os-ubuntu.yml`,
+  `os-macos.yml` and `deps-latest.yml`.** A prefix groups a family and a
+  name states its own subject: `latest` alone does not say the latest
+  what, where the workflow is the sentinel that upgrades every dependency
+  past its floor. The `name:` key and the concurrency group of each
+  follow the file, and so does every mention of one in the tree.
+- **No job name moves.** Those are the contexts a status check carries
+  and the branch rule names, and renaming one renames a required check
+  out of existence.
+
 ### CLAUDE.md holds only what no document for a human can
 
 - **The commands and the gates left it for `CONTRIBUTING.md`**
@@ -111,12 +123,12 @@ The release notes, which say what a user has to act on, are in
   workflows of the sibling repositories were already making, applied
   here for the first time.
 
-- **`ubuntu.yml` and `macos.yml` take the sweep, whole.** Each is two
-  images across every interpreter this project supports, once a week and
-  on demand. `ubuntu.yml`'s matrix keeps the gate's own cell rather than
-  subtracting it: a matrix with a hole in it is one whose shape has to be
-  re-derived from another file before it can be read, and re-running one
-  cell a week is cheaper than that.
+- **`os-ubuntu.yml` and `os-macos.yml` take the sweep, whole.** Each is
+  two images across every interpreter this project supports, once a week
+  and on demand. `os-ubuntu.yml`'s matrix keeps the gate's own cell
+  rather than subtracting it: a matrix with a hole in it is one whose
+  shape has to be re-derived from another file before it can be read, and
+  re-running one cell a week is cheaper than that.
 
   macOS is new here rather than moved, and it is where the comparands
   resolve differently: `secp256k1` publishes an arm64 wheel and no
@@ -133,7 +145,7 @@ The release notes, which say what a user has to act on, are in
   `uv sync`. `REPOSITORY.md` carries the evidence and the command that
   re-derives it.
 
-- **`links.yml`, `codeql.yml` and `latest.yml`.** Each answers a
+- **`links.yml`, `codeql.yml` and `deps-latest.yml`.** Each answers a
   question nothing else here asked. `links` reads the URLs that rot
   without anybody touching the tree — `vectors/README.md` publishes an
   upstream URL beside every digest, and the pages under `results/` cite
@@ -245,8 +257,8 @@ The release notes, which say what a user has to act on, are in
 
   Without it a Dependabot pull request is the one class that can never
   carry the ack of record `REVIEWING.md` requires — the class whose whole
-  value is landing promptly, `latest.yml` having reported on the same
-  upgrade the day before. Measured on btclib-org/bitcoin-core-rpc#207,
+  value is landing promptly, `deps-latest.yml` having reported on the
+  same upgrade the day before. Measured on btclib-org/bitcoin-core-rpc#207,
   the first Dependabot pull request opened after the credential guard
   landed.
 
