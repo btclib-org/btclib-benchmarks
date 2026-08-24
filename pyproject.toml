@@ -45,6 +45,13 @@ requires-python = ">=3.11"
 # nothing in the library ran. Here they are what the project is for, so
 # an alert against one names the package it is actually about.
 #
+# GHSA-wj6h-64fc-37mp against `ecdsa` is exactly that: a Minerva timing
+# side channel upstream ships no patched release for and does not plan
+# one, `ecdsa` offering no constant-time execution at all. Dismissed as
+# a tolerable risk rather than left open: `ecdsa` is imported only by
+# this project's own timing harness, on every run, and never to protect
+# anything, so the alert has nothing to wait on.
+#
 # A floor and not a pin, for the reason btclib's `bench` group gave and
 # this inherits: the premise of the comparison is whatever `pip install`
 # currently gives a user, so a new release is to be picked up and

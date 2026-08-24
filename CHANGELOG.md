@@ -26,6 +26,17 @@ the record behind.
   pre-commit.ci, alongside mypy, for the same reason: both shell out to
   `uv`, which is not installed there, and the lint workflow covers them
   (#166).
+### The two open Dependabot alerts against `ecdsa` are dismissed
+
+- **GHSA-wj6h-64fc-37mp has no patched version in any `ecdsa` release
+  and none planned -- a Minerva timing side channel upstream does not
+  offer constant-time execution to fix.** Dismissed as a tolerable
+  risk on both alerts (`pyproject.toml`'s and `uv.lock`'s manifest):
+  `ecdsa` is a benchmark comparand here, imported only by the timing
+  harness and never to protect anything. `pyproject.toml`'s own
+  paragraph on why an alert against a comparand belongs to this
+  repository now names this alert specifically, where before it argued
+  the general case (#146).
 
 ### Comments say why the code is as it is, in the present tense
 
