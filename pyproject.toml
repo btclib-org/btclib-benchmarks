@@ -489,13 +489,36 @@ select = [
 ]
 extend-select = ["unspecified-encoding"]
 ignore = [
+    # docstrings: every public module, class, method and function must
+    # carry one -- D100/D104 and the D101/D102/D103 left out of this
+    # list enforce exactly that. The convention leaves these two
+    # enabled -- it is not what silences them, ignoring them is -- for
+    # every dunder and every constructor still to be written and not
+    # only the ones already in the tree: __init__ is documented by its
+    # class, and a magic method by the data model it implements
     "undocumented-magic-method",
     "undocumented-public-init",
+    # code length is enforced by the formatter, which reflows to its 88
+    # columns everything it is allowed to rewrite. What is left for
+    # line-too-long to find is what no width the formatter controls can
+    # break: a benchmark row's own label describing what it measures,
+    # and a guard condition naming a loaded module in a test. The prose
+    # the formatter never touches is measured instead by max-doc-length
+    # below. `uv run ruff check --select E501 --no-cache .` lists the
+    # sites
     "line-too-long",
-    "too-many-arguments",
-    "too-many-statements",
-    "too-many-positional-arguments",
+    # sizes and prefixes a specification assigns, not values this code
+    # chose and could have named instead: a message length fixed by a
+    # published test vector's own schema, and SEC's 0x04 prefix on an
+    # uncompressed key. `uv run ruff check --select PLR2004 --no-cache .`
+    # lists the sites, in a fixture and in the tests reading it
     "magic-value-comparison",
+    # the message is built where the exception is raised because that
+    # is the only place holding what went wrong -- which page, which
+    # table, which schema -- and a shared exception class could not say
+    # that without every raise site passing it back in anyway.
+    # `uv run ruff check --select TRY003 --no-cache .` lists the sites,
+    # every one in scripts/_results.py or scripts/render.py
     "raise-vanilla-args",
 ]
 

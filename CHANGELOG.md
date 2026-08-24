@@ -33,6 +33,24 @@ the record behind.
   push, schedule and workflow_dispatch -- include no pull_request, so no
   rule can require it and an aggregate here would be a name nothing can
   hold. The comment now states that instead of the open question (#176).
+### `[tool.ruff.lint] ignore` names no rule with nothing beside it
+
+- **Every entry now carries the reason it is ignored, and the command
+  that measures whether it still applies, matching every sibling
+  repository whose `ignore` list has entries.** `undocumented-magic-method`
+  and `undocumented-public-init` keep the reason: the `pep257` convention
+  leaves both enabled, so without the entries a tree naming neither would
+  be asked for a docstring on every constructor and every dunder method,
+  which `__init__` already gets from its class and a magic method from the
+  data model it implements. `line-too-long`, `magic-value-comparison`
+  and `raise-vanilla-args` keep the reason and the command that lists
+  their current sites -- a benchmark row's own label, a test vector's
+  message length, an exception message built where it is raised.
+- **`too-many-arguments`, `too-many-statements` and
+  `too-many-positional-arguments` go.** `uv run ruff check --select
+  PLR0913,PLR0915,PLR0917 --no-cache .` reports nothing under any of
+  the three: no function in this tree crosses the threshold, so the
+  exemption decided nothing (#177).
 
 ### A cross-repository reference now qualifies its repository
 
