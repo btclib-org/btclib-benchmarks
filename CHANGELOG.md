@@ -14,6 +14,17 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### REPOSITORY.md points at the release fact instead of restating it
+
+- **The *No PyPI publishing, and no release workflow* bullet restated
+  that nothing is installed from this project, in the same sentence as
+  `[tool.uv.build-backend] module-name = []`, which is this
+  repository's own configuration and not a restatement**
+  (btclib-org/.github#291). The bullet now points at `CONTRIBUTING.md`'s
+  *A version, and no release* for the release fact, and keeps the
+  configuration fact and the `check` dependency group's packaging-lint
+  role beside it.
+
 ### The configuration decides what it says it decides
 
 - **`[tool.ruff.lint] ignore` names no rule the declared convention
