@@ -23,7 +23,7 @@ ci:
   autoupdate_schedule: weekly
   # the hooks pre-commit.ci cannot run: they shell out to uv, which is not
   # installed there, and the lint workflow covers them
-  skip: [mypy]
+  skip: [mypy, twine-check]
 
 repos:
   # this file checking itself. A `files` or `exclude` pattern that stops
@@ -619,6 +619,22 @@ repos:
         types: [python]
         pass_filenames: false
         require_serial: true
+      # check-sdist and pyroma above already inspect a distribution nothing
+      # publishes -- a lint of the packaging rather than a release step,
+      # [tool.uv.build-backend]'s own comment has the reason. twine reads
+      # what those two do not: the rendered long description and the
+      # classifiers PyPI would actually show, which is exactly what
+      # `check = [...]` declared it for without anything running it
+      # (#166). `rm -rf dist` first, so a stale artifact from a version
+      # this checkout no longer carries cannot pass silently
+      - id: twine-check
+        name: twine check --strict (packaging metadata, over a build nobody publishes)
+        entry: >
+          bash -c 'rm -rf dist && uv build --quiet && uv run --locked
+          --only-group check twine check --strict dist/*'
+        language: system
+        pass_filenames: false
+        always_run: true
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.12.5
     hooks:
