@@ -14,6 +14,16 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### CONTRIBUTING.md's shared half is the organization's current copy
+
+- **Everything above `## This repository in particular` is section 14's
+  copy, byte for byte** (`tests/verbatim_test.py` in `btclib-org/.github`
+  is what compares it). Two changes this tree was missing: *The landing
+  queue*, a new subsection under *Pull requests* on which of several
+  already-open pull requests is carried to `main` next and why; and a
+  rewritten paragraph in *Documentation and comments* on what a commit
+  message becomes once it lands. Nothing below the marker moved (#187).
+
 ### The import-budget test reads the source, not a wall clock
 
 - **`tests/scripts_import_test.py` timed a warm reload of each benchmark
