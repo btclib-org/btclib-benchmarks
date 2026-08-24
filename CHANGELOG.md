@@ -333,6 +333,17 @@ the record behind.
   and the branch rule names, and renaming one renames a required check
   out of existence.
 
+### CLAUDE.md's primary-checkout paragraph names the read that cannot go stale
+
+- **The paragraph said reading the checkout was fine — `git log`, `git
+  show`, `git diff`, `gh`, and a `git fetch`, which writes refs and
+  leaves the work tree alone — without saying that leaves a `grep` or a
+  `Read` against the checkout's files answering for whenever it was last
+  brought forward, not for now** (btclib-org/.github#255). It now names
+  `git show origin/main:<path>` as the read that does not go stale, and
+  gives the fast-forward that brings a clean checkout forward without
+  working in it.
+
 ### CLAUDE.md holds only what no document for a human can
 
 - **The commands and the gates left it for `CONTRIBUTING.md`**
