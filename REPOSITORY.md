@@ -349,10 +349,11 @@ here.
 
 ## What is not configured, and why
 
-- **No PyPI publishing, and no release workflow.** Nothing is installed
-  from this project: `[tool.uv.build-backend] module-name = []`, and the
-  scripts are run from a checkout. The `check` dependency group exists so
-  that `check-sdist`, `pyroma` and `twine` can still inspect the
+- **No PyPI publishing, and no release workflow.** `CONTRIBUTING.md`'s
+  *A version, and no release* is the whole of that answer, and
+  `[tool.uv.build-backend] module-name = []` is this repository's own
+  copy of the setting it explains. The `check` dependency group exists
+  so that `check-sdist`, `pyroma` and `twine` can still inspect the
   distribution and its metadata, which is a lint of the packaging rather
   than a step toward a release.
 - **No Read the Docs.** `.readthedocs.yaml` is present and the `docs`
