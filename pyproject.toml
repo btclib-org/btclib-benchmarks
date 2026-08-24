@@ -159,7 +159,7 @@ dev = [
 # floor silently stops every lock update it attempts, security ones
 # included. The pin is `FROM ghcr.io/astral-sh/uv:...` in
 # dependabot-core's uv/Dockerfile, and only a human bumping that file
-# moves the ceiling out -- btclib's issue #485 is this same failure
+# moves the ceiling out -- btclib-org/btclib#485 is this same failure
 # caught there first. Not the rev of the uv-lock hook in
 # .pre-commit-config.yaml, which is newer and moves on pre-commit.ci's
 # own schedule: this floor only has to be low enough for Dependabot and

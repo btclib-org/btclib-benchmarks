@@ -14,6 +14,14 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### A cross-repository reference now qualifies its repository
+
+- **The `[tool.uv] required-version` comment cited `#485` bare, which
+  the forge resolves inside this repository rather than in btclib,
+  where the issue actually lives.** It now reads `btclib-org/btclib#485`,
+  section 9 of the standard's rule for a reference outside the tree it
+  sits in (#164).
+
 ### REPOSITORY.md points at the release fact instead of restating it
 
 - **The *No PyPI publishing, and no release workflow* bullet restated
