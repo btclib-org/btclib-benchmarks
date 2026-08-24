@@ -14,6 +14,19 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### twine, declared in the `check` group, now runs there too
+
+- **A local `twine-check` hook builds the distribution and runs `twine
+  check --strict` on it, the packaging lint `check-sdist` and `pyroma`
+  already run despite nothing here publishing.** `[tool.uv.build-backend]`'s
+  own comment already claimed the sdist was "what check-sdist, pyroma and
+  twine inspect"; only the third was untrue until now. `twine` reads what
+  the other two do not -- the rendered long description and the
+  classifiers PyPI would show -- so it earns the same place. Skipped on
+  pre-commit.ci, alongside mypy, for the same reason: both shell out to
+  `uv`, which is not installed there, and the lint workflow covers them
+  (#166).
+
 ### Comments say why the code is as it is, in the present tense
 
 - **A `check-json` exclusion, a `--only-group docs` comment and a
