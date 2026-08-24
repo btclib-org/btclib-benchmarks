@@ -149,11 +149,11 @@ jobs:
           # upload replaces the first rather than adding to it
           category: /language:${{ matrix.language }}
 
-  # no aggregate job, where test.yml has one and the sibling repositories
-  # have one here too. An aggregate exists to give branch protection a
-  # single context to require in place of a matrix cell whose name
-  # changes with the matrix, and nothing requires this workflow -- but
-  # nothing requires the siblings' aggregates either, so that alone does
-  # not tell the two apart. btclib-org/.github#90 asks the organization
-  # to rule on which reading of section 10 is the standard's; this file
-  # follows whichever answer that issue reaches
+  # no aggregate job, where test.yml has one and the sibling
+  # repositories have one here too: theirs gates a pull request and
+  # this workflow does not, carrying no pull_request trigger among
+  # push, schedule and workflow_dispatch above. A branch rule can name
+  # only a context a pull request produces, so no rule can require this
+  # workflow and an aggregate here would be a name nothing can hold --
+  # section 10 of the standard, "A matrix is not what asks for one",
+  # settled against this exact question by btclib-org/.github#90
