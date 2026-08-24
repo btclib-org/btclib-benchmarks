@@ -74,15 +74,14 @@ jobs:
       # comparands are this project's own dependencies rather than a
       # group of their own, so the latter still installs every one of
       # them -- coincurve and secp256k1 included, and neither publishes a
-      # cp314 wheel or builds from source under it, which failed the
-      # first version of this job. --only-group skips the project's own
-      # dependencies and the project itself, which is correct today: no
-      # page under docs/source carries an autodoc directive, so nothing
-      # sphinx reads here imports btclib. The day one does, the import
-      # fails loudly under -W rather than printing a bare title, which is
-      # this job's whole reason to exist -- and installing btclib for
-      # that day is this line's to grow, not the whole project's install
-      # to restore.
+      # cp314 wheel or builds from source under it. --only-group skips
+      # the project's own dependencies and the project itself, which is
+      # correct today: no page under docs/source carries an autodoc
+      # directive, so nothing sphinx reads here imports btclib. The day
+      # one does, the import fails loudly under -W rather than printing
+      # a bare title, which is this job's whole reason to exist -- and
+      # installing btclib for that day is this line's to grow, not the
+      # whole project's install to restore.
       #
       # --keep-going first, so one broken page reports every other
       # problem in the same run instead of one per push

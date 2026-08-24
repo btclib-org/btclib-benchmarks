@@ -14,6 +14,26 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### Comments say why the code is as it is, in the present tense
+
+- **A `check-json` exclusion, a `--only-group docs` comment and a
+  `secp256k1lab` floor each carried a clause about a past state of the
+  tree beside reasoning that stands without it.** `.pre-commit-config.yaml`
+  dropped *"for the reason it was once dropped for altogether"*,
+  `.github/workflows/docs.yml` dropped *"which failed the first version
+  of this job"*, and `pyproject.toml` dropped *"which CI found, the
+  marker this used to carry having made it absent rather than
+  unresolvable"* — in each case the present-tense reasoning beside the
+  clause already said the whole of what a reader needs (#169).
+- **`codeql.yml`'s comment on carrying no aggregate job asked an open
+  question instead of giving the reason.** It deferred to
+  btclib-org/.github#90, "which reading of section 10 is the
+  standard's". That issue is settled: a branch rule can name only a
+  context a pull request produces, and this workflow's triggers --
+  push, schedule and workflow_dispatch -- include no pull_request, so no
+  rule can require it and an aggregate here would be a name nothing can
+  hold. The comment now states that instead of the open question (#176).
+
 ### A cross-repository reference now qualifies its repository
 
 - **The `[tool.uv] required-version` comment cited `#485` bare, which

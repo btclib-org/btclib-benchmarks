@@ -92,12 +92,10 @@ dependencies = [
     "secp256k1>=0.14.0",
     # on no index at all, so [tool.uv.sources] below takes it from its
     # git tag. It declares >=3.11, and that is where this project's own
-    # floor comes from: scripts/04-pure-python.py imports it unguarded, so
-    # on 3.10 the module cannot be loaded at all -- which CI found, the
-    # marker this used to carry having made it absent rather than
-    # unresolvable. A benchmark that will not start says more than one
-    # with a row silently missing, so the floor moved instead of the
-    # import growing a guard
+    # floor comes from: scripts/04-pure-python.py imports it unguarded,
+    # so on 3.10 the module cannot be loaded at all. A benchmark that
+    # will not start says more than one with a row silently missing, so
+    # the floor moved instead of the import growing a guard
     "secp256k1lab",
 ]
 keywords = [

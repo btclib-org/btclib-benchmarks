@@ -106,10 +106,10 @@ repos:
       - id: check-json
         # `.vscode` is jsonc, not json: VSCode reads a comment in its own
         # settings.json and extensions.json, and a json parser rejects the
-        # file at the first one. Excluded here for the reason it was once
-        # dropped for altogether -- it is not a gap, prettier below is
-        # given that directory and fails on what it cannot parse, which is
-        # the question this hook asks. What check-json reaches instead is
+        # file at the first one. Excluded here because it is not a gap:
+        # prettier below is given that directory and fails on what it
+        # cannot parse, which is the question this hook asks. What
+        # check-json reaches instead is
         # `results/*.json`, `vectors/*.json` and .claude/settings.json,
         # none of them jsonc and none of them under prettier's `files`
         # allowlist -- so this is the only parser in the gate for the
