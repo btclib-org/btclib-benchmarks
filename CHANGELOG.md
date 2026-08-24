@@ -14,6 +14,20 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### The import-budget test reads the source, not a wall clock
+
+- **`tests/scripts_import_test.py` timed a warm reload of each benchmark
+  against a 60-second ceiling, meant to catch a regression to a bare
+  module-level call to `main()`.** On an ordinarily busy machine the
+  reload alone already spent most of that budget, so the test measured
+  the machine as much as the code -- a ceiling loose enough to survive a
+  busy machine is one loose enough to miss a removed guard too. It now
+  parses each script's source with `ast` and asserts `main()` is never
+  called at module level outside its own `if __name__ == "__main__":`
+  guard, which a wall clock could only ever infer. A unit test on the
+  detector itself (a synthetic source with a bare call to `main()`)
+  trips the branch none of the six compliant scripts can (#173).
+
 ### twine, declared in the `check` group, now runs there too
 
 - **A local `twine-check` hook builds the distribution and runs `twine

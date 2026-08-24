@@ -15,9 +15,10 @@ code -- so what is checked here is the two things that can be:
   computing different things is worth nothing, and importing the module
   is what runs that check.
 - it did not time anything while doing so. The `main()` guard is what
-  buys that, and a regression to bare module-level calls would turn
-  every one of these tests into a benchmark run -- slow enough to notice,
-  but the assertion below is what names the cause.
+  buys that, checked in the source rather than by timing a reload: a
+  wall clock cannot tell a removed guard from a busy machine, the two
+  reading the same from outside, and a ceiling loose enough to survive
+  a busy machine is one loose enough to miss a removed guard too.
 
 Both are what `main()` is for: a benchmark whose timings run at import
 is one no suite can hold to anything.
@@ -25,8 +26,9 @@ is one no suite can hold to anything.
 
 from __future__ import annotations
 
+import ast
 import importlib
-import time
+from pathlib import Path
 
 import pytest
 
@@ -39,24 +41,50 @@ BENCHMARKS = [
     "06-silentpayments",
 ]
 
-# an import does fixture work, and since the six scripts draw from one
-# shared pool that work is no longer a handful of vectors: `03-libraries.py`
-# builds key objects and signatures for six packages, two of which sign in
-# pure Python at tens of milliseconds a signature. What the pool caches --
-# the keys, the messages, the public keys -- is read from disk after the
-# first run; what it cannot cache is a package's own object.
-#
-# So this is tens of seconds rather than milliseconds, and the number is
-# chosen against what it guards rather than against what a quiet machine
-# manages: a benchmark that timed on import would spend minutes, every one
-# of the six timing runs being minutes long. It is deliberately loose,
-# because the machine running this suite may have just run one of those --
-# `03-libraries.py` built its fixtures in thirteen seconds cold and
-# twenty-six warm, and a budget tight enough to catch the difference would
-# be a test that fails for the temperature of a laptop rather than for
-# anything in the code. Anything near a minute means the
-# `if __name__ == "__main__"` guard is gone
-_IMPORT_BUDGET_SECONDS = 60.0
+# where conftest.py points this process's own import path, spelled again
+# rather than imported from it: mypy resolves modules by path and a test
+# importing its own conftest is a module it cannot find
+SCRIPTS = Path(__file__).parents[1] / "scripts"
+
+
+def _guards_dunder_main(node: ast.stmt) -> bool:
+    """Match `if __name__ == "__main__":`, the guard every script uses."""
+    return (
+        isinstance(node, ast.If)
+        and isinstance(node.test, ast.Compare)
+        and isinstance(node.test.left, ast.Name)
+        and node.test.left.id == "__name__"
+        and len(node.test.ops) == 1
+        and isinstance(node.test.ops[0], ast.Eq)
+        and len(node.test.comparators) == 1
+        and isinstance(node.test.comparators[0], ast.Constant)
+        and node.test.comparators[0].value == "__main__"
+    )
+
+
+def _calls_main_by_name(node: ast.AST) -> bool:
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "main"
+    )
+
+
+def _main_runs_only_behind_its_guard(source: str) -> bool:
+    """Report False if main() is called at module level outside the guard.
+
+    Only the guard's own branch may call it: every other top-level
+    statement is walked whole, except a function or class definition,
+    which does not call anything by merely existing.
+    """
+    for node in ast.parse(source).body:
+        if _guards_dunder_main(node):
+            continue
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+            continue
+        if any(_calls_main_by_name(child) for child in ast.walk(node)):
+            return False
+    return True
 
 
 @pytest.mark.parametrize("name", BENCHMARKS)
@@ -66,12 +94,16 @@ def test_the_benchmark_imports_and_its_comparands_agree(name: str) -> None:
 
 
 @pytest.mark.parametrize("name", BENCHMARKS)
-def test_importing_a_benchmark_does_not_run_it(name: str) -> None:
-    """A re-import is nearly free; an unguarded benchmark would not be."""
-    importlib.import_module(name)  # warm, so the fixtures are not timed twice
-    start = time.perf_counter()
-    importlib.reload(importlib.import_module(name))
-    assert time.perf_counter() - start < _IMPORT_BUDGET_SECONDS
+def test_main_is_never_called_outside_its_own_guard(name: str) -> None:
+    """A bare module-level call would time every benchmark on import."""
+    source = (SCRIPTS / f"{name}.py").read_text(encoding="utf-8")
+    assert _main_runs_only_behind_its_guard(source)
+
+
+def test_a_bare_module_level_call_to_main_is_detected() -> None:
+    """The detector itself: none of the six is the regression it looks for."""
+    source = "def main():\n    pass\n\n\nmain()\n"
+    assert not _main_runs_only_behind_its_guard(source)
 
 
 @pytest.mark.parametrize("name", BENCHMARKS)
