@@ -149,6 +149,23 @@ def test_the_vendored_file_is_the_one_the_readme_describes(name: str) -> None:
     assert digest == DIGESTS[name]
 
 
+def test_bip340_valid_matches_the_files_own_verification_result() -> None:
+    """`Bip340.valid` is the CSV's own column, read by nothing below.
+
+    Every implementation test in this file reads the raw CSV row instead,
+    which is what leaves this field's own parsing otherwise unchecked.
+    """
+    parsed = {v.number: v.valid for v in _vectors.bip340()}
+    for row in BIP340:
+        expected = row["verification result"] == "TRUE"
+        assert parsed[int(row["index"])] == expected
+
+
+def test_signing_rows_have_a_32_byte_aux() -> None:
+    """A missing `aux_rand` falls back to 32 zero bytes, not another width."""
+    assert all(len(v.aux) == 32 for v in _vectors.signing())
+
+
 # --- BIP340 -------------------------------------------------------------
 
 # every implementation of BIP340 verification this project times, in the one

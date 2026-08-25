@@ -155,11 +155,17 @@ lint = ["mypy", "pre-commit", "ruff>=0.16"]
 # btclib-secp256k1 holds under it beside a `check` like this one
 check = ["check-sdist", "pyroma", "twine"]
 docs = ["furo", "myst-parser", "sphinx"]
+# what the mutation workflow and a local session both run against;
+# .github/mutation/*.toml is the scope and CONTRIBUTING.md's own section
+# on it is the recipe, so this group is the one thing cosmic-ray needs
+# to be installed at all
+mutation = ["cosmic-ray"]
 dev = [
     { include-group = "test" },
     { include-group = "lint" },
     { include-group = "check" },
     { include-group = "docs" },
+    { include-group = "mutation" },
 ]
 
 [tool.uv]
@@ -580,6 +586,14 @@ ignore = [
     "S101",   # assert
     "T201",   # print
     "SLF001", # private member access
+    "INP001", # implicit namespace package
+]
+# the workflow's own helper, read by `mutation.yml` and run standalone
+# (`python .github/scripts/mutation_counts.py`): the same INP001 argument
+# as `scripts/*.py` above, this directory not being a package either, and
+# T201 for the one line worth reading in the log its own docstring names
+".github/scripts/*.py" = [
+    "T201",   # print
     "INP001", # implicit namespace package
 ]
 # `_results.py` narrows a `json.loads` return with `isinstance` seven

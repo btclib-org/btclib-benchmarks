@@ -1,0 +1,49 @@
+# The one module every benchmark draws its keys, messages and public keys
+# from: a seeded stream, a cache that must not hand back a partial pool, and
+# the arithmetic that cuts the compressed and x-only forms from the
+# uncompressed one. A coverage floor at 100% says every line here ran; it
+# says nothing about whether a wrong seed width, a wrong cache width or a
+# wrong offset would be noticed, which is exactly what this scope checks.
+
+[cosmic-ray]
+module-path = ["src/btclib_benchmarks/_inputs.py"]
+
+test-command = "python -m pytest -x -q -p no:randomly --no-cov tests/inputs_test.py"
+
+timeout = 60
+
+excluded-modules = []
+
+# `_read`'s return annotation is the only `|` in this module, and
+# `from __future__ import annotations` (PEP 563) means an annotation is
+# never evaluated at run time: `list[bytes] | None` mutated to any other
+# operator is a string cosmic-ray never asks Python to run. Measured rather
+# than assumed -- `grep -n '|' src/btclib_benchmarks/_inputs.py` answers
+# with that one line and nothing else -- so excluding the whole `BitOr`
+# family costs no real mutant
+[cosmic-ray.filters.operators-filter]
+exclude-operators = ["core/ReplaceBinaryOperator_BitOr_.*"]
+
+# A session over this scope finishes inside its budget with room to spare.
+# What survived and was not a test to write:
+#
+# - `pubkeys_33`'s `2 + (pubkey[64] & 1)` mutated to `2 | (...)` and to
+#   `2 ^ (...)` -- the right-hand side is always 0 or 1, and 2 is `0b10`,
+#   so addition, bitwise or and xor agree on both possible inputs. The
+#   suite's own assertion computes the identical expression
+#   (`short[0] == 2 + (full[64] & 1)`) and could not tell the three apart
+#   either way, being exactly as equivalent as the source it mirrors.
+#
+# What survived and became a test in this same change: `_read`'s length
+# check accepting an overlong file (`!=` weakened to `<`), `cached`'s
+# `mkdir` called with `parents=False` (unobservable under a fixture
+# directly beneath `tmp_path`, so the fixture moved), the seed's `%`
+# formatting turned into repetition, the stream's eight-byte counter width,
+# `keys`' start offset into the stream, and the width `keys`, `messages`
+# and `pubkeys_65` each pass to `cached` -- a wrong one there does not
+# corrupt what is returned (the stream is deterministic, so a needless
+# rebuild is byte-identical to the cache it replaced) and only shows up as
+# a rebuild nothing before this counted.
+
+[cosmic-ray.distributor]
+name = "local"

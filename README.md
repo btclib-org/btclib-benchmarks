@@ -28,6 +28,7 @@ README states for itself. -->
 [![deps-latest workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml)
 [![os-ubuntu workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml)
 [![os-macos workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml)
+[![mutation workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/btclib-org/btclib-benchmarks/badge)](https://scorecard.dev/viewer/?uri=github.com/btclib-org/btclib-benchmarks)
 
 [![GitHub repository: btclib-org/btclib-benchmarks](https://img.shields.io/badge/GitHub-btclib--org%2Fbtclib--benchmarks-181717?logo=github)](https://github.com/btclib-org/btclib-benchmarks/)

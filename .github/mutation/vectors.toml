@@ -1,0 +1,63 @@
+# The one module every implementation this project times is checked
+# against: BIP340's vectors, BIP32's, Wycheproof's ECDSA file and Core's
+# base58 pairs, decoded from the files `vectors/README.md` publishes a
+# digest for. A benchmark row is only as good as the fixture behind it, so
+# a field this module maps to the wrong column is a fixture every
+# comparand agrees on for the wrong reason.
+#
+# The pure-Python run (`test_the_pure_python_configuration_answers_the_same_vectors`)
+# is excluded from the test command below: it is a subprocess re-running
+# this same file with btclib's dispatch turned off, which answers a
+# question about btclib and the other comparands rather than about this
+# module's own parsing, and it alone is most of what tests/vectors_test.py
+# costs to run.
+
+[cosmic-ray]
+module-path = ["src/btclib_benchmarks/_vectors.py"]
+
+test-command = "python -m pytest -x -q -p no:randomly --no-cov -k 'not test_the_pure_python_configuration_answers_the_same_vectors' tests/vectors_test.py tests/round_trip_test.py tests/wrappers_test.py"
+
+timeout = 120
+
+excluded-modules = []
+
+[cosmic-ray.distributor]
+name = "local"
+
+# A session over this scope finishes inside its budget with room to spare,
+# most of it spent in tests/vectors_test.py's own comparand loops rather
+# than in cosmic-ray's own overhead. What survived and was not a test to
+# write:
+#
+# - `bip340`'s `valid=row["verification result"] == "TRUE"` and
+#   `wycheproof`'s `valid=case["result"] == "valid"`, each weakened from
+#   `==` to `>=`. Measured rather than assumed --
+#
+#       python3 -c "import csv; print(sorted({r['verification result'] \
+#           for r in csv.DictReader(open('vectors/bip340_test_vectors.csv'))}))"
+#
+#   answers `['FALSE', 'TRUE']`, and the vendored Wycheproof file's own
+#   `result` field answers `['invalid', 'valid']` the same way -- in both
+#   files the only value a `>=` comparison could accept that `==` would
+#   not is a third value sorting after the true one, and neither file
+#   carries one. `bip340`'s own field was otherwise unchecked before this
+#   change: every implementation test in tests/vectors_test.py reads the
+#   raw CSV row directly rather than through this module, which is what
+#   `test_bip340_valid_matches_the_files_own_verification_result` is for,
+#   and it is what killed every other operator this line mutated to.
+# - `read`'s digest check, `if digest != DIGESTS[name]:`, mutated on the
+#   operator (`<`, `>`, `is`). The branch already carries `pragma: no
+#   cover` for the same reason cosmic-ray cannot see it either: a vendored
+#   file's digest matches its own recorded one on every run, by
+#   construction, so no test -- and no mutant -- ever reaches the body the
+#   operator guards.
+# - `signing`'s `aux=v.aux or bytes(32)`, mutated on the fallback's width
+#   (`33`, `31`). The fallback is unreachable with the vendored file: a
+#   `bytes` object is falsy only when it is empty, and every `SIGNING` row
+#   supplies a 64-character `aux_rand`, so `v.aux` is never `None` and
+#   `or` never evaluates its right side -- confirmed directly rather than
+#   assumed, `bytes.fromhex(row["aux_rand"])` for the vector whose
+#   `aux_rand` is all zeros still being a nonempty, truthy 32-byte object.
+#   `test_signing_rows_have_a_32_byte_aux` still asserts the width every
+#   row actually carries, which is what a caller depends on regardless of
+#   which branch produced it.

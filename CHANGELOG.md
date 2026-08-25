@@ -127,6 +127,22 @@ the record behind.
   matching the most recent review from `claude[bot]` on its `state`,
   its body's last line and its own `commit_id` (issue #211).
 
+### This tree gains the `mutation` sentinel
+
+- **A coverage floor at 100% says every line and branch of the modules
+  under `src/btclib_benchmarks/` the suite covers, and of
+  `scripts/artifacts.py`, ran; it says nothing about whether a test would
+  notice one of them wrong, and this tree held no sentinel that asked.**
+  `.github/workflows/mutation.yml`
+  runs weekly, `.github/mutation/*.toml` states each scope and what a
+  session over it found, and `.github/scripts/mutation_counts.py` reads
+  the counts a filtered session needs, `cr-rate` counting a skipped
+  mutant as a kill. It gates nothing and adds no required check: a
+  surviving mutant is a test nobody has written, not a regression to
+  block a merge over. Several survivors this scope's first session found
+  were exactly that, and are tests in this same change; the rest are
+  argued equivalent beside the scope they belong to (issue #211).
+
 ### `CLAUDE.md` counts `scripts/`'s eight files, names the two run without hands
 
 - **`CLAUDE.md`'s *Non-obvious facts* section named no count for
