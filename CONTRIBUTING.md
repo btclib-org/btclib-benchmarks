@@ -425,12 +425,12 @@ person runs, not by a gate.
 
 ### A version, and no release
 
-There is no release. Nothing here is published to an index, and
-`[tool.uv.build-backend] module-name = []` means an install would put
-nothing on the path anyway: the scripts are run from a checkout. So
-this tree carries no `RELEASING.md` and no `RELEASE_NOTES.md`: section 2
-of the standard has why a tier-2 repository carries neither, and a file
-whose content is its own absence is this paragraph instead.
+There is no release. Nothing here is published to an index.
+Installing this project puts `src/btclib_benchmarks/` on the path, and
+the scripts are still run from a checkout. So this tree carries no
+`RELEASING.md` and no `RELEASE_NOTES.md`: section 2 of the standard has
+why a tier-2 repository carries neither, and a file whose content is its
+own absence is this paragraph instead.
 
 What `project.version` is for, then, is the `CHANGELOG.md` heading: a
 released *state of the benchmarks*, so that a table someone kept can be

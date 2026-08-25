@@ -38,6 +38,20 @@ the record behind.
   classifier ship together or neither ship. Both reach the built
   artifacts through `[tool.uv.build-backend]`'s existing `src/**`
   include, with no further listing (issue btclib-org/.github#79).
+- **`CLAUDE.md`'s Architecture section names `_vectors.py` beside the
+  other shared modules the suite covers, and its coverage note names
+  `src/btclib_benchmarks/` rather than `_provenance.py` alone.**
+  `[tool.coverage.run]`'s own comment is what both now match: `_results.py`
+  is the one of the four still omitted (closes #198).
+- **`CONTRIBUTING.md`, `REPOSITORY.md`,
+  `.github/workflows/os-ubuntu.yml`, `.readthedocs.yaml` and
+  `docs/source/conf.py` no longer cite
+  `[tool.uv.build-backend] module-name = []`.** `CONTRIBUTING.md` now
+  says what installing this project puts on the path,
+  `src/btclib_benchmarks/`; `conf.py` gives `--only-group docs` as why
+  the documentation build still has no distribution to read a version
+  from, and `.readthedocs.yaml` points at that docstring rather than
+  restating it (closes #200).
 
 ### `pyproject.toml`'s uv floor sits at the measured ceiling again
 
