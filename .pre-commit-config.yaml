@@ -221,13 +221,20 @@ repos:
     rev: v2.4.3
     hooks:
       - id: codespell
-        name: codespell (prose and comments)
+        name: codespell (prose and comments, in place fixes)
         # the "clear" dictionary alone, where codespell's default is
         # "clear,rare": the other four builtins are what btclib measured
         # as mostly-wrong findings, and a hook whose findings are mostly
         # wrong earns an ignore list long enough to hide a real typo.
-        # The same choice is made in every repository of this org
-        args: [--builtin, clear]
+        # The same choice is made in every repository of this org.
+        #
+        # --write-changes puts this hook with the others that correct
+        # rather than report, which is section 4 of the standard for a
+        # hook that can. A spell checker's repairs are guesses where a
+        # formatter's are deterministic, so the flag went on against a
+        # measurement rather than on principle: `uvx codespell --builtin
+        # clear .` rewrites nothing in this tree
+        args: [--builtin, clear, --write-changes]
   # the second spell checker, and not a replacement for the one above:
   # codespell matches whole words and keeps the hyphen inside the token,
   # so a hyphenated or snake_case misspelling is invisible to it, while
