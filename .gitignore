@@ -11,6 +11,6 @@ dist/
 *.egg-info/
 
 # the shared input pool: re-derivable from two constants in
-# scripts/_inputs.py, and built once so the second run on a machine starts
-# at the numbers
+# src/btclib_benchmarks/_inputs.py, and built once so the second run on
+# a machine starts at the numbers
 .inputs/

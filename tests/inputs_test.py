@@ -4,13 +4,14 @@
 
 """The pool every benchmark draws from, and the cache that hands it back.
 
-`scripts/_inputs.py` is the one place a measurement gets an input, so two
-of its properties are worth holding to. The first is that the cache is a
-cache: what a second run reads has to be what the first run built, or two
-pages that claim the same pool were measured over different bytes. The
-second is that a file it cannot vouch for is treated as absent rather than
-repaired -- a run interrupted mid-write leaves a short file, and half a
-pool handed to a benchmark is the failure this module exists to prevent.
+`src/btclib_benchmarks/_inputs.py` is the one place a measurement gets an
+input, so two of its properties are worth holding to. The first is that
+the cache is a cache: what a second run reads has to be what the first
+run built, or two pages that claim the same pool were measured over
+different bytes. The second is that a file it cannot vouch for is
+treated as absent rather than repaired -- a run interrupted mid-write
+leaves a short file, and half a pool handed to a benchmark is the
+failure this module exists to prevent.
 
 Neither shows up in a timing. A pool half as long as it should be measures
 perfectly well and reports a number about the wrong thing.
@@ -20,8 +21,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import _inputs
 import pytest
+
+from btclib_benchmarks import _inputs
 
 
 @pytest.fixture

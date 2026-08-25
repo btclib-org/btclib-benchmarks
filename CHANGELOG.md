@@ -8,6 +8,29 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### The four shared modules are a package now, under `src/`
+
+- **`_inputs.py`, `_provenance.py`, `_results.py` and `_vectors.py` move
+  from `scripts/` to `src/btclib_benchmarks/`, an installed package.**
+  Every import of one of them, in the benchmarks, in `render.py`, in
+  `artifacts.py` and in the suite, is now `from btclib_benchmarks import
+  _inputs` or `from btclib_benchmarks._provenance import ...` rather than
+  the bare top-level name a `sys.path` insert used to resolve.
+  `[tool.uv.build-backend]`'s `module-name = []` is gone: without it the
+  backend ships `project.name` normalized under `src/`, which is this
+  package exactly, where it used to ship dist-info and nothing else.
+- **The six numbered benchmarks, `artifacts.py` and `render.py` stay
+  under `scripts/`, run by path as `CONTRIBUTING.md` and `README.md`
+  already document.** A module named `01-libsecp256k1` is not a Python
+  identifier, so none of the six could become a package member as it is,
+  and the reading order the numbering gives is deliberate;
+  `tests/conftest.py`'s `sys.path` insert is now for those eight files
+  alone.
+- **`tests/README.md` declares the public surface tested**
+  (`tests/public_surface_test.py`), the organization standard forcing
+  that one convention on every repository that ships an importable
+  package regardless of what its own prose states (closes #193).
+
 ### CHANGELOG.md's lint derogation goes, and codespell corrects in place
 
 - **This file opened by disabling MD022 and MD032, because a rebase of

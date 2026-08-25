@@ -112,5 +112,5 @@ own comparands:
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
-[inputs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/scripts/_inputs.py
+[inputs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/src/btclib_benchmarks/_inputs.py
 [i83]: https://github.com/btclib-org/btclib-benchmarks/issues/83

@@ -28,7 +28,7 @@ import json
 from pathlib import Path
 from typing import NamedTuple
 
-VECTORS = Path(__file__).parents[1] / "vectors"
+VECTORS = Path(__file__).parents[2] / "vectors"
 
 # what `vectors/README.md` publishes for each file
 DIGESTS = {

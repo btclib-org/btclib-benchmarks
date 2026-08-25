@@ -85,12 +85,15 @@ from collections.abc import Callable
 from hashlib import sha256
 from itertools import cycle
 
-import _inputs
 import btclib
 import btclib_secp256k1
 import ecdsa
-from _provenance import described
-from _results import (
+from btclib.curves import curve, sec_point
+from btclib.ecc import dsa
+
+from btclib_benchmarks import _inputs
+from btclib_benchmarks._provenance import described
+from btclib_benchmarks._results import (
     BreakEven,
     Measurement,
     Preparation,
@@ -103,8 +106,6 @@ from _results import (
     save,
     taken_now,
 )
-from btclib.curves import curve, sec_point
-from btclib.ecc import dsa
 
 
 def provenance() -> Provenance:

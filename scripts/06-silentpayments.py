@@ -84,10 +84,12 @@ import time
 from collections.abc import Callable
 from itertools import cycle
 
-import _inputs
 import btclib_secp256k1.keys
-from _provenance import described
-from _results import (
+from btclib_secp256k1 import silentpayments
+
+from btclib_benchmarks import _inputs
+from btclib_benchmarks._provenance import described
+from btclib_benchmarks._results import (
     Measurement,
     Provenance,
     Ratios,
@@ -101,7 +103,6 @@ from _results import (
     taken_now,
     width_for,
 )
-from btclib_secp256k1 import silentpayments
 
 
 def provenance() -> Provenance:

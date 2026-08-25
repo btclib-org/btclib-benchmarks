@@ -154,7 +154,6 @@ from importlib.util import find_spec
 from itertools import cycle
 from pathlib import Path
 
-import _inputs
 import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
 import bitcoin.wallet as bitcoinlib_wallet
@@ -181,8 +180,14 @@ import embit.bip32
 import embit.ec
 import pycoin.encoding.b58
 import pycoin.symbols.btc
-from _provenance import WHAT_A_TIMING_CONTAINS, origin_of
-from _results import (
+from btclib.bip32 import bip32 as btclib_bip32
+from btclib.curves import curve
+from btclib.ecc import dsa, ssa
+from btclib.to_pub_key import pub_keyinfo_from_key
+
+from btclib_benchmarks import _inputs
+from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS, origin_of
+from btclib_benchmarks._results import (
     Measurement,
     Provenance,
     Ratios,
@@ -196,11 +201,7 @@ from _results import (
     taken_now,
     width_for,
 )
-from _vectors import bip32
-from btclib.bip32 import bip32 as btclib_bip32
-from btclib.curves import curve
-from btclib.ecc import dsa, ssa
-from btclib.to_pub_key import pub_keyinfo_from_key
+from btclib_benchmarks._vectors import bip32
 
 # the release each version was published on, recorded because no installed
 # metadata carries it: a wheel's METADATA has a Version and no date, and the
