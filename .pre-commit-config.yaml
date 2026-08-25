@@ -570,20 +570,18 @@ repos:
   # it. The uv-lock hook below catches the stale lock in the same run, but
   # only after this one has already produced a verdict on the wrong
   # environment, and the lint workflow runs this file, so CI inherits that.
-  # .github/scripts is in the scope because what lives there imports btclib
-  # and no test collects it: the smoke script needs a node, so a workflow
-  # dispatch is the only thing that runs it, and strict mode is the whole of
-  # what reads it in between. A bound method used as a truth value is what
-  # that buys -- in a script of checks, a check that cannot fail.
-  # scripts/ joins it for the same reason: no test collects either script
-  # there, a manual run being the whole of what exercises benchmark.py and
-  # benchmark_libraries.py alike. The latter imports five untyped
-  # third-party packages the `bench` group installs and this command's
-  # `--group lint --group test` does not, so pyproject.toml's
-  # [[tool.mypy.overrides]] declares ignore_missing_imports for exactly
-  # those five -- unresolved either way, with or without the group, so the
-  # group is not what this command needs. The former has no third-party
-  # dependency to begin with, so nothing there needs that override
+  # Only the six numbered benchmarks make scripts/ need the
+  # ignore_missing_imports override: nothing else in this repository ever
+  # calls one of their main() -- pytest's testpaths is tests/ alone, so
+  # they are never collected, and tests/scripts_import_test.py's own
+  # docstring says a test can hold one to no more than its fixtures and
+  # its cross-comparand assertions, main() checked callable, never called.
+  # A manual run is the only thing that executes one, so mypy is the only
+  # check that reaches what runs inside. Several of the comparands they
+  # import ship no py.typed and no stub, which is what pyproject.toml's
+  # [[tool.mypy.overrides]] declares ignore_missing_imports for. src needs
+  # none of it: the one package src/btclib_benchmarks/ imports beyond the
+  # standard library, btclib_secp256k1, ships py.typed.
   - repo: local
     hooks:
       # `render.py --check` says a published page still matches the run it

@@ -8,6 +8,19 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### The mypy hook's comment describes this tree's `scripts/`, not another repository's
+
+- **`.pre-commit-config.yaml`'s local `mypy` hook carried a comment
+  describing `.github/scripts`, a `benchmark.py`/`benchmark_libraries.py`
+  pair, and a `bench` dependency group installing what the latter imports --
+  none of which this repository has -- boilerplate from another repository's
+  file, never adapted here.** It now says why `scripts/` needs
+  `[[tool.mypy.overrides]]`'s `ignore_missing_imports`: only the six numbered
+  benchmarks import a comparand mypy cannot resolve, nothing else in this
+  repository ever calls one of their `main()`, and a manual run is the only
+  thing that does, so mypy is the only check that reaches what runs inside
+  (closes #196).
+
 ### The four shared modules are a package now, under `src/`
 
 - **`_inputs.py`, `_provenance.py`, `_results.py` and `_vectors.py` move
