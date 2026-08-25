@@ -1,0 +1,119 @@
+---
+name: scorecard
+
+# The OpenSSF Scorecard, run against this tree rather than left to the
+# project's own weekly crawl of public GitHub. `publish_results: true`
+# below replaces that crawl's copy of this repository with the run made
+# here, which is what section 10's "Which trees owe which sentinel"
+# keys on two facts about the repository rather than on a preference:
+#
+#     gh api repos/btclib-org/btclib-benchmarks --jq '.fork, .private'
+#
+# answers `false` and `false` today -- public and not a fork, which is
+# the whole of the property the standard asks for. `ossf/scorecard-action`
+# itself does not support running on a fork, so the second half is not
+# this file's choice to make either.
+#
+# What it scores is read from https://api.securityscorecards.dev, and
+# each check scoring below its maximum is either an issue against what
+# it found or a sentence in section 14 recording this organization's own
+# reason -- neither is this file's to carry, and none of it exists yet:
+# this workflow has not produced a first score for this tree to read.
+
+on:
+  # `ossf/scorecard-action`'s own README is what fixes this rather than
+  # section 10's usual push-and-pull_request-and-workflow_dispatch
+  # pattern: "The following GitHub triggers are supported: push,
+  # schedule (default branch only). The pull_request and
+  # workflow_dispatch triggers are experimental." Section 10 says so of
+  # this sentinel by name -- "Its triggers are the action's and not this
+  # section's" -- so following the organization's own pattern here would
+  # be asking for a trigger the action does not stand behind, and the
+  # cadence grid two tables further up in the standard carries no row
+  # for this workflow for the same reason: there is no day or hour of
+  # this repository's own to assign it
+  push:
+    # only the default branch is read: a scorecard check answers for the
+    # tree main is, not for a branch under review, which is also why
+    # this is not on pull_request
+    branches: [main]
+  schedule:
+    # weekly, on the day and the hour the action's own canonical
+    # workflow uses (ossf/scorecard's own scorecard-analysis.yml): a
+    # score depends on checks read from outside this repository --
+    # Branch-Protection and Code-Review among them -- so an unchanged
+    # tree can still answer differently a week later
+    - cron: "30 1 * * 6"
+
+# least privilege for the GITHUB_TOKEN at the file level; the job below
+# declares everything it needs on top of this, so the elevation is held
+# by one job rather than by the file. No workflow-level write permission
+# either, which is one of the restrictions publish_results: true imposes
+# on the workflow carrying it, "Workflow Restrictions" in the action's
+# own README
+permissions:
+  contents: read
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    # far above what a single analysis run needs, the same reasoning
+    # every other job here gives its own timeout: what it bounds is a
+    # hung job holding a runner rather than the ordinary run
+    timeout-minutes: 15
+    permissions:
+      # what files the results as code scanning alerts, the reason
+      # security-events: write is asked for at all -- the upload-sarif
+      # step below is what spends it
+      security-events: write
+      # the OIDC token behind the transparency-log entry that
+      # publish_results: true writes; the action's README requires this
+      # specifically on the job running ossf/scorecard-action and
+      # nowhere else in the workflow, which the elevation-per-job rule
+      # already gives it here
+      id-token: write
+      # what the action's own checks read: Branch-Protection and
+      # Code-Review query the repository's workflow runs and its
+      # protection settings, both reached through the API rather than
+      # through the checked-out tree
+      actions: read
+      contents: read
+    steps:
+      # every action is pinned to a commit SHA, the tag in the comment,
+      # as everywhere else here
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run the Scorecard analysis
+        uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # replaces the project's own weekly crawl of this repository
+          # with the run made here, and is what turns the badge and the
+          # REST API on for it -- both read the published result rather
+          # than re-running anything themselves
+          publish_results: true
+
+      # readable without the Security tab, and by anyone: the SARIF this
+      # run produced, kept for the number of days the action's own
+      # example uses. The step below uploads the same file to code
+      # scanning; this is the copy a run's own page carries regardless
+      - name: Upload the SARIF as a run artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
+
+      # what security-events: write above is for: a finding scored below
+      # its maximum becomes a code scanning alert here rather than a
+      # number nobody but the badge shows, so it lands on the Security
+      # tab the way every other alert this organization reads does
+      - name: Upload to code scanning
+        uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
+        with:
+          sarif_file: results.sarif

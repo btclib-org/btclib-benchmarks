@@ -29,24 +29,43 @@ name: codeql
 # shape the python queries are about.
 
 on:
-  # main and the schedule below, and no pull_request trigger: the
-  # concurrent-job ceiling REPOSITORY.md records is the organization's
-  # and not this repository's, and the point of btclib-org/.github#85 is
-  # that a merge waits for one cell. So the analysis lands on the merge
-  # commit rather than before it, and it is not a required check --
-  # REPOSITORY.md's "Required checks on main" is where that list lives.
-  # What still reads a branch before it merges is lint.yml: zizmor is a
-  # pre-commit hook and reads exactly these files for an injected
-  # expression, which is the finding this workflow would otherwise be
-  # alone in making. What a merge defers is the rest, for the time
-  # between that merge and the next run, which for main is the merge
-  # itself
+  # push and schedule since this workflow was added, and pull_request
+  # since btclib-org/.github#349: the OpenSSF Scorecard's SAST check
+  # reads a pull request's own commits for a SAST tool run against them,
+  # so a push-and-schedule-only trigger scored "0 commits out of N are
+  # checked with a SAST tool" however many merges to main this workflow
+  # had already analysed -- a finding on a branch is one its author can
+  # still answer, where the same finding on main is a finding on the
+  # default branch already. push stays: dropping it would leave a direct
+  # push to main -- rare here, but possible -- unanalysed, and that is a
+  # different question from the one btclib-org/.github#349 asks. schedule
+  # stays too: a query pack updates without anybody touching the
+  # repository, so the analysis of an unchanged tree is a different
+  # answer this week than last.
+  #
+  # Gaining pull_request does not make this a required check.
+  # REPOSITORY.md's "Required checks on main" does not name it, the same
+  # choice claude-review.yml states for itself and for the same reason:
+  # what a merge requires is a branch rule held outside this repository,
+  # and btclib-org/.github#349's own "Done when" asks only that this
+  # workflow run on pull_request, nothing about gating one. Whether it
+  # should become required is for whoever holds admin on branch
+  # protection to decide
   push:
-    # a merge creates a commit that no pull request analysed, and an
-    # alert is attributed to a branch: the default branch is where code
-    # scanning reports what is open, so without a run here there is no
-    # baseline
+    # a merge creates a commit that no pull request analysed under the
+    # sha it lands as, and an alert is attributed to a branch: the
+    # default branch is where code scanning reports what is open, so
+    # without a run here there is no baseline
     branches: [main]
+  pull_request:
+    # the organization standard's own default set for a pull_request
+    # trigger, section 10: ready_for_review because a readied pull
+    # request would otherwise wait for its next push, and closed so the
+    # merge lands in the pull request's own concurrency group and
+    # cancels the run still holding it -- the concurrency block below is
+    # what makes that landing resolve to this pull request's own group
+    # rather than to the push trigger's
+    types: [opened, reopened, synchronize, ready_for_review, closed]
   schedule:
     # a weekly run is what a push trigger cannot replace: a query pack
     # updates without anybody touching the repository, so the analysis of
@@ -56,10 +75,8 @@ on:
     # Only the default branch schedules workflows, so on any other branch
     # this is reachable through the dispatch below alone
     - cron: "16 4 * * 2"
-  # the escape hatch, and with no pull_request trigger above it is the
-  # only way to analyse a branch before it is merged: worth reaching for
-  # on one that touches a workflow, which is what the actions queries
-  # read
+  # still worth reaching for on a branch whose pull request is not open
+  # yet, which is what the actions queries read
   workflow_dispatch:
 
 # least privilege for the GITHUB_TOKEN, which everything running in a job
@@ -69,11 +86,22 @@ on:
 permissions:
   contents: read
 
-# cancel superseded runs on the same branch. Named literally rather than
-# through github.workflow, as everywhere else here: in a called workflow
-# that expression is the caller's name
 concurrency:
-  group: codeql-${{ github.ref }}
+  # named literally, never through github.workflow: in a called workflow
+  # that expression is the caller's name, so two workflows called from
+  # one place would share a group and cancel each other.
+  # github.event.pull_request.number, not github.ref alone, is what a
+  # pull_request run of any action groups by -- github.ref for a closed,
+  # merged pull request resolves to the base branch's ref rather than
+  # refs/pull/N/merge, which is what put docs.yml's closed run in the
+  # push trigger's own group and cancelled the run building the actual
+  # merge commit's documentation one to two seconds after every merge,
+  # observed on this repository's own main after #99 merged. Grouping by
+  # the pull request's own number here from the start is what keeps this
+  # workflow from hitting the same bug the day it gets its first closed
+  # event. A push carries no pull_request context, so github.ref is
+  # still what groups it, unchanged
+  group: codeql-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -82,10 +110,13 @@ jobs:
     # one job per language, so a red check names which analysis broke
     # instead of a matrix cell to open. It also lets the two run at once
     name: Analyze ${{ matrix.language }} with CodeQL
-    # no draft condition, where every job of test.yml carries one: this
-    # workflow does not run on a pull request at all, so there is no
-    # draft to skip and `github.event.pull_request.draft` is an
-    # expression that could only read empty here
+    # a draft pull request is work in progress and spends no runner here
+    # either; a closed one spends none either, the trigger above taking
+    # the closed event only to supersede a run this pull request's own
+    # group is still holding -- the same condition test.yml and docs.yml
+    # carry on their own jobs. push and schedule carry no pull_request
+    # context, so both sides of this read empty there and stay true
+    if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     permissions:
       # where the alerts are uploaded to; the one write in this workflow
@@ -149,11 +180,18 @@ jobs:
           # upload replaces the first rather than adding to it
           category: /language:${{ matrix.language }}
 
-  # no aggregate job, where test.yml has one and the sibling
-  # repositories have one here too: theirs gates a pull request and
-  # this workflow does not, carrying no pull_request trigger among
-  # push, schedule and workflow_dispatch above. A branch rule can name
-  # only a context a pull request produces, so no rule can require this
-  # workflow and an aggregate here would be a name nothing can hold --
-  # section 10 of the standard, "A matrix is not what asks for one",
-  # settled against this exact question by btclib-org/.github#90
+  # still no aggregate job. Gaining pull_request means a branch rule
+  # could now name one of this job's own contexts -- the objection
+  # btclib-org/.github#90 settled against, that nothing here is required
+  # so an aggregate would be a name nothing could hold, no longer holds
+  # word for word. What still keeps it out is section 10's "The
+  # aggregate job, and the required check": an aggregate arrives with
+  # the trigger in the same pull request only where the workflow "is to
+  # gate", and btclib-org/.github#349's own "Done when" asks only that
+  # this workflow run on pull_request -- nothing about requiring it.
+  # REPOSITORY.md's "Required checks on main" does not name it either.
+  # Making it required is a branch-protection change reserved to
+  # whoever holds admin there, and an aggregate job with nothing
+  # requiring it would be exactly the anticipatory job
+  # btclib-org/.github#90 warned against writing without the standard
+  # saying so

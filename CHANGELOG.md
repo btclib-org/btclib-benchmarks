@@ -44,6 +44,24 @@ the record behind.
   project and for a project name that does not exist at all
   (issue #211).
 
+### `codeql.yml` runs on `pull_request`, and `scorecard.yml` is new
+
+- **`codeql.yml` ran on `push` and `schedule` alone, so the OpenSSF
+  Scorecard's `SAST` check found no pull request commit a SAST tool had
+  run against and scored the analysis as never run on a branch.**
+  `pull_request` is now a trigger beside `push` and `schedule`, which
+  stay for what each covers that a pull request cannot -- a direct push
+  to `main`, and a query pack updated without a commit. It is still not
+  a required check, the same choice `claude-review.yml` states for
+  itself: nothing here asks this workflow to gate a merge, only to run
+  before one (issue #211).
+- **No repository in the organization carried `scorecard.yml`.** This
+  tree is public and not a fork, which is what the organization
+  standard's section 10 keys the sentinel on, so it gains one:
+  `publish_results: true` for the badge and the published score, and a
+  SARIF upload to code scanning for what `security-events: write` is
+  asked for (issue #211).
+
 ### `CLAUDE.md` counts `scripts/`'s eight files, names the two run without hands
 
 - **`CLAUDE.md`'s *Non-obvious facts* section named no count for
