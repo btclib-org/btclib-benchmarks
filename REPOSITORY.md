@@ -381,12 +381,3 @@ here.
 
   The day both answers stop being zero, this workflow is `os-macos.yml`
   with the images and the schedule swapped.
-- **No `mutation.yml`, and no mutation configuration.** The subject
-  exists — the helper modules under `scripts/` are what the 100%
-  ratchet in `[tool.coverage.report]` holds, and mutation testing is
-  exactly the question coverage does not answer of them — but a
-  workflow whose configuration is not in the tree is a workflow with
-  nothing to run. Adding the `cosmic-ray` dependency group and the
-  scope, the test command and the operator filters that go with it is a
-  decision about what to mutate, made with the survivor list in front of
-  whoever makes it.

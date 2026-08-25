@@ -203,10 +203,16 @@ def test_a_recorded_release_date_is_given_beside_the_version_it_was_read_at(
     Recorded against a release: the date is given for that one and the
     version stands alone for any other, which is what keeps a date from
     outliving the release it describes.
+
+    Built at runtime rather than typed twice as the same literal: two
+    equal string literals in one file can end up being the same object,
+    which would let `==` mutated to `is` pass unnoticed.
     """
-    monkeypatch.setattr(_provenance, "version", lambda _: "1.2.3")
+    installed = str(1) + "." + str(2) + "." + str(3)
+    monkeypatch.setattr(_provenance, "version", lambda _: installed)
     dated = _provenance.described(
-        ("pytest", pytest.__file__), dates={"pytest": ("1.2.3", "2026-01-01")}
+        ("pytest", pytest.__file__),
+        dates={"pytest": (str(1) + "." + str(2) + "." + str(3), "2026-01-01")},
     )
     assert "released 2026-01-01" in dated[0]
 
@@ -214,6 +220,13 @@ def test_a_recorded_release_date_is_given_beside_the_version_it_was_read_at(
         ("pytest", pytest.__file__), dates={"pytest": ("9.9.9", "2026-01-01")}
     )
     assert "released" not in stale[0]
+
+    # a recorded version that sorts before the installed one is still not a
+    # match: `==` mutated to `>=` would let this one through
+    behind = _provenance.described(
+        ("pytest", pytest.__file__), dates={"pytest": ("0.0.1", "2026-01-01")}
+    )
+    assert "released" not in behind[0]
 
 
 def test_described_returns_one_line_per_package_and_nothing_else() -> None:

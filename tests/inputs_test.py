@@ -19,8 +19,10 @@ perfectly well and reports a number about the wrong thing.
 
 from __future__ import annotations
 
+from hashlib import sha256
 from typing import TYPE_CHECKING
 
+import btclib_secp256k1.keys
 import pytest
 
 from btclib_benchmarks import _inputs
@@ -87,6 +89,97 @@ def test_a_short_file_is_absent_rather_than_half_a_pool(cache: Path) -> None:
 def test_a_missing_file_reads_as_missing(cache: Path) -> None:
     """The ordinary first run, and the one case that is not an error."""
     assert _inputs._read(cache / "nothing.bin", 32) is None
+
+
+def test_an_overlong_file_is_also_treated_as_absent(cache: Path) -> None:
+    """A ragged file is not only a short one, and the docstring says both."""
+    name = f"{_inputs.GENERATION}-{_inputs.POOL_SIZE}-probe.bin"
+    cache.mkdir(parents=True)
+    (cache / name).write_bytes(b"\x00" * (_inputs.POOL_SIZE * 32 + 1))
+    assert _inputs._read(cache / name, 32) is None
+
+
+def test_the_cache_directory_is_created_even_when_its_parent_is_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The fixture, directly under `tmp_path`, cannot tell `True` from `False`.
+
+    A cache path with a missing intermediate directory can.
+    """
+    monkeypatch.setattr(_inputs, "CACHE", tmp_path / "missing" / "inputs")
+    _inputs.cached("probe", 32, lambda: _inputs._stream(4, 0))
+    assert (tmp_path / "missing" / "inputs").is_dir()
+
+
+def test_the_seed_folds_in_the_generation() -> None:
+    """`SEED` is `%`-formatted with `GENERATION`, not repeated that often."""
+    assert _inputs.SEED == b"btclib-benchmarks/inputs/%d" % _inputs.GENERATION
+
+
+def test_the_stream_hashes_an_eight_byte_big_endian_counter() -> None:
+    """The counter's width and byte order are part of the derivation."""
+    expected = sha256(_inputs.SEED + (5).to_bytes(8, "big")).digest()
+    assert _inputs._stream(1, 5) == [expected]
+
+
+def test_keys_are_the_stream_from_zero(cache: Path) -> None:
+    """Keys start where the stream starts, and messages start after them."""
+    assert _inputs.keys()[:2] == _inputs._stream(2, 0)
+
+
+def test_keys_are_read_from_the_cache_on_the_second_call(
+    cache: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A width `_read` cannot match rebuilds every call, unseen by value alone.
+
+    The stream is deterministic, so a needless rebuild returns bytes
+    identical to the cached ones -- only counting the rebuild sees it.
+    """
+    monkeypatch.setattr(_inputs, "POOL_SIZE", 4)
+    calls: list[int] = []
+    real_stream = _inputs._stream
+
+    def counting(count: int, start: int) -> list[bytes]:
+        calls.append(start)
+        return real_stream(count, start)
+
+    monkeypatch.setattr(_inputs, "_stream", counting)
+    assert _inputs.keys() == _inputs.keys()
+    assert calls == [0]
+
+
+def test_messages_are_read_from_the_cache_on_the_second_call(
+    cache: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The same property as above, for the other cached stream."""
+    monkeypatch.setattr(_inputs, "POOL_SIZE", 4)
+    calls: list[int] = []
+    real_stream = _inputs._stream
+
+    def counting(count: int, start: int) -> list[bytes]:
+        calls.append(start)
+        return real_stream(count, start)
+
+    monkeypatch.setattr(_inputs, "_stream", counting)
+    assert _inputs.messages() == _inputs.messages()
+    assert calls == [4]
+
+
+def test_pubkeys_65_are_read_from_the_cache_on_the_second_call(
+    cache: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The same property as the two above, for the derived public keys."""
+    monkeypatch.setattr(_inputs, "POOL_SIZE", 4)
+    calls: list[bytes] = []
+    real_pubkey = btclib_secp256k1.keys.pubkey_from_prvkey
+
+    def counting(prvkey: bytes, *, compressed: bool) -> bytes:
+        calls.append(prvkey)
+        return real_pubkey(prvkey, compressed=compressed)
+
+    monkeypatch.setattr(btclib_secp256k1.keys, "pubkey_from_prvkey", counting)
+    assert _inputs.pubkeys_65() == _inputs.pubkeys_65()
+    assert len(calls) == 4
 
 
 def test_the_keys_and_the_messages_are_different_bytes(cache: Path) -> None:

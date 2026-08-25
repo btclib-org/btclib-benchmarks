@@ -295,6 +295,69 @@ What a cron runs is the suite, the lint gate, the link check and the
 code analysis, and never a benchmark — *What the suite can and cannot
 check*, below, is where that rule and its reason live.
 
+### Running a mutation session
+
+The `mutation` workflow, weekly and on demand, gates nothing: it asks
+whether the suite would *notice* a wrong line in the four modules and the
+one script `fail_under = 100.0` already says run in full,
+`src/btclib_benchmarks/_inputs.py`, `_provenance.py`, `_vectors.py` and
+`scripts/artifacts.py` — where coverage says a line ran, a surviving
+mutant says nothing asserted about it. `.github/mutation/` is the list,
+and each file in it states what it mutates, what judges it, and what the
+last session over it found; those configurations are also what a local
+run reads, so there is one statement of what is mutated and what judges
+it:
+
+```shell
+uv run --locked --no-default-groups --group test --group mutation \
+    cosmic-ray baseline .github/mutation/inputs.toml
+uv run --locked --no-default-groups --group test --group mutation \
+    cosmic-ray init .github/mutation/inputs.toml inputs.sqlite
+uv run --locked --no-default-groups --group test --group mutation \
+    cr-filter-operators inputs.sqlite .github/mutation/inputs.toml
+uv run --locked --no-default-groups --group test --group mutation \
+    cosmic-ray exec .github/mutation/inputs.toml inputs.sqlite
+uv run --locked --no-default-groups --group test --group mutation \
+    cr-report --surviving-only --show-diff inputs.sqlite
+```
+
+`baseline` first, always: it runs the configured test command against
+the unmutated tree, and without it a stale path or a renamed test file
+fails every mutant identically and the session reports a perfect kill
+rate, which is the one failure mode of a mutation run that looks like
+good news. `cr-filter-operators` marks as skipped the mutants a
+configuration excludes by operator, and is a no-op for one that excludes
+none, so the same five commands run any of the three scopes —
+`provenance.toml` or `vectors.toml` in place of `inputs.toml` above is
+the other two. The report is `--surviving-only`, which is the whole of
+what anybody acts on: a killed mutant is the suite doing its job, and
+printing every one of them buries the handful that are not.
+
+Three things to know before starting one. The session mutates the source
+file in place and restores it afterwards, so nothing else may read the
+tree while it runs — no second session, no `pytest` in another shell, and
+a `git status` in the middle is a working tree with a mutant in it.
+`exec` is resumable, running whatever the session still has pending, so
+interrupting one costs only the mutant it was on. And the `.sqlite`
+sessions are the artifact the workflow uploads: `cr-report`, `cr-html`
+and `cr-rate` all read one, and a downloaded one can be finished locally.
+
+For the counts, read the session with the workflow's own script rather
+than `cr-rate`:
+
+```shell
+uv run --locked --no-default-groups \
+    python .github/scripts/mutation_counts.py inputs.sqlite
+```
+
+`cr-rate`'s `is_killed` is `test_outcome != SURVIVED`, so a mutant the
+operator filter skipped counts as a kill and the rate divides by every
+result, reading a perfect 0.00% on a session nothing has run yet.
+`cr-report`'s summary line is wrong the same way. The script prints
+killed, survived, skipped and never-run counts, and exits non-zero for
+an outcome that is no verdict at all — a worker that raised rather than
+a mutant a test caught.
+
 ### Running a benchmark
 
 Every floor in `pyproject.toml` is a minimum a comparand upgrades past

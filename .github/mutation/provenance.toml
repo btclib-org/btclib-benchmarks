@@ -1,0 +1,70 @@
+# What every page's provenance block asks: which artifact a comparand's
+# install resolved to, and whether it came from an index at all. Both
+# modules are the same question at two layers -- `_provenance.py` reads a
+# `WHEEL` file and a `direct_url.json`, and `scripts/artifacts.py` is the
+# one script built entirely on top of it, declared dependencies in and one
+# line per comparand out.
+
+[cosmic-ray]
+module-path = [
+    "src/btclib_benchmarks/_provenance.py",
+    "scripts/artifacts.py",
+]
+
+test-command = "python -m pytest -x -q -p no:randomly --no-cov tests/provenance_test.py tests/artifacts_test.py"
+
+timeout = 60
+
+excluded-modules = []
+
+# Both modules carry `from __future__ import annotations` (PEP 563), so an
+# annotation's own operators are strings Python never evaluates -- the same
+# argument inputs.toml makes, for the two `X | None` returns this module
+# declares (`wheel_tags`, `described`'s `dates` parameter). Measured:
+# `grep -n '|' src/btclib_benchmarks/_provenance.py` answers with exactly
+# those two lines
+[cosmic-ray.filters.operators-filter]
+exclude-operators = ["core/ReplaceBinaryOperator_BitOr_.*"]
+
+# A session over this scope finishes inside its budget with room to spare.
+# What survived and was not a test to write:
+#
+# - `scripts/artifacts.py`'s `if __name__ == "__main__":` mutated to `<`
+#   and to `<=` -- the guard never runs under the suite, which imports the
+#   module as `artifacts` rather than executing it, and `"artifacts" ==
+#   "__main__"`, `"artifacts" < "__main__"` and `"artifacts" <= "__main__"`
+#   all answer False, `_` (0x5F) sorting before `a` (0x61). The `pragma: no
+#   cover` beside the line says the same thing to coverage; cosmic-ray does
+#   not read a pragma
+# - `_built_here`'s `tag.rsplit("-", 1)[-1]`, mutated on the index (`-1`
+#   turned `1` or `+1`) and on the split count (`1` turned `2`). A wheel
+#   tag is `interpreter-abi-platform` per PEP 425, exactly two hyphens and
+#   no more (a platform field's own separator is `.`, which is what the
+#   compressed-set test below this function exercises), so the last field
+#   is the same element at index `-1` and at index `1`, and splitting once
+#   from the right or twice makes no difference once there are at most two
+#   hyphens to find. The domain, not the test, is what makes these
+#   equivalent -- a tag with a third hyphen is not one any index or any
+#   comparand here has ever published
+# - `wheel_tags`'s `line.split(":", 1)[1]` mutated to `split(":", 2)`: a
+#   `WHEEL` file's `Tag:` line carries one colon, the one this splits on,
+#   so a second permitted split has nothing left to do
+#
+# What survived and became a test in this same change: `described`'s
+# `version(dist_name) == recorded[0]` weakened to `>=` and to `is`. The
+# existing case recorded a version equal to itself, which two string
+# literals spelling `"1.2.3"` in the same function can end up satisfying
+# by identity as well as by value -- CPython's own compiler deduplicates
+# equal constants within one code object, so `a is b` answers `True` for
+# two such literals with nothing else forcing it. The fix builds both
+# sides at run time instead, `str(1) + "." + str(2) + "." + str(3)`: a
+# plain `.join()` over the same literal parts would have worked too --
+# `dis` shows it as a genuine call, never folded -- but ruff's own
+# static-join-to-f-string flags exactly that shape and asks for the
+# literal it built, which would restore the identity this test exists to
+# rule out. Guaranteeing distinct objects is what lets the case add one
+# where the recorded version sorts before the installed one, which `>=`
+# would have accepted.
+
+[cosmic-ray.distributor]
+name = "local"
