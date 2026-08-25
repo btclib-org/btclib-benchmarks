@@ -30,7 +30,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from hashlib import sha256
 
-import _vectors
 import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
 import btclib.ecc.dsa
@@ -42,6 +41,8 @@ import pycoin.symbols.btc
 import pytest
 import secp256k1lab.secp256k1
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
+
+from btclib_benchmarks import _vectors
 
 SIGNING = _vectors.signing()
 

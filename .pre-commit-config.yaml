@@ -119,17 +119,18 @@ repos:
       # pretty-format-json reaches the json written by hand, which is
       # .claude/settings.json, and the exclude keeps it off the rest for a
       # reason that is not the one above: `results/*.json` is
-      # `scripts/_results.py`'s output
-      # (json.dumps(..., indent=2, ensure_ascii=False), read there), so a
-      # formatter with its own idea of indent or key order is a second
-      # writer of a file a script already owns, and the two disagreeing
-      # is a diff nobody asked for on every run that follows a benchmark.
+      # `src/btclib_benchmarks/_results.py`'s output (json.dumps(...,
+      # indent=2, ensure_ascii=False), read there), so a formatter with
+      # its own idea of indent or key order is a second writer of a file
+      # a script already owns, and the two disagreeing is a diff nobody
+      # asked for on every run that follows a benchmark.
       # `vectors/*.json` is the opposite problem with the same answer:
       # vendored copies vectors/README.md pins to a sha256 each, checked
-      # in scripts/_vectors.py on import, so a reformat would break the
-      # digest as surely as hand-editing a byte would. Neither file is
-      # this hook's to rewrite; check-json above still answers the
-      # question worth asking of both, which is whether they parse.
+      # in src/btclib_benchmarks/_vectors.py on import, so a reformat
+      # would break the digest as surely as hand-editing a byte would.
+      # Neither file is this hook's to rewrite; check-json above still
+      # answers the question worth asking of both, which is whether they
+      # parse.
       # `.vscode/` is jsonc, which this hook cannot read any more than
       # check-json can, and prettier's. What is left is what the hook is
       # for, at its defaults -- two-space indent and sorted keys, nothing
@@ -154,12 +155,13 @@ repos:
       # convention every module under tests/ follows, needs no args. No
       # exclude, and the hook's own exemption for conftest.py is what
       # keeps it that way: tests/conftest.py holds no test of its own,
-      # only the sys.path insert that lets a test import
-      # scripts/_vectors.py, so exempting its name from the pattern costs
-      # nothing. The __init__.py exemption goes unused -- there is no
-      # tests/__init__.py, tests/ is not a package, and the vector
-      # loading a package __init__ would hold in btclib is
-      # scripts/_vectors.py's job here, outside tests/ entirely.
+      # only the sys.path insert that lets a test import the six numbered
+      # benchmarks, artifacts.py and render.py by path, so exempting its
+      # name from the pattern costs nothing. The __init__.py exemption
+      # goes unused -- there is no tests/__init__.py, tests/ is not a
+      # package, and the vector loading a package __init__ would hold in
+      # btclib is src/btclib_benchmarks/_vectors.py's job here, outside
+      # tests/ entirely.
       # tests/vectors_test.py is this hook's boundary case met rather
       # than avoided: the name reads as a loader, and is in fact the
       # suite that holds every vendored vector to the digest
@@ -221,13 +223,20 @@ repos:
     rev: v2.4.3
     hooks:
       - id: codespell
-        name: codespell (prose and comments)
+        name: codespell (prose and comments, in place fixes)
         # the "clear" dictionary alone, where codespell's default is
         # "clear,rare": the other four builtins are what btclib measured
         # as mostly-wrong findings, and a hook whose findings are mostly
         # wrong earns an ignore list long enough to hide a real typo.
-        # The same choice is made in every repository of this org
-        args: [--builtin, clear]
+        # The same choice is made in every repository of this org.
+        #
+        # --write-changes puts this hook with the others that correct
+        # rather than report, which is section 4 of the standard for a
+        # hook that can. A spell checker's repairs are guesses where a
+        # formatter's are deterministic, so the flag went on against a
+        # measurement rather than on principle: `uvx codespell --builtin
+        # clear .` rewrites nothing in this tree
+        args: [--builtin, clear, --write-changes]
   # the second spell checker, and not a replacement for the one above:
   # codespell matches whole words and keeps the hyphen inside the token,
   # so a hyphenated or snake_case misspelling is invisible to it, while
@@ -511,20 +520,21 @@ repos:
   # prose under it does not. The configuration is in pyproject.toml, next
   # to the ruff one.
   #
-  # Scoped to `scripts/`, which is where every function this repository
-  # writes lives: the six benchmarks included, a fixture builder whose
-  # docstring no longer matches its parameters being how a row starts
-  # measuring something other than what the page says it does. Not
-  # `tests/`, where mypy does run: a test takes fixtures rather than
-  # arguments and has no caller to hold a contract with, so the sections
-  # this asks for would be written for nobody
+  # Scoped to `scripts/` and `src/`, which between them are where every
+  # function this repository writes lives: the six benchmarks and the
+  # four shared modules under `src/btclib_benchmarks/` included, a
+  # fixture builder whose docstring no longer matches its parameters
+  # being how a row starts measuring something other than what the page
+  # says it does. Not `tests/`, where mypy does run: a test takes
+  # fixtures rather than arguments and has no caller to hold a contract
+  # with, so the sections this asks for would be written for nobody
   - repo: https://github.com/jsh9/pydoclint
     rev: 0.9.1
     hooks:
       - id: pydoclint
         name: pydoclint (arguments and return values)
         args: [--config=pyproject.toml]
-        files: ^scripts/.*\.py$
+        files: ^(scripts|src)/.*\.py$
   # the other half of pyproject.toml's unspecified-encoding, which reads
   # `open` and the pathlib and tempfile spellings and stops there. A child
   # process decoded through `text=True` takes the locale's encoding by
@@ -600,13 +610,22 @@ repos:
       # it runs on pre-commit.ci as well, where `uv` is absent and `mypy` is
       # skipped for exactly that reason.
       #
+      # `render.py` used to reach `_results.py` the way the script's own
+      # directory lands on `sys.path[0]` when Python runs a file directly --
+      # no insert needed, because both sat in `scripts/`. `_results.py` is a
+      # package module now, `src/btclib_benchmarks/` being no relation to
+      # the directory `render.py` still runs from, so `PYTHONPATH=src` is
+      # what stands in: `env` sets it and execs the hook's own venv
+      # `python`, the environment `language: python` gives this hook having
+      # nothing installed in it to import the package from instead.
+      #
       # `always_run` rather than a `files` pattern: a page goes stale from an
       # edit to its markdown, to its saved run, or to the renderer, and a
       # pattern narrow enough to name those is a pattern that stops matching
       # one day -- which is the hazard the top of this file is about.
       - id: render-check
         name: render.py --check (each page matches its saved run)
-        entry: python scripts/render.py --check
+        entry: env PYTHONPATH=src python scripts/render.py --check
         language: python
         pass_filenames: false
         always_run: true
@@ -614,7 +633,7 @@ repos:
         name: mypy (strict, in the project environment)
         entry: >
           uv run --locked --no-default-groups --group lint --group test
-          mypy --explicit-package-bases scripts tests
+          mypy --explicit-package-bases scripts src tests
         language: system
         types: [python]
         pass_filenames: false

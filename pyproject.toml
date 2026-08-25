@@ -131,6 +131,11 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
     "Topic :: Security :: Cryptography",
+    # `src/btclib_benchmarks/py.typed` ships in the wheel: section 3 of
+    # the organization standard asks that this classifier and that
+    # marker agree, one being PEP 561's promise to an installer and the
+    # other the same promise on the index page
+    "Typing :: Typed",
 ]
 
 [project.urls]
@@ -158,26 +163,9 @@ dev = [
 ]
 
 [tool.uv]
-# the oldest uv Dependabot's own uv-ecosystem updater bundles: it runs
-# `uv lock` with exactly that version regardless of this key, and refuses
-# rather than upgrading itself when the key asks for more, so any higher
-# floor silently stops every lock update it attempts, security ones
-# included. The pin is `FROM ghcr.io/astral-sh/uv:...` in
-# dependabot-core's uv/Dockerfile, and only a human bumping that file
-# moves the ceiling out -- btclib-org/btclib#485 is this same failure
-# caught there first. Not the rev of the uv-lock hook in
-# .pre-commit-config.yaml, which is newer and moves on pre-commit.ci's
-# own schedule: this floor only has to be low enough for Dependabot and
-# to understand the committed lock, which is `revision = 3` and is what
-# the sibling repositories run at this same floor. Declared here it holds
-# for every uv command rather than that one updater alone, so an older uv
-# on a developer's machine says so instead of rewriting the lock in a
-# format the runners then fail to read -- uv is pre-1.0 and changes that
-# format. It also reaches CI without a second pin: setup-uv, given no
-# version input, reads this key, and a bare minimum specifier makes it
-# install the latest uv, so the runners are never behind the floor and
-# there is nothing here to go stale
-required-version = ">=0.11.31"
+# the oldest uv that may read uv.lock -- section 1 has the argument and
+# section 15 the command that measures the ceiling
+required-version = ">=0.12.1"
 
 [tool.uv.sources]
 # the one comparand with no release on any index, pinned to the tag its
@@ -185,21 +173,20 @@ required-version = ">=0.11.31"
 secp256k1lab = { git = "https://github.com/secp256k1lab/secp256k1lab", tag = "v1.0.0" }
 
 [tool.uv.build-backend]
-# no module, so the wheel is metadata and the licence files and nothing
-# else: the scripts under scripts/ are the deliverable and they are not
-# a package -- nothing imports them, and a module list naming them would
-# put benchmarks at the root of site-packages. So nothing is installed;
-# this project is run from a checkout, which is what `uv run` in
-# README.md does. The key is not optional: left out it means
-# `project.name` normalized under the default `src/` root, and the build
-# fails on a module that is not there.
-#
-# The empty list is measured rather than promised: uv's documentation
-# gives the list form for a namespace package with more than one root
-# module and describes no empty one, so what bounds this is the ceiling
-# in [build-system] above. With the key the wheel holds dist-info and
-# nothing else; without it the build fails, and both were run
-module-name = []
+# no key here, so the backend takes `project.name` normalized under its
+# default `src/` root -- `src/btclib_benchmarks/` exactly -- and that is
+# what the wheel ships: the four modules the benchmarks and the suite
+# both import, `_inputs.py`, `_provenance.py`, `_results.py` and
+# `_vectors.py`. The six numbered scripts, `artifacts.py` and
+# `render.py` are not part of it and stay under `scripts/`: a module
+# whose name opens with a digit or carries a hyphen is not a Python
+# identifier, so none of them could enter a package as they are, and the
+# reading order the numbering gives is deliberate. They stay run by
+# path, which is what `uv run` in README.md does for them; what
+# installing the package now buys is that `from btclib_benchmarks
+# import _inputs` resolves for the scripts and the suite that import it,
+# where the removed key's empty wheel left nothing on `sys.path` for
+# either to find.
 # what the sdist carries beyond what the backend puts there by itself --
 # pyproject.toml, PKG-INFO, and the files `project.readme` and
 # `project.license-files` name. Patterns are anchored, so `*.md` is the
@@ -227,6 +214,7 @@ source-include = [
     "docs/**",
     "results/**",
     "scripts/**",
+    "src/**",
     "tests/**",
     "vectors/**",
 ]
@@ -338,18 +326,24 @@ extend-glob = ["CHANGELOG.md", ".pre-commit-config.yaml"]
 extend-ignore-re = ['`[^`]*`']
 
 [tool.coverage.run]
-# `_provenance.py` and the suite, and deliberately not the six benchmark
-# scripts beside it. What their bodies do is time things: covering a
-# timing function means running it, so a coverage gate over them would
-# make every test run a benchmark -- slow, and worse, it would put a
-# measurement inside CI, where the numbers mean nothing. What *is*
-# testable in them is reached the other way round, by importing the
-# module: the `main()` guard exists so that an import runs the fixtures
-# and the cross-comparand assertions without timing anything, and
-# tests/scripts_import_test.py is what does it. So the scripts are
+# `src/btclib_benchmarks/` and the suite, and deliberately not the six
+# benchmark scripts under `scripts/` beside them. What their bodies do is
+# time things: covering a timing function means running it, so a coverage
+# gate over them would make every test run a benchmark -- slow, and
+# worse, it would put a measurement inside CI, where the numbers mean
+# nothing. What *is* testable in them is reached the other way round, by
+# importing the module: the `main()` guard exists so that an import runs
+# the fixtures and the cross-comparand assertions without timing anything,
+# and tests/scripts_import_test.py is what does it. So the scripts are
 # checked on the one property a test can hold them to -- that they load,
-# that their comparands agree -- and measured by a person
-source = ["scripts", "tests"]
+# that their comparands agree -- and measured by a person.
+#
+# `src/btclib_benchmarks/`'s four modules are measured in full: they are
+# exactly the modules the suite already imports and asserts against, and
+# living under a package changes where they are and not what covers them
+# -- `_results.py` is the one of the four still omitted below, for its
+# own reason
+source = ["scripts", "src", "tests"]
 # what is measured here is mostly parsing and provenance, and both are
 # written as a walk with an early exit: statement coverage calls a loop
 # fully covered once its body has run, and never asks whether the loop
@@ -373,7 +367,7 @@ branch = true
 # nobody can edit by hand cannot drift from its numbers
 omit = [
     "*/site-packages/*",
-    "scripts/_results.py",
+    "src/btclib_benchmarks/_results.py",
     "scripts/03-libraries.py",
     "scripts/02-btclib-vs-btclib.py",
     "scripts/05-key-reuse.py",
@@ -422,10 +416,18 @@ warn_unreachable = true
 # instead of a runtime failure on the matrix
 python_version = "3.11"
 exclude = ["build"]
-# the benchmark scripts are modules reached by path, not an installed
-# package: this is the same `sys.path` entry tests/conftest.py makes, said
-# to the type checker
-mypy_path = "scripts"
+# `scripts` is for the eight files still reached by path -- the six
+# numbered benchmarks, `artifacts.py` and `render.py`, not part of the
+# installed `btclib_benchmarks` package: the same `sys.path` entry
+# tests/conftest.py makes for them, said to the type checker.
+#
+# `src` is for a different reason: `--explicit-package-bases` below
+# draws its package roots from `mypy_path` (and `MYPYPATH`), not from the
+# directories named on the mypy command line, so without it every
+# `from btclib_benchmarks import ...` resolves against the installed,
+# stub-less copy instead of the source here -- `_results.py` importing
+# its own package sibling included
+mypy_path = ["scripts", "src"]
 
 # the comparands: none of the ten ships py.typed or a stub on PyPI, so
 # the import is unresolved whether or not the package is installed.
@@ -525,7 +527,7 @@ ignore = [
     # table, which schema -- and a shared exception class could not say
     # that without every raise site passing it back in anyway.
     # `uv run ruff check --select TRY003 --no-cache .` lists the sites,
-    # every one in scripts/_results.py or scripts/render.py
+    # every one in src/btclib_benchmarks/_results.py or scripts/render.py
     "raise-vanilla-args",
 ]
 
@@ -538,6 +540,17 @@ ignore = [
 "scripts/*.py" = [
     "S101", # assert
     "T201", # print
+]
+# `_results.py` narrows a `json.loads` return with `isinstance` seven
+# times over -- the type it reads back is `Any`, and this is how the
+# module says what it actually holds before trusting it. The glob above
+# does not reach it: this module left `scripts/`, where it carried the
+# same exemption, for `src/btclib_benchmarks/` in this same change. Only
+# S101, and only this file: the other three modules under
+# `src/btclib_benchmarks/` have no assert or print to exempt
+# (`uv run ruff check --select S101,T201 --no-cache src/`)
+"src/btclib_benchmarks/_results.py" = [
+    "S101", # assert
 ]
 "tests/**" = [
     "S101",

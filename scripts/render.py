@@ -56,8 +56,8 @@ import ast
 import sys
 from pathlib import Path
 
-import _results
-from _results import RESULTS, Measurement
+from btclib_benchmarks import _results
+from btclib_benchmarks._results import RESULTS, Measurement
 
 # where the benchmarks are, this file sitting beside them. Read as text
 # and never imported, which is the paragraph above

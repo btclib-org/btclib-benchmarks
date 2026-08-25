@@ -55,7 +55,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-from _provenance import WHAT_A_TIMING_CONTAINS
+from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS
 
 # what `render.py` refuses to read rather than misread. A saved run is a
 # file this project writes and reads back a release apart, so the one
@@ -93,7 +93,7 @@ SCHEMA = 1
 # where a run is saved and where the page it feeds lives, which are one
 # directory: a measurement nobody can find beside its page is a
 # measurement that gets taken again
-RESULTS = Path(__file__).resolve().parent.parent / "results"
+RESULTS = Path(__file__).resolve().parent.parent.parent / "results"
 
 # where a machine says what it is, when the run cannot work it out well
 # enough on its own. Everything else in the run block is taken where the

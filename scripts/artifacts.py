@@ -41,7 +41,7 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-import _provenance
+from btclib_benchmarks import _provenance
 
 # where the declared dependencies are, this file sitting beside the
 # scripts the project's root holds

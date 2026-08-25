@@ -126,9 +126,15 @@ from collections.abc import Callable
 from importlib.metadata import version
 from itertools import cycle
 
-import _inputs
-from _provenance import from_a_declared_source, origin_of
-from _results import (
+from btclib import b58
+from btclib.curves import curve, sec_point
+from btclib.ecc import bms, dh, dsa, ellswift, ssa
+from btclib.script import taproot
+from btclib.to_pub_key import pub_keyinfo_from_prv_key
+
+from btclib_benchmarks import _inputs
+from btclib_benchmarks._provenance import from_a_declared_source, origin_of
+from btclib_benchmarks._results import (
     Measurement,
     Pair,
     Pairs,
@@ -140,11 +146,6 @@ from _results import (
     taken_now,
     width_for,
 )
-from btclib import b58
-from btclib.curves import curve, sec_point
-from btclib.ecc import bms, dh, dsa, ellswift, ssa
-from btclib.script import taproot
-from btclib.to_pub_key import pub_keyinfo_from_prv_key
 
 
 def provenance() -> Provenance:

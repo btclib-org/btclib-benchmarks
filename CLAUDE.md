@@ -5,8 +5,10 @@ with code in this repository.
 
 What this project publishes is measurements: `scripts/` holds the
 benchmarks, `results/` the run each one saved and the page rendered from
-it, and `README.md` is what a reader arrives at. Nothing here is
-installed by anyone or released to an index.
+it, and `README.md` is what a reader arrives at. `src/btclib_benchmarks/`
+is the one importable package here, installed into this project's own
+venv so the suite and the scripts can import it, and released to no
+index.
 
 How to work here — what the issue tracker takes, the prose style, and
 how a pull request is opened and landed — is `CONTRIBUTING.md`, which is
@@ -36,10 +38,11 @@ The benchmarks, one question each:
 - `scripts/06-silentpayments.py` — BIP352, which only `btclib_secp256k1`
   implements of every comparand here
 
-`scripts/_provenance.py`, `scripts/_inputs.py` and `scripts/artifacts.py`
-are what the suite covers. `scripts/_results.py` and `scripts/render.py`
-are the non-benchmarks besides those, and they are outside the gate on purpose
-— see below.
+`src/btclib_benchmarks/_provenance.py`, `src/btclib_benchmarks/_inputs.py`
+and `scripts/artifacts.py` are what the suite covers.
+`src/btclib_benchmarks/_results.py` and `scripts/render.py` are the
+non-benchmarks besides those, and they are outside the gate on purpose —
+see below.
 
 Measuring and publishing are two commands, which `CONTRIBUTING.md`
 carries. A benchmark writes `results/<name>.json`: the numbers as

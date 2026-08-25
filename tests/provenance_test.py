@@ -16,8 +16,9 @@ from collections.abc import Callable
 from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 
-import _provenance
 import pytest
+
+from btclib_benchmarks import _provenance
 
 # what the `fake_dist` fixture hands a test: a function taking the
 # payload a `direct_url.json` would hold, or None for "no such file"

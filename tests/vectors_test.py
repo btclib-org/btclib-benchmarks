@@ -51,7 +51,6 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-import _vectors
 import bitcoin.base58
 import btclib.base58
 import btclib_secp256k1.dsa
@@ -76,6 +75,8 @@ from btclib.ecc import dsa, ssa
 from pycoin.ecdsa.secp256k1 import secp256k1_generator as pycoin_generator
 from pycoin.encoding.sec import sec_to_public_pair
 from pycoin.satoshi.der import sigdecode_der
+
+from btclib_benchmarks import _vectors
 
 DATA = _vectors.VECTORS
 

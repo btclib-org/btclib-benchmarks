@@ -129,10 +129,11 @@ that filled the gap from the C underneath would hide exactly that.
 
 ## One input per call, and no two tables over the same ones
 
-The inputs are `scripts/_inputs.py`': one pool, shared by every benchmark in
-this repository, built once from a seed and read from `.inputs/` on every
-run after the first. That module holds the seed and the pool size, and its
-`GENERATION` is what asking for new inputs changes.
+The inputs are `src/btclib_benchmarks/_inputs.py`': one pool, shared by
+every benchmark in this repository, built once from a seed and read from
+`.inputs/` on every run after the first. That module holds the seed and
+the pool size, and its `GENERATION` is what asking for new inputs
+changes.
 
 Each table reads a slice of that pool as long as one round, so a round is
 its slice exactly once, no row measures one input repeated, and nothing a
@@ -340,20 +341,21 @@ from importlib.metadata import version
 from itertools import cycle
 from typing import TypeVar
 
-import _inputs
 import btclib_secp256k1.dsa
 import btclib_secp256k1.keys
 import btclib_secp256k1.ssa
 import coincurve
 import electrum_ecc
 import secp256k1
-from _provenance import (
+
+from btclib_benchmarks import _inputs
+from btclib_benchmarks._provenance import (
     built_here,
     from_a_declared_source,
     origin_of,
     wheel_tags,
 )
-from _results import (
+from btclib_benchmarks._results import (
     Measurement,
     Provenance,
     Ratios,

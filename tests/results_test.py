@@ -4,11 +4,12 @@
 
 """The three things in the renderer that refuse rather than format.
 
-`scripts/_results.py` is outside the coverage gate on purpose: a page is
-written by a command a person runs, and putting the rewording of a heading
-behind the suite is the coupling that split removes. So what earns a case here
-is not the formatting but a limit, and a limit whose own correctness nothing
-checks is the defect it was added to fix.
+`src/btclib_benchmarks/_results.py` is outside the coverage gate on
+purpose: a page is written by a command a person runs, and putting the
+rewording of a heading behind the suite is the coupling that split
+removes. So what earns a case here is not the formatting but a limit,
+and a limit whose own correctness nothing checks is the defect it was
+added to fix.
 
 `labelled` is the first: `LINE` widened by accident, or `>` becoming `>=`, or
 the separator gaining a space, would otherwise fail nothing anywhere.
@@ -38,8 +39,8 @@ from a saved run, the second being the only way a file has.
 What is asserted throughout is the boundary and not the rendering, so this puts
 no page behind the suite: `labelled` is a pure function of a label and a
 string, and a refused row or run is refused before any table is rendered.
-Importing the module costs the gate nothing, `scripts/_results.py` being in
-coverage's `omit`.
+Importing the module costs the gate nothing,
+`src/btclib_benchmarks/_results.py` being in coverage's `omit`.
 """
 
 from __future__ import annotations
@@ -47,8 +48,9 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-import _results
 import pytest
+
+from btclib_benchmarks import _results
 
 # where the same width is written down for prose, arrived at independently of
 # the renderer: `ruff` holds every comment and docstring in this project to it,

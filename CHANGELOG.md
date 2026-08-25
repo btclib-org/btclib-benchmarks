@@ -1,9 +1,3 @@
-<!-- markdownlint-disable MD022 MD032 -->
-<!-- This file is merge=union, so a rebase joins two sections and drops
-     the blank line between them without a conflict: the rule is off
-     here for the duration of btclib-org/.github#33, and goes back on
-     when that queue is empty. btclib-org/.github#138 is the record. -->
-
 # Changelog
 
 Every change, in full: what changed, why, and what it cost. The headings
@@ -13,6 +7,60 @@ that means here, and why there are no release notes for this file to be
 the record behind.
 
 ## v2026.9 (work in progress, not released yet)
+
+### The four shared modules are a package now, under `src/`
+
+- **`_inputs.py`, `_provenance.py`, `_results.py` and `_vectors.py` move
+  from `scripts/` to `src/btclib_benchmarks/`, an installed package.**
+  Every import of one of them, in the benchmarks, in `render.py`, in
+  `artifacts.py` and in the suite, is now `from btclib_benchmarks import
+  _inputs` or `from btclib_benchmarks._provenance import ...` rather than
+  the bare top-level name a `sys.path` insert used to resolve.
+  `[tool.uv.build-backend]`'s `module-name = []` is gone: without it the
+  backend ships `project.name` normalized under `src/`, which is this
+  package exactly, where it used to ship dist-info and nothing else.
+- **The six numbered benchmarks, `artifacts.py` and `render.py` stay
+  under `scripts/`, run by path as `CONTRIBUTING.md` and `README.md`
+  already document.** A module named `01-libsecp256k1` is not a Python
+  identifier, so none of the six could become a package member as it is,
+  and the reading order the numbering gives is deliberate;
+  `tests/conftest.py`'s `sys.path` insert is now for those eight files
+  alone.
+- **`tests/README.md` declares the public surface tested**
+  (`tests/public_surface_test.py`), the organization standard forcing
+  that one convention on every repository that ships an importable
+  package regardless of what its own prose states (closes #193).
+- **`src/btclib_benchmarks/py.typed` is an empty, git-tracked file, and
+  `classifiers` gains `Typing :: Typed` beside it.** `__init__.py`
+  declares `__all__: list[str] = []`; `py.typed` is the other half of
+  that same promise, that the package's types are supported at all, and
+  the organization standard's section 3 asks that the marker and the
+  classifier ship together or neither ship. Both reach the built
+  artifacts through `[tool.uv.build-backend]`'s existing `src/**`
+  include, with no further listing (issue btclib-org/.github#79).
+
+### `pyproject.toml`'s uv floor sits at the measured ceiling again
+
+- **`[tool.uv] required-version` was `>=0.11.31`**, below the newest uv
+  Dependabot's uv-ecosystem updater bundles today --
+  `gh api repos/dependabot/dependabot-core/contents/uv/Dockerfile` reads
+  `ghcr.io/astral-sh/uv:0.12.1`, and it is now `>=0.12.1`. The comment
+  beside it points at the standard's section 1 and section 15 instead of
+  restating the Dependabot argument, matching `btclib-org/.github`'s own
+  (closes #191).
+
+### CHANGELOG.md's lint derogation goes, and codespell corrects in place
+
+- **This file opened by disabling MD022 and MD032, because a rebase of
+  this `merge=union` file joins two `###` blocks without a conflict and
+  drops the blank line between them, and the rule reported a gap it
+  would not close.** `markdownlint-cli2` already runs with `--fix`, so
+  that gap is now the hook's own repair: the directive is gone and both
+  rules apply to this file again.
+- **`codespell` now runs with `--write-changes`, joining
+  `markdownlint-cli2` and `typos` among the hooks that correct rather
+  than report.** `uvx codespell --builtin clear .` rewrites nothing in
+  this tree; `yamllint` has no fix mode to turn on (closes #190).
 
 ### CONTRIBUTING.md's shared half is the organization's current copy
 
@@ -50,6 +98,7 @@ the record behind.
   pre-commit.ci, alongside mypy, for the same reason: both shell out to
   `uv`, which is not installed there, and the lint workflow covers them
   (#166).
+
 ### The two open Dependabot alerts against `ecdsa` are dismissed
 
 - **GHSA-wj6h-64fc-37mp has no patched version in any `ecdsa` release
@@ -81,6 +130,7 @@ the record behind.
   push, schedule and workflow_dispatch -- include no pull_request, so no
   rule can require it and an aggregate here would be a name nothing can
   hold. The comment now states that instead of the open question (#176).
+
 ### `[tool.ruff.lint] ignore` names no rule with nothing beside it
 
 - **Every entry now carries the reason it is ignored, and the command
