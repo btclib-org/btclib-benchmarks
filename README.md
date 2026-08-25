@@ -11,7 +11,12 @@ than by omission: nothing here is published to an index and nothing here
 is served by Read the Docs, so the PyPI version, the download count, the
 development status, the supported interpreters and the documentation
 build have no state to report. What is left is what this repository
-actually has. -->
+actually has.
+Scorecard sits after os-macos rather than inside section 10's calendar
+order: the calendar carries no row for it yet -- btclib-org/.github#363
+proposes one -- so it takes the position after everything the calendar
+does order, not before it, the same reading btclib-org/portanode's own
+README states for itself. -->
 [![license](https://img.shields.io/github/license/btclib-org/btclib-benchmarks.svg)](https://github.com/btclib-org/btclib-benchmarks/blob/main/LICENSE)
 
 [![test workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml)
@@ -23,6 +28,7 @@ actually has. -->
 [![deps-latest workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml)
 [![os-ubuntu workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml)
 [![os-macos workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/btclib-org/btclib-benchmarks/badge)](https://scorecard.dev/viewer/?uri=github.com/btclib-org/btclib-benchmarks)
 
 [![GitHub repository: btclib-org/btclib-benchmarks](https://img.shields.io/badge/GitHub-btclib--org%2Fbtclib--benchmarks-181717?logo=github)](https://github.com/btclib-org/btclib-benchmarks/)
 

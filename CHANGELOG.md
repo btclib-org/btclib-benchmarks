@@ -8,6 +8,18 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `README.md`'s head carries a Scorecard badge
+
+- **`scorecard.yml` landed with no `README.md` badge behind it, so a
+  reader had no way to see the workflow already ran.** The badge is the
+  OpenSSF Scorecard's own -- `api.scorecard.dev`, not a GitHub
+  `actions/workflows/.../badge.svg` -- placed after `os-macos`: section
+  10's calendar carries no row for `scorecard` yet
+  (`btclib-org/.github#363`), so it takes the position after everything
+  the calendar does order rather than a place inside it, the same
+  reading `btclib-org/portanode`'s own `README.md` already states for
+  itself (closes #218).
+
 ### The documentation build takes `furo` and `-n`, against the organization standard
 
 - **The `docs` group carried `sphinx_rtd_theme` and `conf.py` named it as
