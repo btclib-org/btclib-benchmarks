@@ -38,12 +38,15 @@ on:
     # this is not on pull_request
     branches: [main]
   schedule:
-    # weekly, on the day and the hour the action's own canonical
-    # workflow uses (ossf/scorecard's own scorecard-analysis.yml): a
-    # score depends on checks read from outside this repository --
-    # Branch-Protection and Code-Review among them -- so an unchanged
-    # tree can still answer differently a week later
-    - cron: "30 1 * * 6"
+    # Saturday and hour 03 from section 10's calendar, minute 16 from
+    # this repository's own row in that section's second table --
+    # neither is this file's to restate. This line used to follow the
+    # hour ossf/scorecard's own canonical workflow uses instead
+    # (scorecard-analysis.yml); section 10's "The hour is chosen against
+    # this organization's own load, not GitHub's" is the reason that
+    # instant was not the answer, and btclib-org/.github#384 is where
+    # the two were found to disagree
+    - cron: "16 3 * * 6"
 
 # least privilege for the GITHUB_TOKEN at the file level; the job below
 # declares everything it needs on top of this, so the elevation is held

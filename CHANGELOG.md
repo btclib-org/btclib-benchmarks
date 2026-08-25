@@ -8,6 +8,15 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `scorecard.yml`'s cron rejoins section 10's calendar
+
+- **`scorecard.yml` scheduled `30 1 * * 6`, the hour `ossf/scorecard`'s
+  own canonical workflow uses rather than the row `btclib-org/.github`'s
+  README section 10 states for this pair -- Saturday hour 03, minute 16
+  -- and `btclib-org/.github`'s `tests/grid_test.py` read the two as
+  disagreeing.** The cron now reads `16 3 * * 6`, matching the calendar
+  (closes btclib-org/.github#384).
+
 ### `scorecard.yml`'s comment names the domain the badge already uses
 
 - **`scorecard.yml`'s own comment read the score's source as
