@@ -6,12 +6,14 @@ name: claude-review
 # to say: the prompt below names that file rather than restating it, so a
 # change to the standard reaches this workflow without editing it.
 #
-# Not a required check, and it must not become one. What it produces is a
-# comment, which is an opinion for the author to weigh -- REPOSITORY.md's
-# rule is that `main`'s required contexts are named outside the repository,
-# and a review that gates a merge would make a model's judgement a branch
-# rule. The required checks stay what they are, and which ones those
-# are is REPOSITORY.md's to record and the endpoint's to answer.
+# Not a required check, and it must not become one. What it produces is
+# inline comments and a summary posted as a GitHub review -- an approval
+# or a request for changes -- whose body is an opinion for the author to
+# weigh -- REPOSITORY.md's rule is that `main`'s required contexts are
+# named outside the repository, and a review that gates a merge would
+# make a model's judgement a branch rule. The required checks stay what
+# they are, and which ones those are is REPOSITORY.md's to record and
+# the endpoint's to answer.
 #
 # It is one more job on every pull request, which is not free: GitHub Free
 # gives this organization twenty concurrent jobs and REPOSITORY.md measures
@@ -66,7 +68,7 @@ jobs:
           && github.event.pull_request.head.repo.full_name
              == github.repository }}
     runs-on: ubuntu-latest
-    # a diff read and a comment posted; a job past this is hung on the API
+    # a diff read and a review posted; a job past this is hung on the API
     timeout-minutes: 15
     # per job rather than per workflow, so that a push cancelling a
     # superseded review does not also cancel somebody's @claude question
@@ -151,17 +153,20 @@ jobs:
             this job and that those runs are what stands.
 
             Do not file issues from here: a collateral finding goes in the
-            summary comment, under a line saying it is not a finding
-            against this pull request, and a person decides whether it
-            becomes one.
+            summary, under a line saying it is not a finding against this
+            pull request, and a person decides whether it becomes one.
 
-            Post GitHub comments only, never review text as a message.
-            `gh pr comment` for the summary,
+            Post inline findings through
             `mcp__github_inline_comment__create_inline_comment` (with
-            `confirmed: true`) for a finding a line is the subject of.
+            `confirmed: true`), one per line a finding is about. Post the
+            summary as a GitHub review, never as a comment and never as a
+            message: `gh pr review --approve --body "..."` where the body
+            ends with `ACK <sha>`, or `gh pr review --request-changes
+            --body "..."` where it ends with `CHANGES REQUESTED <sha>`,
+            `<sha>` being this pull request's head sha, named above.
           # folded rather than literal, and `gh pr` rather than the three
           # subcommands spelled out: the flag has to reach the CLI as one
-          # line, and the line that spells out comment, diff and view is
+          # line, and the line that spells out diff, review and view is
           # past the 100 columns yamllint holds this file to
           claude_args: >-
             --allowedTools
@@ -195,20 +200,22 @@ jobs:
       # starts, finishes green and posts nothing at all walks through
       # it: on btclib-org/.github's pull request 139 two runs of the same
       # sha both concluded success, the first having written no comment
-      # and the second the review.
+      # and the second the review. The same failure reaches a review
+      # posted through the pull request reviews API just as easily -- a
+      # run can finish green having submitted no review at all.
       #
       #   gh api "repos/btclib-org/.github/actions/runs?head_sha=<sha>" \
       #     --jq '.workflow_runs[] | select(.name == "claude-review")
       #           | {id, conclusion, run_started_at, updated_at}'
       #
       # So what is read here is what was posted rather than what the
-      # action produced: the verdict is the last line of a comment on
-      # the pull request, which is where section 11 of the standard puts
-      # the ack of record, and only what claude[bot] wrote is one -- an
-      # author's own ack is not.
+      # action produced: the verdict is the last line of the most recent
+      # pull request review's body, which is where section 11 of the
+      # standard puts the ack of record, and only a review submitted by
+      # claude[bot] is one -- an author's own ack is not.
       #
-      #   gh api repos/btclib-org/.github/issues/139/comments \
-      #     --jq '.[] | "\(.user.login) \(.body | split("\n") | last)"'
+      #   gh api "repos/$REPO/pulls/$NUMBER/reviews" --jq \
+      #     '.[] | "\(.user.login) \(.state) \(.body | split("\n") | last)"'
       #
       # The last verdict decides, rather than any verdict naming the
       # head: a second reading of the same tree can refuse what an
@@ -222,11 +229,15 @@ jobs:
       # the sha alone turns a stale ack red, with no clock to compare
       # against and no re-run of an unchanged commit turned red for
       # having nothing new to say. An abbreviation names the same commit
-      # as the forty characters do, so a prefix of it counts.
+      # as the forty characters do, so a prefix of it counts. The
+      # review's own `commit_id` field names the reviewed tree directly,
+      # and is checked too, alongside the sha the body's last line
+      # carries rather than in its place -- the two are read from
+      # different places, and either could be wrong on its own.
       #
       # Red, and gating nothing: this check is not required, and what
       # the colour buys is a reader who sees a refusal in the checks
-      # instead of under the fold at the foot of a comment.
+      # instead of under the fold at the foot of a review.
       - name: Refuse to report anything but an ack of this head
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -234,26 +245,37 @@ jobs:
           NUMBER: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          # --paginate because the API pages at thirty comments and the
+          # --paginate because the API pages at thirty reviews and the
           # newest sit on the last page; --jq answers once per page, so
-          # the last line of the output is the last verdict posted.
-          verdict=$(gh api "repos/$REPO/issues/$NUMBER/comments" --paginate \
+          # the last line of the output is the last verdict posted. Only
+          # a state of APPROVED or CHANGES_REQUESTED carries a verdict:
+          # COMMENTED and PENDING are not one, whatever the body reads.
+          result=$(gh api "repos/$REPO/pulls/$NUMBER/reviews" --paginate \
             --jq '[ .[]
                     | select(.user.login == "claude[bot]")
-                    | .body
-                    | split("\n")
-                    | map(sub("\\s+$"; ""))
-                    | map(select(length > 0))
-                    | last // empty
-                    | select(test("^(ACK|CHANGES REQUESTED) [0-9a-f]{7,40}$"))
+                    | select(.state == "APPROVED"
+                             or .state == "CHANGES_REQUESTED")
+                    | {
+                        commit: .commit_id,
+                        verdict: (.body
+                                  | split("\n")
+                                  | map(sub("\\s+$"; ""))
+                                  | map(select(length > 0))
+                                  | last // empty)
+                      }
+                    | select(.verdict
+                             | test("^(ACK|CHANGES REQUESTED) [0-9a-f]{7,40}$"))
+                    | [.commit, .verdict] | @tsv
                   ] | last // empty' | tail -1)
-          if [ -z "$verdict" ]; then
-            echo "::error::the review posted no verdict on this pull" \
+          if [ -z "$result" ]; then
+            echo "::error::the review submitted no verdict on this pull" \
                  "request, so nothing says whether $HEAD_SHA was read at" \
-                 "all. A job that finishes green having written no" \
-                 "comment is what this reports."
+                 "all. A job that finishes green having submitted no" \
+                 "review is what this reports."
             exit 1
           fi
+          commit_id=${result%%$'\t'*}
+          verdict=${result#*$'\t'}
           sha=${verdict##* }
           case "$verdict" in
             "ACK "*) ;;
@@ -262,14 +284,30 @@ jobs:
               exit 1
               ;;
           esac
+          # commit_id is the review's own field for the tree it was
+          # submitted against, always the full forty characters, and is
+          # checked first; the sha the body's own last line carries is
+          # checked too, the two being read from different places and
+          # either capable of being wrong on its own.
+          case "$commit_id" in
+            "$HEAD_SHA")
+              ;;
+            *)
+              echo "::error::the last verdict was submitted against" \
+                   "$commit_id and the head is $HEAD_SHA: an ack belongs" \
+                   "to a tree, and this one names a tree the branch has" \
+                   "moved past."
+              exit 1
+              ;;
+          esac
           case "$HEAD_SHA" in
             "$sha"*)
               echo "the review acked $sha"
               ;;
             *)
-              echo "::error::the last verdict acks $sha and the head is" \
-                   "$HEAD_SHA: an ack belongs to a tree, and this one" \
-                   "names a tree the branch has moved past."
+              echo "::error::the verdict's own line names $sha, which" \
+                   "disagrees with the review's commit_id ($commit_id)" \
+                   "for the same verdict."
               exit 1
               ;;
           esac
