@@ -41,9 +41,9 @@ on:
   # workflow_dispatch alone, where the sibling repositories also offer
   # workflow_call: that trigger exists so a release can gate a
   # publication on a platform, and this project publishes nothing --
-  # `[tool.uv.build-backend] module-name = []`, no index, no release.yml,
-  # and REPOSITORY.md says why. A trigger nothing can pull is a trigger
-  # nobody can test; it is one line to add on the day a caller exists.
+  # no index, no release.yml, and REPOSITORY.md says why. A trigger
+  # nothing can pull is a trigger nobody can test; it is one line to
+  # add on the day a caller exists.
   #
   # So this is the escape hatch and the only one: the matrix on demand,
   # for a branch that moves a floor in pyproject.toml, the lock under it,

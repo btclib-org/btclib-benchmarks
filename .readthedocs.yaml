@@ -20,10 +20,8 @@
 # this one was a copy of btclib's, down to prose about installing btclib
 # so that autodoc can import it. Nothing under docs/source carries an
 # autodoc directive -- `grep -rn automodule docs/source` answers with
-# nothing -- and conf.py records why: `[tool.uv.build-backend]
-# module-name` is empty, this project installs nothing, and the version
-# is read out of pyproject.toml because there is no distribution to ask
-# for metadata.
+# nothing -- and conf.py's own docstring records why the version comes
+# from pyproject.toml rather than from installed metadata.
 # There is no import here for -W to turn into a build error. What -W
 # catches instead is a markdown link or a cross-reference sphinx cannot
 # resolve, which is the whole of what these `{include}`-based pages can

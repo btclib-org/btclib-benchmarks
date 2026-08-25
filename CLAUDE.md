@@ -38,8 +38,9 @@ The benchmarks, one question each:
 - `scripts/06-silentpayments.py` — BIP352, which only `btclib_secp256k1`
   implements of every comparand here
 
-`src/btclib_benchmarks/_provenance.py`, `src/btclib_benchmarks/_inputs.py`
-and `scripts/artifacts.py` are what the suite covers.
+`src/btclib_benchmarks/_provenance.py`, `src/btclib_benchmarks/_inputs.py`,
+`src/btclib_benchmarks/_vectors.py` and `scripts/artifacts.py` are what
+the suite covers.
 `src/btclib_benchmarks/_results.py` and `scripts/render.py` are the
 non-benchmarks besides those, and they are outside the gate on purpose —
 see below.
@@ -200,9 +201,10 @@ Do not use Fable unless explicitly instructed.
   other side. A tag in neither set is `unrecorded` rather than a guess.
   Do not key a pin on a version again without checking that the version
   has one artifact.
-- **Coverage measures `_provenance.py` and the suite, and omits the
-  benchmark scripts** — covering a timing function means running it, and a
-  measurement inside CI is a number that means nothing.
+- **Coverage measures `src/btclib_benchmarks/` — `_results.py`
+  excepted — and the suite, and omits the benchmark scripts** —
+  covering a timing function means running it, and a measurement inside
+  CI is a number that means nothing.
 - **pytest is strict**: a warning is an error, an unregistered marker is
   an error, and an xfail that passes is a failure. A comparand's release
   that fixes a recorded defect therefore turns the suite red, which is
