@@ -14,7 +14,7 @@ name: scorecard
 # itself does not support running on a fork, so the second half is not
 # this file's choice to make either.
 #
-# What it scores is read from https://api.securityscorecards.dev, and
+# What it scores is read from https://api.scorecard.dev, and
 # each check scoring below its maximum is either an issue against what
 # it found or a sentence in section 14 recording this organization's own
 # reason -- neither is this file's to carry, and none of it exists yet:
