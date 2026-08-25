@@ -335,11 +335,10 @@ from __future__ import annotations
 
 import sys
 import time
-from collections.abc import Callable
 from dataclasses import replace
 from importlib.metadata import version
 from itertools import cycle
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import btclib_secp256k1.dsa
 import btclib_secp256k1.keys
@@ -370,6 +369,9 @@ from btclib_benchmarks._results import (
     taken_now,
     width_for,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _build_of(dist_name: str) -> str:

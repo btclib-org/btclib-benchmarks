@@ -126,11 +126,11 @@ class RootFileLinks(SphinxPostTransform):
     # unresolved target into that anchor
     default_priority = 5
 
-    def run(self, **kwargs: Any) -> None:
+    def run(self, **_kwargs: Any) -> None:  # noqa: ANN401 - Sphinx's own signature
         """Rewrite every myst xref naming a root file a page renders.
 
         Args:
-            kwargs: what sphinx passes a post-transform, and unused here.
+            _kwargs: what sphinx passes a post-transform, and unused here.
         """
         for node in self.document.findall(pending_xref):
             # refdomain "doc" is a link myst has already resolved to a

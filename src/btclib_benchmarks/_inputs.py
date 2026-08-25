@@ -50,9 +50,12 @@ the same bytes.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from hashlib import sha256
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # what a benchmark reads. Two hundred thousand is the longest row in the
 # suite, so this is two passes over the pool for it and one or two for

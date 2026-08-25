@@ -62,6 +62,32 @@ the record behind.
   SARIF upload to code scanning for what `security-events: write` is
   asked for (issue #211).
 
+### `pyproject.toml` runs `select = ["ALL"]`, the org standard's section 5
+
+- **`[tool.ruff.lint]`'s `select` held a hand-picked list of rule
+  families, which is the shape section 5 of btclib-org/.github's
+  `README.md` argues against: a list nobody is asked to revisit the day
+  ruff ships a family nobody has looked at yet.** `select = ["ALL"]`
+  replaces it, and every family the change turns on for the first time is
+  answered in `[tool.ruff.lint.ignore]` and in
+  `[tool.ruff.lint.per-file-ignores]`, each entry argued beside it: the
+  rules the formatter itself conflicts with, cited from ruff's own
+  `docs/formatter.md`; `TD`, disciplining a marker `FIX` already refuses
+  outright; `boolean-positional-value-in-call`, fired only by a call
+  through one of `tests/wrappers_test.py`'s comparand dispatch tables,
+  typed `Callable[[..., bool], ...]` and so carrying no argument name a
+  keyword call could use; and
+  `INP001`/`SLF001`/`ARG001`, scoped to `scripts/*.py` and `tests/**` for
+  the reasons already argued there. `[tool.ruff]` gained
+  `namespace-packages`, telling `INP001` that `tests/` and `docs/source/`
+  are packages on purpose. The findings ruff had never been asked about
+  before were fixed at their sites instead of ignored: an exception
+  message built inline is now assigned to a variable first, a
+  standard-library import used only for a type is moved behind
+  `TYPE_CHECKING`, `scripts/render.py`'s `blocks()` takes its one boolean
+  keyword-only, and a lambda's unused `aux` parameter is
+  underscore-prefixed (issue #211).
+
 ### `CLAUDE.md` counts `scripts/`'s eight files, names the two run without hands
 
 - **`CLAUDE.md`'s *Non-obvious facts* section named no count for

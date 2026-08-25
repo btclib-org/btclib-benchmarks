@@ -50,12 +50,15 @@ import platform
 import statistics
 import subprocess
 import tomllib
-from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # what `render.py` refuses to read rather than misread. A saved run is a
 # file this project writes and reads back a release apart, so the one
@@ -212,7 +215,8 @@ class Timing:
         inside rather than from a file.
         """
         if self.spread is not None and self.halves_apart is not None:
-            raise ValueError(f"{self.label} states two dispersions")
+            err_msg = f"{self.label} states two dispersions"
+            raise ValueError(err_msg)
 
     @property
     def dispersion(self) -> float | None:
@@ -414,7 +418,8 @@ class Measurement:
         would print no drift line and say nothing about why.
         """
         if bool(self.run.when_again) != bool(_measured_twice(self.tables)):
-            raise ValueError(f"{self.benchmark} records half of a second pass")
+            err_msg = f"{self.benchmark} records half of a second pass"
+            raise ValueError(err_msg)
 
 
 def _measured_twice(tables: Sequence[Table]) -> list[tuple[float, float]]:
@@ -598,7 +603,8 @@ def labelled(label: str, value: str) -> str:
     """
     line = f"{label:<{LABEL}}: {value}"
     if len(line) > LINE:
-        raise ValueError(f"{len(line)} columns is wider than {LINE}: {line!r}")
+        err_msg = f"{len(line)} columns is wider than {LINE}: {line!r}"
+        raise ValueError(err_msg)
     return line
 
 
@@ -786,7 +792,8 @@ def rendered_ratios(table: Ratios, width: int, *, counted: bool = False) -> str:
     quickest = min(row.us_per_call for row in timed)
     statistics = {row.dispersion_key for row in timed} - {None}
     if len(statistics) > 1:
-        raise ValueError(f"{table.title}: two statistics under one column")
+        err_msg = f"{table.title}: two statistics under one column"
+        raise ValueError(err_msg)
     dispersed = statistics.pop() if statistics else None
     deviations = any(row.deviation is not None for row in timed)
     heading = f"  {'':<{width}}{'μs/call':>10}"
@@ -925,7 +932,8 @@ def rendered_group(measurement: Measurement, group: str) -> str:
     counted = bool(counted_once(measurement.tables))
     tables = [table for table in measurement.tables if table.group == group]
     if not tables:
-        raise ValueError(f"no table is in the group {group!r}")
+        err_msg = f"no table is in the group {group!r}"
+        raise ValueError(err_msg)
     return "\n\n".join(
         rendered_table(table, width, counted=counted) for table in tables
     )
@@ -1101,7 +1109,8 @@ def from_json(saved: dict[str, object]) -> Measurement:
     publish that difference as a table.
     """
     if saved.get("schema") != SCHEMA:
-        raise ValueError(f"{saved.get('schema')} is not schema {SCHEMA}")
+        err_msg = f"{saved.get('schema')} is not schema {SCHEMA}"
+        raise ValueError(err_msg)
     run = saved["run"]
     provenance = saved["provenance"]
     tables = saved["tables"]

@@ -455,53 +455,63 @@ ignore_missing_imports = true
 
 [tool.ruff]
 # target-version is inferred from project.requires-python
+# tests/ and docs/source/ carry no __init__.py, and INP001 below would
+# otherwise read that as an oversight: tests/ is collected by pytest's
+# rootdir-relative import and asks for none, and docs/source/conf.py is
+# Sphinx's entry point, read by path and never imported. Declaring the
+# two here is what tells the rule so, the way it is meant to be told:
+# `namespace-packages` has ruff treat a directory as if it already
+# carried an `__init__.py`.
+#
+# scripts/ is not among them, and deliberately: the same option makes
+# ruff treat every file under it as a package module too, which is what
+# N999 then checks the six numbered benchmarks' own names against -- and
+# none of them could pass, a name opening with a digit or carrying a
+# hyphen not being a Python identifier (tests/conftest.py's own docstring
+# gives the reason in full). scripts/*.py's own per-file-ignores entry
+# below is where that direction is answered instead
+namespace-packages = ["tests", "docs/source"]
 
 [tool.ruff.lint]
 preview = true
 explicit-preview-rules = true
-# the selection btclib-org holds its Python to, as bitcoin-core-rpc's own
-# pyproject.toml puts it. PTH is not here, and that is the one deliberate
-# subtraction: btclib selects it, and the handful of files this project
-# opens -- the vendored vectors, a saved run, a page being rendered -- are
-# reached through `pathlib` already, so the rule would have nothing to say.
-# FIX is what refuses a TODO or a FIXME in the tree: work that is not
-# finished belongs in an issue, where it is searchable, assignable and
-# closeable, and not in a comment beside code that reads as finished. TD
-# is the other half of that pair and is left out, as it is everywhere in
-# the organization -- it disciplines the format of a marker this refuses
+# every rule family ruff ships, present ones and a release's future ones
+# alike: `ignore` below is where a family or a single rule is turned back
+# off, each entry argued beside it. `ignore` holds three kinds of entry,
+# told apart by what its comment argues: a rule the formatter conflicts
+# with, cited from ruff's own docs/formatter.md and not argued in this
+# tree's own words, since the list is the vendor's; a rule this tree
+# declines on its own merits; and TD, disciplining a marker FIX refuses
 # outright
-select = [
-    "A",
-    "B",
-    "BLE",
-    "C4",
-    "C90",
-    "CPY",
-    "D",
-    "E",
-    "ERA",
-    "F",
-    "FIX",
-    "FURB",
-    "I",
-    "ISC",
-    "PGH",
-    "PIE",
-    "PL",
-    "PT",
-    "RET",
-    "RSE",
-    "RUF",
-    "S",
-    "SIM",
-    "T20",
-    "TID",
-    "TRY",
-    "UP",
-    "W",
-]
+select = ["ALL"]
 extend-select = ["unspecified-encoding"]
 ignore = [
+    # every one of these is docs/formatter.md's own list, at the
+    # ruff-pre-commit rev .pre-commit-config.yaml pins: enabling one
+    # flags what ruff-format's own algorithm decided instead of
+    # demanding, so `ruff check` and `ruff format` would fight the tree
+    # they both look at. Two of the vendor's own list are not named here,
+    # each for its own reason and not by omission: the pep257 convention
+    # below already disables incorrect-blank-line-before-class (D203)
+    # without an ignore entry doing it -- a declared convention settles
+    # the pair ruff calls incompatible, so naming the half it disables
+    # here would change no diagnostic and silence no warning -- and
+    # multi-line-implicit-string-concatenation's (ISC002) own conflict is
+    # conditional on ISC001 being off, which it is not: ISC is selected
+    # whole
+    "tab-indentation",
+    "indentation-with-invalid-multiple",
+    "indentation-with-invalid-multiple-comment",
+    "over-indented",
+    "docstring-tab-indentation",
+    "triple-single-quotes",
+    "bad-quotes-inline-string",
+    "bad-quotes-multiline-string",
+    "bad-quotes-docstring",
+    "avoidable-escaped-quote",
+    "unnecessary-escaped-quote",
+    "missing-trailing-comma",
+    "prohibited-trailing-comma",
     # docstrings: every public module, class, method and function must
     # carry one -- D100/D104 and the D101/D102/D103 left out of this
     # list enforce exactly that. The convention leaves these two
@@ -533,6 +543,24 @@ ignore = [
     # `uv run ruff check --select TRY003 --no-cache .` lists the sites,
     # every one in src/btclib_benchmarks/_results.py or scripts/render.py
     "raise-vanilla-args",
+    # PARSERS, CHECKED_PAIRS and their siblings in tests/wrappers_test.py
+    # are dispatch tables typed `Callable[[..., bool], ...]`, called
+    # through the dict rather than by name -- `parse(encoding, True)`,
+    # never `parse(encoding, compressed=True)`. The type carries no
+    # argument names, so no call through one of these tables could pass
+    # the bool a keyword: the site is the type, not any one wrapper's own
+    # signature.
+    # `uv run ruff check --select FBT003 --no-cache .` lists the sites,
+    # every one a call through such a table
+    "boolean-positional-value-in-call",
+    # FIX refuses a TODO, a FIXME, an XXX or a HACK wherever one opens a
+    # comment: unfinished work belongs in an issue, searchable,
+    # assignable and closeable, not in a comment beside code that reads
+    # as finished. TD disciplines the same four markers' format instead
+    # of refusing them, and is not even a superset of what FIX catches --
+    # HACK draws no TD diagnostic at all -- so a repository that finishes
+    # what it starts keeps the refusal and leaves TD here
+    "TD",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -540,10 +568,19 @@ ignore = [
 # and each asserts its comparands agree with each other before timing any
 # of them. T20 is selected for the same reason it is everywhere in this
 # org -- a library writes to no stream of its own -- and a script whose
-# caller is a person at a terminal is the case it is not about
+# caller is a person at a terminal is the case it is not about. SLF001 is
+# what CLAUDE.md's own reasoning about `_libsecp256k1_available` already
+# argues -- btclib's private dispatch switch, reached into on purpose so
+# `python_arithmetic_only()` can turn it off after the row that measures
+# through libsecp256k1. INP001 is `[tool.ruff]`'s own `namespace-packages`
+# comment above, read the other way: this directory is not a package and
+# cannot become one, the six numbered benchmarks' own names not being
+# Python identifiers
 "scripts/*.py" = [
-    "S101", # assert
-    "T201", # print
+    "S101",   # assert
+    "T201",   # print
+    "SLF001", # private member access
+    "INP001", # implicit namespace package
 ]
 # `_results.py` narrows a `json.loads` return with `isinstance` seven
 # times over -- the type it reads back is `Any`, and this is how the
@@ -563,6 +600,20 @@ ignore = [
     "PT012",
     "PT018",
     "RUF043",
+    # a fixture applied for its monkeypatching alone -- inputs_test.py's
+    # `cache` chief among them -- is unread in the test body by design;
+    # pytest looks a fixture up by its parameter's own name, so the usual
+    # leading underscore that answers ARG001 elsewhere would also un-wire
+    # the fixture
+    "ARG001",
+    # `_inputs.py`, `_provenance.py`, `_results.py` and `_vectors.py` are
+    # themselves underscore-named -- private to the package, not merely
+    # to a class inside it -- and this suite is what covers them, so a
+    # test reaching `_stream`, `_read` or `_table_from_json` is exercising
+    # the module directly rather than crossing into somebody else's
+    # internals. vectors_test.py's one `curve._libsecp256k1_available`
+    # is scripts/*.py's own SLF001 entry above, for the same reason
+    "SLF001",
 ]
 
 [tool.ruff.lint.mccabe]

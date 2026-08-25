@@ -48,8 +48,8 @@ import hashlib
 import os
 import subprocess
 import sys
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import bitcoin.base58
 import btclib.base58
@@ -77,6 +77,9 @@ from pycoin.encoding.sec import sec_to_public_pair
 from pycoin.satoshi.der import sigdecode_der
 
 from btclib_benchmarks import _vectors
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 DATA = _vectors.VECTORS
 

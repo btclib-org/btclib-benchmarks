@@ -122,9 +122,9 @@ from __future__ import annotations
 
 import sys
 import time
-from collections.abc import Callable
 from importlib.metadata import version
 from itertools import cycle
+from typing import TYPE_CHECKING
 
 from btclib import b58
 from btclib.curves import curve, sec_point
@@ -146,6 +146,9 @@ from btclib_benchmarks._results import (
     taken_now,
     width_for,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def provenance() -> Provenance:

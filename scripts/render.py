@@ -93,7 +93,9 @@ def _fenced(block: str) -> list[str]:
     return ["```text", *block.split("\n"), "```"]
 
 
-def blocks(measurement: Measurement, has_own_provenance: bool) -> dict[str, list[str]]:
+def blocks(
+    measurement: Measurement, *, has_own_provenance: bool
+) -> dict[str, list[str]]:
     """Return the lines each region of a page is to be given.
 
     A page with nowhere of its own to put the packages block gets it above
@@ -132,7 +134,8 @@ def _region_bounds(lines: list[str], name: str) -> tuple[int, int] | None:
     if not opened and not closed:
         return None
     if len(opened) != 1 or len(closed) != 1 or closed[0] < opened[0]:
-        raise ValueError(f"{name}: markers are not one pair, opened then closed")
+        err_msg = f"{name}: markers are not one pair, opened then closed"
+        raise ValueError(err_msg)
     return opened[0] + 1, closed[0]
 
 
@@ -146,9 +149,11 @@ def rendered_page(page: str, measurement: Measurement) -> str:
     bounds = {name: _region_bounds(lines, name) for name in names}
     split = [name for name in names if name.startswith(TABLES_PREFIX) and bounds[name]]
     if bounds["run"] is None or (bounds["output"] is None and not split):
-        raise ValueError("a page needs a run region, and output or table regions")
+        err_msg = "a page needs a run region, and output or table regions"
+        raise ValueError(err_msg)
     if split and len(split) != len(_results.groups_of(measurement)):
-        raise ValueError("a split page carries a region for every group of the run")
+        err_msg = "a split page carries a region for every group of the run"
+        raise ValueError(err_msg)
     filled = blocks(measurement, has_own_provenance=bounds["provenance"] is not None)
     # last region first, so that replacing one does not move the next
     for name, where in sorted(

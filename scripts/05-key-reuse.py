@@ -81,9 +81,9 @@ from __future__ import annotations
 
 import sys
 import time
-from collections.abc import Callable
 from hashlib import sha256
 from itertools import cycle
+from typing import TYPE_CHECKING
 
 import btclib
 import btclib_secp256k1
@@ -106,6 +106,9 @@ from btclib_benchmarks._results import (
     save,
     taken_now,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def provenance() -> Provenance:
