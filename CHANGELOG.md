@@ -8,6 +8,23 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### The documentation build takes `furo` and `-n`, against the organization standard
+
+- **The `docs` group carried `sphinx_rtd_theme` and `conf.py` named it as
+  `html_theme`, where `btclib-org/.github`'s README.md "The documentation"
+  gives the theme this organization builds against as `furo`.** The group
+  now declares `furo` and `conf.py` sets it as the theme; `sphinx.ext.intersphinx`
+  is added ahead of `myst_parser`, with a mapping for the python standard
+  library, so a stdlib name in an annotation resolves instead of reporting
+  as this tree's own broken reference.
+- **Neither `.github/workflows/docs.yml` nor `.readthedocs.yaml` ran sphinx
+  with `-n`, so a sphinx-domain cross-reference resolving to nothing --
+  a `:class:` or `:func:` role naming something that does not exist --
+  was not a warning at all and `-W` never saw it.** Both now add `-n`,
+  and `CONTRIBUTING.md`'s own gate list matches; nothing under
+  `docs/source` writes such a role today, so the build carries no
+  `nitpick_ignore` entry (issue #211).
+
 ### `CLAUDE.md` counts `scripts/`'s eight files, names the two run without hands
 
 - **`CLAUDE.md`'s *Non-obvious facts* section named no count for

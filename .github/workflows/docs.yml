@@ -88,4 +88,4 @@ jobs:
       - name: Build the documentation
         run: >-
           uv run --locked --only-group docs
-          sphinx-build -W --keep-going -b html docs/source docs/build/html
+          sphinx-build -W --keep-going -n -b html docs/source docs/build/html

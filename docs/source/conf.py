@@ -32,10 +32,17 @@ copyright = "The btclib developers"  # noqa: A001
 release = tomllib.loads(_PYPROJECT.read_text(encoding="utf-8"))["project"]["version"]
 version = release
 
-extensions = ["myst_parser"]
+extensions = ["sphinx.ext.intersphinx", "myst_parser"]
 source_suffix = {".md": "markdown", ".rst": "restructuredtext"}
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 exclude_patterns: list[str] = []
+
+# resolved before -n is turned on in .github/workflows/docs.yml and
+# .readthedocs.yaml, per btclib-org/.github's README.md "The
+# documentation": without this, a stdlib name in an annotation reports as
+# this tree's own unresolved reference rather than as the standard
+# library's
+intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
 
 # -- Links out of the included root markdown files ----------------------------
