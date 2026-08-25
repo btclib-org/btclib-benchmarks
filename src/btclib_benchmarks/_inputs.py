@@ -70,7 +70,7 @@ SEED = b"btclib-benchmarks/inputs/%d" % GENERATION
 # ignored by git, and named for that: what is here is re-derivable, and
 # what it buys is the second run on a machine rather than a record of
 # anything
-CACHE = Path(__file__).resolve().parent.parent / ".inputs"
+CACHE = Path(__file__).resolve().parent.parent.parent / ".inputs"
 
 
 def _stream(count: int, start: int) -> list[bytes]:

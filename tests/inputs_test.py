@@ -20,8 +20,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import _inputs
 import pytest
+
+from btclib_benchmarks import _inputs
 
 
 @pytest.fixture

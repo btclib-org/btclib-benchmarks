@@ -125,13 +125,18 @@ from hashlib import sha256
 from importlib.metadata import version
 from itertools import cycle
 
-import _inputs
 import buidl.pecc
 import ecdsa
 import pycoin.symbols.btc
 import secp256k1lab.bip340
-from _provenance import WHAT_A_TIMING_CONTAINS, origin_of
-from _results import (
+from btclib.curves import curve
+from btclib.ecc import dsa, ssa
+from btclib.to_pub_key import pub_keyinfo_from_prv_key
+from secp256k1lab.secp256k1 import G as LAB_G
+
+from btclib_benchmarks import _inputs
+from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS, origin_of
+from btclib_benchmarks._results import (
     Measurement,
     Provenance,
     Ratios,
@@ -144,10 +149,6 @@ from _results import (
     taken_now,
     width_for,
 )
-from btclib.curves import curve
-from btclib.ecc import dsa, ssa
-from btclib.to_pub_key import pub_keyinfo_from_prv_key
-from secp256k1lab.secp256k1 import G as LAB_G
 
 # the release each version was published on, recorded because no installed
 # metadata carries it: a wheel's METADATA has a Version and no date, and the

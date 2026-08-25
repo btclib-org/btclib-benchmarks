@@ -47,8 +47,9 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-import _results
 import pytest
+
+from btclib_benchmarks import _results
 
 # where the same width is written down for prose, arrived at independently of
 # the renderer: `ruff` holds every comment and docstring in this project to it,

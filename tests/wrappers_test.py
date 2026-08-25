@@ -46,7 +46,6 @@ import platform
 from collections.abc import Callable
 from typing import Any
 
-import _vectors
 import btclib_secp256k1.dsa
 import btclib_secp256k1.keys
 import btclib_secp256k1.ssa
@@ -56,6 +55,8 @@ import electrum_ecc
 import pytest
 import secp256k1
 import secp256k1lab.secp256k1
+
+from btclib_benchmarks import _vectors
 
 # the published BIP340 rows that carry a secret key, which is what makes them
 # usable here: this module needs keys and messages rather than signatures,
