@@ -88,6 +88,22 @@ the record behind.
   keyword-only, and a lambda's unused `aux` parameter is
   underscore-prefixed (issue #211).
 
+### `claude-review.yml` posts its ack of record as a pull request review
+
+- **The final step read GitHub issue comments for the verdict, and the
+  review job's prompt told the model to post it with `gh pr comment`
+  -- section 11 of the organization standard puts the ack of record in
+  a pull request review instead, an `APPROVE` carrying the `ACK <sha>`
+  body and a `REQUEST_CHANGES` the `CHANGES REQUESTED <sha>` one,
+  because a comment leaves the forge holding no record a landing or
+  the OpenSSF Scorecard's `Code-Review` check can read.** The prompt
+  now asks for `gh pr review --approve` or `gh pr review
+  --request-changes`, inline findings still going through
+  `mcp__github_inline_comment__create_inline_comment`, and the final
+  step reads `pulls/<n>/reviews` rather than `issues/<n>/comments`,
+  matching the most recent review from `claude[bot]` on its `state`,
+  its body's last line and its own `commit_id` (issue #211).
+
 ### `CLAUDE.md` counts `scripts/`'s eight files, names the two run without hands
 
 - **`CLAUDE.md`'s *Non-obvious facts* section named no count for
