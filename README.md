@@ -18,6 +18,11 @@ actually has. -->
 [![lint workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml)
 [![docs workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/btclib-org/btclib-benchmarks/main.svg)](https://results.pre-commit.ci/latest/github/btclib-org/btclib-benchmarks/main)
+[![links workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml)
+[![codeql workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml)
+[![deps-latest workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml)
+[![os-ubuntu workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml)
+[![os-macos workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml)
 
 [![GitHub repository: btclib-org/btclib-benchmarks](https://img.shields.io/badge/GitHub-btclib--org%2Fbtclib--benchmarks-181717?logo=github)](https://github.com/btclib-org/btclib-benchmarks/)
 

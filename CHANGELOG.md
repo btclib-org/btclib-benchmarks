@@ -25,6 +25,25 @@ the record behind.
   `docs/source` writes such a role today, so the build carries no
   `nitpick_ignore` entry (issue #211).
 
+### README.md's head carries a badge for every workflow section 2 owns it
+
+- **Section 2's badge rule keys a badge on a property of the tree, and
+  running a workflow from section 10's calendar is one such property:
+  `links`, `codeql`, `deps-latest`, `os-ubuntu` and `os-macos` already
+  run here on that calendar, and the head named none of them.** The
+  five join the row after `pre-commit.ci`, in the calendar's own order,
+  matching `btclib`'s own `README.md`, the tree currently carrying the
+  rule in full.
+- **`mutation` and `scorecard` stay off the row.** Neither workflow
+  exists in `.github/workflows/` yet, and a sentinel's badge arrives
+  with its workflow rather than ahead of it.
+- **No Read the Docs badge.** The Read the Docs API answers `404` for
+  this project and the repository's GitHub webhooks are empty, so no
+  service is subscribed here — the badge widget itself is not evidence
+  either way, since it renders the same "docs: unknown" SVG for this
+  project and for a project name that does not exist at all
+  (issue #211).
+
 ### `CLAUDE.md` counts `scripts/`'s eight files, names the two run without hands
 
 - **`CLAUDE.md`'s *Non-obvious facts* section named no count for
