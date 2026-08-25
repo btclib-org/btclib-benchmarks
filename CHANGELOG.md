@@ -8,6 +8,18 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `CLAUDE.md` counts `scripts/`'s eight files, names the two run without hands
+
+- **`CLAUDE.md`'s *Non-obvious facts* section named no count for
+  `scripts/` and said nothing about which of its files run outside a
+  manual invocation, so "only a manual run exercises what is under
+  `scripts/`" was a sentence the file did not contradict.** The new
+  bullet points at `pyproject.toml`'s `[tool.mypy]` comment for the
+  count rather than repeating its breakdown, and says what runs the
+  other two: `tests/artifacts_test.py` calls `artifacts.main()`, and
+  the `render-check` hook runs `scripts/render.py --check` on every
+  `pre-commit` run (closes #209).
+
 ### `pyproject.toml`'s mypy comments match this tree's mechanism, not another tree's
 
 - **`pyproject.toml`'s `mypy_path` comment said `--explicit-package-bases`
