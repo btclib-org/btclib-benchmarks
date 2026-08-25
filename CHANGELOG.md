@@ -483,6 +483,15 @@ the record behind.
   directory holding a `.py` file but `docs/source/`, whose `conf.py`
   btclib's hook leaves out the same way. Nothing changed.
 
+- **`REVIEWING.md`'s *The verdict* names the ack of record as an
+  approving review, not a forge approval GitHub refuses outright.** The
+  organization's copy, shared half byte for byte (section 14): the
+  refusal is GitHub's rule against a pull request's author approving
+  their own branch, which explained why an author's own verdict is a
+  comment here but never why the workflow's was; section 11 now has
+  `claude-review.yml` post its verdict as an approving review, and that
+  review is the ack of record (btclib-org/.github#353).
+
 ### The build backend is uv_build, and there is no include list
 
 - **The group holding `check-sdist`, `pyroma` and `twine` is `check`,
