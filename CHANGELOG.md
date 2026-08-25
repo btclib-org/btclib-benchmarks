@@ -1,9 +1,3 @@
-<!-- markdownlint-disable MD022 MD032 -->
-<!-- This file is merge=union, so a rebase joins two sections and drops
-     the blank line between them without a conflict: the rule is off
-     here for the duration of btclib-org/.github#33, and goes back on
-     when that queue is empty. btclib-org/.github#138 is the record. -->
-
 # Changelog
 
 Every change, in full: what changed, why, and what it cost. The headings
@@ -13,6 +7,19 @@ that means here, and why there are no release notes for this file to be
 the record behind.
 
 ## v2026.9 (work in progress, not released yet)
+
+### CHANGELOG.md's lint derogation goes, and codespell corrects in place
+
+- **This file opened by disabling MD022 and MD032, because a rebase of
+  this `merge=union` file joins two `###` blocks without a conflict and
+  drops the blank line between them, and the rule reported a gap it
+  would not close.** `markdownlint-cli2` already runs with `--fix`, so
+  that gap is now the hook's own repair: the directive is gone and both
+  rules apply to this file again.
+- **`codespell` now runs with `--write-changes`, joining
+  `markdownlint-cli2` and `typos` among the hooks that correct rather
+  than report.** `uvx codespell --builtin clear .` rewrites nothing in
+  this tree; `yamllint` has no fix mode to turn on (closes #190).
 
 ### CONTRIBUTING.md's shared half is the organization's current copy
 
@@ -50,6 +57,7 @@ the record behind.
   pre-commit.ci, alongside mypy, for the same reason: both shell out to
   `uv`, which is not installed there, and the lint workflow covers them
   (#166).
+
 ### The two open Dependabot alerts against `ecdsa` are dismissed
 
 - **GHSA-wj6h-64fc-37mp has no patched version in any `ecdsa` release
@@ -81,6 +89,7 @@ the record behind.
   push, schedule and workflow_dispatch -- include no pull_request, so no
   rule can require it and an aggregate here would be a name nothing can
   hold. The comment now states that instead of the open question (#176).
+
 ### `[tool.ruff.lint] ignore` names no rule with nothing beside it
 
 - **Every entry now carries the reason it is ignored, and the command
