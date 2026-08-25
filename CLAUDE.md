@@ -201,6 +201,13 @@ Do not use Fable unless explicitly instructed.
   other side. A tag in neither set is `unrecorded` rather than a guess.
   Do not key a pin on a version again without checking that the version
   has one artifact.
+- **`scripts/` is eight files, and two of them have their `main()`
+  run by something other than a manual invocation** — `pyproject.toml`'s
+  `[tool.mypy]` comment names all eight. The suite calls
+  `artifacts.main()` (`tests/artifacts_test.py`), and the `render-check`
+  hook runs `scripts/render.py --check` on every `pre-commit` run, so
+  "only a manual run exercises what is under `scripts/`" is false of
+  both.
 - **Coverage measures `src/btclib_benchmarks/` — `_results.py`
   excepted — and the suite, and omits the benchmark scripts** —
   covering a timing function means running it, and a measurement inside
