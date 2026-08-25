@@ -35,12 +35,7 @@
     "esbenp.prettier-vscode",
     // check-toml, the pyproject.toml schema over it, and the taplo hook:
     // this extension *is* taplo, and it reads .taplo.toml
-    "tamasfe.even-better-toml",
-    // docs/source is reStructuredText and the lint workflow builds it with
-    // sphinx -W. Highlighting only, deliberately: the heavier
-    // reStructuredText extensions want esbonio, doc8 or rstcheck installed
-    // to say anything, none of which is in the gate
-    "trond-snekvik.simple-rst"
+    "tamasfe.even-better-toml"
   ],
   // the reflex installs that would each fight a hook: ruff formats, ruff
   // sorts the imports with "I", and ruff's "PL" set is the pylint rules the
