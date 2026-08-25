@@ -8,6 +8,17 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `scorecard.yml`'s comment names the domain the badge already uses
+
+- **`scorecard.yml`'s own comment read the score's source as
+  `api.securityscorecards.dev`, a domain neither `ossf/scorecard-action`'s
+  nor `ossf/scorecard`'s own README mentions any more -- both use
+  `api.scorecard.dev` exclusively, confirmed live against each repository's
+  current README.** `README.md`'s own Scorecard badge already reads
+  `api.scorecard.dev` (#218), so the comment named a different hostname
+  than the badge beside it for no stated reason; it now names the same
+  one (closes #219).
+
 ### `README.md`'s head carries a Scorecard badge
 
 - **`scorecard.yml` landed with no `README.md` badge behind it, so a
