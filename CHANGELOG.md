@@ -8,6 +8,53 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `pyproject.toml`'s mypy comments match this tree's mechanism, not another tree's
+
+- **`pyproject.toml`'s `mypy_path` comment said `--explicit-package-bases`
+  needing `src` was to keep `from btclib_benchmarks import ...` off "the
+  installed, stub-less copy" -- wrong on both counts: #201 gave the installed
+  package its own `py.typed`, and the install is editable, so there is no
+  copy distinct from the source to resolve against instead.** Dropping `src`
+  from `mypy_path` and running the project's own mypy answers what the
+  comment now says: `Source file found twice under different module names` --
+  `src.btclib_benchmarks._inputs`, from the bare directory on the mypy
+  command line, and `btclib_benchmarks._inputs`, from the editable install's
+  own `.pth` pointing at that same directory. Naming `src` in `mypy_path` is
+  what tells mypy the two are one package (closes #203).
+- **`[[tool.mypy.overrides]]`'s comment said "none of the ten" comparands it
+  lists ship `py.typed`, where two of them, `coincurve` and `secp256k1lab`,
+  do and their entries are inert.** Both are dropped: keeping an inert
+  `ignore_missing_imports` entry for an already-typed package is not the
+  ratchet `[tool.mypy]`'s own `enable_error_code` comment argues for keeping
+  an unused error code -- the day either drops its marker, the entry would
+  silence the resulting regression instead of raising it. The comment states
+  what the list's own members share instead of counting them (closes #202).
+
+### `.vscode/` describes this tree, not another repository's
+
+- **`.vscode/settings.json` carried the same foreign-tree boilerplate as
+  #196's `.pre-commit-config.yaml` comment, beyond the `reportingScope` line
+  the issue named.** That line named `btclib`, `tests` and `.github/scripts`
+  for a hook that checks `scripts`, `src` and `tests`; the pyright survey
+  command targeted `btclib tests`; a sentence resolved `import btclib`
+  through the project's own editable install, where the package installed
+  editable here is `btclib_benchmarks`; and the json/jsonc comment pointed at
+  `tests/_data/README.md`, which does not exist here, and named an indent the
+  vendored files do not share -- it now points at the `vectors/README.md`
+  digest that actually holds them. Every one of them now names this tree
+  (closes #204).
+- **`.vscode/extensions.json` said sphinx runs under "the lint workflow", in
+  the same neighbourhood.** It runs under a workflow named `docs`,
+  `lint.yml`'s own job never calling `sphinx-build`.
+- **`.vscode/extensions.json` recommended an rst highlighter,
+  `trond-snekvik.simple-rst`, on the claim that `docs/source` is
+  reStructuredText.** `docs/source` holds only markdown, `conf.py`'s
+  `extensions = ["myst_parser"]` is what renders it, and the tree
+  has no `.rst` file anywhere -- the recommendation and its comment
+  are dropped rather than corrected, matching this file's own
+  opening rule that an entry earns its place from a gate, and no
+  gate has an opinion on rst here (closes #207).
+
 ### The mypy hook's comment describes this tree's `scripts/`, not another repository's
 
 - **`.pre-commit-config.yaml`'s local `mypy` hook carried a comment
