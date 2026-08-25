@@ -31,6 +31,16 @@ the record behind.
   that one convention on every repository that ships an importable
   package regardless of what its own prose states (closes #193).
 
+### `pyproject.toml`'s uv floor sits at the measured ceiling again
+
+- **`[tool.uv] required-version` was `>=0.11.31`**, below the newest uv
+  Dependabot's uv-ecosystem updater bundles today --
+  `gh api repos/dependabot/dependabot-core/contents/uv/Dockerfile` reads
+  `ghcr.io/astral-sh/uv:0.12.1`, and it is now `>=0.12.1`. The comment
+  beside it points at the standard's section 1 and section 15 instead of
+  restating the Dependabot argument, matching `btclib-org/.github`'s own
+  (closes #191).
+
 ### CHANGELOG.md's lint derogation goes, and codespell corrects in place
 
 - **This file opened by disabling MD022 and MD032, because a rebase of
