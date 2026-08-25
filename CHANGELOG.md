@@ -29,7 +29,7 @@ the record behind.
 - **`tests/README.md` declares the public surface tested**
   (`tests/public_surface_test.py`), the organization standard forcing
   that one convention on every repository that ships an importable
-  package regardless of what its own prose states (#193).
+  package regardless of what its own prose states (closes #193).
 
 ### CHANGELOG.md's lint derogation goes, and codespell corrects in place
 
