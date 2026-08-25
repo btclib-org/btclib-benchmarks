@@ -30,6 +30,14 @@ the record behind.
   (`tests/public_surface_test.py`), the organization standard forcing
   that one convention on every repository that ships an importable
   package regardless of what its own prose states (closes #193).
+- **`src/btclib_benchmarks/py.typed` is an empty, git-tracked file, and
+  `classifiers` gains `Typing :: Typed` beside it.** `__init__.py`
+  declares `__all__: list[str] = []`; `py.typed` is the other half of
+  that same promise, that the package's types are supported at all, and
+  the organization standard's section 3 asks that the marker and the
+  classifier ship together or neither ship. Both reach the built
+  artifacts through `[tool.uv.build-backend]`'s existing `src/**`
+  include, with no further listing (issue btclib-org/.github#79).
 
 ### `pyproject.toml`'s uv floor sits at the measured ceiling again
 

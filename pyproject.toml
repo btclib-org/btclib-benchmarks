@@ -131,6 +131,11 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
     "Topic :: Security :: Cryptography",
+    # `src/btclib_benchmarks/py.typed` ships in the wheel: section 3 of
+    # the organization standard asks that this classifier and that
+    # marker agree, one being PEP 561's promise to an installer and the
+    # other the same promise on the index page
+    "Typing :: Typed",
 ]
 
 [project.urls]
