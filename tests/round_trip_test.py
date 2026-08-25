@@ -27,8 +27,8 @@ run, and a timing script should contain no check at all.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from hashlib import sha256
+from typing import TYPE_CHECKING
 
 import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
@@ -43,6 +43,9 @@ import secp256k1lab.secp256k1
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
 
 from btclib_benchmarks import _vectors
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 SIGNING = _vectors.signing()
 

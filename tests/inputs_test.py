@@ -19,11 +19,14 @@ perfectly well and reports a number about the wrong thing.
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from btclib_benchmarks import _inputs
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture

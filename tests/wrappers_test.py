@@ -43,8 +43,7 @@ from __future__ import annotations
 
 import hashlib
 import platform
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import btclib_secp256k1.dsa
 import btclib_secp256k1.keys
@@ -57,6 +56,9 @@ import secp256k1
 import secp256k1lab.secp256k1
 
 from btclib_benchmarks import _vectors
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # the published BIP340 rows that carry a secret key, which is what makes them
 # usable here: this module needs keys and messages rather than signatures,
@@ -326,7 +328,7 @@ SSA_FRESH: dict[str, Callable[[bytes, bytes, bytes], bytes]] = {
     "coincurve": lambda msg, prvkey, aux: coincurve.PrivateKey(prvkey).sign_schnorr(
         msg, aux
     ),
-    "secp256k1-py": lambda msg, prvkey, aux: bytes(
+    "secp256k1-py": lambda msg, prvkey, _aux: bytes(
         secp256k1.PrivateKey(prvkey, raw=True).schnorr_sign(msg, None, raw=True)
     ),
     "electrum-ecc": lambda msg, prvkey, aux: electrum_ecc.ECPrivkey(
@@ -352,7 +354,7 @@ BUILD_SIGNER: dict[str, Callable[[bytes], object]] = {
 SIGN_HELD: dict[str, Callable[[Any, bytes, bytes], bytes]] = {
     "btclib_secp256k1": lambda signer, msg, aux: signer.sign(msg, aux, verify=False),
     "coincurve": lambda key, msg, aux: key.sign_schnorr(msg, aux),
-    "secp256k1-py": lambda key, msg, aux: bytes(key.schnorr_sign(msg, None, raw=True)),
+    "secp256k1-py": lambda key, msg, _aux: bytes(key.schnorr_sign(msg, None, raw=True)),
     "electrum-ecc": lambda key, msg, aux: key.schnorr_sign(msg, aux_rand32=aux),
 }
 
