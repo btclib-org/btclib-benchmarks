@@ -218,15 +218,20 @@ The gates are three commands, and CI runs exactly them:
 uv run pytest                      # the suite, gated at 100% coverage
 uv run pre-commit run --all-files  # every lint hook, which is what CI runs
 uv run --locked --only-group docs \
-  sphinx-build -W --keep-going -b html docs/source docs/build/html
+  sphinx-build -W --keep-going -n -b html docs/source docs/build/html
 ```
 
 The documentation build is the one a contributor used to meet by having
 a pull request held: `-W` turns a sphinx warning into an error, so a
-heading level skipped, a reference that resolves to nothing, or a page
-reachable from no toctree is a red check and not a note in a log.
-`--keep-going` is what makes the first one not also be the only one
-reported.
+heading level skipped, a markdown link that resolves to nothing, or a
+page reachable from no toctree is a red check and not a note in a log.
+`-n` adds sphinx's own cross-reference resolution to what `-W` can fail
+on -- a `:class:` or `:func:` role naming something that does not exist
+-- which nothing under `docs/source` writes today, so the flag is ahead
+of the content that will exercise it rather than catching anything here
+yet; `btclib-org/.github`'s README.md "The documentation" has the
+reason it is on regardless. `--keep-going` is what makes the first one
+not also be the only one reported.
 
 A fixture that is a key or a signature trips detect-secrets, correctly: it
 cannot tell a private key published in a BIP from a credential. Record the

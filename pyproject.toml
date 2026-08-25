@@ -154,7 +154,7 @@ lint = ["mypy", "pre-commit", "ruff>=0.16"]
 # that build a distribution, a frontend and the wheel repairers, which
 # btclib-secp256k1 holds under it beside a `check` like this one
 check = ["check-sdist", "pyroma", "twine"]
-docs = ["myst-parser", "sphinx", "sphinx_rtd_theme"]
+docs = ["furo", "myst-parser", "sphinx"]
 dev = [
     { include-group = "test" },
     { include-group = "lint" },

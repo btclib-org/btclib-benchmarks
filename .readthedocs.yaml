@@ -23,9 +23,11 @@
 # nothing -- and conf.py's own docstring records why the version comes
 # from pyproject.toml rather than from installed metadata.
 # There is no import here for -W to turn into a build error. What -W
-# catches instead is a markdown link or a cross-reference sphinx cannot
-# resolve, which is the whole of what these `{include}`-based pages can
-# get wrong.
+# catches instead is a markdown link these `{include}`-based pages get
+# wrong, which is the whole of it today; -n adds sphinx's own
+# cross-reference resolution -- a `:class:` or `:func:` role naming
+# something that does not exist -- ahead of the day a page writes one,
+# per btclib-org/.github's README.md "The documentation".
 
 # Required
 version: 2
@@ -61,7 +63,8 @@ build:
   # docs.yml's job. --only-group skips the project and its dependencies,
   # correct while no page imports anything; the day one does, this line
   # grows the install rather than the whole project's being restored.
-  # -W keeps a link sphinx cannot resolve from passing as a warning;
+  # -n turns an unresolved sphinx-domain cross-reference into a warning
+  # and -W turns that warning, like every other, into an error;
   # --keep-going comes first so one broken page reports every other
   # problem in the same run instead of one per push
   commands:
@@ -69,4 +72,4 @@ build:
     - uv sync --locked --only-group docs
     - >-
       uv run --locked --only-group docs
-      sphinx-build -W --keep-going -b html docs/source $READTHEDOCS_OUTPUT/html
+      sphinx-build -W --keep-going -n -b html docs/source $READTHEDOCS_OUTPUT/html
