@@ -1,0 +1,115 @@
+---
+name: vendored vectors
+
+# `vectors/README.md` pins every vendored file to an upstream commit and
+# the git blob SHA-1 compared against it. `tests/vectors_test.py` holds
+# the blob half on every run, which catches a copy edited here; the
+# commit half is a question about another repository and the suite runs
+# offline, so nothing in a gate can ask it. This asks it once a week, and
+# opens or updates an issue on drift rather than fixing anything:
+# refreshing a vector file changes what every comparand is held to, which
+# is a decision the script does not get to make.
+#
+# issues: write is new to this repository -- no other workflow grants it,
+# and three decline it in as many words, each for its own reason:
+# links.yml, deps-latest.yml and mutation.yml. This one takes it, on
+# purpose: a dead link is noticed the next time somebody follows it,
+# where a vendored vector is trusted without anybody looking at it again,
+# and an issue is what carries that past the one email a failed run sends
+
+on:
+  schedule:
+    # the day and the time are section 10's grid in btclib-org/.github and
+    # not this file's to restate; the hour after links.yml, that one
+    # asking whether a page this tree points at still resolves and this
+    # one whether a file it pinned is still the file.
+    # Only the default branch schedules workflows, so on any other branch
+    # this is reachable through the dispatch below alone
+    - cron: "16 5 * * 1"
+  workflow_dispatch:
+  # so a change to this file, to the script it runs or to the pins it
+  # reads is checked by the thing it configures
+  pull_request:
+    # ready_for_review, so a pull request marked ready gets the run the
+    # draft condition below withheld while it was a draft: the default
+    # types do not include it, and without it a readied pull request
+    # would wait for its next push to be checked at all.
+    # closed too, though the job below declines the real work on it: a
+    # merge or a close is neither a push nor a synchronize, so a run this
+    # pull request's own concurrency group is still holding survives
+    # either unless the closed event lands in that same group -- which
+    # this type is what makes it do, cancel-in-progress below turning the
+    # landing into the cancellation
+    types: [opened, reopened, synchronize, ready_for_review, closed]
+    paths:
+      - .github/workflows/vendored-vectors.yml
+      - .github/scripts/check_vendored_vectors.py
+      - vectors/README.md
+
+permissions:
+  contents: read
+
+# named literally rather than through github.workflow, as everywhere else
+# here: in a called workflow that expression is the caller's name.
+# github.event.pull_request.number, not github.ref alone, is what a
+# pull_request run of any action groups by -- a closed, merged pull
+# request resolves github.ref to the base branch's ref, which the
+# schedule and the dispatch above also resolve to. Neither of those two
+# carries pull_request context, so github.ref is still what groups either
+concurrency:
+  group: vendored-vectors-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vectors:
+    name: Check the vendored pins against upstream
+    # a draft pull request is work in progress and spends no runner here
+    # either: the same condition the gates carry, and ready_for_review is
+    # a trigger type above for the same reason. A closed pull request
+    # spends none either -- the trigger above takes the closed event only
+    # to supersede a run this ref's group is still holding
+    if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
+    runs-on: ubuntu-latest
+    # one API call per pin; a job past this is hung on one
+    timeout-minutes: 10
+    # the elevation, on the job that needs it and nowhere else. issues:
+    # write is what the script's gh issue create/edit/close calls take, on
+    # the tracking issue this run opens, updates or closes
+    permissions:
+      contents: read
+      issues: write # gh issue create/edit/close, in the step below
+    steps:
+      # every action pinned to a commit SHA with the tag in the comment:
+      # a tag, let alone a branch, is a name its owner can move
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # see the checkout of the coverage job in test.yml
+          persist-credentials: false
+
+      # no uv and no interpreter to install: the script imports the
+      # standard library alone and shells out to gh, and a GitHub-hosted
+      # runner already carries both. Nothing of this project is installed
+      # to run it, which is what leaves the `uv --locked` every other step
+      # here uses with nothing to lock.
+      # --dry-run on the pull_request trigger only: a fork's read-only
+      # token could not write the issue anyway, and a same-repository pull
+      # request testing a change to this script or to the pins should not
+      # edit or close whatever tracking issue is open at the time as a side
+      # effect of that test.
+      # The flag reaches the shell through the environment rather than
+      # through a `${{ }}` inside the script, which would be text pasted
+      # into it; the array built from it, rather than an unquoted
+      # expansion, is what keeps an empty value from becoming an empty
+      # argument
+      - name: Re-check every pin already at upstream's tip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ github.event_name == 'pull_request' && '--dry-run' || '' }}
+        run: |
+          args=()
+          if [ -n "$DRY_RUN" ]; then
+            args=(--dry-run)
+          fi
+          python3 .github/scripts/check_vendored_vectors.py \
+            vectors/README.md "${args[@]}"

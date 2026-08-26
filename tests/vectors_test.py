@@ -46,6 +46,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -83,11 +84,30 @@ if TYPE_CHECKING:
 
 DATA = _vectors.VECTORS
 
-# the digests README.md publishes for the two copies. Checked on every run:
-# a vendored file is only as good as the statement of where it came from, and
-# a copy that has drifted from the statement should fail a test rather than
-# quietly become the new question
-DIGESTS = _vectors.DIGESTS
+# one provenance entry of README.md, matched whole rather than field by
+# field. Section 7 of the organization standard fixes the block's field
+# names and their spacing, and a sweep outside this repository parses it, so
+# the shape is part of what a drifted file should fail on: a block that
+# still carries a right blob under a wrong spelling is one nothing reads
+_ENTRY = re.compile(
+    r"^### `vectors/(?P<name>[^`]+)`\n\n```text\n"
+    r"repo    (?P<repo>\S+)\n"
+    r"path    (?P<path>\S+)\n"
+    r"commit  (?P<commit>[0-9a-f]{40})  (?P<committed>\d{4}-\d\d-\d\d)\n"
+    r"blob    (?P<blob>[0-9a-f]{40})\n"
+    r"pulled  (?P<pulled>\d{4}-\d\d-\d\d)\n"
+    r"behind  (?P<behind>.+)\n```$",
+    re.MULTILINE,
+)
+
+# what README.md pins each vendored file to, parsed rather than restated:
+# a vendored file is only as good as the statement of where it came from,
+# and a copy that has drifted from the statement should fail a test rather
+# than quietly become the new question
+PINS = {
+    match["name"]: match["blob"]
+    for match in _ENTRY.finditer((DATA / "README.md").read_text(encoding="utf-8"))
+}
 
 # the pure-Python configuration, as `scripts/04-pure-python.py` measures it: the
 # environment variable pycoin reads at import, and btclib's dispatch off
@@ -142,11 +162,27 @@ def _ids(vectors: list[dict[str, str]]) -> list[str]:
     return [f"vector{v['index']}" for v in vectors]
 
 
-@pytest.mark.parametrize("name", sorted(DIGESTS))
-def test_the_vendored_file_is_the_one_the_readme_describes(name: str) -> None:
+@pytest.mark.parametrize("name", sorted(PINS))
+def test_the_vendored_file_is_the_blob_the_readme_pins(name: str) -> None:
     """A copy that has drifted from its provenance is not a vector."""
-    digest = hashlib.sha256((DATA / name).read_bytes()).hexdigest()
-    assert digest == DIGESTS[name]
+    assert _vectors.blob_id((DATA / name).read_bytes()) == PINS[name]
+
+
+def test_the_readme_pins_every_file_beside_it() -> None:
+    """A vendored file with no entry is a file nothing says the origin of."""
+    assert {path.name for path in DATA.iterdir() if path.name != "README.md"} == set(
+        PINS
+    )
+
+
+def test_the_module_repeats_what_the_readme_pins() -> None:
+    """`_vectors.BLOBS` guards what a benchmark reads, and README.md is why.
+
+    The two are separate statements of one fact, which is what makes this
+    test the thing keeping them one: a module that parsed the markdown
+    instead would put a benchmark's inputs behind a prose format.
+    """
+    assert {name: PINS[name] for name in _vectors.BLOBS} == _vectors.BLOBS
 
 
 def test_bip340_valid_matches_the_files_own_verification_result() -> None:

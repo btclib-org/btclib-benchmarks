@@ -1,7 +1,7 @@
 # The one module every implementation this project times is checked
 # against: BIP340's vectors, BIP32's, Wycheproof's ECDSA file and Core's
-# base58 pairs, decoded from the files `vectors/README.md` publishes a
-# digest for. A benchmark row is only as good as the fixture behind it, so
+# base58 pairs, decoded from the files `vectors/README.md` pins a git blob
+# SHA-1 for. A benchmark row is only as good as the fixture behind it, so
 # a field this module maps to the wrong column is a fixture every
 # comparand agrees on for the wrong reason.
 #
@@ -45,10 +45,10 @@ name = "local"
 #   raw CSV row directly rather than through this module, which is what
 #   `test_bip340_valid_matches_the_files_own_verification_result` is for,
 #   and it is what killed every other operator this line mutated to.
-# - `read`'s digest check, `if digest != DIGESTS[name]:`, mutated on the
+# - `read`'s blob check, `if blob != BLOBS[name]:`, mutated on the
 #   operator (`<`, `>`, `is`). The branch already carries `pragma: no
 #   cover` for the same reason cosmic-ray cannot see it either: a vendored
-#   file's digest matches its own recorded one on every run, by
+#   file's blob matches its own recorded one on every run, by
 #   construction, so no test -- and no mutant -- ever reaches the body the
 #   operator guards.
 # - `signing`'s `aux=v.aux or bytes(32)`, mutated on the fallback's width
