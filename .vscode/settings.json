@@ -84,8 +84,8 @@
   },
   // json and jsonc are two languages to the editor, and the difference is
   // the one the hooks draw: results/*.json is _results.py's own json.dumps
-  // output, and vectors/*.json is vendored, held byte for byte by the
-  // sha256 each carries in vectors/README.md -- so an editor formatting
+  // output, and vectors/*.json is vendored, held byte for byte by the git
+  // blob id each carries in vectors/README.md -- so an editor formatting
   // either on save would rewrite a script's output or void a verdict
   "[json]": {
     "editor.formatOnSave": false

@@ -11,9 +11,10 @@ first attempt, and nothing in the output says which. Cycling the set costs
 one `next` per call, the same for every row, and buys a number averaged over
 inputs somebody else chose.
 
-`vectors/README.md` says where each file came from and publishes its digest.
-The digests are checked here, on import, because a benchmark reading a
-drifted copy would print numbers over inputs nobody can look up.
+`vectors/README.md` says where each file came from and publishes the git
+blob SHA-1 it was compared against. That blob is checked here, on every
+read, because a benchmark reading a drifted copy would print numbers over
+inputs nobody can look up.
 
 The second module in `scripts/` that is not a benchmark, after
 `_provenance.py`: six scripts and the suite need one answer to "what are the
@@ -30,29 +31,36 @@ from typing import NamedTuple
 
 VECTORS = Path(__file__).parents[2] / "vectors"
 
-# what `vectors/README.md` publishes for each file
-DIGESTS = {
-    "bip340_test_vectors.csv": (
-        "01c8cabba63b4c9b2f44c975902990086a4fe56eee9d265b187d1e2c1d98ccfb"
-    ),
-    "bip32_test_vectors.json": (
-        "5a0e3411f974989d9c65ee542101f175ce3847300fd5bdafdd2812ce5fb85594"
-    ),
+# the git blob SHA-1 `vectors/README.md` publishes for each file, and the
+# one `WYCHEPROOF_COPYING` entry no benchmark reads is deliberately absent:
+# what this table guards is a file about to be handed to a comparand
+BLOBS = {
+    "bip340_test_vectors.csv": "aa317a3b3d53aa904def8b5a625b13073898b349",
+    "bip32_test_vectors.json": "eb692228a6fb84a694a699f62937808bc2c640aa",
     "ecdsa_secp256k1_sha256_bitcoin_test.json": (
-        "27c848b8cfa4e3f3bfbda27971542dd9b827e393842d5549fdfdf1923771c756"
+        "f737aabce273eb9485f21b84d32aa01d3e8b0246"
     ),
-    "base58_encode_decode.json": (
-        "20d51011f49339714c28b9244cc5238f4c78bb9206dc8fc61500aed6fc2682ca"
-    ),
+    "base58_encode_decode.json": "7255fd45c8003ad99ee95c507d8c54f49b50e4c2",
 }
+
+
+def blob_id(payload: bytes) -> str:
+    """Return the git blob SHA-1 of `payload`, as `git hash-object` prints it.
+
+    The algorithm is fixed by what is being reproduced rather than chosen,
+    which is what `usedforsecurity=False` states: git names an object this
+    way, so an id computed any other way would compare against nothing.
+    """
+    header = f"blob {len(payload)}\0".encode()
+    return hashlib.sha1(header + payload, usedforsecurity=False).hexdigest()
 
 
 def read(name: str) -> str:
     """Return a vendored file's text, having checked it is the vendored file."""
     payload = (VECTORS / name).read_bytes()
-    digest = hashlib.sha256(payload).hexdigest()
-    if digest != DIGESTS[name]:  # pragma: no cover - the suite asserts this too
-        message = f"{name} is not the copy vectors/README.md describes: {digest}"
+    blob = blob_id(payload)
+    if blob != BLOBS[name]:  # pragma: no cover - the suite asserts this too
+        message = f"{name} is not the copy vectors/README.md describes: {blob}"
         raise ValueError(message)
     return payload.decode("utf-8")
 

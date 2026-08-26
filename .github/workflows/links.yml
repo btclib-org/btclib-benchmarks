@@ -7,9 +7,10 @@ name: links
 #
 # What rots here is not evenly spread, which is why this workflow is
 # worth its runner on a repository that ships no library. `vectors/`
-# publishes a digest and an upstream URL for every vendored file, and
-# that URL is the whole of what lets a reader check the copy against what
-# it claims to be: a moved raw path turns provenance into an assertion.
+# pins every vendored file to a btclib commit and blob, and links the
+# provenance file btclib keeps for its own copies, which is the far half
+# of that chain of custody: a link that stops resolving turns provenance
+# into an assertion.
 # The pages under `results/` cite the comparands they measured, and a
 # comparand is a third-party project that renames its repository without
 # telling anyone. Neither is a link a test can follow.
@@ -70,9 +71,11 @@ on:
 # links only, where an unauthenticated runner is rate limited hard enough
 # to look like rot; contents: read is all that needs.
 # Deliberately not issues: write -- an automatic "link rot" issue is the
-# usual next step here, and it would make this the only workflow in the
-# repository that can write anything, to save a maintainer from reading a
-# failure notification they already get
+# usual next step here, to save a maintainer from reading a failure
+# notification they already get. vendored-vectors.yml is the one workflow
+# here that does grant it, for the reason its own header gives: a dead
+# link is noticed the next time somebody follows it, where a vendored
+# vector is not
 permissions:
   contents: read
 

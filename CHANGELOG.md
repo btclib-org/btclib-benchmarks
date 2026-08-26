@@ -8,6 +8,33 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### The vendored pins are section 7's block, and a weekly run re-checks them
+
+- **`vectors/README.md` recorded each vendored file by a sha256, which
+  answers whether a copy changed here and never whether btclib moved.**
+  Every file in that directory now carries section 7's block -- `repo`,
+  `path`, `commit` with its date, `blob`, `pulled`, `behind` -- pinned to
+  the `btclib-org/btclib` commit that last touched the path and to the git
+  blob SHA-1 that commit left there, with a verdict under it. `behind` is
+  what a digest cannot say: btclib took a newer revision of
+  `ecdsa_secp256k1_sha256_bitcoin_test.json` on 2026-08-25, and the entry
+  records that gap rather than closing it, taking a newer revision being a
+  decision about what every comparand is held to.
+- **`_vectors.py` checked a file's sha256 before handing it to a
+  benchmark, and the README published the same digest beside it.** Both
+  are the git blob SHA-1 now: it is what a tree entry already carries, so
+  comparing against btclib downloads nothing and `git hash-object`
+  reproduces it locally. `vectors_test.py` parses the entries rather than
+  restating them, so a block whose field spelling or spacing drifts from
+  section 7's fails there as surely as a copy that changed.
+- **Nothing re-checked whether btclib had moved under the pins.**
+  `vendored-vectors.yml` runs `.github/scripts/check_vendored_vectors.py`
+  on section 10's Monday 05 row at this repository's minute, over every
+  entry whose `behind` reads 0, and opens or updates an issue on drift
+  instead of refreshing anything. An entry already documented as behind is
+  a decision somebody took, so the run names it as skipped rather than
+  reporting the same gap every week (closes btclib-org/.github#435).
+
 ### `README.md`'s badge row drops the link to the repository
 
 - **The GitHub badge rendered `btclib-org/btclib-benchmarks` because its

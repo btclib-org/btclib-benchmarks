@@ -125,9 +125,10 @@ repos:
       # a script already owns, and the two disagreeing is a diff nobody
       # asked for on every run that follows a benchmark.
       # `vectors/*.json` is the opposite problem with the same answer:
-      # vendored copies vectors/README.md pins to a sha256 each, checked
-      # in src/btclib_benchmarks/_vectors.py on import, so a reformat
-      # would break the digest as surely as hand-editing a byte would.
+      # vendored copies vectors/README.md pins to a git blob id each,
+      # checked in src/btclib_benchmarks/_vectors.py on every read, so a
+      # reformat would break the pin as surely as hand-editing a byte
+      # would.
       # Neither file is this hook's to rewrite; check-json above still
       # answers the question worth asking of both, which is whether they
       # parse.
@@ -176,7 +177,7 @@ repos:
       # still, so the threshold has not yet forced a decision about
       # where a blob's provenance goes. It already has an answer for
       # when it does: vectors/README.md names where each vendored vector
-      # came from and pins it to a sha256, whatever its size
+      # came from and pins it to a git blob id, whatever its size
       - id: check-added-large-files
       # there are none, and a submodule is the one dependency that would
       # not be in uv.lock, not be pinned by dependabot, and not be
