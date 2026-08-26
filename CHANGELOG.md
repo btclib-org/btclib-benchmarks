@@ -8,6 +8,38 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `claude-review.yml`'s comments name the standard, the job and the ceiling
+
+- **The file cited `section 11's *Review*` twice and never named the
+  document that section is in, so a reader of the workflow alone was
+  not told which standard holds the rule.** The first citation in file
+  order now reads `section 11 of the organization's standard` and the
+  second keeps the subsection form (issue btclib-org/.github#400).
+- **The `mention` job's credential guard was the review job's step
+  copied whole, so the job that answers an `@claude` comment and
+  reviews nothing refused in a review's words.** It now reads
+  `Refuse to answer without a credential` and ends `this workflow
+  answers nothing` (issue btclib-org/.github#402).
+- **The comment above that step restated the review job's whole reason,
+  narrating that job's measurement -- a token found empty, a review
+  reported successful -- as its own, inside the job that reviews
+  nothing.** It now points at the review job for the reason instead of
+  repeating it (issue btclib-org/.github#410).
+- **The header gave the organization's concurrent-job ceiling as a bare
+  figure, sourced from the GitHub plan and re-derived by nothing: no
+  hook reads a comment, and a plan change leaves the sentence
+  grammatical.** The header now says the ceiling is the organization's
+  rather than this repository's, so a slot taken here is one a sibling
+  repository's matrix waits behind, and points at `REPOSITORY.md`,
+  which states the ceiling and carries the command that answers which
+  plan sets it (issue btclib-org/.github#405).
+- **`REPOSITORY.md` exempted `claude-review.yml` from the rule that a
+  document spending against the ceiling points at *The concurrent-job
+  ceiling* rather than repeating the number, on the ground that a pull
+  request editing that file is refused a review by it.** The workflow
+  carries no number to except, and the exemption is gone (issue
+  btclib-org/.github#405).
+
 ### `scorecard.yml`'s cron rejoins section 10's calendar
 
 - **`scorecard.yml` scheduled `30 1 * * 6`, the hour `ossf/scorecard`'s
