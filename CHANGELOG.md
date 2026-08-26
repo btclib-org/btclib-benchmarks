@@ -8,6 +8,63 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `REPOSITORY.md`'s *Token permissions* is read back rather than listed
+
+- **The section bounded every job by what commenting on a pull request
+  takes, and the enumeration it rested on named the workflows that
+  comment.** `codeql.yml` and `scorecard.yml` file code-scanning alerts,
+  `scorecard.yml` and `claude-review.yml` mint an OIDC token, and
+  `vendored-vectors.yml` opens an issue: none of those is a pull request
+  comment, and each was on `main` under a sentence saying no job held a
+  scope that wide. Both halves are gone. Which jobs elevate is a `git
+  grep` over `.github/workflows/` that the section carries instead of a
+  list, why a job holds a scope stays beside that job, and what the
+  section states is what the same command says is absent -- nothing
+  writes to the repository's contents and nothing publishes from it
+  (closes #229).
+
+### `codeql.yml` ends in an aggregate, and the aggregate reads the run
+
+- **The analysis runs a cell per language and each reports its own check
+  context, so a branch rule could only ever name the cells** -- and a
+  language added later would sit outside a rule naming the ones there
+  today. `codeql-passed` produces `codeql: every job passed`, which is a
+  name that does not move, and it lands with the `pull_request` trigger
+  already here rather than after it: a context no pull request produces
+  is one no rule can hold (issue btclib-org/.github#459).
+- **Nothing became a required check.** `REPOSITORY.md`'s *Required
+  checks on main* is where this repository's list is read back, and it
+  says in as many words that this context is produced and not required:
+  what the aggregate buys is that requiring the analysis would be an edit
+  to that list rather than to a workflow.
+- **The gate asks the API what this run's jobs concluded rather than
+  reading `needs.*.result`**, which is `test.yml`'s shape and is taken
+  here for the reason this repository already measured: that context
+  reported a red matrix as `success` under an action-download outage,
+  and no strictness covers a shape it does not report. The organization's
+  other aggregates read that context -- through an `if:` expression a
+  skip leaves unevaluated, or through a shell test that always runs and
+  logs what it was handed, judging every result the context reports and
+  none it does not. Which tree spells it which way is
+  btclib-org/.github#464. Two aggregates in one repository deciding two
+  different ways is what this declines.
+
+### `tests/README.md` accounts for section 7's ninth convention
+
+- **`conventions_test.py`'s `_CONVENTIONS` was a bullet behind section
+  7, and a convention outside that tuple can be declared neither tested
+  nor untested here.** *The suite opens no socket* is in it now, and the
+  declaration puts it under *Not tested here* with the derivation:
+  nothing under `tests/` imports `socket`, `urllib` or an HTTP client,
+  and what the bullet asks a test to walk -- the argument each
+  construction that could reach the network carries -- has no call site
+  in this suite to visit (issue btclib-org/.github#458).
+- **The property is one this repository states rather than one it merely
+  has**, `vendored-vectors.yml` and the script it runs existing because
+  the suite cannot ask upstream whether a pin has moved. What that costs
+  is now written where somebody looking for the test will find it,
+  instead of being an absence that reads like an oversight.
+
 ### The vendored pins are section 7's block, and a weekly run re-checks them
 
 - **`vectors/README.md` recorded each vendored file by a sha256, which
