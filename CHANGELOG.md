@@ -17,6 +17,33 @@ the record behind.
   disagreeing.** The cron now reads `16 3 * * 6`, matching the calendar
   (closes btclib-org/.github#384).
 
+### `claude-review.yml` converges to the organization's current review mechanism
+
+- **Both `review` and `mention` now carry `if: vars.CLAUDE_REVIEW_ENABLED
+  == 'true'` on the job, beside their existing conditions.** An unset
+  organization variable is the empty string, so the switch is off until
+  the organization turns it on, and a skipped job costs nothing and
+  reports nothing -- where `gh run list` shows the job here concluding
+  `failure` on every `pull_request` trigger since 2026-08-23T22:52 UTC,
+  with no `success` after it (issue btclib-org/.github#364).
+- **The guard step named the execution file empty and said nothing when
+  the review step itself had failed or run out of its `timeout-minutes`,
+  so a timed-out or refused review reported only that no verdict had
+  been written.** It now runs on `!cancelled()`, reads the step's own
+  `outcome`, and prints the execution file's `api_error_status`,
+  `stop_reason` and `.result` when the outcome is not `success` -- the
+  fields the action's own sanitized log leaves out (issue
+  btclib-org/.github#385).
+- **The verdict was posted with `gh pr review --approve` or `gh pr
+  review --request-changes`, and the verification step required a
+  review `state` of `APPROVED` or `CHANGES_REQUESTED` and checked its
+  `commit_id`.** The verdict is now posted with `gh pr review
+  --comment`, ending with `ACK <sha>`, `CHANGES REQUESTED <sha>` or
+  `NACK <sha>`, and the verification step reads `pulls/<n>/reviews` for
+  a `claude[bot]` body ending in one of those three lines, with no
+  restriction on `state` and no `commit_id` check (issue
+  btclib-org/.github#340).
+
 ### `scorecard.yml`'s comment names the domain the badge already uses
 
 - **`scorecard.yml`'s own comment read the score's source as
