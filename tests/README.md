@@ -23,7 +23,7 @@ So which of them this repository tests is **declared here**, and
 
 Not tested here: the copyright header; the documentation; the import
 graph; the changelog; the build system; the calling convention; input
-validation.
+validation; the suite opens no socket.
 
 **The public surface is tested because `src/btclib_benchmarks/` is an
 importable package**, and section 7's own escape clause excepts that one
@@ -42,6 +42,28 @@ forces only the public surface regardless of what the prose says. The
 copyright header, the changelog and the build system are conventions
 this repository does hold — it has a `LICENSE`, a `CHANGELOG.md` and a
 declared build backend — and nothing checks any of those three either.
+
+**The suite opens no socket, and this is where the decision not to test
+that is recorded.** The property holds: nothing the suite reads of this
+tree — `tests/`, `src/btclib_benchmarks/`, the benchmark scripts —
+imports `socket`, `urllib` or an HTTP client, and the subprocesses it
+spawns run this interpreter over that same code, `pure_python_path_test.py`'s
+probe and `vectors_test.py`'s re-run of itself with the C turned off, so
+what a child executes is what the same walk already covers. What does
+reach upstream is a weekly workflow's own script,
+`.github/scripts/check_vendored_vectors.py`, which no test imports.
+
+It is a property this repository states rather than one it merely has:
+that script and `vendored-vectors.yml` exist because the suite cannot ask
+upstream whether a pin has moved, and both say so where they say why the
+question is a workflow's instead of a test's.
+
+What section 7's bullet asks a test to walk is the argument each
+construction that could reach the network carries, and this suite builds
+no such construction for the walk to visit. A walk over none compares
+nothing and passes, which reads as a result and is not one, so the bullet
+is declared here instead. The row moves to the table above the day this
+suite gains a call site the walk would have something to say about.
 
 What the suite does check is a different set, and section 7 does not list
 them because they belong to this repository alone: that every benchmark

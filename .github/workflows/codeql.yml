@@ -180,18 +180,113 @@ jobs:
           # upload replaces the first rather than adding to it
           category: /language:${{ matrix.language }}
 
-  # still no aggregate job. Gaining pull_request means a branch rule
-  # could now name one of this job's own contexts -- the objection
-  # btclib-org/.github#90 settled against, that nothing here is required
-  # so an aggregate would be a name nothing could hold, no longer holds
-  # word for word. What still keeps it out is section 10's "The
-  # aggregate job, and the required check": an aggregate arrives with
-  # the trigger in the same pull request only where the workflow "is to
-  # gate", and btclib-org/.github#349's own "Done when" asks only that
-  # this workflow run on pull_request -- nothing about requiring it.
-  # REPOSITORY.md's "Required checks on main" does not name it either.
-  # Making it required is a branch-protection change reserved to
-  # whoever holds admin there, and an aggregate job with nothing
-  # requiring it would be exactly the anticipatory job
-  # btclib-org/.github#90 warned against writing without the standard
-  # saying so
+  # the aggregate btclib-org/.github#459 asks of every codeql.yml in the
+  # organization. A matrix reports one check context per cell, so a
+  # branch rule could only ever name the cells, and the day a third
+  # language is added the new cell falls outside the rule with nothing
+  # red; one job that judges the run is a name that does not move.
+  # btclib-org/.github#90 recorded the objection to writing this job --
+  # an aggregate nothing requires is a name nothing holds -- and
+  # btclib-org/.github#459 is what answers it: a context a rule could
+  # name is a workflow's own to
+  # offer, and whether to spend it is a branch-protection change, made
+  # where REPOSITORY.md's "Required checks on main" records what this
+  # repository requires. That list does not name this context
+  codeql-passed:
+    # the name and not the id is what such a rule matches, and a context
+    # is keyed by name alone: two workflows with a job named "every job
+    # passed" would produce one ambiguous check, and test.yml's aggregate
+    # is the one main already requires
+    name: "codeql: every job passed"
+    # ordering, and nothing else -- the same rule test.yml's aggregate
+    # states: what the step below judges is every job the run reports,
+    # so a job of this workflow left out of this list is judged without
+    # being waited for and turns the gate red until it is added here
+    needs: [analyze]
+    # !cancelled() rather than always(): a run superseded by the
+    # concurrency group above is one a newer run speaks for, and this
+    # job skips instead of failing for it -- a skip satisfying a rule
+    # that names this context the same as a pass. The draft and closed
+    # halves are the analysis job's own condition, so a draft skips
+    # uniformly rather than being reported as a failure for an analysis
+    # this workflow declined to run
+    if: ${{ !cancelled() && !github.event.pull_request.draft && github.event.action != 'closed' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      # what asking the API for this run's own jobs takes, and the same
+      # read test.yml's aggregate holds for the same question.
+      # REPOSITORY.md's "Token permissions" is where the elevations are
+      # read back
+      actions: read
+    steps:
+      # what test.yml's aggregate does, in this workflow: it asks the run
+      # what its jobs concluded rather than reading `needs.*.result`.
+      # REPOSITORY.md's "Required checks on main" has why -- that context
+      # reported a red matrix as `success` here under an outage, and
+      # reading it more strictly was tried first and is not the answer,
+      # since no strictness covers a shape the context does not report.
+      # The organization's other aggregates read that context, in the
+      # spellings btclib-org/.github#464 lists: an `if:` expression a skip
+      # leaves unevaluated, which is btclib-org/btclib#1001's own failure,
+      # and shell tests over `join(needs.*.result, ' ')` that always run
+      # and so log what the context held, which records the hole rather
+      # than closing it -- and which an empty join walks past without an
+      # iteration (btclib-org/btclib#1454). A run's own listing is subject
+      # to neither, and the count below is what refuses a listing that
+      # describes nothing.
+      #
+      # The price is that this script and test.yml's are the same script
+      # in two files: `needs` reaches nothing outside its own workflow and
+      # a step is not shared between two, so an aggregate is per workflow
+      # whatever it is written in
+      - name: Fail unless every other job of this run succeeded
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # `.status` beside the conclusion so that an unfinished job says
+          # which kind it is: queued and running are one word to
+          # `.conclusion` and two facts to a reader of the log
+          jobs=$(gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" \
+            --jq '.jobs[] | "\(.conclusion // "unfinished")\t\(.status)\t\(.name)"')
+          # printed before it is judged: the job whose purpose is to be
+          # trusted is the one that has to be able to say what it saw
+          printf '%s\n' "${jobs}"
+          # awk and not grep: a tab in a grep pattern is one
+          # implementation's extension and a literal "t" in another's,
+          # where awk's field separator is POSIX
+          bad=$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 != "success" && $1 != "unfinished"')
+          unfinished=$(printf '%s\n' "${jobs}" |
+            awk -F'\t' '$1 == "unfinished"' | wc -l | tr -d ' ')
+          # each annotation names the rows it is about, an annotation
+          # being what the checks page shows without the log being
+          # opened. `%0A` is a newline to one, and the tab goes with it:
+          # the columns line up in a log and not in this
+          annotate() {
+            printf '::error::%s' "$1"
+            printf '%s' "$2" | tr '\t' ' ' | awk '{ printf "%%0A%s", $0 }'
+            printf '\n'
+          }
+          verdict=0
+          if [ -n "${bad}" ]; then
+            annotate "these jobs of the run did not succeed:" "${bad}"
+            verdict=1
+          fi
+          # exactly one job of the run may be unfinished, and it is this
+          # one. Counted rather than excluded by name, a name being what
+          # goes stale when this job is renamed -- and none unfinished at
+          # all is refused too, a listing with no job running not being a
+          # listing of the run this step is running in
+          if [ "${unfinished}" -ne 1 ]; then
+            # no colon on this one, and rows after it only if there are
+            # any: nothing unfinished is the case that says nothing, and
+            # a colon would promise a list
+            annotate \
+              "this check should be the run's one unfinished job; ${unfinished} are" \
+              "$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 == "unfinished"')"
+            verdict=1
+          fi
+          exit "${verdict}"

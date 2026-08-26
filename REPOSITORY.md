@@ -75,6 +75,16 @@ job runs, and there is no `paths` filter for it to sit out.
 
 `strict` requires a branch to be up to date with main before it merges.
 
+One context this repository produces is not in that list, and is meant to
+be produced anyway: `codeql.yml`'s `codeql: every job passed`, which
+btclib-org/.github#459 asks every code analysis in the organization to
+carry. A matrix reports one context per cell, so a rule could only ever
+name the cells, and a language added later would fall outside a rule
+naming the ones there today; an aggregate is what makes requiring that
+analysis an edit to the list above rather than to a workflow. Whether to
+make it is branch protection's to answer, and the command above is what
+would show it answered.
+
 ## Branch protection
 
 ```shell
@@ -203,15 +213,34 @@ subject.
 ## Token permissions
 
 Every workflow declares `permissions: contents: read` at the top level,
-and some jobs elevate it: `test.yml`'s `test-passed` adds `actions:
-read`, which is what lets it ask the run what its own jobs concluded
-rather than trust the needs context — the reason is under *Required
-checks on main* above; `claude-review.yml`'s `review` and `mention` jobs
-add `pull-requests: write`, which is what posting a review or a reply
-takes. Nothing in this repository publishes, attests, or writes to the
-repository's contents, so no job holds a scope wider than commenting on
-a pull request — which is a smaller surface than the other btclib-org
-repositories have, and the reason there is no `publishing` section here.
+and a job that needs more declares it on itself, so a write is held by
+one job for the length of one job rather than by the file around it.
+Which jobs those are is read back rather than listed here, a list of them
+being wrong from the next workflow that elevates and saying nothing about
+it:
+
+```shell
+git grep -nE '^ +[a-z-]+: write' -- .github/workflows/
+```
+
+Why a particular scope is held is written beside the job that spends it,
+where whoever changes that job can see it, rather than here. What this
+section adds is the bound those lines are kept under: each of them is one
+job's own work — posting a review or a reply, filing a code-scanning
+alert, an OIDC token that one action asks for at its own startup and
+another spends on a transparency-log entry, opening the issue a weekly
+drift check reports through. One of them has no comment beside it and is
+filed as #232, which is the shape this paragraph is about rather than an
+exception to it. `actions: read` is the elevation that is not a write,
+and what distinguishes it is where a job reads from — the API rather
+than the tree — which is the bound, and not a list of what each one
+asks the API for.
+
+The bound is what the same command says is absent: no job holds
+`contents: write` or `packages: write`. Nothing a run does reaches the
+tree or an index — a version is a signed tag a person pushes — and that
+is why there is no `publishing` section in this file for a job to sit
+under.
 
 What those declarations sit on top of is a repository setting, and it is
 read back rather than assumed:

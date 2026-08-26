@@ -57,6 +57,7 @@ _CONVENTIONS = (
     "the build system",
     "the calling convention",
     "input validation",
+    "the suite opens no socket",
 )
 
 _HEADING = "## Convention tests"
