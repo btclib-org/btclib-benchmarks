@@ -8,6 +8,15 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `README.md`'s badge row drops the link to the repository
+
+- **The GitHub badge rendered `btclib-org/btclib-benchmarks` because its
+  URL said so rather than because anything was measured, and section 2's
+  badge row is an audit** — an item that measures nothing does not
+  belong in it, so the row now ends at the OpenSSF Scorecard badge.
+  `[project.urls]`'s `repository` line still carries the link (issue
+  btclib-org/.github#381).
+
 ### `typos` is a local hook now, converged with `btclib-org/.github`'s own
 
 - **`.pre-commit-config.yaml`'s `typos` hook is `repo: local`, converged
