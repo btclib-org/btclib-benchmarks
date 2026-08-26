@@ -312,7 +312,12 @@ ignore-regex = '`[^`]*`'
 # `vectors/` for the reason [tool.codespell] gives above, and here it
 # matters more: this hook runs with --write-changes, so an uncorrected
 # vendored file is one it silently rewrites into a copy whose digest no
-# longer matches the provenance published for it
+# longer matches the provenance published for it.
+#
+# This table is silent without --force-exclude in the hook's args:
+# pre-commit passes filenames, and typos honours its own exclude list
+# only under that flag. So the two are one setting written in two files,
+# and dropping the flag does not narrow the exclusion, it removes it
 extend-exclude = [".secrets.baseline", "uv.lock", "vectors/"]
 
 [tool.typos.default]

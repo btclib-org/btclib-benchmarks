@@ -8,6 +8,26 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `typos` is a local hook now, converged with `btclib-org/.github`'s own
+
+- **`.pre-commit-config.yaml`'s `typos` hook is `repo: local`, converged
+  on `btclib-org/.github`'s own** (issue btclib-org/.github#399).
+  `additional_dependencies: [typos==1.49.0]` carries the version pin
+  `rev:` used to, and `language`, `entry`, `types` and `stages` are
+  upstream's own hook definition, copied in rather than fetched —
+  `local` and `meta` are the two `repo:` values `pre-commit autoupdate`
+  filters out before it walks the rest, so `autoupdate` can no longer
+  propose `crate-ci/typos`'s moving `v1` alias here.
+- **`--write-changes` and `--force-exclude` are unchanged**, and were
+  already this file's own rather than a mirror's: the entry they sat in
+  restated them, with the reason beside each. `--force-exclude` is the
+  one `[tool.typos.files]` depends on — without it `typos` ignores its
+  own exclude list when pre-commit passes filenames, and the vendored
+  Wycheproof vectors are what that exclusion protects from a
+  `--write-changes` rewrite. That reason moved out of the file with the
+  comment the convergence replaced; `pyproject.toml`'s own note beside
+  the exclusion now carries it.
+
 ### `claude-review.yml`'s comments name the standard, the job and the ceiling
 
 - **The file cited `section 11's *Review*` twice and never named the
