@@ -14,12 +14,13 @@ name: claude-review
 # The required checks stay what they are, and which ones those are is
 # REPOSITORY.md's to record and the endpoint's to answer.
 #
-# It is one more job on every pull request, which is not free: GitHub Free
-# gives this organization twenty concurrent jobs and REPOSITORY.md measures
-# what a commit at that ceiling costs in wall clock. It earns the slot by
-# being short -- it reads a diff, it does not build a matrix -- and by
-# skipping a draft, which is the condition test.yml and lint.yml already
-# carry.
+# It is one more job on every pull request, which is not free: the
+# concurrent-job ceiling belongs to the organization rather than to this
+# repository, so a slot taken here is one a sibling repository's matrix
+# waits behind. REPOSITORY.md states that ceiling and carries the command
+# that answers which plan sets it. It earns the slot by being short -- it
+# reads a diff, it does not build a matrix -- and by skipping a draft,
+# which is the condition test.yml and lint.yml already carry.
 
 on:
   pull_request:
@@ -63,8 +64,8 @@ jobs:
     # btclib-org/bbt, itself a fork.
     #
     # CLAUDE_REVIEW_ENABLED is the switch, an *organization* variable,
-    # and section 11's *Review* is where what it does is stated rather
-    # than here a second time.
+    # and section 11 of the organization's standard is where what it does
+    # is stated rather than here a second time.
     #
     # On the job and not on a step. A step declining to run leaves
     # `steps.review.outcome` at `skipped`, which the guard below reads as
@@ -428,19 +429,16 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
-      # a missing credential is a silent pass without this, which is the
-      # worst shape a gate can take: measured on the first run after the
-      # organization secret was deleted -- the action found the token
-      # empty, reviewed nothing, and reported success. Fail loudly
-      # instead, and say which secret and where it lives
-      - name: Refuse to review without a credential
+      # a missing credential is a silent pass without this, for the
+      # reason the review job above gives
+      - name: Refuse to answer without a credential
         env:
           TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           if [ -z "$TOKEN" ]; then
             echo "::error::CLAUDE_CODE_OAUTH_TOKEN is empty. It is an" \
                  "organization secret of btclib-org, visible to all" \
-                 "repositories; without it this workflow reviews nothing."
+                 "repositories; without it this workflow answers nothing."
             exit 1
           fi
       - name: Answer the mention

@@ -342,10 +342,7 @@ behind, which is the whole argument for a merge that waits on one cell
 and a sweep that runs weekly
 ([btclib-org/.github#85](https://github.com/btclib-org/.github/issues/85)).
 Every workflow and document that spends against the ceiling points here
-rather than repeating the number, `claude-review.yml` excepted while
-btclib-org/.github#91 is open: a pull request that edits that file is
-refused a review by it, so its copy of the number cannot be taken out
-here.
+rather than repeating the number.
 
 ## What is not configured, and why
 
