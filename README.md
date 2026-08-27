@@ -17,19 +17,16 @@ order: the calendar carries no row for it yet -- btclib-org/.github#363
 proposes one -- so it takes the position after everything the calendar
 does order, not before it, the same reading btclib-org/portanode's own
 README states for itself. -->
-[![license](https://img.shields.io/github/license/btclib-org/btclib-benchmarks.svg)](https://github.com/btclib-org/btclib-benchmarks/blob/main/LICENSE)
-
-[![test workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml)
-[![lint workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml)
-[![docs workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/btclib-org/btclib-benchmarks/main.svg)](https://results.pre-commit.ci/latest/github/btclib-org/btclib-benchmarks/main)
+[![test workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml)
+[![mutation workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml)
+[![lint workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml)
 [![links workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml)
+[![docs workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml)
 [![codeql workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml)
 [![deps-latest workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml)
-[![os-ubuntu workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml)
 [![os-macos workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml)
-[![mutation workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/btclib-org/btclib-benchmarks/badge)](https://scorecard.dev/viewer/?uri=github.com/btclib-org/btclib-benchmarks)
+[![os-ubuntu workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml)
 
 ---
 
