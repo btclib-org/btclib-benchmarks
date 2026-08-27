@@ -30,13 +30,13 @@ on:
   # `cosmic-ray baseline` below fails the run before any mutant if a test
   # command has gone stale
   schedule:
-    # Sunday 04:16 UTC: section 10 of the organization standard gives
-    # `mutation` the hour and this repository the minute, and neither is
-    # this file's to restate
-    - cron: "16 4 * * 0"
+    # the day and the time are section 10's grid in btclib-org/.github
+    # and not this file's to restate: that section gives `mutation` the
+    # day and the hour, and this repository the minute
+    - cron: "16 5 * * 1"
   # the escape hatch: a session worth re-running on demand, after a
   # survivor is fixed or a scope file's budget is argued about, rather
-  # than waiting for the next Sunday
+  # than waiting for the next scheduled one
   workflow_dispatch:
 
 # least privilege for the GITHUB_TOKEN: everything running in this job can
@@ -158,7 +158,7 @@ jobs:
 
       # always(), because the reports are the whole product: a session cut
       # short, or one whose exec died, still holds every verdict reached
-      # before that, and those are what somebody reads on Monday
+      # before that, and those are what somebody reads afterwards
       - name: Write the reports
         if: always()
         env:

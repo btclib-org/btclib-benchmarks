@@ -38,15 +38,15 @@ on:
     # this is not on pull_request
     branches: [main]
   schedule:
-    # Saturday and hour 03 from section 10's calendar, minute 16 from
-    # this repository's own row in that section's second table --
-    # neither is this file's to restate. This line used to follow the
-    # hour ossf/scorecard's own canonical workflow uses instead
-    # (scorecard-analysis.yml); section 10's "The hour is chosen against
-    # this organization's own load, not GitHub's" is the reason that
-    # instant was not the answer, and btclib-org/.github#384 is where
+    # the day and the time are section 10's calendar in
+    # btclib-org/.github, the minute this repository's own row in that
+    # section's second table, and neither is this file's to restate.
+    # ossf/scorecard's own canonical workflow (scorecard-analysis.yml)
+    # schedules a different instant; section 10's "The hour is chosen
+    # against this organization's own load, not GitHub's" is why that
+    # one is not the answer here, and btclib-org/.github#384 is where
     # the two were found to disagree
-    - cron: "16 3 * * 6"
+    - cron: "16 5 * * 0"
 
 # least privilege for the GITHUB_TOKEN at the file level; the job below
 # declares everything it needs on top of this, so the elevation is held

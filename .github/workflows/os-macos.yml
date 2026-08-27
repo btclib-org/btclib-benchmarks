@@ -29,7 +29,7 @@ on:
     # one morning is the queue this design exists to avoid.
     # Only the default branch schedules workflows, so on any other branch
     # this is reachable through the dispatch below alone
-    - cron: "16 4 * * 6"
+    - cron: "16 5 * * 4"
   # the escape hatch, and the only trigger besides the schedule: see
   # os-ubuntu.yml, where the absence of a workflow_call is argued once
   workflow_dispatch:
