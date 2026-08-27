@@ -8,6 +8,27 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### The Scorecard sentinel goes with its badge
+
+- **`scorecard.yml` ran a sentinel this tree is not given.** Section 10
+  of the repository standard records which trees carry which sentinel,
+  and its `scorecard` entry does not name this repository. The badge and
+  the workflow are one membership there: what the run buys is an opinion
+  of the tree's supply-chain posture formed outside the organization,
+  and a reading nobody displays is not worth the run (issue
+  btclib-org/.github#492).
+- **`REPOSITORY.md` records the absence rather than leaving it to be
+  read off `.github/workflows/`.** *What is not configured, and why* is
+  where it sits, and the sentinel's own bar -- public, and not a fork --
+  is read back beside it, so the absence is a decision rather than an
+  impediment.
+- **`REPOSITORY.md`'s *Token permissions* bounded an elevation by a
+  transparency-log entry, and that entry was this workflow's.** The
+  clause goes with the job that wrote it.
+- **`README.md`'s badge comment opens on the three groups section 2 of
+  that standard fixes, and no badge fills the third.** The comment says
+  why, and points at the file that records it.
+
 ### The schedules and the badge row follow section 10's calendar
 
 - **Each `cron:` here is the instant section 10 of the organization
