@@ -74,7 +74,7 @@ on:
     # and not this file's to restate.
     # Only the default branch schedules workflows, so on any other branch
     # this is reachable through the dispatch below alone
-    - cron: "16 4 * * 2"
+    - cron: "16 4 * * 0"
   # still worth reaching for on a branch whose pull request is not open
   # yet, which is what the actions queries read
   workflow_dispatch:

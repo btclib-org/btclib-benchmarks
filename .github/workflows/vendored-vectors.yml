@@ -20,12 +20,12 @@ name: vendored vectors
 on:
   schedule:
     # the day and the time are section 10's grid in btclib-org/.github and
-    # not this file's to restate; the hour after links.yml, that one
-    # asking whether a page this tree points at still resolves and this
-    # one whether a file it pinned is still the file.
+    # not this file's to restate; the sibling of links.yml in what it
+    # asks, that one whether a page this tree points at still resolves
+    # and this one whether a file it pinned is still the file.
     # Only the default branch schedules workflows, so on any other branch
     # this is reachable through the dispatch below alone
-    - cron: "16 5 * * 1"
+    - cron: "16 3 * * 1"
   workflow_dispatch:
   # so a change to this file, to the script it runs or to the pins it
   # reads is checked by the thing it configures

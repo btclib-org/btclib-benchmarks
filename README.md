@@ -1,32 +1,39 @@
 # btclib-benchmarks
 
-<!-- The badges are what the reader decides with: the first line says
-whether it can be used, the second whether it works. A badge that reports
-no state -- "we use ruff", "we use uv" -- reports a choice instead, and
-those are in CONTRIBUTING.md, beside the prose that says how the choice
-is enforced. One badge per line keeps a change to one line and every line
-inside MD013.
+<!-- The badges are what the reader decides with, in the three groups
+btclib-org/.github's README.md section 2 fixes: what the software is and
+whether it can be used, whether it works, and what the OpenSSF makes of
+it.
+
+Inside the second group the gates come first, in the order a commit meets
+them, and the sentinels follow in the order section 10 of that standard
+schedules them -- the badge order *is* the calendar order over that
+subset, which is why the two move together or not at all. The day and
+hour each sentinel owns live in that section and are not copied here: a
+reader wanting the schedule reads it there, where it is still true.
+
 This block is shorter than a sibling library's, and by subtraction rather
 than by omission: nothing here is published to an index and nothing here
 is served by Read the Docs, so the PyPI version, the download count, the
 development status, the supported interpreters and the documentation
-build have no state to report. What is left is what this repository
-actually has.
-Scorecard sits after os-macos rather than inside section 10's calendar
-order: the calendar carries no row for it yet -- btclib-org/.github#363
-proposes one -- so it takes the position after everything the calendar
-does order, not before it, the same reading btclib-org/portanode's own
-README states for itself. -->
+build have no state to report.
+
+One badge per line keeps a change to one line and every line inside
+MD013, whose 80 columns bind only where a space follows them.
+
+A badge that reports no state -- "we use ruff", "we use uv" -- reports a
+choice instead, and those are in CONTRIBUTING.md, beside the prose that
+says how the choice is enforced. -->
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/btclib-org/btclib-benchmarks/main.svg)](https://results.pre-commit.ci/latest/github/btclib-org/btclib-benchmarks/main)
-[![test workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml)
-[![mutation workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml)
 [![lint workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml)
-[![links workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml)
+[![test workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml)
 [![docs workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml)
-[![codeql workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml)
+[![mutation workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml)
 [![deps-latest workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml)
 [![os-macos workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml)
 [![os-ubuntu workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml)
+[![links workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml)
+[![codeql workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml)
 
 ---
 

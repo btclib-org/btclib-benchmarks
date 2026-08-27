@@ -8,6 +8,28 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### The schedules and the badge row follow section 10's calendar
+
+- **Each `cron:` here is the instant section 10 of the organization
+  standard gives its workflow at this repository's minute.** That
+  calendar orders the sentinels by what each asks about, and the instant
+  is read there rather than restated in a workflow or in this file
+  (issue btclib-org/.github#480).
+- **The comments beside `mutation.yml`'s, `scorecard.yml`'s and
+  `vendored-vectors.yml`'s schedules name the cadence instead of a day.**
+  Each had a day, an hour or a neighbouring workflow's slot written into
+  it, and prose of that kind goes stale on the next move where the
+  calendar it copies does not.
+- **`README.md`'s badge row is section 2's order**: the gates in the
+  order a commit meets them, then the sentinels in the order the
+  calendar schedules them.
+- **The block's comment argued a Scorecard placement from the calendar
+  carrying no row for `scorecard`, and that row is there.** What the
+  block leaves out is recorded rather than settled here: this repository
+  runs `scorecard.yml` and shows no Scorecard badge, which is
+  btclib-org/.github#492, and it runs `vendored-vectors.yml` and shows no
+  badge for that either, which is btclib-org/.github#493.
+
 ### `REPOSITORY.md`'s *Token permissions* is read back rather than listed
 
 - **The section bounded every job by what commenting on a pull request
