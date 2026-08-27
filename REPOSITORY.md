@@ -227,14 +227,13 @@ Why a particular scope is held is written beside the job that spends it,
 where whoever changes that job can see it, rather than here. What this
 section adds is the bound those lines are kept under: each of them is one
 job's own work — posting a review or a reply, filing a code-scanning
-alert, an OIDC token that one action asks for at its own startup and
-another spends on a transparency-log entry, opening the issue a weekly
-drift check reports through. One of them has no comment beside it and is
-filed as #232, which is the shape this paragraph is about rather than an
-exception to it. `actions: read` is the elevation that is not a write,
-and what distinguishes it is where a job reads from — the API rather
-than the tree — which is the bound, and not a list of what each one
-asks the API for.
+alert, an OIDC token an action asks for at its own startup, opening the
+issue a weekly drift check reports through. One of them has no comment
+beside it and is filed as #232, which is the shape this paragraph is
+about rather than an exception to it. `actions: read` is the elevation
+that is not a write, and what distinguishes it is where a job reads
+from — the API rather than the tree — which is the bound, and not a
+list of what each one asks the API for.
 
 The bound is what the same command says is absent: no job holds
 `contents: write` or `packages: write`. Nothing a run does reaches the
@@ -386,6 +385,22 @@ rather than repeating the number.
 - **No benchmark on a schedule.** Several workflows here run weekly and
   none of them times anything; `CONTRIBUTING.md`'s "What the suite can
   and cannot check" is where that rule and its reason are written down.
+- **No `scorecard.yml`, and no OpenSSF Scorecard badge.** The two are
+  one membership in section 10 of the repository standard, whose *Which
+  trees carry which sentinel* does not name this repository for
+  `scorecard`: what the run buys is an opinion of the tree's
+  supply-chain posture formed outside the organization, and a reading
+  nobody displays is not worth the run
+  ([btclib-org/.github#490](https://github.com/btclib-org/.github/issues/490)).
+  The bar the sentinel asks -- public, and not a fork -- is cleared
+  here, so the absence is a decision rather than an impediment:
+
+  ```shell
+  gh api repos/btclib-org/btclib-benchmarks --jq '.private, .fork'
+  # false
+  # false
+  ```
+
 - **No `windows.yml`, where the other repositories have one.** Two
   comparands cannot be installed on a Windows runner at all, so every
   cell of that matrix would be red on `uv sync` and the workflow could

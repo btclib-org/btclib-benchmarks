@@ -18,6 +18,12 @@ is served by Read the Docs, so the PyPI version, the download count, the
 development status, the supported interpreters and the documentation
 build have no state to report.
 
+The third group is empty, and by decision rather than by property:
+section 10 of that standard records which trees carry which sentinel,
+and it does not name this repository for `scorecard`. REPOSITORY.md's
+*What is not configured, and why* is where that sits beside the rest of
+what this tree does without.
+
 One badge per line keeps a change to one line and every line inside
 MD013, whose 80 columns bind only where a space follows them.
 
