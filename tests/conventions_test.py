@@ -18,14 +18,14 @@ reads a declaration rather than a directory, and this module is what
 keeps the declaration from being prose: section 7's own rule, that a
 convention worth stating is worth a test, applied to section 7 itself.
 
-Here the table is empty and the "Not tested here" line carries the whole
+The table's rows and the "Not tested here" line together carry the
 declaration, which is why the assertion below is about the *section*
-rather than about the rows: a repository whose table has no rows is
-making a statement, not failing to make one, and tests/README.md says
-why this one's is empty. No count is written anywhere -- not of either
-half and not of the list itself: _CONVENTIONS below is the list, and
-this module asserts the two halves cover it rather than how many fall on
-each side.
+rather than about the rows: a table with no rows would still be making a
+statement rather than failing to make one, and tests/README.md says why
+each convention sits on the side it does. No count is written anywhere
+-- not of either half and not of the list itself: _CONVENTIONS below is
+the list, and this module asserts the two halves cover it rather than
+how many fall on each side.
 
 What it does not check is whether a named module tests the convention it
 is named against. Nothing short of reading it can, and the four
@@ -110,13 +110,13 @@ def _holds_a_test(path: Path) -> bool:
 
 
 def test_the_test_scan_reports_what_it_is_asked_to(tmp_path: Path) -> None:
-    """The scan is exercised here, this tree naming it no module.
+    """The scan is exercised directly here, not only through the declared rows.
 
     `_holds_a_test` answers whether a module defines a function whose
     name begins with `test_`, and it is called once per declared row --
-    of which this repository declares none. Two modules written for it,
-    one of each kind, are what keeps the check below from resting on a
-    scan nothing has run.
+    which need not include one of each kind. Two modules written for it
+    here, one of each kind, are what keeps the check below from depending
+    on the declaration happening to exercise both branches of the scan.
     """
     holds = tmp_path / "holds.py"
     holds.write_text("def test_something() -> None:\n    pass\n")
@@ -146,12 +146,12 @@ def test_the_section_reader_reports_what_it_is_asked_to() -> None:
 def test_the_section_was_found() -> None:
     """A declaration that parsed to nothing is the failure that hides.
 
-    Not "the table is not empty": here it is empty on purpose, this
-    repository testing none of them, and a repository whose table has no
-    rows is making a statement rather than failing to make one. What must
-    not parse to nothing is the section -- retitled, or moved above
-    another `## ` heading -- because then the sentinel below is missing
-    too and the message a reader gets names the wrong thing.
+    Not "the table is not empty": whether the table has no rows or
+    several, either is a repository making a statement rather than
+    failing to make one. What must not parse to nothing is the section --
+    retitled, or moved above another `## ` heading -- because then the
+    sentinel below is missing too and the message a reader gets names the
+    wrong thing.
     """
     assert _SECTION.strip() not in ("", _HEADING), (
         f"{_README.name} carries no one {_HEADING} section with anything under it"
@@ -159,11 +159,12 @@ def test_the_section_was_found() -> None:
 
 
 # the three checks below quantify over the rows rather than being
-# parametrized by them, which matters exactly here: this repository
-# declares no rows, and a parametrized test over an empty set is skipped
-# -- its body never runs, and the coverage gate reads that as a line
-# nothing exercises. A comprehension over no rows still runs its
-# assertion, and the message names every row that failed rather than one
+# parametrized by them, which matters generally: a repository is free to
+# declare no rows at all, and a parametrized test over an empty set is
+# skipped -- its body never runs, and the coverage gate reads that as a
+# line nothing exercises. A comprehension over any number of rows still
+# runs its assertion, and the message names every row that failed rather
+# than one
 def test_every_convention_named_is_one_of_section_sevens() -> None:
     """A convention invented here is not a convention the standard has."""
     unknown = [

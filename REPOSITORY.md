@@ -228,12 +228,10 @@ where whoever changes that job can see it, rather than here. What this
 section adds is the bound those lines are kept under: each of them is one
 job's own work — posting a review or a reply, filing a code-scanning
 alert, an OIDC token an action asks for at its own startup, opening the
-issue a weekly drift check reports through. One of them has no comment
-beside it and is filed as #232, which is the shape this paragraph is
-about rather than an exception to it. `actions: read` is the elevation
-that is not a write, and what distinguishes it is where a job reads
-from — the API rather than the tree — which is the bound, and not a
-list of what each one asks the API for.
+issue a weekly drift check reports through. `actions: read` is the
+elevation that is not a write, and what distinguishes it is where a job
+reads from — the API rather than the tree — which is the bound, and not
+a list of what each one asks the API for.
 
 The bound is what the same command says is absent: no job holds
 `contents: write` or `packages: write`. Nothing a run does reaches the
