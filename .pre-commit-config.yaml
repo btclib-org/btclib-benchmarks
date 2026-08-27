@@ -302,9 +302,9 @@ repos:
   # its link text stepping over a nested image because a badge is
   # "[![alt](src)](href)" and a link text written "[^]]*" stops at the
   # "]" closing the alt text -- which left every badge destination
-  # unchecked in this hook's first shape. There is no badge in this
-  # repository's markdown to demonstrate that on; the siblings that have
-  # them are where it was measured. The lookbehind refuses a "["
+  # unchecked in this hook's first shape. README.md's badge row is what
+  # exercises that branch here: each entry is exactly that shape, and
+  # this hook reads README.md on every run. The lookbehind refuses a "["
   # preceded by a backtick, "!" or "[", so prose can quote the refused
   # shape in a code span, as the paragraph above does. The
   # second reads a link reference definition, `[label]: page.md`, which

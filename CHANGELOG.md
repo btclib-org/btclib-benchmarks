@@ -8,6 +8,23 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### Three comments catch up to the tree they describe
+
+- **`tests/conventions_test.py`'s four docstrings argued from an empty
+  convention table, and the table has held `public_surface_test.py`'s
+  row since `a3cea3b`.** Each reason is restated on the ground that
+  holds with a row present, rather than the one that stopped holding
+  (closes #231).
+- **`claude-review.yml`'s `mention` job's `pull-requests: write` now
+  carries the reason beside it that its `review` job's copy already
+  does: what posting a reply takes.** `REPOSITORY.md`'s *Token
+  permissions* no longer names a job with no comment beside its scope
+  (closes #232).
+- **`.pre-commit-config.yaml`'s `local-link-prefix` comment said no
+  badge in this repository's markdown exercised its nested-image
+  branch; `README.md`'s badge row does, on every run.** The comment
+  says so instead of pointing at a sibling (closes #238).
+
 ### The Scorecard sentinel goes with its badge
 
 - **`scorecard.yml` ran a sentinel this tree is not given.** Section 10
