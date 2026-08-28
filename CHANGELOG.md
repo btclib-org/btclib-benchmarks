@@ -3305,6 +3305,18 @@ the record behind.
   glob, and there is no site served from this root for the clause to be
   about.
 
+### The `vendored-vectors` sentinel gets its badge
+
+- **`README.md`'s head carries a `vendored-vectors` badge.** Section 10
+  of the repository standard records which trees carry which sentinel,
+  and its `vendored-vectors` entry names this repository. The badge and
+  the workflow are one membership there, so a tree keeps both or drops
+  both (closes btclib-org/.github#493).
+- **The badge sits between `docs` and `mutation`.** Section 2 puts the
+  gates first, in the order a commit meets them, then the sentinels in
+  the order section 10's calendar schedules them; `vendored-vectors` is
+  that calendar's first row.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
