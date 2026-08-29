@@ -5,6 +5,17 @@ and the answer that call gives today. A setting recorded as prose alone
 is one nobody can check; recorded this way, a drift is one command away
 from being seen.
 
+What is recorded is the settings [section 11 of the repository
+standard](https://github.com/btclib-org/.github/blob/main/README.md#11-github-settings)
+asks about — the ones [section 16's
+checklist](https://github.com/btclib-org/.github/blob/main/README.md#16-checklists)
+sets on a new repository, and the ones a section of that file states a
+rule for — together with whatever a call quoted for one of those answers
+alongside it. The perimeter is section 11's rather than this file's, so a
+setting inside it that no section below reads back is a gap rather than a
+decision, and *What this file passes over* at the foot is what falls
+outside it.
+
 ## Required checks on main
 
 ```shell
@@ -449,3 +460,66 @@ rather than repeating the number.
 
   The day both answers stop being zero, this workflow is `os-macos.yml`
   with the images and the schedule swapped.
+
+## What this file passes over
+
+*What is not configured, and why* above is what this repository decided
+against. This section is the other edge of the scope at the top: what an
+endpoint answers for this repository and no section here asks about.
+
+**Most of the repository document is not a setting.** `gh api
+repos/btclib-org/btclib-benchmarks` answers it whole, and the greater
+part of what comes back is URLs, counts, timestamps and state GitHub
+derives from the tree. No call here reads any of that back, a scope of
+the settings the standard asks about reaching none of it.
+
+**A field of that document no rule reaches.** `allow_forking`,
+`allow_update_branch`, `has_discussions`, `has_downloads`, `is_template`
+and `web_commit_signoff_required` are in it, in none of this file's
+`--jq` objects, and named nowhere in the standard:
+
+```shell
+std=$(gh api repos/btclib-org/.github/contents/README.md \
+        -H 'Accept: application/vnd.github.raw')
+for f in allow_forking allow_update_branch has_discussions has_downloads \
+         is_template web_commit_signoff_required; do
+  printf '%s %s %s\n' "$f" \
+    "$(printf '%s' "$std" | grep -c "$f")" "$(grep -c "\.$f" REPOSITORY.md)"
+done
+# every line reads "<field> 0 0"
+printf '%s' "$std" | grep -c squash_merge_commit_title   # 1
+grep -c '\.allow_squash[_]merge' REPOSITORY.md           # 1
+```
+
+The two counts under the loop are what make its zeros absences: a field
+the standard does state a rule about, and a field this file does quote
+in a `--jq` object, the bracket in the second keeping that line from
+matching itself. Recording a field on no rule grows this file with
+GitHub's API rather than with the standard.
+
+**A credential this repository does not hold.** `claude-review.yml` reads
+`secrets.CLAUDE_CODE_OAUTH_TOKEN` and `vars.CLAUDE_REVIEW_ENABLED`, and
+section 11 of the standard makes both the organization's rather than each
+repository's:
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks/actions/secrets \
+  --jq '.total_count'
+# 0
+gh api orgs/btclib-org/actions/secrets \
+  --jq '.secrets[] | "\(.name) \(.visibility)"'
+# CLAUDE_CODE_OAUTH_TOKEN all
+```
+
+The organization's store answering with a name is what makes the zero
+above it an absence rather than an endpoint that answers empty for
+everyone.
+
+**A facility nothing here uses.** Environments, self-hosted runners,
+webhooks, deploy keys, autolinks and custom property values each answer
+empty, and an empty answer records no decision. Whichever of them a
+workflow needs one day arrives with the section that uses it.
+
+What the scope costs is that a change to any of the above fails no
+command here: what finds one is somebody reading the repository document
+and the stores above against this file.
