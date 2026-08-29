@@ -210,6 +210,22 @@ what it claims gets reported, and where a finding noticed while writing or
 reviewing a pull request is parked so that the pull request stays one
 subject.
 
+## Topics
+
+```shell
+diff <(gh api repos/btclib-org/btclib-benchmarks --jq '.topics[]' | sort) \
+     <(sed -n '/^keywords = \[/,/^]/s/^ *"\(.*\)",$/\1/p' pyproject.toml \
+       | sort)
+```
+
+Section 3 makes a package's `keywords` its
+[topics](https://github.com/btclib-org/.github/blob/main/README.md#3-pyprojecttoml-is-the-configuration)
+entry for entry, and this `pyproject.toml` declares a `[build-system]`, so
+`topics_test.py` holds this repository to that comparison. The diff above
+is empty: the two lists already agree, sorted because GitHub returns
+topics in an order of its own rather than `pyproject.toml`'s relevance
+order.
+
 ## Token permissions
 
 Every workflow declares `permissions: contents: read` at the top level,
@@ -327,6 +343,19 @@ gh api repos/btclib-org/btclib-benchmarks/secret-scanning/alerts \
 
 From the alignment audit of 21 August 2026,
 [btclib-org/.github#5](https://github.com/btclib-org/.github/issues/5).
+
+## Private vulnerability reporting
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks/private-vulnerability-reporting
+# {"enabled":true}
+```
+
+On, [as the standard asks of every
+tier](https://github.com/btclib-org/.github/blob/main/README.md#root-files):
+it is what puts the *Report a vulnerability* button on the Security tab,
+ahead of a `SECURITY.md` this repository does not carry, that file being
+tier 1's row.
 
 ## Code scanning, and which setup performs it
 
