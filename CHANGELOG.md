@@ -3330,6 +3330,22 @@ the record behind.
   The two already agree, entry for entry; before this the agreement was
   nowhere written down.
 
+### `REPOSITORY.md` states its scope, and what falls outside it
+
+- **The head of the file says what is recorded** (closes
+  btclib-org/.github#556): the settings the standard asks about — the
+  ones section 16's checklist sets on a new repository, and the ones a
+  section of it states a rule for — together with whatever a call quoted
+  for one of those answers alongside it. Section 11 fixes that
+  perimeter, so a setting inside it that no section here reads back is a
+  gap rather than a decision.
+- **`What this file passes over` at the foot is the other half**: the
+  fields of the repository document no rule reaches, the credential
+  `claude-review.yml` spends and this repository does not hold, and the
+  stores that answer empty. The block beside the first carries a control
+  on each side of its loop, the one reading this file bracketed so that
+  its own line does not answer it.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
