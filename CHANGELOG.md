@@ -3317,6 +3317,19 @@ the record behind.
   the order section 10's calendar schedules them; `vendored-vectors` is
   that calendar's first row.
 
+### `REPOSITORY.md` reads private vulnerability reporting and the topics back
+
+- **A `Private vulnerability reporting` section carries the `gh api
+  .../private-vulnerability-reporting` call and its `{"enabled":true}`
+  answer** (issue btclib-org/.github#468). The organization standard
+  makes the setting every tier's regardless of which tier owns
+  `SECURITY.md`, and a record silent about it could not have shown the
+  setting turned off.
+- **A `Topics` section carries the `diff` comparing GitHub's topics
+  against `pyproject.toml`'s `keywords`** (issue btclib-org/.github#468).
+  The two already agree, entry for entry; before this the agreement was
+  nowhere written down.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
