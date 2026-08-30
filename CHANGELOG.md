@@ -3428,6 +3428,21 @@ the record behind.
   shared half already pointed at it. Secret scanning's two plan-gated
   settings stay under *Security and analysis*, with a pointer.
 
+### `links.yml` asks lychee for the fragment too
+
+- **`.github/workflows/links.yml` passes `--include-fragments`** (issue
+  btclib-org/.github#583). A link into a heading is then checked as an
+  anchor and not only as a page, where the forge serves the page and
+  drops a fragment it cannot resolve, so a heading renamed in the tree a
+  link here points into is red in this run rather than nowhere. The
+  check reads the page already fetched for the link and adds no request;
+  run over the tree as it stands, it found no broken anchor. The
+  `blob/main/README.md#<heading>` anchors `REPOSITORY.md` carries are
+  read; the bare `github.com/btclib-org/.github#<heading>` shape
+  `CONTRIBUTING.md` cites the standard by is answered by the repositories
+  API instead, once lychee holds the workflow's token, and
+  btclib-org/.github#630 is where that is weighed.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
