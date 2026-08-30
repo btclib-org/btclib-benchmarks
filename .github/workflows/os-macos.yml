@@ -15,21 +15,22 @@ name: os-macos
 # The matrix carries `macos-latest` alone, arm64, and not an Intel image
 # beside it. `secp256k1` publishes an arm64 wheel and no x86_64 one, so
 # an Intel cell built its libsecp256k1 from the sdist rather than
-# downloading it, and that sdist's autotools-generated `Makefile.in` was
-# produced with automake 1.16 and carries a maintainer-mode rebuild rule
-# that invokes that exact versioned binary, `automake-1.16`. Homebrew's
-# `automake` formula is 1.18.1 now and provides no `automake-1.16`, so
-# the build dies with `automake-1.16: command not found` and exit 127
-# before a single comparand answers the vendored vectors -- confirmed on
-# every interpreter cell of `macos-26-intel` in
+# downloading it, and that sdist's autotools-generated `Makefile.in`
+# carries a maintainer-mode rebuild rule invoking automake by its own
+# build's exact versioned binary name -- `automake-1.16` on the 3.12
+# cell, `aclocal-1.16` on 3.11 and 3.13. Homebrew's `automake` formula is
+# 1.18.1 now and provides neither, so the build dies with that binary
+# reported missing and exit 127 before a single comparand answers the
+# vendored vectors -- confirmed on every interpreter cell of
+# `macos-26-intel` in
 # https://github.com/btclib-org/btclib-benchmarks/actions/runs/33302522716.
 # Homebrew's shipped automake version and a version pin baked into an
 # sdist this project does not control are both outside this repository's
 # reach, so this is environment drift rather than a project regression,
-# and raising `secp256k1`'s pin or waiting for Homebrew to carry
-# `automake-1.16` again are not this repository's to do. Put the Intel
-# cell back once `secp256k1` ships an x86_64 wheel or an sdist that
-# builds under current Homebrew, whichever comes first
+# and raising `secp256k1`'s pin or waiting for Homebrew to carry either
+# binary again are not this repository's to do. Put the Intel cell back
+# once `secp256k1` ships an x86_64 wheel or an sdist that builds under
+# current Homebrew, whichever comes first
 # ([ISS 244](https://github.com/btclib-org/btclib-benchmarks/issues/244)).
 #
 # It gates no commit and no merge -- a macOS regression sits on main for

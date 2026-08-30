@@ -49,10 +49,10 @@ Timings of [btclib](https://github.com/btclib-org/btclib) and
 against the packages they are usefully compared with.
 
 What a benchmark here can compare is bounded by what its comparands
-publish: no wrapper builds under `cp314` yet, and, on macOS, `secp256k1`'s
-sdist does not build on an Intel runner. "The interpreter is 3.13, not
-3.14" below is the first's reason, and `os-macos.yml`'s own header is the
-second's.
+publish: `coincurve` and `secp256k1` build no `cp314` wheel yet, and, on
+macOS, `secp256k1`'s sdist does not build on an Intel runner. "The
+interpreter is 3.13, not 3.14" below is the first's reason, and
+`os-macos.yml`'s own header is the second's.
 
 The benchmarks, each answering a different question:
 
