@@ -3387,6 +3387,18 @@ the record behind.
   pointing at their two canonical explanations rather than restating
   either.
 
+### The badge row carries the qualifier section 2 asks of it
+
+- **Every workflow-status badge at the head of `README.md` carries
+  `?branch=main`** (issue btclib-org/.github#579): each answers for
+  `main` or answers `no status`, where the unqualified badge falls back
+  to another branch's run when `main` has none. The pre-commit.ci badge
+  is outside the rule.
+- **`vendored-vectors` answers `no status` until the workflow's first
+  run on `main`** (issue #245), the schedule or a dispatch from `main`
+  being what gives it one; the unqualified badge rendered a
+  `pull_request` run of a feature branch there.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

@@ -31,16 +31,16 @@ A badge that reports no state -- "we use ruff", "we use uv" -- reports a
 choice instead, and those are in CONTRIBUTING.md, beside the prose that
 says how the choice is enforced. -->
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/btclib-org/btclib-benchmarks/main.svg)](https://results.pre-commit.ci/latest/github/btclib-org/btclib-benchmarks/main)
-[![lint workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml)
-[![test workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml)
-[![docs workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml)
-[![vendored-vectors workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/vendored-vectors.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/vendored-vectors.yml)
-[![mutation workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml)
-[![deps-latest workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml)
-[![os-macos workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml)
-[![os-ubuntu workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml)
-[![links workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml)
-[![codeql workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml/badge.svg)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml)
+[![lint workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml)
+[![test workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml)
+[![docs workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml)
+[![vendored-vectors workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/vendored-vectors.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/vendored-vectors.yml)
+[![mutation workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml)
+[![deps-latest workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml)
+[![os-macos workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml)
+[![os-ubuntu workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml)
+[![links workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml)
+[![codeql workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml)
 
 ---
 
