@@ -175,6 +175,9 @@ Do not use Fable unless explicitly instructed.
   `coincurve` and `secp256k1` and no others hold the ceiling: `electrum-ecc`
   compiles from an sdist on every platform and what it builds is
   `py3-none`, so it installs on any interpreter.
+- **`os-macos.yml`'s matrix carries one macOS image, not two.** An Intel
+  cell is a comparand's build limit, not a choice — that workflow's own
+  header is the full explanation.
 - **Every timing lives behind `main()`.** Importing a script must run
   its fixtures and its cross-comparand assertions and time nothing —
   that is what makes the suite possible. `02-btclib-vs-btclib.py` and

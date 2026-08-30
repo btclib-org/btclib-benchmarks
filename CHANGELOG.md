@@ -3364,6 +3364,29 @@ the record behind.
   *Plan-gated settings* for the ceiling's figure (issue
   btclib-org/.github#412).
 
+### `os-macos.yml` drops the Intel cell secp256k1's sdist can't build
+
+- **Every cell of `macos-26-intel` failed at a versioned autotools
+  binary Homebrew's current formula no longer provides, exit 127 before
+  a comparand answered the vendored vectors** — `automake-1.16` on the
+  3.12 cell, `aclocal-1.16` on 3.11 and 3.13. `secp256k1` publishes an
+  arm64 wheel and no x86_64 one, so that cell alone compiled the sdist,
+  whose autotools-generated `Makefile.in` carries a maintainer-mode
+  rebuild rule invoking automake by its own build's exact versioned
+  name; Homebrew's `automake` formula is 1.18.1 now and provides neither
+  binary under either name. Homebrew's shipped version and a pin baked
+  into a comparand's sdist are both outside this repository's reach, so
+  the matrix carries `macos-latest` alone rather than working around
+  either (closes #244).
+- **The header explains the limit in the one place the platform cell is
+  chosen, the way `.python-version` explains the cp314 ceiling**, and
+  `CLAUDE.md`'s non-obvious-facts list points at it tersely rather than
+  restating it.
+- **README.md's opening now names the two comparands that hold the
+  `cp314` ceiling and the sdist that does not build on Intel macOS**,
+  pointing at their two canonical explanations rather than restating
+  either.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
