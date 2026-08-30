@@ -8,13 +8,29 @@ name: os-macos
 #
 # What macOS adds is the one platform this project is never otherwise
 # asked about. The gate is ubuntu, and no Windows sentinel exists for the
-# reason REPOSITORY.md records, so these cells are the whole of what says
+# reason REPOSITORY.md records, so this cell is the whole of what says
 # whether the comparands install and answer the vendored vectors anywhere
-# but Linux. They resolve differently here too, and differently again
-# between the two images: `secp256k1` publishes an arm64 wheel and no
-# x86_64 one, so the same version is a download on one image and a
-# compile on the other, and the `Record which artifact` step below is
-# what puts that in the log rather than in a guess.
+# but Linux.
+#
+# The matrix carries `macos-latest` alone, arm64, and not an Intel image
+# beside it. `secp256k1` publishes an arm64 wheel and no x86_64 one, so
+# an Intel cell built its libsecp256k1 from the sdist rather than
+# downloading it, and that sdist's autotools-generated `Makefile.in` was
+# produced with automake 1.16 and carries a maintainer-mode rebuild rule
+# that invokes that exact versioned binary, `automake-1.16`. Homebrew's
+# `automake` formula is 1.18.1 now and provides no `automake-1.16`, so
+# the build dies with `automake-1.16: command not found` and exit 127
+# before a single comparand answers the vendored vectors -- confirmed on
+# every interpreter cell of `macos-26-intel` in
+# https://github.com/btclib-org/btclib-benchmarks/actions/runs/33302522716.
+# Homebrew's shipped automake version and a version pin baked into an
+# sdist this project does not control are both outside this repository's
+# reach, so this is environment drift rather than a project regression,
+# and raising `secp256k1`'s pin or waiting for Homebrew to carry
+# `automake-1.16` again are not this repository's to do. Put the Intel
+# cell back once `secp256k1` ships an x86_64 wheel or an sdist that
+# builds under current Homebrew, whichever comes first
+# ([ISS 244](https://github.com/btclib-org/btclib-benchmarks/issues/244)).
 #
 # It gates no commit and no merge -- a macOS regression sits on main for
 # at most a week -- and nothing calls it, this project having nothing to
@@ -56,13 +72,9 @@ jobs:
       # the whole answer, and stopping at the first one hides the rest
       fail-fast: false
       matrix:
-        # both images. One is Apple silicon and the other Intel, and on
-        # this platform the difference is not only which architecture the
-        # interpreter targets: it decides whether `secp256k1` arrives as
-        # a wheel or as a build, which is the divergence the record step
-        # below prints
+        # the one image this platform gets: see this file's header for
+        # why an Intel cell is not beside it
         os:
-          - macos-26-intel
           - macos-latest
         # every interpreter this project supports, the one the gate runs
         # included, and the two ends are a comparand's rather than a
@@ -116,15 +128,13 @@ jobs:
           python-version: ${{ matrix.python }}
 
       # which of an index's two artifacts each comparand's install
-      # resolved to, and here it is the Intel image that earns the step:
-      # `uv.lock` carries a `macosx_11_0_arm64` wheel for `secp256k1` and
-      # no x86_64 one, so on `macos-26-intel` its libsecp256k1 is
-      # compiled on the runner out of an sdist whose bundled revision is
-      # years behind the one the wheels carry. Those cells hold the
-      # pages' claims against a different binary from the one the pages
-      # are measured on, and the tag this prints is what says so instead
-      # of leaving the next Intel-only divergence to be blamed on the
-      # wrapper.
+      # resolved to. On this one image every comparand that publishes a
+      # wheel resolves to it -- `secp256k1` publishes an arm64 wheel and
+      # this file's header is why no other cell here would resolve to
+      # anything else -- so what the record buys is the day that stops
+      # being true: an index dropping the wheel is a different binary
+      # under an unchanged version, and this is what says so instead of
+      # leaving the divergence to be blamed on the wrapper.
       # Recorded and not asserted, for the reason the same step gives in
       # test.yml
       - name: Record which artifact each comparand's install resolved to

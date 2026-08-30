@@ -8,6 +8,23 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `os-macos.yml` drops the Intel cell secp256k1's sdist can't build
+
+- **Every cell of `macos-26-intel` failed building `secp256k1`'s sdist,
+  `automake-1.16: command not found` and exit 127 before a comparand
+  answered the vendored vectors.** `secp256k1` publishes an arm64 wheel
+  and no x86_64 one, so that cell alone compiled the sdist, whose
+  autotools-generated `Makefile.in` carries a maintainer-mode rebuild
+  rule invoking automake 1.16 by that exact versioned name; Homebrew's
+  `automake` formula is 1.18.1 now and provides no `automake-1.16`.
+  Homebrew's shipped version and a pin baked into a comparand's sdist are
+  both outside this repository's reach, so the matrix carries
+  `macos-latest` alone rather than working around either (closes #244).
+- **The header explains the limit in the one place the platform cell is
+  chosen, the way `.python-version` explains the cp314 ceiling**, and
+  `CLAUDE.md`'s non-obvious-facts list points at it tersely rather than
+  restating it.
+
 ### Three comments catch up to the tree they describe
 
 - **`tests/conventions_test.py`'s four docstrings argued from an empty
