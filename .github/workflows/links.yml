@@ -152,13 +152,28 @@ jobs:
           # enough to report the first as the second -- with the retries
           # above making it three timeouts rather than one. If a URL
           # times out run after run it belongs in a .lycheeignore, with
-          # the measurement beside it, and not here
+          # the measurement beside it, and not here.
+          # --include-fragments, or a heading renamed in the tree a
+          # link here points into breaks that link with nothing red
+          # anywhere: the forge serves the page and drops a fragment it
+          # cannot resolve, so the run that notices is the linking
+          # tree's. The check reads the page already fetched for the
+          # link, so it adds no request. What can override it is the
+          # token below: on a failed github.com/<owner>/<repo> link
+          # lychee falls back to the repositories API, so a missing
+          # fragment on that shape -- the one CONTRIBUTING.md cites the
+          # standard by -- is read, found missing, and then answered OK
+          # because the repository exists; the same anchor on the
+          # blob/main/README.md page, which is how REPOSITORY.md cites
+          # it, carries a path the API declines and stays red.
+          # btclib-org/.github#630 is where that is weighed.
           args: >-
             --no-progress
             --max-retries 3
             --retry-wait-time 10
             --timeout 45
             --accept 100..=103,200..=299,429
+            --include-fragments
             "*.md" "docs/**/*.md" "results/*.md"
             "tests/*.md" "vectors/*.md"
           # fail the job, rather than only summarizing: a green run that
