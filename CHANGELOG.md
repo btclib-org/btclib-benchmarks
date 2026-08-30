@@ -3346,6 +3346,24 @@ the record behind.
   on each side of its loop, the one reading this file bracketed so that
   its own line does not answer it.
 
+### The verbatim files are the standard's copies, byte for byte
+
+- **`.gitattributes` states the union price as section 9 of the
+  standard does** (issue btclib-org/.github#423): the driver is a
+  checkout's and the forge does not apply it, so a pull request whose
+  `CHANGELOG.md` or `RELEASE_NOTES.md` overlaps its base is reported
+  `CONFLICTING` however cleanly the pair merges locally, and a rebase on
+  a checkout is what clears it.
+- **`.markdownlint.jsonc` points at section 14 of the standard for who
+  carries it** (issue btclib-org/.github#316), in place of an
+  enumeration of trees.
+- **`CONTRIBUTING.md`'s shared half is btclib-org/.github's** (issue
+  btclib-org/.github#281): the half is replaced whole rather than each
+  change applied by hand, a hand-written list of them being what comes
+  up short. Among them, *The landing queue* points at `REPOSITORY.md`'s
+  *Plan-gated settings* for the ceiling's figure (issue
+  btclib-org/.github#412).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
