@@ -9,12 +9,12 @@ What is recorded is the settings [section 11 of the repository
 standard](https://github.com/btclib-org/.github/blob/main/README.md#11-github-settings)
 asks about — the ones [section 16's
 checklist](https://github.com/btclib-org/.github/blob/main/README.md#16-checklists)
-sets on a new repository, and the ones a section of that file states a
-rule for — together with whatever a call quoted for one of those answers
-alongside it. The perimeter is section 11's rather than this file's, so a
-setting inside it that no section below reads back is a gap rather than a
-decision, and *What this file passes over* at the foot is what falls
-outside it.
+sets on a new repository, the ones a section of the standard states a
+rule for, and the ones a behaviour it describes rests on — together with
+whatever a call quoted for one of those answers alongside it. The
+perimeter is section 11's rather than this file's, so a setting inside
+it that no section below reads back is a gap rather than a decision, and
+*What this file passes over* at the foot is what falls outside it.
 
 ## Required checks on main
 
@@ -112,9 +112,16 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 #  "force":false,"linear":true,"reviews":1}
 ```
 
-`main` is the only branch, and no change reaches it except through a pull
-request — no exception, and no push. `main-integrity` and
-`main-self-merge` carry that beside the classic protection above, rules
+`main` is the repository's default branch and its only one:
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks --jq '.default_branch'
+# main
+```
+
+No change reaches it except through a pull request — no exception, and
+no push. `main-integrity` and `main-self-merge` carry that beside the
+classic protection above, rules
 aggregating across rulesets and the most restrictive combination winning
 wherever they overlap — `tag-integrity`, described further down, targets
 tags rather than `main`, so the command below lists it too without it
@@ -190,9 +197,12 @@ exists instead of asking the forge to write one.
 gh api repos/btclib-org/btclib-benchmarks \
   --jq '{squash: .allow_squash_merge, merge: .allow_merge_commit,
          rebase: .allow_rebase_merge, auto: .allow_auto_merge,
-         delete_on_merge: .delete_branch_on_merge}'
-# {"auto":true,"delete_on_merge":true,"merge":false,"rebase":false,
-#  "squash":true}
+         delete_on_merge: .delete_branch_on_merge,
+         title: .squash_merge_commit_title,
+         message: .squash_merge_commit_message}'
+# {"auto":true,"delete_on_merge":true,"merge":false,
+#  "message":"COMMIT_MESSAGES","rebase":false,"squash":true,
+#  "title":"COMMIT_OR_PR_TITLE"}
 ```
 
 Squash only, which is what `required_linear_history` above already
@@ -201,25 +211,34 @@ commit on `main`. The ruleset names the same one, so the constraint
 holds even if this setting is flipped. Auto-merge is what presses it,
 once the review and the checks are in.
 
+`COMMIT_OR_PR_TITLE` with `COMMIT_MESSAGES` is the pair section 11 asks
+for: a single-commit branch lands under its own subject and a longer one
+under the pull request's title, with the branch's commit messages as the
+body — never the pull request's description, which `PR_BODY` would take
+with nothing here to show the flip.
+
 `delete_branch_on_merge` deletes the head branch of a pull request
 merged *through* the pull request, and every landing here is one, so it
 fires on its own and there is nothing to delete by hand. A branch still
 standing is a pull request that was closed rather than merged.
 
-## Features that are off
+## Features
 
 ```shell
 gh api repos/btclib-org/btclib-benchmarks \
-  --jq '{wiki: .has_wiki, projects: .has_projects, issues: .has_issues}'
-# {"issues":true,"projects":false,"wiki":false}
+  --jq '{issues: .has_issues, visibility: .visibility}'
+# {"issues":true,"visibility":"public"}
 ```
 
-A wiki is a second place for documentation to go stale, and this
-repository's documentation is in the tree beside what it describes.
-Issues stay on: they are where a benchmark that has stopped measuring
+Issues are on: they are where a benchmark that has stopped measuring
 what it claims gets reported, and where a finding noticed while writing or
 reviewing a pull request is parked so that the pull request stays one
-subject.
+subject. `CONTRIBUTING.md`'s *The issue tracker* rests on the setting.
+
+Public is the half of section 10's `scorecard` bar a copy reads back,
+and this tree runs no `scorecard` sentinel: *What is not configured,
+and why* below is that decision, and the answer above is what keeps it
+a decision rather than an impediment.
 
 ## Topics
 
@@ -393,22 +412,29 @@ gh api repos/btclib-org/btclib-benchmarks/code-scanning/alerts \
   --jq 'length'
 ```
 
-## The concurrent-job ceiling
+## Plan-gated settings
+
+The ceiling on concurrent jobs is a number the plan decides rather than
+anything this repository configures, and this section is its one home
+in the tree:
 
 ```shell
 gh api orgs/btclib-org --jq '{plan: .plan.name}'
 # {"plan":"free"}
 ```
 
-Twenty concurrent jobs is what GitHub's documented usage limits give
-that plan, and they belong to the organization rather than to this
+[GitHub's own table](https://docs.github.com/en/actions/reference/limits)
+turns that answer into a number, twenty concurrent jobs on the free
+plan, and they belong to the organization rather than to this
 repository: every repository in it draws on the same twenty. So a matrix
 on every commit here is a slot a reviewer in a sibling repository waits
 behind, which is the whole argument for a merge that waits on one cell
 and a sweep that runs weekly
 ([btclib-org/.github#85](https://github.com/btclib-org/.github/issues/85)).
 Every workflow and document that spends against the ceiling points here
-rather than repeating the number.
+rather than repeating the number. The other plan-gated pair, secret
+scanning's non-provider patterns and validity checks, is read back under
+*Security and analysis* above.
 
 ## What is not configured, and why
 
@@ -417,6 +443,9 @@ rather than repeating the number.
   dependency group exists so that `check-sdist`, `pyroma` and `twine`
   can still inspect the distribution and its metadata, which is a lint
   of the packaging rather than a step toward a release.
+- **No GitHub Pages.** `gh api repos/btclib-org/btclib-benchmarks/pages`
+  answers `404`: the pages under `results/` are read in the tree, and
+  nothing deploys a site from it.
 - **No Read the Docs.** `.readthedocs.yaml` is present and the `docs`
   group builds, so the sphinx gate is runnable, but no service is
   subscribed to this repository.
@@ -430,15 +459,9 @@ rather than repeating the number.
   supply-chain posture formed outside the organization, and a reading
   nobody displays is not worth the run
   ([btclib-org/.github#490](https://github.com/btclib-org/.github/issues/490)).
-  The bar the sentinel asks -- public, and not a fork -- is cleared
-  here, so the absence is a decision rather than an impediment:
-
-  ```shell
-  gh api repos/btclib-org/btclib-benchmarks --jq '.private, .fork'
-  # false
-  # false
-  ```
-
+  The half of the bar a copy reads back, `.visibility` under *Features*
+  above, answers `public`, so the absence is a decision rather than an
+  impediment.
 - **No `windows.yml`, where the other repositories have one.** Two
   comparands cannot be installed on a Windows runner at all, so every
   cell of that matrix would be red on `uv sync` and the workflow could
@@ -496,6 +519,11 @@ the standard does state a rule about, and a field this file does quote
 in a `--jq` object, the bracket in the second keeping that line from
 matching itself. Recording a field on no rule grows this file with
 GitHub's API rather than with the standard.
+
+`has_wiki` and `has_projects` are outside the perimeter by section 11's
+own sentence, which states no rule about either, so this file neither
+reads them back nor explains an answer to them; that sentence is what
+the loop above would count, which is why the pair is not in its list.
 
 **A credential this repository does not hold.** `claude-review.yml` reads
 `secrets.CLAUDE_CODE_OAUTH_TOKEN` and `vars.CLAUDE_REVIEW_ENABLED`, and

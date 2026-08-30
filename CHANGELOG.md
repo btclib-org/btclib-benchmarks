@@ -3399,6 +3399,35 @@ the record behind.
   being what gives it one; the unqualified badge rendered a
   `pull_request` run of a feature branch there.
 
+### `REPOSITORY.md`'s perimeter is section 11's
+
+- **The scope statement carries section 11's three limbs in the
+  standard's own words** (issue btclib-org/.github#582), the third --
+  the settings a behaviour the standard describes rests on -- being what
+  admits `.visibility` beside `has_issues`.
+- **`has_wiki` and `has_projects` leave the file** (issue
+  btclib-org/.github#550): section 11 puts both outside the perimeter,
+  so *Features that are off* becomes *Features*, reading back
+  `has_issues` and `.visibility`, and the reason a wiki was off goes
+  with the read-back.
+- **`.visibility` replaces `.private`, and `.fork` is not read back**
+  (issue btclib-org/.github#584): nothing sets `.fork`, and section 10
+  states that half of the `scorecard` bar once; the *No `scorecard.yml`*
+  bullet points at *Features* for the half a copy records.
+- **`squash_merge_commit_title` and `squash_merge_commit_message` are
+  read back with the other merge settings** (closes
+  btclib-org/.github#568), with the pair section 11 asks for beside the
+  answer.
+- **`.default_branch` and the absence of a Pages site are read back**
+  (issue btclib-org/.github#549), the first under *Branch protection*
+  and the second as a bullet of *What is not configured, and why*.
+- **The ceiling's section takes the standard's heading, *Plan-gated
+  settings*, and GitHub's table sits beside the plan command** (issue
+  btclib-org/.github#569, issue btclib-org/.github#412): section 10
+  names that heading as the figure's one home, and `CONTRIBUTING.md`'s
+  shared half already pointed at it. Secret scanning's two plan-gated
+  settings stay under *Security and analysis*, with a pointer.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
