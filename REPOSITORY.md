@@ -534,14 +534,28 @@ repository's:
 gh api repos/btclib-org/btclib-benchmarks/actions/secrets \
   --jq '.total_count'
 # 0
+gh api repos/btclib-org/btclib-benchmarks/actions/variables \
+  --jq '.total_count'
+# 0
 gh api orgs/btclib-org/actions/secrets \
   --jq '.secrets[] | "\(.name) \(.visibility)"'
 # CLAUDE_CODE_OAUTH_TOKEN all
+gh api orgs/btclib-org/actions/variables --jq '.variables[].name'
+# (nothing)
+gh api orgs/btclib-org/actions/variables --jq '.total_count'
+# 0
 ```
 
-The organization's store answering with a name is what makes the zero
-above it an absence rather than an endpoint that answers empty for
-everyone.
+The organization's secret store answering with a name is what makes this
+repository's two zeros an absence rather than an endpoint that answers
+empty for everyone. The variable store prints nothing at all when it
+answers, so its own `total_count` of `0` is what shows the call reached
+it: one that does not reach it prints an error and exits non-zero.
+Section 11 reads that empty name list as `vars.CLAUDE_REVIEW_ENABLED`'s
+off state, an undefined `vars.X` being the empty string. Both stores are
+read because a variable set here would take precedence over one of the
+same name set on the organization, so the organization's answer alone
+would not show the switch off for this tree.
 
 **A facility nothing here uses.** Environments, self-hosted runners,
 webhooks, deploy keys, autolinks and custom property values each answer

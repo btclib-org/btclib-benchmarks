@@ -3477,6 +3477,19 @@ the record behind.
   an entry arriving at one shared anchor rather than a bullet appended
   to one of a few changelog groups** (issue btclib-org/.github#646).
 
+### `REPOSITORY.md` reads back both of the variable stores it names
+
+- **The credential bullet named `secrets.CLAUDE_CODE_OAUTH_TOKEN` and
+  the `vars.CLAUDE_REVIEW_ENABLED` switch and read back only the two
+  secret stores.** It now reads this repository's variable store and the
+  organization's, the second with the `total_count` beside it that shows
+  an empty name list is section 11's off state for the switch rather
+  than a call that never reached the store: one that does not reach it
+  prints an error and exits non-zero. A variable set here would take
+  precedence over one of the same name on the organization, so both
+  answers are what shows the switch off
+  (closes btclib-org/.github#633).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
