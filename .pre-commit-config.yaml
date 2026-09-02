@@ -697,7 +697,7 @@ repos:
     # above is exactly this failure mode, pyroma included. What a beta
     # of the packaging checker would gate is the release workflow, on a
     # judgement its own author has not settled yet
-    rev: "5.1b1"
+    rev: "5.0.1"
     hooks:
       - id: pyroma
         # the backend, in pyroma's own environment, because pyroma builds
