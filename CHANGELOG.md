@@ -3457,6 +3457,19 @@ the record behind.
   `dependency-groups`' `check` and at mypy's `enable_error_code` name
   theirs.
 
+### The *Topics* reason names the `[project]` table
+
+- **`REPOSITORY.md`'s *Topics* gave this `pyproject.toml`'s
+  `[build-system]` as why `topics_test.py` holds this repository to the
+  topics/`keywords` comparison** (closes btclib-org/.github#665). The
+  clause names the `[project]` table instead: that is what `keyworded`
+  selects on, and section 3 of the organization standard states it under
+  its own heading -- the rule turns on that table and not on the index.
+  Both keys are declared here, so it was the reason and not the
+  conclusion that was wrong, and a reader carrying it to a tree with a
+  `[project]` table and no build backend exempts a repository the suite
+  asks the same question of.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
