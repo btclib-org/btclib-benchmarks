@@ -3443,6 +3443,40 @@ the record behind.
   API instead, once lychee holds the workflow's token, and
   btclib-org/.github#630 is where that is weighed.
 
+### The `undocumented-public-init` comment gave the class as the place
+
+- **`pyproject.toml`'s `ignore` comment said `__init__` is documented by
+  its class** (closes btclib-org/.github#662), where section 5 of the
+  organization standard puts the constructor's documentation in
+  `__init__`'s own docstring, after PEP 257. The comment now gives that
+  section's reason for the entry: the rule checks that a docstring
+  exists and never that it says anything, so declining it declines the
+  presence check and never the documentation -- an argument's meaning, a
+  raised exception, an invariant the constructor establishes still has
+  nowhere else to go. It names the section, as the comments at
+  `dependency-groups`' `check` and at mypy's `enable_error_code` name
+  theirs.
+
+### The *Topics* reason names the `[project]` table
+
+- **`REPOSITORY.md`'s *Topics* gave this `pyproject.toml`'s
+  `[build-system]` as why `topics_test.py` holds this repository to the
+  topics/`keywords` comparison** (closes btclib-org/.github#665). The
+  clause names the `[project]` table instead: that is what `keyworded`
+  selects on, and section 3 of the organization standard states it under
+  its own heading -- the rule turns on that table and not on the index.
+  Both keys are declared here, so it was the reason and not the
+  conclusion that was wrong, and a reader carrying it to a tree with a
+  `[project]` table and no build backend exempts a repository the suite
+  asks the same question of.
+
+### `.gitattributes`'s comment names the driver's sides and one anchor
+
+- **The comment keeps `ours` first and `theirs` second, names which side
+  each of a merge and a rebase calls `ours`, and premises the driver on
+  an entry arriving at one shared anchor rather than a bullet appended
+  to one of a few changelog groups** (issue btclib-org/.github#646).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

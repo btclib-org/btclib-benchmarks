@@ -528,8 +528,17 @@ ignore = [
     # list enforce exactly that. The convention leaves these two
     # enabled -- it is not what silences them, ignoring them is -- for
     # every dunder and every constructor still to be written and not
-    # only the ones already in the tree: __init__ is documented by its
-    # class, and a magic method by the data model it implements
+    # only the ones already in the tree. A magic method is documented
+    # by the data model it implements. `undocumented-public-init` is
+    # declined for a different reason: it checks that a docstring
+    # exists, never that it says anything, and the cheapest line
+    # satisfying it restates what the constructor's own annotations and
+    # strict mypy already carry. PEP 257 puts the constructor's
+    # documentation in `__init__`'s own docstring, so declining the
+    # rule declines that presence check and never the documentation --
+    # an argument's meaning, a raised exception, an invariant the
+    # constructor establishes still has nowhere else to go. Section 5
+    # of btclib-org/.github gives the reason
     "undocumented-magic-method",
     "undocumented-public-init",
     # code length is enforced by the formatter, which reflows to its 88
