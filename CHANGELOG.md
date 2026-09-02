@@ -3443,6 +3443,20 @@ the record behind.
   API instead, once lychee holds the workflow's token, and
   btclib-org/.github#630 is where that is weighed.
 
+### The `undocumented-public-init` comment gave the class as the place
+
+- **`pyproject.toml`'s `ignore` comment said `__init__` is documented by
+  its class** (closes btclib-org/.github#662), where section 5 of the
+  organization standard puts the constructor's documentation in
+  `__init__`'s own docstring, after PEP 257. The comment now gives that
+  section's reason for the entry: the rule checks that a docstring
+  exists and never that it says anything, so declining it declines the
+  presence check and never the documentation -- an argument's meaning, a
+  raised exception, an invariant the constructor establishes still has
+  nowhere else to go. It names the section, as the comments at
+  `dependency-groups`' `check` and at mypy's `enable_error_code` name
+  theirs.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
