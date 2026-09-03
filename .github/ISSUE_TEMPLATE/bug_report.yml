@@ -1,0 +1,95 @@
+---
+name: Bug report
+description: A script, a page or the package does not do what it says
+labels: [bug]
+
+body:
+  - type: markdown
+    attributes:
+      value: >
+        What is reported here is a benchmark that has stopped measuring
+        what its label says: a row whose backend is not the one it names,
+        a script that fails or whose cross-comparand assertions no longer
+        hold, a page whose numbers no longer come from the run beside it.
+        A defect in one of the packages timed here belongs to that
+        project, and a defect in
+        [btclib](https://github.com/btclib-org/btclib/issues) or
+        [btclib-secp256k1](https://github.com/btclib-org/btclib-secp256k1/issues)
+        to theirs. If in doubt, report it here.
+
+
+        A timing that differs from a published table is not by itself a
+        defect: a timing is a property of the machine, which is why
+        nothing here asserts one and why every page states the machine it
+        was taken on.
+
+  - type: input
+    id: subject
+    attributes:
+      label: Which script or page
+      description: The path from the repository root.
+      placeholder: "scripts/03-libraries.py, or results/03-libraries.md"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What you observed, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce it
+      description: >
+        The commands, in order, from a state somebody else can reach, and
+        the whole of what they print where there is a traceback.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: header
+    attributes:
+      label: The run header
+      description: >
+        Every script prints each package's version and where it was
+        imported from before any number, and a table without that block
+        cannot be checked. `uv run python scripts/artifacts.py` says
+        which artifact each install resolved to, which is the half a
+        version cannot say.
+      render: text
+
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: >
+        `git rev-parse --short HEAD`. Nothing here is published to an
+        index, so a commit is what dates a report.
+      placeholder: "c8ed2b4"
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and interpreter
+      description: >
+        `python -VV` and the operating system, architecture included. A
+        comparand that compiles its own libsecp256k1 answers differently
+        on each.
+      placeholder: "CPython 3.13.5, macOS 15.6 arm64"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: >
+        The specification or vector the behaviour disagrees with, and the
+        commit this last worked on.

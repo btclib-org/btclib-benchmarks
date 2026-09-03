@@ -1,0 +1,63 @@
+---
+name: Feature request
+description: Add a benchmark, a row or a comparand, or change how one is measured
+labels: [enhancement]
+
+body:
+  - type: markdown
+    attributes:
+      value: >
+        These tables compare btclib and btclib-secp256k1 with the
+        packages they are usefully compared with, so what belongs here is
+        an operation or a comparand the pages do not cover yet. What
+        bounds it is what a comparand publishes, which `README.md`'s
+        opening states: a package that will not install beside the others
+        on the interpreter the pages are taken on has no row.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What is missing
+      description: >
+        The operation, and which packages would have a row for it.
+    validations:
+      required: true
+
+  - type: input
+    id: package
+    attributes:
+      label: Where a new comparand is published
+      description: >
+        The index page or the repository, where the request adds a
+        package rather than a row to a table that exists.
+      placeholder: "https://pypi.org/project/coincurve/"
+
+  - type: textarea
+    id: agreement
+    attributes:
+      label: What fixes the answer
+      description: >
+        A row asserts before it times, against a published test vector
+        where one exists and against the other comparands where none
+        does. Name the vector, or say that the cross-comparand check is
+        all there is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it belongs here
+      description: >
+        What the pages do not already answer, and what a reader would
+        decide with it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: >
+        Another way of measuring the same thing, and what a row already
+        published would have to change.
