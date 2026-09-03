@@ -3517,6 +3517,20 @@ the record behind.
   own, and the links beside the forms send a defect in `btclib` or in the
   bindings to the tree it is written in.
 
+### CLAUDE.md's `git worktree add` line ends in its placeholder
+
+- **`-b <branch>` sits after the path and the commit-ish** (closes
+  btclib-org/.github#687): a paste made before the placeholders are
+  filled in reaches the shell with `<branch>` as a pair of redirections,
+  and with the flag ahead of the path the `>` takes `"$WT"` as its
+  target. In a reader's directory holding a file named `branch` the `<`
+  succeeds and the line runs, and removing the worktree is part of
+  finishing, so that path ordinarily has no directory at it for the `>`
+  to fail on: the paste writes a file there, which the next
+  `git worktree add` refuses. With the placeholder last the `>` has
+  nothing to open, which is section 9 of the standard's *A bare
+  placeholder goes at the end of its command*.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
