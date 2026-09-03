@@ -235,7 +235,14 @@ jobs:
           # second -- where awk's field separator is POSIX. Which is also
           # why the count below is an awk filter piped to `wc` rather than
           # `grep -c`
-          bad=$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 != "success" && $1 != "unfinished"')
+          # `skipped` is a conclusion this accepts, and section 10 of
+          # the organization standard is where that sits: it asks for a
+          # step failing on anything but `success` and `skipped`, and
+          # names what produces the second -- a run superseded by its
+          # concurrency group, and a `changes` job that found the diff
+          # touches nothing those jobs read
+          bad=$(printf '%s\n' "${jobs}" |
+            awk -F'\t' '$1 != "success" && $1 != "skipped" && $1 != "unfinished"')
           unfinished=$(printf '%s\n' "${jobs}" |
             awk -F'\t' '$1 == "unfinished"' | wc -l | tr -d ' ')
           # both are reported before exiting rather than the first one

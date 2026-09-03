@@ -3546,6 +3546,26 @@ the record behind.
   beside the command they describe; `docs.yml`'s comment was about the
   flag alone, so it goes rather than being rewritten.
 
+### `skipped` is a conclusion both aggregates accept
+
+- **`test.yml`'s and `codeql.yml`'s aggregates read the run's job
+  listing, and refused every conclusion in it but `success`** (closes
+  btclib-org/.github#478): section 10 of the organization standard asks
+  for a step failing on anything but `success` and `skipped`, and names
+  what produces the second -- a run superseded by its concurrency group,
+  and a `changes` job that found the diff touches nothing those jobs
+  read. `cancelled` and `failure` stay refused.
+- **No run here produces a `skipped` row for the filter to meet.**
+  Neither workflow has a `changes` job, and the `coverage` and `analyze`
+  jobs carry the draft and closed conditions of the aggregate that waits
+  on them, so a skip takes that aggregate with it rather than reaching
+  its listing. What the filter refused is a conclusion the standard asks
+  it to accept, whether or not a run here has produced one.
+- **`REPOSITORY.md`'s *Required checks on main* described the gate as
+  demanding `success` of every job the run reports.** The paragraph names
+  both conclusions, and points at section 10 for the cases `skipped` is
+  legitimate on.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

@@ -27,15 +27,17 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 ```
 
 `test: every job passed` is an aggregate rather than a matrix cell.
-`test.yml`'s `test-passed` job runs last and demands `success` of every
-job the run reports, `!cancelled()` in its `if:` being what makes a red
-cell reach it rather than leave it unreported -- while a cancellation of
-the run itself, superseded by a newer push under the workflow's
-concurrency group, skips the gate instead of reaching it, a skip
-satisfying this required check the same as a pass. Naming the aggregate
-means `test.yml` can gain or lose a job without anyone editing branch
-protection; naming its jobs would mean this list going stale the first
-time it changed.
+`test.yml`'s `test-passed` job runs last and demands `success` or
+`skipped` of every job the run reports, `!cancelled()` in its `if:`
+being what makes a red cell reach it rather than leave it unreported --
+while a cancellation of the run itself, superseded by a newer push under
+the workflow's concurrency group, skips the gate instead of reaching it,
+a skip satisfying this required check the same as a pass. A `skipped`
+row is a job the run declined to start rather than one that did not
+pass, and section 10 of the standard is where the cases it is legitimate
+on are named. Naming the aggregate means `test.yml` can gain or lose a
+job without anyone editing branch protection; naming its jobs would mean
+this list going stale the first time it changed.
 
 What it judges is therefore not what `needs` waits for, and the two sets
 coincide only for as long as `test-passed` is the workflow's only other
