@@ -527,6 +527,29 @@ own sentence, which states no rule about either, so this file neither
 reads them back nor explains an answer to them; that sentence is what
 the loop above would count, which is why the pair is not in its list.
 
+**A field the standard scopes to a releasing tree.** `.homepage` is the
+*About* link on this repository's page and `pyproject.toml`'s
+`[project.urls] homepage` is the same URL, so what is checkable here is
+that the two surfaces still agree:
+
+```shell
+diff <(gh api repos/btclib-org/btclib-benchmarks --jq '.homepage') \
+     <(sed -n '/^\[project.urls\]/,/^\[/p' pyproject.toml \
+       | sed -n 's/^homepage = "\(.*\)"$/\1/p')
+```
+
+The diff above is empty. Which URL it is, and why it is the
+organization site rather than something of this tree's, is at that key
+in `pyproject.toml` and nowhere here: no limb of the scope at the top
+reaches the field in a tree that releases nothing, so this file holds it
+to no value. Section 3 of the standard states its rule of "a releasing
+tree's `homepage`" and says of a tree that releases nothing that it
+"publishes no URL that outlives a correction, so this asks it nothing";
+section 16's checklist sets the field "where the tree releases"; and
+section 11 calls it "a releasing tree's" where it names what a copy
+records that has another form in the tree. *What is not configured, and
+why* above is this repository's answer to releasing.
+
 **A credential this repository does not hold.** `claude-review.yml` reads
 `secrets.CLAUDE_CODE_OAUTH_TOKEN` and `vars.CLAUDE_REVIEW_ENABLED`, and
 section 11 of the standard makes both the organization's rather than each

@@ -3577,6 +3577,23 @@ the record behind.
   `sphinx-build -W -n -b html docs/source docs/build/html`, with and
   without the link present in a root file the documentation renders.
 
+### `homepage` says why it is the organization site
+
+- **`pyproject.toml`'s `[project.urls] homepage` and the repository's
+  `.homepage` both name `https://btclib.org`, and the reason for that is
+  at the key** (closes btclib-org/.github#649). This tree publishes no
+  documentation of its own -- no Read the Docs project is subscribed to
+  it and no Pages site is deployed from it -- so there is no site of its
+  own for the field to name, and section 3 of the organization standard
+  asks a releasing tree's `homepage` to be its own documentation site
+  and asks nothing of a tree that releases nothing.
+- **`REPOSITORY.md`'s *What this file passes over* names the field.**
+  Section 11 makes `.homepage` a releasing tree's and section 16's
+  checklist sets it where the tree releases, so no limb of that file's
+  scope reaches it here; the two surfaces are read back there together,
+  which is what makes a disagreement between them one command from being
+  seen.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
