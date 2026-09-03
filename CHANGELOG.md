@@ -3499,6 +3499,24 @@ the record behind.
   whatever `$WT` a session that has already been through it still holds.
   Its own block is the one CLAUDE.md's reader pastes deliberately.
 
+### The new-issue page carries this repository's own forms
+
+- **`.github/ISSUE_TEMPLATE/` carries `bug_report.yml`,
+  `feature_request.yml`, `question.yml` and `config.yml`** (closes
+  btclib-org/.github#632): section 2 of the standard gives `.github/` to
+  every tier and names the directory among what it holds, and section
+  16's checklist gives every repository one. A form the organization
+  serves to a repository keeping none of its own is written without
+  knowing the tree it renders in, where these ask what a report about a
+  measurement here has to carry.
+- **A bug report asks for the block a script prints before its numbers,
+  and for the machine** (closes btclib-org/.github#632): a timing is a
+  property of the machine, so what makes a report checkable is each
+  package's version and where it was imported from, beside the platform
+  and the commit. Blank issues are off, a question having a form of its
+  own, and the links beside the forms send a defect in `btclib` or in the
+  bindings to the tree it is written in.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

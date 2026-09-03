@@ -1,0 +1,42 @@
+---
+# The new-issue page of this repository. The forms beside this file are
+# the kinds of issue this tree takes; the links below are for what has a
+# better address than any of them.
+#
+# Blank issues are off: a question has a form of its own here, which is
+# what a blank box would otherwise be the only home for.
+#
+# A `contact_links` url is absolute -- the schema for this file admits
+# only `^https?://` -- so each names one address and none of them
+# resolves against this tree. The packages these tables time are many
+# and each has a tracker of its own, so where a report belongs to one of
+# them the bug form says so rather than a link here naming a few.
+blank_issues_enabled: false
+contact_links:
+  # first, because a vulnerability is the one report that must not be
+  # filed as an issue at all
+  - name: Security vulnerability
+    url: https://github.com/btclib-org/btclib-benchmarks/security/advisories/new
+    about: >
+      Never a public issue. This opens a private advisory, visible to
+      the maintainers alone; the policy on the Security tab, which this
+      repository inherits from the organization, gives an email address
+      for anyone who would rather not use it.
+  - name: Bug in btclib itself
+    url: https://github.com/btclib-org/btclib/issues
+    about: >
+      The library these tables exist to publish is measured here and
+      written there, so a defect in what a row calls is reported there.
+  - name: Bug in the libsecp256k1 bindings
+    url: https://github.com/btclib-org/btclib-secp256k1/issues
+    about: >
+      Every row through the C library goes via the bindings, so which
+      one is installed is part of the report and a defect in it is
+      theirs.
+  - name: An issue the standard owns, or that spans repositories
+    url: https://github.com/btclib-org/.github/issues
+    about: >
+      Where an issue is filed is CONTRIBUTING.md's *The issue tracker*,
+      the same file in every repository of the organization: what the
+      standard decides, or what no single tree can answer, is filed
+      there rather than where it was noticed.

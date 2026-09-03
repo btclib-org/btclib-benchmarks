@@ -1,0 +1,32 @@
+---
+name: Question
+description: Ask what a table measures, or why it is measured that way
+labels: [question]
+
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Discussions are not enabled here, so a question is an issue: this
+        form is what keeps one from having to be filed as a bug. Each
+        page under `results/` defines the columns it prints, in the prose
+        beside its tables, and `CONTRIBUTING.md`'s *Running a benchmark*
+        says what a run does and does not measure.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: The question
+      description: >
+        What you are trying to find out, and what you have already read
+        or run. A row and the number it prints is a sharper question than
+        a description of either.
+    validations:
+      required: true
+
+  - type: input
+    id: subject
+    attributes:
+      label: Which script or page, where it is about one
+      description: The path from the repository root.
+      placeholder: "results/02-btclib-vs-btclib.md"
