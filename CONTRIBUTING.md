@@ -253,7 +253,7 @@ The gates are three commands, and CI runs exactly them:
 uv run pytest                      # the suite, gated at 100% coverage
 uv run pre-commit run --all-files  # every lint hook, which is what CI runs
 uv run --locked --only-group docs \
-  sphinx-build -W --keep-going -n -b html docs/source docs/build/html
+  sphinx-build -W -n -b html docs/source docs/build/html
 ```
 
 The documentation build is the one a contributor used to meet by having
@@ -265,8 +265,8 @@ on -- a `:class:` or `:func:` role naming something that does not exist
 -- which nothing under `docs/source` writes today, so the flag is ahead
 of the content that will exercise it rather than catching anything here
 yet; `btclib-org/.github`'s README.md "The documentation" has the
-reason it is on regardless. `--keep-going` is what makes the first one
-not also be the only one reported.
+reason it is on regardless. `-W` fails at the end of the build rather
+than at the first warning, so one broken page does not hide the next.
 
 A fixture that is a key or a signature trips detect-secrets, correctly: it
 cannot tell a private key published in a BIP from a credential. Record the
