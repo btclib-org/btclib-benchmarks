@@ -64,12 +64,12 @@ build:
   # correct while no page imports anything; the day one does, this line
   # grows the install rather than the whole project's being restored.
   # -n turns an unresolved sphinx-domain cross-reference into a warning
-  # and -W turns that warning, like every other, into an error;
-  # --keep-going comes first so one broken page reports every other
-  # problem in the same run instead of one per push
+  # and -W turns that warning, like every other, into an error; the
+  # build fails at its end rather than at the first warning, so one
+  # broken page does not hide the next
   commands:
     - pip install uv
     - uv sync --locked --only-group docs
     - >-
       uv run --locked --only-group docs
-      sphinx-build -W --keep-going -n -b html docs/source $READTHEDOCS_OUTPUT/html
+      sphinx-build -W -n -b html docs/source $READTHEDOCS_OUTPUT/html

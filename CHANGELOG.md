@@ -3531,6 +3531,21 @@ the record behind.
   nothing to open, which is section 9 of the standard's *A bare
   placeholder goes at the end of its command*.
 
+### The documentation build passes `-W -n`
+
+- **`--keep-going` is not passed** (closes btclib-org/.github#347):
+  sphinx accepts the flag and reads it nowhere, and section 2 of the
+  organization standard carries the measurement and the rule.
+  `.github/workflows/docs.yml`, `.readthedocs.yaml` and the gate command
+  under `CONTRIBUTING.md`'s *This repository in particular* each spell
+  the build, and none of them passes it.
+- **`-W` is what the prose credits for one broken page not hiding the
+  next** (closes btclib-org/.github#347): it reports every warning a
+  build raises and fails at the end of it. The comment in
+  `.readthedocs.yaml` and the paragraph under the gate commands say so
+  beside the command they describe; `docs.yml`'s comment was about the
+  flag alone, so it goes rather than being rewritten.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

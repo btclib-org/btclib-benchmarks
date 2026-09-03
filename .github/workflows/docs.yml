@@ -82,10 +82,7 @@ jobs:
       # a bare title, which is this job's whole reason to exist -- and
       # installing btclib for that day is this line's to grow, not the
       # whole project's install to restore.
-      #
-      # --keep-going first, so one broken page reports every other
-      # problem in the same run instead of one per push
       - name: Build the documentation
         run: >-
           uv run --locked --only-group docs
-          sphinx-build -W --keep-going -n -b html docs/source docs/build/html
+          sphinx-build -W -n -b html docs/source docs/build/html
