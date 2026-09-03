@@ -247,11 +247,12 @@ so a C toolchain has to be present — `pkg-config` for the first two, and
 sdist and runs libsecp256k1's `autogen.sh`. `secp256k1lab` comes from a
 git tag, having no release on any index.
 
-The gates are three commands, and CI runs exactly them:
+The gates are three commands, and CI runs exactly them: the suite,
+gated at 100% coverage; every lint hook; and the documentation build.
 
 ```shell
-uv run pytest                      # the suite, gated at 100% coverage
-uv run pre-commit run --all-files  # every lint hook, which is what CI runs
+uv run pytest
+uv run pre-commit run --all-files
 uv run --locked --only-group docs \
   sphinx-build -W -n -b html docs/source docs/build/html
 ```
@@ -475,12 +476,14 @@ The header then says `editable: /path/to/btclib` where it otherwise says
 A run writes `results/<name>.json` as it finishes: every number, the
 packages block, and what the run block states — the clock, the
 interpreter, the machine, the method. Nothing about the page is decided
-there.
+there. With no argument every page renders from its own run; naming one
+page renders only that one; `--check` names what is stale and writes
+nothing.
 
 ```shell
-uv run python scripts/render.py               # every page, from its run
-uv run python scripts/render.py 05-key-reuse  # one of them
-uv run python scripts/render.py --check       # name what is stale, write none
+uv run python scripts/render.py
+uv run python scripts/render.py 05-key-reuse
+uv run python scripts/render.py --check
 ```
 
 `render.py` puts the numbers, the packages block and the run block into
@@ -498,8 +501,10 @@ runs every cross-comparand assertion before it will answer anything.
 
 ### Which artifact an install resolved to, which is a third command
 
+One line per comparand:
+
 ```shell
-uv run python scripts/artifacts.py    # one line per comparand
+uv run python scripts/artifacts.py
 ```
 
 A page's provenance block says what version was measured and whether it

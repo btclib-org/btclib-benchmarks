@@ -3594,6 +3594,30 @@ the record behind.
   which is what makes a disagreement between them one command from being
   seen.
 
+### Section 9's trailing-comment and bare-placeholder rules land here too
+
+- **`CLAUDE.md`, `CONTRIBUTING.md` and `REPOSITORY.md`'s trailing `#`
+  comments on a command line inside a `shell` fence move above the
+  fence as prose, or onto a line of their own where they only annotate
+  the command's output** — section 9's rule, following
+  `btclib-org/.github`'s own sweep, `55cd016` (issue
+  btclib-org/.github#771).
+- **`CLAUDE.md`'s `WT=` line carried the trailing example, and its
+  role was to give the line's otherwise-dangling final `>` a word to
+  close on.** `INTERACTIVE_COMMENTS` unset, an interactive `zsh` reads
+  a trailing `#` comment as ordinary words rather than starting one, so
+  the example turns a line that would parse-error into one that parses
+  and runs every redirection in it in order — and the redirection right
+  after `<scratchpad>` closes is what writes at `/wt-`, the root of the
+  filesystem, before the paste ever reaches a placeholder to fill in
+  (issue btclib-org/.github#786).
+- **`REVIEWING.md`'s two placeholders — the `gh issue list --search`
+  argument and `gh issue create`'s `--title` and `--body` — go bare,
+  matching `btclib-org/.github`'s own copy.** Quoted, a paste made
+  before the finding is written runs `gh issue create` with the
+  placeholder itself as the title, `--body` supplied leaving it nothing
+  to prompt for (issue btclib-org/.github#772).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
