@@ -258,7 +258,14 @@ jobs:
           # awk and not grep: a tab in a grep pattern is one
           # implementation's extension and a literal "t" in another's,
           # where awk's field separator is POSIX
-          bad=$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 != "success" && $1 != "unfinished"')
+          # `skipped` is a conclusion this accepts, and section 10 of
+          # the organization standard is where that sits: it asks for a
+          # step failing on anything but `success` and `skipped`, and
+          # names what produces the second -- a run superseded by its
+          # concurrency group, and a `changes` job that found the diff
+          # touches nothing those jobs read
+          bad=$(printf '%s\n' "${jobs}" |
+            awk -F'\t' '$1 != "success" && $1 != "skipped" && $1 != "unfinished"')
           unfinished=$(printf '%s\n' "${jobs}" |
             awk -F'\t' '$1 == "unfinished"' | wc -l | tr -d ' ')
           # each annotation names the rows it is about, an annotation
