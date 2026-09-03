@@ -139,6 +139,15 @@ classifiers = [
 ]
 
 [project.urls]
+# the organization site, this tree publishing no documentation of its
+# own -- REPOSITORY.md's *What is not configured, and why* has both
+# halves, under "No Read the Docs" and "No GitHub Pages". Section 3 of
+# the organization standard asks a releasing tree's homepage to be its
+# own documentation site and asks nothing of a tree that releases
+# nothing, which leaves a choice between the site of the organization
+# whose libraries these benchmarks time and this repository -- and the
+# second is what `repository` below carries and what a reader following
+# the *About* link is already looking at
 homepage = "https://btclib.org"
 download = "https://github.com/btclib-org/btclib-benchmarks/releases"
 repository = "https://github.com/btclib-org/btclib-benchmarks"
