@@ -3566,6 +3566,17 @@ the record behind.
   both conclusions, and points at section 10 for the cases `skipped` is
   legitimate on.
 
+### `.pre-commit-config.yaml`'s comment names the build this tree runs
+
+- **The comment quoted `sphinx-build -E -W --keep-going`; this tree's
+  gate is `sphinx-build -W -n`** (closes #261). `.github/workflows/docs.yml`,
+  `.readthedocs.yaml` and `CONTRIBUTING.md`'s gate list all spell the
+  build that way, and the comment does now too.
+- **`[a](./REPOSITORY.md)` still takes that command to exit 1 where the
+  tree without it exits 0.** Measured fresh against
+  `sphinx-build -W -n -b html docs/source docs/build/html`, with and
+  without the link present in a root file the documentation renders.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
