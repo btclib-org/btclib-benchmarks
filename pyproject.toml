@@ -450,7 +450,15 @@ exclude = ["build"]
 # pointing at that same directory -- `_results.py` importing its own package
 # sibling included. Naming `src` here is what tells mypy the two are one
 # package, not two.
-mypy_path = ["scripts", "src"]
+#
+# `tests` is for the import between two test modules: pytest collects
+# this directory rootdir-relative and puts it on `sys.path`, so
+# tests/conftest.py is `conftest` to a test module beside it, and naming
+# the directory here is what makes mypy read the same name. Left out,
+# mypy takes its base from the working directory instead, calls the file
+# `tests.conftest`, and reports the import a test does resolve as
+# unfound.
+mypy_path = ["scripts", "src", "tests"]
 
 # the comparands below ship no py.typed and no stub, so the import is
 # unresolved whether or not the package is installed. ignore_missing_imports

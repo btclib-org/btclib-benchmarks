@@ -3686,6 +3686,33 @@ the record behind.
   names `ghcr.io/astral-sh/uv:0.12.7` today, so the floor is now
   `>=0.12.7` (issue btclib-org/.github#448).
 
+### A selective run is reported and not gated
+
+- **`uv run pytest tests/inputs_test.py` ended in `Required test
+  coverage of 100.0% not reached`: `fail_under` applies to every report
+  coverage writes, so one file was measured against the whole tree's
+  floor.** `tests/conftest.py` gains a `pytest_configure` that hands
+  pytest-cov a threshold of zero where the invocation asked for less
+  than the suite, so the report still prints and nothing fails on the
+  tests that did not run. An explicit `--cov-fail-under` is handed back
+  untouched, that being the caller naming the threshold (closes
+  btclib-org/.github#432).
+- **What counts as asking for less is section 8's set**: `-k`, `-m`,
+  `--deselect`, `--ignore`, `--ignore-glob`, `--lf`, and a path that
+  leaves a `testpaths` entry out. A path at or above `testpaths` is not
+  one of them -- `uv run pytest tests` collects what a bare run
+  collects -- and an `-x` that stops early is outside the set, what
+  cuts that run short being a failure rather than what was asked for.
+- **`tests/conftest_test.py` is what covers the hook**, the run that
+  reaches it with a subset selected being, by construction, not the run
+  that measures that module. It also reads `--cov`'s position in
+  `addopts`: the flag takes an optional value, so as the last token it
+  would swallow the first path of any command line that names one.
+- **`[tool.mypy] mypy_path` gains `tests`**, so that mypy calls
+  tests/conftest.py what pytest calls it. A test module beside it
+  imports `conftest`, which mypy reports as unfound while it takes its
+  base from the working directory instead.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
