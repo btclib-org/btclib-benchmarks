@@ -3651,6 +3651,17 @@ the record behind.
   the paragraph beside it already names that sync and what it costs, so
   the comment has nothing of its own left to say.
 
+### `CLAUDE.md`'s worktree-removal fence refuses an unset `WT`
+
+- **The fence closes on `git worktree remove --force "${WT:?}"`.** It
+  stands in a block of its own, so a paste of it alone is a command, and
+  it runs against whatever `$WT` the shell already holds; the `:?` makes
+  the unset case a failed expansion rather than a removal (issue
+  btclib-org/.github#790).
+- **The paragraph above the fence says what the `:?` is doing there**,
+  which is what section 9 of the repository standard asks for, on the
+  ground that a reader who is not told deletes it.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
