@@ -3637,6 +3637,20 @@ the record behind.
   true of the file `btclib-org/.github` serves and false of a file a
   tree carries, where "this one" names the tree's own.
 
+### `CLAUDE.md`'s worktree fence states the editing and the gates once
+
+- **The whole-line comment `# edit, gate and commit here, then` does not
+  sit between the fence's `cd` line and its `git push`** (closes
+  btclib-org/.github#793): the paragraph above the fence says that the
+  editing, the gates and the commits all happen in the worktree before
+  the push, and section 9's *One fact in one place* argues against
+  stating that fact a second time inside the fence.
+- **The other answer that issue allows — keep both halves and name why —
+  is declined here.** The one respect in which this fence differs from
+  `btclib-org/.github`'s is that `uv sync --locked` runs inside it, and
+  the paragraph beside it already names that sync and what it costs, so
+  the comment has nothing of its own left to say.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
