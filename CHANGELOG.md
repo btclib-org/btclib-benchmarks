@@ -8,6 +8,17 @@ the record behind.
 
 ## v2026.9 (work in progress, not released yet)
 
+### `claude-review.yml`'s fork condition names a repository that is not a fork
+
+- **The comment explaining why the fork condition compares `full_name`
+  rather than `.fork` illustrated the distinction with
+  `btclib-org/bbt`, "itself a fork" -- and no repository of the
+  organization is one, `bbt` included.** The argument the comment makes
+  stands; only the example had stopped being one. The paragraph now
+  reasons from a repository the organization has taken over instead of
+  naming one, and reads back `gh api repos/btclib-org/btclib-benchmarks
+  --jq .fork` as `false` (issue btclib-org/.github#456).
+
 ### Three comments catch up to the tree they describe
 
 - **`tests/conventions_test.py`'s four docstrings argued from an empty
