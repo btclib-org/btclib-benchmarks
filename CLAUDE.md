@@ -127,7 +127,6 @@ push.
 WT=<scratchpad>/wt-<tracker>-<issue>-<repo>-<role>
 git worktree add "$WT" origin/main -b <branch>
 cd "$WT" && uv sync --locked
-# edit, gate and commit here, then
 git push origin HEAD:refs/heads/<branch>
 ```
 
