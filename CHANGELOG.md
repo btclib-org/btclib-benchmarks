@@ -3618,6 +3618,25 @@ the record behind.
   placeholder itself as the title, `--body` supplied leaving it nothing
   to prompt for (issue btclib-org/.github#772).
 
+### This tree carries its own `.github/PULL_REQUEST_TEMPLATE.md`
+
+- **`.github/PULL_REQUEST_TEMPLATE.md` is tracked here rather than
+  inherited from `btclib-org/.github`.** Section 2 of the repository
+  standard names the file among what `.github/` holds and gives that
+  directory to every tier, and an inherited copy is display only: it is
+  in no tree here, so no clone carries it and nothing gates it (closes
+  btclib-org/.github#781).
+- **Its Checks list is the commands `CONTRIBUTING.md` documents** — the
+  suite with its coverage gate, every lint hook, and the documentation
+  build under `-W`, which the inherited copy does not name at all. The
+  `RELEASE_NOTES.md` half of the changelog checkbox goes with it, this
+  tree having no such file and *A version, and no release* saying why.
+- **The inherited copy's closing comment is not in it** — that a
+  repository whose commands differ carries a template of its own, this
+  one being what GitHub shows where there is none. That sentence is
+  true of the file `btclib-org/.github` serves and false of a file a
+  tree carries, where "this one" names the tree's own.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
