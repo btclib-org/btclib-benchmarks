@@ -3673,6 +3673,19 @@ the record behind.
   which is what section 9 of the repository standard asks for, on the
   ground that a reader who is not told deletes it.
 
+### `pyproject.toml`'s uv floor catches up to Dependabot's bundled updater
+
+- **`[tool.uv] required-version` read `>=0.12.1` against a ceiling that
+  has since moved.** Section 1 of the repository standard sets the
+  floor at the ceiling rather than below it -- the newest uv that
+  Dependabot's own bundled uv-ecosystem updater still reads, since that
+  updater runs `uv lock` with exactly the uv it ships and refuses
+  rather than upgrading itself, so a floor above the ceiling would
+  silently stop every lock update it attempts, security ones included.
+  `gh api repos/dependabot/dependabot-core/contents/uv/Dockerfile`
+  names `ghcr.io/astral-sh/uv:0.12.7` today, so the floor is now
+  `>=0.12.7` (issue btclib-org/.github#448).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

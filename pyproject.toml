@@ -180,7 +180,7 @@ dev = [
 [tool.uv]
 # the oldest uv that may read uv.lock -- section 1 has the argument and
 # section 15 the command that measures the ceiling
-required-version = ">=0.12.1"
+required-version = ">=0.12.7"
 
 [tool.uv.sources]
 # the one comparand with no release on any index, pinned to the tag its
