@@ -512,8 +512,10 @@ for f in allow_forking allow_update_branch has_discussions has_downloads \
     "$(printf '%s' "$std" | grep -c "$f")" "$(grep -c "\.$f" REPOSITORY.md)"
 done
 # every line reads "<field> 0 0"
-printf '%s' "$std" | grep -c squash_merge_commit_title   # 1
-grep -c '\.allow_squash[_]merge' REPOSITORY.md           # 1
+printf '%s' "$std" | grep -c squash_merge_commit_title
+# 1
+grep -c '\.allow_squash[_]merge' REPOSITORY.md
+# 1
 ```
 
 The two counts under the loop are what make its zeros absences: a field
