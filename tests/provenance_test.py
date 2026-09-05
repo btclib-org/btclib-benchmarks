@@ -263,8 +263,16 @@ def test_what_a_timing_contains_says_a_timing_holds_no_check() -> None:
     apart: it names the file the output points at.
     """
     said = "\n".join(_provenance.WHAT_A_TIMING_CONTAINS)
-    assert "tests/vectors_test.py" in said
-    assert Path("tests/vectors_test.py").is_file()
+    # one literal for both halves: the string the output states its claim
+    # in, and the path that claim has to resolve to. Two copies of it
+    # drift apart silently -- this file and the one it names moved into a
+    # subdirectory together leave a check on a sibling green while the
+    # output still points at tests/. The anchor is this file rather than
+    # the working directory, which is what the claim is about and is not
+    # what a pytest started from tests/ would make it
+    named = "tests/vectors_test.py"
+    assert named in said
+    assert (Path(__file__).parents[1] / named).is_file()
 
 
 class _FakeWheel:
