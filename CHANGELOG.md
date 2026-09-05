@@ -3713,6 +3713,36 @@ the record behind.
   imports `conftest`, which mypy reports as unfound while it takes its
   base from the working directory instead.
 
+### `CLAUDE.md`'s worktree fence stops at `cd "$WT"`
+
+- **No line of that block runs `uv sync --locked`** (issue
+  btclib-org/.github#739): section 9 of the repository standard gives a
+  line that writes a fence of its own, and what this sync writes is a
+  venv, part of it built — `electrum-ecc` publishes no wheel, so it is
+  built from its sdist and compiles a libsecp256k1 on the way — in the
+  directory the shell is standing in. With `WT` unset, `cd ""` leaves
+  `/bin/zsh` 5.9 and the `bash` 3.2.57 macOS ships where they were,
+  `bash` 5.3.15 refusing it, so for a reader of `CLAUDE.md` that
+  directory is the primary checkout.
+- **The block's own parse is no guard to rest on**: read as a script
+  with `-n`, the fence unfilled is a syntax error to each of those
+  shells, and the same lines with values filled in parse cleanly, so the
+  stop is the placeholders' shape. It is not one placeholder's:
+  `<scratchpad>` filled alone, or `<branch>` alone, leaves the same
+  error at the same line. An interactive paste is unmeasured here.
+- **The paragraph below the fence points at `CONTRIBUTING.md`'s
+  environment step** for that sync and for the C toolchain `electrum-ecc`
+  needs, rather than naming either beside the block. It states no wall
+  clock for the venv either (closes #270), where the sentence it replaces
+  gave one that nothing re-derived — and the reason that sentence offered,
+  a second venv compiling three libsecp256k1s, is not what the sync does:
+  `coincurve` and `secp256k1` arrive as wheels, which is what
+  `.python-version` pins 3.13 for.
+- **The `#793` entry above is superseded in part.** It records that this
+  tree's fence differed from `btclib-org/.github`'s by running
+  `uv sync --locked` inside it; that is no longer so, and the entry stays
+  as the record of what was true when it landed.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
