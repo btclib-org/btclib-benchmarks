@@ -118,15 +118,13 @@ the narrower case of a coder and its reviewer holding a worktree at
 once, which the ordinary sequence avoids by each removing its own.
 
 An issue of `btclib-org/.github`'s tracker worked in `btclib` by a coder
-names its worktree `wt-github-255-btclib-coder`. `cd "$WT"` is followed
-by `uv sync --locked`, a second venv that takes about a minute, and the
-editing, the gates and the commits all happen in the worktree before the
-push.
+names its worktree `wt-github-255-btclib-coder`, and the editing, the
+gates and the commits all happen in the worktree before the push.
 
 ```shell
 WT=<scratchpad>/wt-<tracker>-<issue>-<repo>-<role>
 git worktree add "$WT" origin/main -b <branch>
-cd "$WT" && uv sync --locked
+cd "$WT"
 git push origin HEAD:refs/heads/<branch>
 ```
 
@@ -135,6 +133,29 @@ placeholder ends the command, which is section 9 of the standard's rule.
 With the placeholder ahead of `"$WT"` the `>` closing it takes that path
 as its target, and a path with no directory at it is a file the paste
 creates.
+
+Giving the worktree an environment is `CONTRIBUTING.md`'s *The
+environment and the gates*, and its `uv sync --locked` is most of the
+work here: `electrum-ecc` publishes no wheel, so it is built from its
+sdist and compiles a libsecp256k1 of its own on the way, and the C
+toolchain that needs is named beside the command there rather than here.
+`coincurve` and `secp256k1` arrive as wheels their publishers built --
+which is what `.python-version` pins 3.13 for, neither of them building
+from source without pkg-config and a toolchain. Section 9's *A line that
+writes goes in a fence of its own* keeps that build out of the block
+above: it runs in the directory the shell is standing in, and with `WT`
+unset `cd "$WT"` is `cd ""`, which `/bin/zsh` 5.9 and the `bash` 3.2.57
+macOS ships as `/bin/bash` and `/bin/sh` answer 0 where `bash` 5.3.15
+refuses it, leaving a reader of this file in the primary checkout above
+— where `.gitignore` covers the `.venv` a build would leave. Chaining
+it with an `&&` is no answer, and neither is what the block does
+unfilled: it is a syntax error to each of those shells reading it as a
+script, while the same lines with values filled in parse cleanly, so the
+stop is the placeholders' shape. It does not move with an edit to any
+one of them: filling `<scratchpad>` alone, or `<branch>` alone, leaves
+the same error at the same line, line 1 still ending on the `>` of
+`<role>`. Filling all of them is what changes the parse. An interactive
+paste of the block is unmeasured here.
 
 Removing the worktree is part of finishing, and it stands in a block of
 its own: the block above ends in a placeholder, and a shell that
