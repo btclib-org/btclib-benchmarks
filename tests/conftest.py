@@ -54,10 +54,11 @@ def asks_for_everything(
     The two bases are different directories, which `pytest .` run from
     `tests/` shows: pytest reads a positional argument against the
     directory it was invoked from, and `testpaths` against the rootdir.
-    Both sides are then resolved, because `tests`, `./tests` and `tests/`
-    are one directory under three spellings, and because a tree reached
-    through a symlink -- `/tmp` on macOS -- compares equal on neither
-    side until the link is followed.
+    Both sides are then resolved, because a directory reached through a
+    symlink -- `/tmp` on macOS -- is unequal to the same directory
+    spelled without it, and either side can be the one that carries the
+    link: an absolute positional keeps whatever the command line wrote,
+    and `rootpath` keeps whatever `--rootdir` was given.
 
     `file_or_dir` is `None` rather than `[]` on the `--help` path, the
     positional never having been parsed, and that names no path either --

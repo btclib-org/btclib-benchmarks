@@ -3769,6 +3769,18 @@ over the rows quantify rather than being parametrized on them. The
 reason for the quantification stays in the comment above the checks, and
 the header points at it rather than restating it.
 
+### `asks_for_everything` gives the reason its own code supports
+
+The docstring's reason for resolving both sides is the symlink alone
+(issue btclib-org/.github#816). `pathlib` collapses `.` and a trailing
+separator at construction, so `tests`, `./tests` and `tests/` joined
+onto `invocation_dir` are one object before anything is resolved — the
+second reason the docstring gave, refuted by the code under it. What
+replaces it says why each call is there: an absolute positional keeps
+the spelling the command line wrote, and `rootpath` keeps the one
+`--rootdir` was given, so either side can be the one reached through the
+link.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
