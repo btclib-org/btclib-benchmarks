@@ -3743,6 +3743,22 @@ the record behind.
   `uv sync --locked` inside it; that is no longer so, and the entry stays
   as the record of what was true when it landed.
 
+### The workflow badge links open the runs page filtered to `main`
+
+- **Every workflow-status badge's link in `README.md` carries
+  `?query=branch%3Amain`** (issue btclib-org/.github#762), the filter in
+  the spelling the runs page takes, so the page a reader arrives on lists
+  the runs the badge itself answers for. Section 2 of the repository
+  standard is where that rule sits, beside the one the image halves
+  already satisfy.
+- **The image's `?branch=main` is ignored on a runs page.** The page
+  served for it carries no `branch:main` filter, no more than the page
+  served with no query at all does, so the image's spelling on a link
+  buys nothing; the images keep it and are unchanged.
+- **The pre-commit.ci badge's link is untouched.** Section 2 puts that
+  badge outside the rule: it is the service's own rather than a
+  workflow-status badge, and its branch is already in its path.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
