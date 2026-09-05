@@ -3759,6 +3759,16 @@ the record behind.
   badge outside the rule: it is the service's own rather than a
   workflow-status badge, and its branch is already in its path.
 
+### `tests/conventions_test.py`'s header names its decided departures
+
+The module docstring says what in this copy is decided rather than
+accidental, which is what section 14 asks of a copy of this module
+(issue btclib-org/.github#690): `_CONVENTIONS` transcribes section 7's
+list because the standard is another repository's file, and the checks
+over the rows quantify rather than being parametrized on them. The
+reason for the quantification stays in the comment above the checks, and
+the header points at it rather than restating it.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

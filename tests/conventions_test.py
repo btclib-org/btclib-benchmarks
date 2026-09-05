@@ -27,6 +27,13 @@ each convention sits on the side it does. No count is written anywhere
 the list, and this module asserts the two halves cover it rather than
 how many fall on each side.
 
+Section 14 asks a copy of this module to say which of its departures are
+decided rather than accidental. Section 7's list is transcribed into
+_CONVENTIONS below rather than read off the standard: the standard is
+another repository's file, so a copy is the only form the list takes
+here. The checks over the rows quantify rather than being parametrized
+on them, for the reason the comment above them carries.
+
 What it does not check is whether a named module tests the convention it
 is named against. Nothing short of reading it can, and the four
 assertions below are the ones that fail on the ways a declaration
