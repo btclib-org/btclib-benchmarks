@@ -3781,6 +3781,18 @@ the spelling the command line wrote, and `rootpath` keeps the one
 `--rootdir` was given, so either side can be the one reached through the
 link.
 
+### `provenance_test.py`'s claim and its check take one literal
+
+`Path("tests/vectors_test.py").is_file()` resolved against the
+process's working directory, so the check it existed for -- that
+`_provenance.WHAT_A_TIMING_CONTAINS` names a file the tree still has --
+passed only when pytest was started from the repository root. The path
+is built from the module's own location instead, and the string the
+output states its claim in is the same literal the check resolves, so
+the two cannot drift apart: a check on a sibling file would stay green
+with this module and the file it names moved into a subdirectory
+together and the output still pointing at `tests/` (closes #276).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
