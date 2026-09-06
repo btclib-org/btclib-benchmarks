@@ -3836,6 +3836,50 @@ together and the output still pointing at `tests/` (closes #276).
   link is made inside the test, and a platform that refuses the
   privilege skips rather than failing.
 
+### The worktree fence's create, push and guard take the standard's form
+
+- **The fence pushes with `git -C "$WT"` and carries no `cd` above it**
+  (issue btclib-org/.github#824). A `cd` binds the shell that runs it,
+  so a session running each line as its own command pushes from the
+  directory it began in, the primary checkout. The paragraph giving that
+  binding is `btclib-org/.github`'s `CLAUDE.md` at `20ad654` byte for
+  byte, so the limit lands with it: git(1) says an empty `-C` leaves the
+  working directory unchanged, and `pwd` after a `git -C <dir>` stays
+  where it started where after a `cd <dir>` it does not.
+- **The guard sentence says `${WT:?}` fails with `$WT` unset or empty.**
+  `WT=` is set and does not expand, so naming an unset `WT` as what the
+  guard catches gave a reason false of a value it refuses. Under
+  `/bin/zsh` 5.9 and the `bash` 3.2.57 macOS ships as `/bin/bash` and
+  `/bin/sh`, unset and empty both refuse, where a space, a word and a
+  stale path each run — those being the control.
+- **The create's condition is the reader's own directory already holding
+  the placeholder's name.** With the placeholder ahead of `"$WT"` the
+  `<` has to succeed before the `>` is reached: a file named `branch`
+  and a directory named `branch` each leave the target created, where a
+  directory holding neither ends the line with nothing created, in
+  `/bin/zsh`, `/bin/bash`, `/bin/sh` and `/bin/dash`. The message each
+  prints is its own, and the one quoted is `zsh`'s.
+- **`btclib-org/.github`'s `CLAUDE.md` at `20ad654` is named as the
+  converged form**, so a later reader compares against a tree rather
+  than against an issue's quotation of one. The push and removal
+  paragraphs are that file's byte for byte, and the create paragraph is
+  from *With the placeholder ahead of* onward, the citation clause
+  before it being this tree's own. That fence region is byte-identical
+  at `20ad654` and at `6a2a5c6`, the tip when this was written.
+- **The *`CLAUDE.md`'s worktree fence stops at `cd "$WT"`* entry above
+  is superseded in part.** Its heading and its reasoning from `cd ""`
+  describe a fence line that is gone; what it decided, the
+  `uv sync --locked` outside the block, is unchanged, and the paragraph
+  on the environment gives that reason without the `cd`: no line of the
+  block moves the shell, `git -C` binding the one command it is given.
+  The block unfilled is the same syntax error at the same line as the
+  one it replaces, in `/bin/zsh` 5.9, `/bin/bash`, `/bin/sh` and `bash`
+  5.3.15, and parses cleanly filled.
+- **The *`CLAUDE.md`'s worktree-removal fence refuses an unset `WT`*
+  entry above is widened rather than corrected.** The `:?` refuses an
+  empty `WT` as well as an unset one, which is what the sentence above
+  that fence now says.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
