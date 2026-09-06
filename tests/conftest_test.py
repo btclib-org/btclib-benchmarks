@@ -115,6 +115,62 @@ def test_a_path_is_read_against_where_pytest_was_started() -> None:
     assert _threshold(file_or_dir=["tests"]) == 100.0
 
 
+def test_a_parent_directory_segment_names_the_whole_suite_too() -> None:
+    """`..` survives into the path object, so the spelling has to resolve.
+
+    `.` and the trailing separator are collapsed when the path is built,
+    which is why they sit in
+    `test_naming_the_suite_is_not_selecting_from_it` and this is its own
+    case: a `..` segment is kept instead, so `tests/../tests` and `tests`
+    are two objects that compare unequal until each side is resolved.
+    Both commands here collect the suite, and without `given`'s call each
+    reads as a selection and is gated at nothing.
+    """
+    assert _threshold(file_or_dir=["tests/../tests"]) == 100.0
+    from_the_tests_directory = _threshold(
+        file_or_dir=["../tests"], invocation_dir=_ROOT / "tests"
+    )
+    assert from_the_tests_directory == 100.0
+
+
+def test_a_symlinked_spelling_of_one_tree_is_still_the_whole_suite(
+    tmp_path: Path,
+) -> None:
+    """Both sides are resolved, so one directory named two ways compares equal.
+
+    A positional argument is joined onto the directory pytest was invoked
+    from and `testpaths` onto the rootdir, and either can be spelled
+    through a symlink -- `/tmp` is one on macOS, and a checkout under a
+    linked home is another. Resolved on one side only, the two spellings
+    of one directory compare unequal, `pytest tests` reads as a subset of
+    itself, and the run that measures the whole suite is gated at
+    nothing. Each assertion below spells one side through the link, so
+    each fails without a different one of the two calls.
+
+    The link is made here rather than taken from the machine, so what the
+    case is about is the comparison and not which directories an
+    operating system happens to link. Creating one on Windows takes a
+    privilege a runner need not hold, so a platform that refuses says so
+    as a skip, which `-ra` reports.
+    """
+    base = tmp_path.resolve()
+    real = base / "real"
+    (real / "tests").mkdir(parents=True)
+    link = base / "link"
+    try:
+        link.symlink_to(real, target_is_directory=True)
+    except OSError as refused:  # pragma: no cover -- Windows without the privilege
+        pytest.skip(f"this platform will not create a symlink: {refused}")
+    started_from_the_link = _threshold(
+        file_or_dir=["tests"], invocation_dir=link, testpaths=[real / "tests"]
+    )
+    assert started_from_the_link == 100.0
+    testpaths_through_the_link = _threshold(
+        file_or_dir=["tests"], invocation_dir=real, testpaths=[link / "tests"]
+    )
+    assert testpaths_through_the_link == 100.0
+
+
 def test_the_help_path_is_no_selection_either() -> None:
     """`--help` leaves `file_or_dir` at `None` rather than at `[]`.
 
