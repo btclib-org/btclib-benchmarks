@@ -3880,6 +3880,23 @@ together and the output still pointing at `tests/` (closes #276).
   empty `WT` as well as an unset one, which is what the sentence above
   that fence now says.
 
+### The pure-Python probe's filter reaches the compiled bindings module
+
+- **`tests/pure_python_path_test.py`'s `PROBE` matched a module's name
+  against `"btclib_secp256k1"` with `str.startswith`, which the
+  compiled extension fails: it is named `_btclib_secp256k1`, the
+  leading underscore belonging to the distribution and not to a
+  build.** The filter now accepts either spelling.
+  `_btclib_secp256k1.lib` is what the wider match reaches -- a cffi
+  `Lib` object whose `__class__` is set to `types.ModuleType` so the
+  loop's own type check admits it, and whose C-backed functions refuse
+  every `setattr` regardless. The `except (AttributeError, TypeError)`
+  beside the call is what that refusal reaches, which is why the arm is
+  there. What decides whether it is reached is the bindings' linkage
+  and not the platform: their static build, the default, is the one
+  that puts `lib` there, where a dynamic one has no such attribute for
+  the loop to find (closes #284).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
