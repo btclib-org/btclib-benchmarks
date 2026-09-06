@@ -570,13 +570,17 @@ ignore = [
     "undocumented-magic-method",
     "undocumented-public-init",
     # code length is enforced by the formatter, which reflows to its 88
-    # columns everything it is allowed to rewrite. What is left for
-    # line-too-long to find is what no width the formatter controls can
-    # break: a benchmark row's own label describing what it measures,
-    # and a guard condition naming a loaded module in a test. The prose
-    # the formatter never touches is measured instead by max-doc-length
-    # below. `uv run ruff check --select E501 --no-cache .` lists the
-    # sites
+    # columns everything it is allowed to rewrite. A string literal is
+    # one thing it may not, and what this rule is left to find is the
+    # line one of them carries past 88: a benchmark row's own label
+    # describing what it measures. Not every line past 88 is listed --
+    # the link reference in scripts/06-silentpayments.py's docstring is
+    # not -- and section 9 of btclib-org/.github names which ones the
+    # rule passes over. max-doc-length below reaches a docstring and a
+    # whole-line comment and not a comment following code on its line;
+    # this rule reaches one, at 88, so naming it in this list is what
+    # leaves such a comment measured nowhere.
+    # `uv run ruff check --select E501 --no-cache .` lists the sites
     "line-too-long",
     # sizes and prefixes a specification assigns, not values this code
     # chose and could have named instead: a message length fixed by a
@@ -678,7 +682,10 @@ max-complexity = 10
 [tool.ruff.lint.pycodestyle]
 # 80 columns on the prose, where the code keeps the formatter's 88:
 # ruff-format reflows code and never a comment or a docstring, so 88 is
-# what it can enforce and this is the rest
+# what it can enforce and this key is what reaches a docstring and a
+# whole-line comment. A comment following code on its line is outside
+# it; what one meets here is at the line-too-long entry above, and
+# section 9 of btclib-org/.github gives the reason it is outside
 max-doc-length = 80
 
 # what holds a docstring under scripts/ to the signature it sits over,

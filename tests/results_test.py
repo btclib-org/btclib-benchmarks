@@ -53,9 +53,9 @@ import pytest
 from btclib_benchmarks import _results
 
 # where the same width is written down for prose, arrived at independently of
-# the renderer: `ruff` holds every comment and docstring in this project to it,
-# and `.markdownlint.jsonc` leaves `MD013` at its default, which is the same
-# number reached from the other side
+# the renderer: `ruff` holds a docstring and a whole-line comment in this
+# project to it, and `.markdownlint.jsonc` leaves `MD013` at its default, which
+# is the same number reached from the other side
 PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
 
 

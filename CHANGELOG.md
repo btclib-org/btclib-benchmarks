@@ -3967,6 +3967,45 @@ together and the output still pointing at `tests/` (closes #276).
   bundled updater still reads — rather than under it. That entry's
   `>=0.11.31` is superseded too (closes btclib-org/.github#865).
 
+### The width comments say what each rule reaches
+
+- **The `"line-too-long"` ignore reason called what the rule is left to
+  find "what no width the formatter controls can break", and this tree
+  has a line of that description the rule does not report**: the link
+  reference in `scripts/06-silentpayments.py`'s docstring is past 88 and
+  absent from `uv run ruff check --select E501 --no-cache .`. The reason
+  now names what that command lists -- a benchmark row's own label,
+  which a string literal carries past 88 -- and leaves which lines the
+  rule passes over to section 9 of the repository standard. The guard
+  condition in a test it also named is not among the sites (issue
+  btclib-org/.github#841).
+- **The same comment gave `max-doc-length` as what measures "the prose
+  the formatter never touches", and a comment following code on its line
+  is prose the formatter never touches and outside that key.** It and
+  `[tool.ruff.lint.pycodestyle]`'s own "this is the rest" now say what
+  the key reaches, a docstring and a whole-line comment; section 9
+  states the exclusion and gives the reason. `line-too-long` does reach
+  such a comment, at 88, so what leaves one measured nowhere here is
+  this tree naming that rule in `ignore` rather than the comment being
+  outside it (issue btclib-org/.github#841).
+- **`.pre-commit-config.yaml`'s yamllint comment carried the same claim
+  in a second file.** "ruff holds Python comments and docstrings to the
+  same" now names a docstring and a whole-line comment. That sentence is
+  there to say why yaml needed a width of its own, and it says it with
+  the same force once the claim about Python is true.
+- **The `toml-comment-width` comment below it said every Python comment
+  here over 80 columns ends in a link that cannot be broken, and the
+  ones this tree has do not.** They end in a `# type: ignore[...]`, or
+  in the reason written after a `pragma: no cover` or a `noqa`. The
+  clause goes rather than being restated: what the amnesty is for is
+  said by the sentence around it, and the gap between the amnesty the
+  hook's `name:` states and the one its pattern implements is
+  [ISS 843](https://github.com/btclib-org/.github/issues/843).
+- **`tests/results_test.py`'s comment over `PYPROJECT` said `ruff` holds
+  every comment and docstring in this project to 80.** It names a
+  docstring and a whole-line comment instead -- what the key that case
+  asserts against reaches.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
