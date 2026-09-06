@@ -116,7 +116,7 @@ benchmark that cannot install its comparands measures nothing, so
 
 Raise the pin when both publish a `cp314` wheel. No other wrapper
 holds any part of it: `btclib-secp256k1` publishes past `cp313`
-already, and `electrum-ecc` has no wheel on PyPI at all — it compiles at
+already, and `electrum-ecc` has no wheel on PyPI at all — it is built at
 install time, and what it builds is tagged `py3-none`, the C being
 reached through ctypes rather than linked into an extension.
 
@@ -124,15 +124,19 @@ The `requires-python` floor is 3.11, and that end is set by a comparand
 too: `secp256k1lab` declares it, and `scripts/04-pure-python.py` imports it
 unguarded.
 
-### Installing the comparands needs a build toolchain
+### A comparand without a wheel is built at install time
 
-`coincurve`, `secp256k1` and `electrum-ecc` each compile a libsecp256k1
-of their own: the first two want `pkg-config`, and `electrum-ecc`,
-shipped as an sdist carrying libsecp256k1 as a submodule, runs its
-`autogen.sh` — so
-`autoconf`, `automake` and `libtool` have to be there as well. That cost
-is what makes the wrapper rows honest: each times the build that
-`pip install` produced, not whatever system library happened to be
+`electrum-ecc` publishes no wheel anywhere, so `uv sync` builds it from
+its sdist, which carries libsecp256k1 as a submodule and runs its
+`autogen.sh` — that is what `autoconf`, `automake` and `libtool` have to
+be there for. The other wrappers resolve to a wheel where the index
+serves one for the pinned interpreter *and* the platform in hand, and
+are built from source where it does not, which is when a build of
+`secp256k1` wants `pkg-config`. `CONTRIBUTING.md` points at the
+workflows that name where each of those happens.
+
+Either way the wrapper rows are honest: each times the libsecp256k1 that
+`pip install` delivered, not whatever system library happened to be
 findable.
 
 ### Measuring a working tree instead of a release

@@ -240,12 +240,17 @@ linters and packaging tools itself.
 uv sync --locked
 ```
 
-That installs the comparands, which is most of the work: `coincurve`,
-`secp256k1` and `electrum-ecc` each compile a libsecp256k1 of their own,
-so a C toolchain has to be present — `pkg-config` for the first two, and
-`autoconf`, `automake` and `libtool` for the third, which ships as an
-sdist and runs libsecp256k1's `autogen.sh`. `secp256k1lab` comes from a
-git tag, having no release on any index.
+That installs the comparands, which is most of the work: `electrum-ecc`
+publishes no wheel anywhere, so it is built from its sdist, which
+carries libsecp256k1 as a submodule and runs its `autogen.sh` — that is
+what `autoconf`, `automake` and `libtool` have to be there for. The
+other wrappers resolve to a wheel where the index serves one for the
+interpreter `.python-version` pins *and* the platform in hand, and are
+built from source where it does not, which is when a build of
+`secp256k1` wants `pkg-config`; `os-ubuntu.yml` and `os-macos.yml` each
+name a cell where that happens. The interpreter half of that is what
+the pin is for, and the comment there says why. `secp256k1lab` comes
+from a git tag, having no release on any index.
 
 The gates are three commands, and CI runs exactly them: the suite,
 gated at 100% coverage; every lint hook; and the documentation build.

@@ -153,9 +153,10 @@ environment and the gates*, and its `uv sync --locked` is most of the
 work here: `electrum-ecc` publishes no wheel, so it is built from its
 sdist and compiles a libsecp256k1 of its own on the way, and the C
 toolchain that needs is named beside the command there rather than here.
-`coincurve` and `secp256k1` arrive as wheels their publishers built --
-which is what `.python-version` pins 3.13 for, neither of them building
-from source without pkg-config and a toolchain. Section 9's *A line that
+`coincurve` and `secp256k1` arrive as wheels their publishers built
+where the index serves one for this interpreter and platform -- which
+is what `.python-version` pins 3.13 for, neither of them building from
+source without pkg-config and a toolchain. Section 9's *A line that
 writes goes in a fence of its own* keeps that build out of the block
 above: it runs in the directory the shell is standing in, and no line of
 that block moves the shell, `git -C` binding the one command it is
@@ -237,8 +238,8 @@ Do not use Fable unless explicitly instructed.
   floor: `secp256k1lab` declares it and `scripts/04-pure-python.py` imports
   it unguarded. Raising either means checking a package index first.
   `coincurve` and `secp256k1` and no others hold the ceiling: `electrum-ecc`
-  compiles from an sdist on every platform and what it builds is
-  `py3-none`, so it installs on any interpreter.
+  is built from an sdist rather than resolved to a wheel, and what it
+  builds is `py3-none`, so it installs on any interpreter.
 - **`os-macos.yml`'s matrix carries one macOS image, not two.** An Intel
   cell is a comparand's build limit, not a choice — that workflow's own
   header is the full explanation.
