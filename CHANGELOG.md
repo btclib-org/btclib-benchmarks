@@ -3897,6 +3897,32 @@ together and the output still pointing at `tests/` (closes #276).
   that puts `lib` there, where a dynamic one has no such attribute for
   the loop to find (closes #284).
 
+### Which comparand is compiled turns on the platform, not the interpreter alone
+
+- **`CONTRIBUTING.md`'s *The environment and the gates* and
+  `README.md`'s section on the build toolchain said `coincurve`,
+  `secp256k1` and `electrum-ecc` each compile a libsecp256k1 of their
+  own and asked for `pkg-config` on account of the first two, where
+  `electrum-ecc` is the one with no wheel anywhere to resolve to.**
+  Both now put the condition on the wheel: a wrapper resolves to one
+  where the index serves it for the pinned interpreter *and* the
+  platform in hand, and is built from source where it does not, which
+  is the case `pkg-config` belongs to. The interpreter alone does not
+  decide it -- `uv.lock` carries no aarch64 Linux, Intel macOS or
+  Windows wheel for `secp256k1`, which is why `os-ubuntu.yml`'s
+  `ubuntu-24.04-arm` cell builds it on the pinned interpreter, and
+  `.python-version`'s comment governs the interpreter half only.
+  `README.md`'s heading names the mechanism rather than the comparands.
+- **`pyproject.toml`'s comment beside the `electrum-ecc` floor called
+  the toolchain that build wants the one `coincurve` and `secp256k1`
+  already ask for here, and `codeql.yml`'s comment on `build-mode:
+  none` counted the comparands that compile a libsecp256k1 on the
+  runner.** The first points at `CONTRIBUTING.md` for the toolchain;
+  the second drops the clause, its argument being that an alert against
+  a comparand is not this analysis's. `CLAUDE.md` carried both
+  unconditional forms -- the wheels, and `electrum-ecc`'s compiling --
+  and now carries neither (closes #278).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

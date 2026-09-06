@@ -85,13 +85,13 @@ dependencies = [
     # the closest comparand btclib_secp256k1 has, and the one that costs
     # something to install: PyPI carries no wheel, only the sdist, so
     # `uv sync` compiles the libsecp256k1 carried in it as a submodule.
-    # That is the same toolchain `coincurve` and `secp256k1` already ask
-    # for here, and it is what makes the row honest -- the binary timed
-    # is that build rather than whatever system library was findable.
-    # Unlike those two it builds a `py3-none-<platform>` wheel, the C
-    # being reached through ctypes and not linked into an extension, so
-    # it is indifferent to the interpreter and holds no part of the 3.13
-    # ceiling below
+    # That build is what makes the row honest -- the binary timed is it
+    # rather than whatever system library was findable -- and the C
+    # toolchain it asks for is the one CONTRIBUTING.md's *The
+    # environment and the gates* names. What it builds is a
+    # `py3-none-<platform>` wheel, the C being reached through ctypes
+    # and not linked into an extension, so it is indifferent to the
+    # interpreter and holds no part of the 3.13 ceiling below
     "electrum-ecc>=0.0.7",
     "embit>=0.8.0",
     "pycoin>=0.92718.20260405",

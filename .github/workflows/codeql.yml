@@ -158,10 +158,9 @@ jobs:
           # the value is what an autobuild step would otherwise be needed
           # for. Nothing is installed first either, and here that is a
           # decision rather than an omission: this project's declared
-          # dependencies are the comparands it measures, three of which
-          # compile a libsecp256k1 on the runner, and none of which
-          # this analysis is about -- an alert against a comparand
-          # belongs to the project that publishes it
+          # dependencies are the comparands it measures, and none of
+          # them is what this analysis is about -- an alert against a
+          # comparand belongs to the project that publishes it
           build-mode: none
           # `queries` is deliberately unset, which is the default query
           # suite: the init action has no query_suite input, its
