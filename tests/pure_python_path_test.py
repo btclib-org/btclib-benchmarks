@@ -96,7 +96,7 @@ for name, module in list(sys.modules.items()):
         if callable(value) and not isinstance(value, type):
             try:
                 setattr(module, attribute, raiser(name + "." + attribute))
-            except (AttributeError, TypeError):  # pragma: no cover - C extensions
+            except (AttributeError, TypeError):
                 pass
 
 for name, operation, _, _ in B.OPERATIONS:

@@ -112,7 +112,7 @@ PINS = {
 # the pure-Python configuration, as `scripts/04-pure-python.py` measures it: the
 # environment variable pycoin reads at import, and btclib's dispatch off
 PURE_PYTHON = bool(os.environ.get("BENCHMARKS_PURE_PYTHON"))
-if PURE_PYTHON:  # pragma: no cover - the child process is the one that runs it
+if PURE_PYTHON:  # pragma: no cover -- the child process is the one that runs it
     curve._libsecp256k1_available = False
 
 

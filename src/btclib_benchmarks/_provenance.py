@@ -56,7 +56,7 @@ def origin_of(dist_name: str) -> str:
     """
     try:
         raw = _distribution(dist_name).read_text("direct_url.json")
-    except PackageNotFoundError:  # pragma: no cover - all are installed
+    except PackageNotFoundError:
         return "not installed"
     if raw is None:
         return "released"
@@ -202,7 +202,7 @@ def describe(dist_name: str, module_file: str) -> str:
     """
     try:
         released = version(dist_name)
-    except PackageNotFoundError:  # pragma: no cover - all are installed
+    except PackageNotFoundError:
         return f"{dist_name:<20}: not installed"
     if not _under_install_root(module_file):
         return f"{dist_name:<20}: {released:<24} (sys.path: {module_file})"

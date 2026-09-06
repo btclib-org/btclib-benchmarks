@@ -403,8 +403,8 @@ skip_covered = true
 precision = 2
 # 100 is not the same rule with the bar raised: coverage special-cases
 # it, so nothing short of an exact 100.00% passes. What is measured here
-# is the helpers, not the timing loops -- those carry `pragma: no cover`
-# with the reason beside them, a benchmark's own measurement being
+# is the helpers, not the timing loops: `omit` above is what leaves the
+# benchmarks holding those loops out, a benchmark's own measurement being
 # something a test must not run
 fail_under = 100.0
 
