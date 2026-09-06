@@ -85,9 +85,14 @@ for module in list(sys.modules.values()):
                 setattr(module, attribute, raiser(module.__name__ + "." + attribute))
 
 # and the bindings' own functions, which is what catches a call routed
-# through the package at run time rather than through a name bound above
+# through the package at run time rather than through a name bound
+# above -- "btclib_secp256k1" names both the pure-Python wrapper package
+# and the compiled extension it wraps, the leading underscore in
+# `_btclib_secp256k1` belonging to the distribution and not to a build
 for name, module in list(sys.modules.items()):
-    if not name.startswith("btclib_secp256k1") or not isinstance(module, types.ModuleType):
+    if not name.lstrip("_").startswith("btclib_secp256k1") or not isinstance(
+        module, types.ModuleType
+    ):
         continue
     for attribute in dir(module):
         if attribute.startswith("__"):
@@ -97,6 +102,16 @@ for name, module in list(sys.modules.items()):
             try:
                 setattr(module, attribute, raiser(name + "." + attribute))
             except (AttributeError, TypeError):
+                # `_btclib_secp256k1.lib` is a cffi `Lib` object whose
+                # `__class__` is set to `types.ModuleType` so the check
+                # above accepts it, but its C-backed attributes are not
+                # a module's own `__dict__` underneath and refuse every
+                # `setattr`. What decides whether this arm is reached at
+                # all is the linkage: the static build the bindings
+                # default to puts `lib` there, and a dynamic one -- cffi
+                # ABI mode, which their `_load_lib` tells apart by
+                # `hasattr(module, "lib")` -- has no such attribute and
+                # nothing here to write to
                 pass
 
 for name, operation, _, _ in B.OPERATIONS:
