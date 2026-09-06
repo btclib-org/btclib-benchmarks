@@ -3953,6 +3953,20 @@ together and the output still pointing at `tests/` (closes #276).
   uv reads `uv.lock` with, not what the backend may resolve (issue
   btclib-org/.github#858).
 
+### The earlier uv-floor entries are named as superseded
+
+- **`[tool.uv] required-version` is `>=0.12.7`, set by
+  *`pyproject.toml`'s uv floor catches up to Dependabot's bundled
+  updater*.** So the `>=0.12.1` that *`pyproject.toml`'s uv floor sits
+  at the measured ceiling again* gives is superseded, and that entry
+  stays as the record of what was true when it landed (closes
+  btclib-org/.github#865).
+- **The rule *The uv floor stays under what Dependabot's updater
+  bundles* states is retired.** Section 1 of the repository standard
+  sets the floor at the ceiling — the newest uv that Dependabot's own
+  bundled updater still reads — rather than under it. That entry's
+  `>=0.11.31` is superseded too (closes btclib-org/.github#865).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
