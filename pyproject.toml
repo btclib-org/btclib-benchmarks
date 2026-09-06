@@ -4,17 +4,28 @@
 # configuration, in place of the separate include and exclude language
 # of a MANIFEST.in.
 #
-# The pin is btclib's, inherited with its reason. Under 0.12 the sdist
-# carries this file verbatim, comments and all, and no second copy of
-# it: built with uv_build==0.11.31 there is no pyproject.toml.orig in
-# the archive. From 0.12.0 on the member is a normalized copy with the
-# verbatim one beside it under that name, so a floor below the minor
-# would leave what the sdist holds with two answers. The ceiling is the
-# next minor, which is where uv's versioning policy puts a breaking
-# change, this backend releasing with uv and versioned by it. That a
-# pure-Python project of this organization uses this backend at all is
-# btclib-org/.github#118
-requires = ["uv_build>=0.12.5,<0.13"]
+# The floor is the boundary of the property it keeps. Under 0.12 the
+# sdist carries this file verbatim, comments and all, and no second
+# copy of it: built with uv_build==0.11.31 there is no
+# pyproject.toml.orig in the archive. From 0.12.0 on the member is a
+# normalized copy with the verbatim one beside it under that name, so a
+# floor below the minor would leave what the sdist holds with two
+# answers. Measured by calling the backend's own hook at each version,
+# the version standing on a line of its own so that an unfilled paste
+# of the line below it fails on ${version:?} rather than measuring
+# whatever is installed:
+#
+#     version=<the version to measure>
+#
+#     uv run --no-project --with uv_build=="${version:?}" python -c \
+#       "import uv_build; print(uv_build.build_sdist('<outdir>'))"
+#
+# which answers with nothing below the boundary and with
+# pyproject.toml.orig at it. The ceiling is the next minor, which is
+# where uv's versioning policy puts a breaking change, this backend
+# releasing with uv and versioned by it. That a pure-Python project of
+# this organization uses this backend at all is btclib-org/.github#118
+requires = ["uv_build>=0.12.0,<0.13"]
 build-backend = "uv_build"
 
 [project]

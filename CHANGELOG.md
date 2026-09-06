@@ -3936,6 +3936,23 @@ together and the output still pointing at `tests/` (closes #276).
   `/bin/zsh`, `/bin/bash`, `/bin/sh` and `/bin/dash`, which do not all
   print the same diagnostic (issue btclib-org/.github#859).
 
+### The `uv_build` floor is lowered to the boundary it keeps
+
+- **The floor sat above `0.12.0`, the boundary of the property that places
+  `pyproject.toml.orig` beside a normalized copy of this file in the sdist
+  from that release on, for a reason the standard now names as a rejected
+  alternative: it was `btclib`'s own floor, inherited along with it.**
+  `[build-system] requires` now reads `uv_build>=0.12.0,<0.13`, the comment
+  above it states the measurement that finds the boundary in place of the
+  borrowed number, and the `check-sdist` and `pyroma` hooks'
+  `additional_dependencies` in `.pre-commit-config.yaml` -- copies of the same
+  range -- move with it. This supersedes the `uv_build>=0.12.5,<0.13`
+  bullet of the entry above, "The build backend is uv_build, and there
+  is no include list", which is where that floor and the reason for it
+  were set. `[tool.uv] required-version` is unchanged: it answers what
+  uv reads `uv.lock` with, not what the backend may resolve (issue
+  btclib-org/.github#858).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
