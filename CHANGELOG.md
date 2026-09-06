@@ -3819,6 +3819,23 @@ together and the output still pointing at `tests/` (closes #276).
   `btclib-org/.github`'s `README.md` rather than a second copy here
   (issue btclib-org/.github#838).
 
+### A case defends each `.resolve()`, and `..` is a second reason for them
+
+- **A parent-directory segment is a second reason to resolve a path,
+  and no symlink is involved in it** (issue btclib-org/.github#836).
+  `pathlib` keeps `..` at construction where it collapses `.` and a
+  trailing separator, so `pytest tests/../tests` from the rootdir spells
+  the `testpaths` entry in a way that compares unequal to it.
+  *`asks_for_everything` gives the reason its own code supports* above
+  leaves the symlink as the docstring's only stated reason, and this
+  entry supersedes that.
+- **`tests/conftest_test.py` fails when either `.resolve()` is removed**
+  (issue btclib-org/.github#806). Dropping either one left the suite
+  green. The `..` case covers the call on `given`, and a spelling
+  through a symlink covers both, with an assertion for each of them: the
+  link is made inside the test, and a platform that refuses the
+  privilege skips rather than failing.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

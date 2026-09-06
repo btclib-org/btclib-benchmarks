@@ -60,6 +60,14 @@ def asks_for_everything(
     link: an absolute positional keeps whatever the command line wrote,
     and `rootpath` keeps whatever `--rootdir` was given.
 
+    A parent-directory segment is a second reason to resolve, and no
+    symlink is involved in it: `pathlib` keeps `..` at construction where
+    it collapses `.` and a trailing separator, so `pytest tests/../tests`
+    from the rootdir spells the `testpaths` entry in a way that compares
+    unequal to it. A reader checks that one in a line, for any `base`:
+    `base / "tests/../tests" == base / "tests"` is False, and the same
+    pair resolved is True.
+
     `file_or_dir` is `None` rather than `[]` on the `--help` path, the
     positional never having been parsed, and that names no path either --
     folding it in is what keeps `--help` from ending in a traceback whose
