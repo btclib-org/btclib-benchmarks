@@ -3923,6 +3923,19 @@ together and the output still pointing at `tests/` (closes #276).
   unconditional forms -- the wheels, and `electrum-ecc`'s compiling --
   and now carries neither (closes #278).
 
+### The worktree fence's create bullet's diagnostic clause is corrected
+
+- **That entry's "The message each prints is its own, and the one
+  quoted is `zsh`'s" is a universal one pair refutes: `/bin/bash` and
+  `/bin/sh` print the byte-identical diagnostic for the failing
+  `<branch` redirection, once each message's own script path is
+  stripped from it.** The half that stands is the quotation — the
+  string `CLAUDE.md` quotes is still `zsh`'s — and the nothing-created
+  outcome is unaffected, all four shells still failing at the `<`
+  before the `>` is reached. The create's outcome is measured in
+  `/bin/zsh`, `/bin/bash`, `/bin/sh` and `/bin/dash`, which do not all
+  print the same diagnostic (issue btclib-org/.github#859).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
