@@ -3793,6 +3793,32 @@ the two cannot drift apart: a check on a sibling file would stay green
 with this module and the file it names moved into a subdirectory
 together and the output still pointing at `tests/` (closes #276).
 
+### A pragma's reason names its case, and the ones excusing nothing go
+
+- **A `# pragma: no cover` carries its reason on the pragma's own line
+  after ` -- `, and the reason names the case that line is** (issue
+  btclib-org/.github#838). `scripts/artifacts.py`'s guard says the
+  suite calls `main()` itself, which is what `tests/artifacts_test.py`
+  does with it.
+- **A pragma on a line the suite runs excuses nothing.**
+  `_provenance.py`'s `origin_of` and `describe` answer a
+  `PackageNotFoundError` with a line of report rather than a traceback,
+  and `tests/provenance_test.py` reaches both handlers by making the
+  lookup raise; the pragmas go, and the floor holds with those two
+  lines measured.
+- **`tests/pure_python_path_test.py`'s probe is a string a child
+  process runs, and a pragma written inside it excludes a statement of
+  the parent.** Coverage matches its exclusion pattern line by line and
+  does not know a string from code, so a pragma inside `PROBE` takes
+  out the statement holding it, which is the `PROBE` assignment. The
+  pragma goes; the `try` it sat on is unchanged.
+- **`[tool.coverage.report]`'s comment attributed the timing loops'
+  exclusion to a pragma the benchmarks holding them do not carry.**
+  `omit` in `[tool.coverage.run]` is what leaves those files out, and
+  the comment says so; where a pragma's reason goes is section 8 of
+  `btclib-org/.github`'s `README.md` rather than a second copy here
+  (issue btclib-org/.github#838).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

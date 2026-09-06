@@ -59,7 +59,7 @@ def read(name: str) -> str:
     """Return a vendored file's text, having checked it is the vendored file."""
     payload = (VECTORS / name).read_bytes()
     blob = blob_id(payload)
-    if blob != BLOBS[name]:  # pragma: no cover - the suite asserts this too
+    if blob != BLOBS[name]:  # pragma: no cover -- the suite asserts this too
         message = f"{name} is not the copy vectors/README.md describes: {blob}"
         raise ValueError(message)
     return payload.decode("utf-8")

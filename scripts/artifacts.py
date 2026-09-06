@@ -73,5 +73,5 @@ def main() -> int:
     return 0
 
 
-if __name__ == "__main__":  # pragma: no cover - the command, not the module
+if __name__ == "__main__":  # pragma: no cover -- the suite calls main() itself
     raise SystemExit(main())

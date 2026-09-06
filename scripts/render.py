@@ -181,7 +181,7 @@ def declared_titles(benchmark: str) -> list[str] | None:
     every table of its run as one the script has dropped.
     """
     source = SCRIPTS / f"{benchmark}.py"
-    if not source.is_file():  # pragma: no cover - a run has a script
+    if not source.is_file():  # pragma: no cover -- a run has a script
         return None
     for node in ast.parse(source.read_text(encoding="utf-8")).body:
         named: list[ast.expr]
