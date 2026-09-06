@@ -4006,6 +4006,27 @@ together and the output still pointing at `tests/` (closes #276).
   docstring and a whole-line comment instead -- what the key that case
   asserts against reaches.
 
+### `toml-comment-width`'s comment claims no other tool's amnesty
+
+- **`.pre-commit-config.yaml`'s `toml-comment-width` comment gave the
+  pattern's exemption to MD013 and to ruff, as what those two give "a
+  comment ending in a link that cannot be broken".** The pattern's test
+  is positional and not lexical: `.{80}\S*[ \t]` reports a line only
+  where whitespace is left past column 80, so a comment whose overflow
+  is one unbroken token is exempt whether or not that token is a link.
+  The comment says that, and attributes the exemption to the pattern and
+  to nothing else (issue btclib-org/.github#843).
+- **The exemption is not W505's.** At this tree's `max-doc-length = 80`,
+  ruff reports a whole-line comment whose overflow is one unbroken
+  non-link token, which this pattern passes over, and passes over the
+  same line with a link in place of that token.
+- **The entry *The width comments say what each rule reaches* deleted a
+  clause on the ground that the sentence around it said what the amnesty
+  is for, and that sentence is the one replaced here.** What the pattern
+  exempts is now said by the pattern's own test. The hook's `name:` and
+  `entry:` are untouched: which of the two moves is the rest of that
+  issue.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
