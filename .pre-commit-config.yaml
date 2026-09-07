@@ -505,7 +505,7 @@ repos:
   # docformatter, flake8, isort, pydocstringformatter, pydocstyle, pylint,
   # pyupgrade, and yesqa
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.5
+    rev: v0.16.6
     hooks:
       - id: ruff-check
         name: ruff check (in place fixes)
@@ -651,7 +651,7 @@ repos:
         pass_filenames: false
         always_run: true
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.7
+    rev: 0.12.10
     hooks:
       # keep uv.lock in sync with pyproject.toml
       - id: uv-lock
@@ -695,7 +695,7 @@ repos:
     # above is exactly this failure mode, pyroma included. What a beta
     # of the packaging checker would gate is the release workflow, on a
     # judgement its own author has not settled yet
-    rev: "5.0.1"
+    rev: "5.1b1"
     hooks:
       - id: pyroma
         # the backend, in pyroma's own environment, because pyroma builds
