@@ -4027,6 +4027,22 @@ together and the output still pointing at `tests/` (closes #276).
   `entry:` are untouched: which of the two moves is the rest of that
   issue.
 
+### `conventions_test.py`'s comment and docstring say what holds here
+
+- **The comment above `_NOT_TESTED` called `"none"` the answer this
+  repository gives, where `tests/README.md` answers with the names under
+  *Not tested here*.** The comment names `"none"` as a legal answer this
+  repository does not give today, which is the answer the
+  `listed == "none"` comparison below it accepts (issue
+  btclib-org/.github#903).
+- **The clause reaching for another repository's list of names is gone.**
+  What `re.DOTALL` is on the pattern for is the wrap in the answer this
+  tree's own `tests/README.md` gives.
+- **`test_the_two_halves_account_for_every_convention`'s docstring
+  counted what the half it describes leaves silent, and that count was a
+  bullet behind section 7's list.** It states no number, and asks the two
+  halves to name each convention once (issue btclib-org/.github#905).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

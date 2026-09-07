@@ -72,10 +72,9 @@ _HEADING = "## Convention tests"
 # MULTILINE because eighty columns wrap the list of names across lines
 # and the non-greedy match then stops at the first full stop that ends
 # one -- which is why no name in that list may carry a full stop of its
-# own. "none" is a legal answer and the one this repository gives, and it
-# fits a line; the six btclib-secp256k1 names do not, which is where the
-# single-line form was found wanting. The two halves are checked against
-# each other below rather than each against nothing
+# own. "none" is a legal answer this repository does not give today; the
+# two halves are checked against each other below rather than each
+# against nothing.
 _NOT_TESTED = re.compile(r"^Not tested here: (.+?)\.$", re.MULTILINE | re.DOTALL)
 # a table row, and the separator row is what the second group's leading
 # backtick excludes: `| --- | --- |` has no backtick to match
@@ -222,9 +221,9 @@ def test_the_two_halves_account_for_every_convention() -> None:
 
     This is the assertion the declaration exists for. Either half alone
     is satisfiable by saying less: a table naming three conventions is
-    true about those three and silent about the other five, and silence
-    is exactly what section 7's escape clause makes unreadable. Together
-    they have to name each of them once.
+    true about those three and silent about the rest, and silence is
+    exactly what section 7's escape clause makes unreadable. Together
+    they have to name each convention once.
     """
     match = _NOT_TESTED.search(_SECTION)
     assert match, (
