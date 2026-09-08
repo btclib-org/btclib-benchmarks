@@ -4067,6 +4067,38 @@ together and the output still pointing at `tests/` (closes #276).
   row that stops matching surfaces as a bullet neither half accounts for,
   which the list already names.
 
+### `conventions_test.py` splits the *Not tested here* list at its separator
+
+- **`tests/conventions_test.py` splits the collapsed list at a semicolon
+  and a space, and collapses no name after that** (closes
+  btclib-org/.github#911): the line above the split has already replaced
+  every run of whitespace, newlines included, with one space, so
+  collapsing a piece of it again is `strip()` with nothing left to strip.
+  The comment gave an eighty-column wrap falling inside a name as the
+  reason for that second collapse. The wrap is there -- `tests/README.md`
+  breaks a name of the *Not tested here* list across lines -- and it is
+  the reason for the collapse one line above, not for the one it sat
+  over.
+- **The bullet under *Which of section 7's conventions this suite tests
+  is declared* gave that wrap as something `strip()` around each name
+  could not repair.** The split does not read the text the wrap is in:
+  the line above turns it into a space first, so at the split's own site
+  a collapse and a `strip()` answer alike and neither repairs anything.
+- **The separator keeps its space rather than becoming the semicolon
+  alone**, and the comment says why: the split is lossless --
+  `sep.join(s.split(sep))` is `s` -- so a separator the declaration wrote
+  some other way leaves the name whatever the split did not take, and the
+  assertion that every name listed is one of section 7's reports it. The
+  semicolon alone takes any spelling of the separator and reports
+  nothing.
+- **That assertion's message quotes the names it read out of the
+  declaration**: a semicolon written with a space on each side is
+  consumed by the split and leaves the name a trailing one, which
+  unquoted reads as a name the same message goes on to list as known. The
+  comments and this message are word-identical to `btclib`'s, landed
+  there as `bd9e3e87`, the issue asking one decision of every copy of
+  this module rather than one per tree.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
