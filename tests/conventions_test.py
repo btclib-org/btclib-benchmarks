@@ -35,12 +35,12 @@ here. The checks over the rows quantify rather than being parametrized
 on them, for the reason the comment above the checks carries.
 
 What it does not check is whether a named module tests the convention it
-is named against. Nothing short of reading it can, and the four
-assertions below are the ones that fail on the ways a declaration
-actually rots: a convention invented here rather than taken from section
-7, a module renamed or deleted with the row left behind, a module emptied
-of its tests, and a bullet that quietly stops being accounted for by
-either half.
+is named against. Nothing short of reading it can, and the assertions
+below that read the declaration are the ones that fail on the ways it
+rots: a section that parses to nothing, a convention invented here rather
+than taken from section 7, a module renamed or deleted with the row left
+behind, a module emptied of its tests, and a bullet that quietly stops
+being accounted for by either half.
 """
 
 import ast

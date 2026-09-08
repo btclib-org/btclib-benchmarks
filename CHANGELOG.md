@@ -4043,6 +4043,30 @@ together and the output still pointing at `tests/` (closes #276).
   bullet behind section 7's list.** It states no number, and asks the two
   halves to name each convention once (issue btclib-org/.github#905).
 
+### `conventions_test.py`'s module docstring names the ways and counts nothing
+
+- **The last paragraph of `tests/conventions_test.py`'s module docstring
+  states no number of the assertions below it** (closes
+  btclib-org/.github#906): it said the four assertions below are the ones
+  that fail on the ways a declaration actually rots, and the ways it
+  listed left out `test_the_section_was_found`. A section that parses to
+  nothing is the first of them now, the ways standing in the order those
+  assertions are defined in rather than one to an assertion --
+  `tests/README.md`'s `## Convention tests` heading retitled, duplicated,
+  or left with another `##` heading under it fails
+  `test_the_two_halves_account_for_every_convention` as well. The number
+  is gone rather than corrected, section 9 of the organization standard
+  refusing a stated total, a line every open branch has to edit.
+- **The sentence names the assertions that read the declaration rather
+  than every function defined below it.** Those driving `_section` and
+  `_holds_a_test` on text and modules written for them fail on no rot of
+  the declaration, and each says in its own docstring what it is for. A
+  column added to `tests/README.md`'s table row, or the backticks
+  dropped from its module column, fails
+  `test_the_two_halves_account_for_every_convention` and nothing else: a
+  row that stops matching surfaces as a bullet neither half accounts for,
+  which the list already names.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
