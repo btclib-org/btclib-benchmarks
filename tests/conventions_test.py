@@ -35,12 +35,12 @@ here. The checks over the rows quantify rather than being parametrized
 on them, for the reason the comment above the checks carries.
 
 What it does not check is whether a named module tests the convention it
-is named against. Nothing short of reading it can, and the four
-assertions below are the ones that fail on the ways a declaration
-actually rots: a convention invented here rather than taken from section
-7, a module renamed or deleted with the row left behind, a module emptied
-of its tests, and a bullet that quietly stops being accounted for by
-either half.
+is named against. Nothing short of reading it can, and the assertions
+below that read the declaration are the ones that fail on the ways it
+rots: a section that parses to nothing, a convention invented here rather
+than taken from section 7, a module renamed or deleted with the row left
+behind, a module emptied of its tests, and a bullet that quietly stops
+being accounted for by either half.
 """
 
 import ast
@@ -231,14 +231,12 @@ def test_the_two_halves_account_for_every_convention() -> None:
         " the declaration is half of one"
     )
     listed = " ".join(match[1].split())
-    # whitespace collapsed inside each name and not only around it: the
-    # list wraps at eighty columns wherever the column falls, which for a
-    # long one is in the middle of a name rather than at a semicolon
-    absent = (
-        ()
-        if listed == "none"
-        else tuple(" ".join(s.split()) for s in listed.split(";"))
-    )
+    # the separator is a semicolon and a space, which is what the
+    # collapse above leaves of one written with a space or a line break
+    # after it. The semicolon alone would take any other spelling for a
+    # separator too; here the name keeps whatever the split did not
+    # take, and the assertions below report it
+    absent = () if listed == "none" else tuple(listed.split("; "))
     tested = {convention for convention, _ in _ROWS}
 
     overlap = tested.intersection(absent)
@@ -247,9 +245,12 @@ def test_the_two_halves_account_for_every_convention() -> None:
     )
 
     unknown = [name for name in absent if name not in _CONVENTIONS]
+    # the names come from the file, so repr: one differing from a
+    # convention in whitespace alone is invisible unquoted, and reads as
+    # a name this same message goes on to list as known
     assert not unknown, (
-        f"{', '.join(unknown)} is listed as not tested and is not one of"
-        f" section 7's: {', '.join(_CONVENTIONS)}"
+        f"{', '.join(map(repr, unknown))} is listed as not tested and is not"
+        f" one of section 7's: {', '.join(_CONVENTIONS)}"
     )
 
     unaccounted = [

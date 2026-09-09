@@ -4043,6 +4043,62 @@ together and the output still pointing at `tests/` (closes #276).
   bullet behind section 7's list.** It states no number, and asks the two
   halves to name each convention once (issue btclib-org/.github#905).
 
+### `conventions_test.py`'s module docstring names the ways and counts nothing
+
+- **The last paragraph of `tests/conventions_test.py`'s module docstring
+  states no number of the assertions below it** (closes
+  btclib-org/.github#906): it said the four assertions below are the ones
+  that fail on the ways a declaration actually rots, and the ways it
+  listed left out `test_the_section_was_found`. A section that parses to
+  nothing is the first of them now, the ways standing in the order those
+  assertions are defined in rather than one to an assertion --
+  `tests/README.md`'s `## Convention tests` heading retitled, duplicated,
+  or left with another `##` heading under it fails
+  `test_the_two_halves_account_for_every_convention` as well. The number
+  is gone rather than corrected, section 9 of the organization standard
+  refusing a stated total, a line every open branch has to edit.
+- **The sentence names the assertions that read the declaration rather
+  than every function defined below it.** Those driving `_section` and
+  `_holds_a_test` on text and modules written for them fail on no rot of
+  the declaration, and each says in its own docstring what it is for. A
+  column added to `tests/README.md`'s table row, or the backticks
+  dropped from its module column, fails
+  `test_the_two_halves_account_for_every_convention` and nothing else: a
+  row that stops matching surfaces as a bullet neither half accounts for,
+  which the list already names.
+
+### `conventions_test.py` splits the *Not tested here* list at its separator
+
+- **`tests/conventions_test.py` splits the collapsed list at a semicolon
+  and a space, and collapses no name after that** (closes
+  btclib-org/.github#911): the line above the split has already replaced
+  every run of whitespace, newlines included, with one space, so
+  collapsing a piece of it again is `strip()` with nothing left to strip.
+  The comment gave an eighty-column wrap falling inside a name as the
+  reason for that second collapse. The wrap is there -- `tests/README.md`
+  breaks a name of the *Not tested here* list across lines -- and it is
+  the reason for the collapse one line above, not for the one it sat
+  over.
+- **The bullet under *Which of section 7's conventions this suite tests
+  is declared* gave that wrap as something `strip()` around each name
+  could not repair.** The split does not read the text the wrap is in:
+  the line above turns it into a space first, so at the split's own site
+  a collapse and a `strip()` answer alike and neither repairs anything.
+- **The separator keeps its space rather than becoming the semicolon
+  alone**, and the comment says why: the split is lossless --
+  `sep.join(s.split(sep))` is `s` -- so a separator the declaration wrote
+  some other way leaves the name whatever the split did not take, and the
+  assertion that every name listed is one of section 7's reports it. The
+  semicolon alone takes any spelling of the separator and reports
+  nothing.
+- **That assertion's message quotes the names it read out of the
+  declaration**: a semicolon written with a space on each side is
+  consumed by the split and leaves the name a trailing one, which
+  unquoted reads as a name the same message goes on to list as known. The
+  comments and this message are word-identical to `btclib`'s, landed
+  there as `bd9e3e87`, the issue asking one decision of every copy of
+  this module rather than one per tree.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
