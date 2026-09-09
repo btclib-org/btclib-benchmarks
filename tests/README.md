@@ -34,14 +34,14 @@ leading underscore, which the standard's own rule excepts from the
 surface, so none of them is a name the root has to re-export, and the
 root's own `__all__` is the whole of what the test reads.
 
-The other four package-only conventions in that clause — the
-documentation of shipped modules, the import graph, the calling
-convention, input validation — remain a choice this repository has not
-been asked to make: nothing in its own prose states them, and section 7
-forces only the public surface regardless of what the prose says. The
-copyright header, the changelog and the build system are conventions
-this repository does hold — it has a `LICENSE`, a `CHANGELOG.md` and a
-declared build backend — and nothing checks any of those three either.
+The other package-only conventions in that clause — the documentation of
+shipped modules, the import graph, the calling convention, input
+validation — remain a choice this repository has not been asked to make:
+nothing in its own prose states them, and section 7 forces only the
+public surface regardless of what the prose says. The copyright header,
+the changelog and the build system are conventions this repository does
+hold — it has a `LICENSE`, a `CHANGELOG.md` and a declared build
+backend — and nothing checks any of those three either.
 
 **The suite opens no socket, and this is where the decision not to test
 that is recorded.** The property holds: nothing the suite reads of this

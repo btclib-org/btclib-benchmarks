@@ -164,13 +164,13 @@ def test_the_section_was_found() -> None:
     )
 
 
-# the three checks below quantify over the rows rather than being
-# parametrized by them, which matters generally: a repository is free to
-# declare no rows at all, and a parametrized test over an empty set is
-# skipped -- its body never runs, and the coverage gate reads that as a
-# line nothing exercises. A comprehension over any number of rows still
-# runs its assertion, and the message names every row that failed rather
-# than one
+# the checks below quantify over the rows rather than being parametrized
+# by them, which matters generally: a repository is free to declare no
+# rows at all, and a parametrized test over an empty set is skipped --
+# its body never runs, and the coverage gate reads that as a line
+# nothing exercises. A comprehension over any number of rows still runs
+# its assertion, and the message names every row that failed rather than
+# one
 def test_every_convention_named_is_one_of_section_sevens() -> None:
     """A convention invented here is not a convention the standard has."""
     unknown = [
