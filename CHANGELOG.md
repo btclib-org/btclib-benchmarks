@@ -4151,6 +4151,27 @@ together and the output still pointing at `tests/` (closes #276).
   `.vscode/`. Editing a copy here would open a divergence rather than
   close one.
 
+### `CLAUDE.md` takes the standard's worktree order and `refs/heads/main` rule
+
+- **The worktree name's four parts carry the argument for their order**
+  (issue btclib-org/.github#854): most general first, an issue of
+  `btclib-org/.github`'s tracker being the key and the repository a
+  detail of it. The sentence saying the name sorts every worktree of one
+  issue together leaves the `repo` collision clause to follow that
+  argument, which is where `btclib-org/.github`'s `CLAUDE.md` at
+  `cdb0333` has it, and it gains that copy's closing clause: sorting
+  turns on the order rather than on `repo` being present.
+- **`refs/heads/main` is a ref to move onto `origin/main` rather than one
+  to leave alone** (issue btclib-org/.github#919), and the reasoning
+  comes with it: the name is the local branch's and no ruleset reaches
+  it, a ruleset binding the forge's copy. The closing sentence names
+  `origin/main` as what a pull request moves, where it named `main`.
+- **What advancing that ref costs another session is still stated here**,
+  with the pointer to `CONTRIBUTING.md`'s *Pull requests* beside it.
+  Whether `btclib-org/.github`'s own copy should carry that sentence is
+  btclib-org/.github#886, whose interim instruction leaves both standing,
+  so this paragraph is deliberately not the standard's word for word.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
