@@ -4117,6 +4117,16 @@ together and the output still pointing at `tests/` (closes #276).
   with no number to keep in step with which functions follow it
   (closes #299).
 
+### `wrappers_test.py`'s `_answer` docstring counts nothing
+
+- **The docstring opened "these four packages do not agree on how to
+  decline" and then named three -- btclib_secp256k1, secp256k1-py,
+  electrum-ecc -- its own next sentence already reading "All three are
+  the same verdict."** `DSA_VERIFIERS_COMPACT`, the dict every case that
+  triggers this decline iterates, holds exactly those three;
+  `coincurve` has no compact verifier to be a fourth. The docstring
+  names the packages and states no count of them (closes #302).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
