@@ -4099,6 +4099,24 @@ together and the output still pointing at `tests/` (closes #276).
   there as `bd9e3e87`, the issue asking one decision of every copy of
   this module rather than one per tree.
 
+### `tests/README.md`'s package-only paragraph names conventions, not a count
+
+- **The paragraph under the declaration table said how many of section
+  7's package-only conventions this repository has not been asked to
+  test, and section 7's list has grown since that number was written.**
+  It names the conventions instead: the documentation of shipped
+  modules, the import graph, the calling convention, input validation
+  (closes #296).
+
+### `conventions_test.py`'s comment above the row checks counts nothing
+
+- **The comment above the row checks said how many of them quantify over
+  `_ROWS` rather than being parametrized by it, and a function further
+  below shares that property without being one the stated number
+  reached.** The comment now says the checks below share the property,
+  with no number to keep in step with which functions follow it
+  (closes #299).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
