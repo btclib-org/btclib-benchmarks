@@ -4127,6 +4127,30 @@ together and the output still pointing at `tests/` (closes #276).
   `coincurve` has no compact verifier to be a fourth. The docstring
   names the packages and states no count of them (closes #302).
 
+### The lint gate is not installed as a git hook
+
+- **`CONTRIBUTING.md`'s *The environment and the gates* says what
+  `pre-commit install` costs** (issue btclib-org/.github#949): it writes
+  into the common git directory, which every worktree of this repository
+  shares, so a worktree's own `rev-parse --git-path hooks` answers with
+  the primary checkout's `.git/hooks` and one session installing the
+  hook installs it for every other. The paragraph sits under *Check exit
+  codes rather than filtered output*, where `.github`, `btclib-node`,
+  `btclib-secp256k1` and `bitcoin-core-rpc` each put theirs.
+- **The lint gate enforces its list on a run rather than on a commit.**
+  The sentence naming `.pre-commit-config.yaml` as the gate gave a
+  commit and CI as what enforce the same list, and nothing in this
+  repository installs the hook a commit would run.
+- **The `render.py --check` entry gives one entry gating a run and CI as
+  its reason for sitting in `.pre-commit-config.yaml` rather than in a
+  workflow.** That reason named a commit and CI, and it is the same
+  correction as above made in the file the entry lives in.
+- **The commit-time wording this repository shares with its siblings is
+  untouched**: `.pre-commit-config.yaml`'s header and its `SKIP` and
+  `--no-verify` lines, `lint.yml`'s header, and both files under
+  `.vscode/`. Editing a copy here would open a divergence rather than
+  close one.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

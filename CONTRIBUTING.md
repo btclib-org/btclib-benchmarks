@@ -286,12 +286,21 @@ git add .secrets.baseline
 ```
 
 `.pre-commit-config.yaml` **is** the lint gate: `lint.yml` runs that file
-and nothing else, so a commit and CI enforce the same list. Never add a
-second copy of the same tools to a workflow.
+and nothing else, so a local run and CI enforce the same list. Never add
+a second copy of the same tools to a workflow.
 
 Check exit codes rather than filtered output — `pre-commit run | grep -v
 Passed` hides a failure, and `grep` finding nothing exits 1, which is not
 the gate's answer to anything.
+
+**The lint gate is not installed as a git hook.** `pre-commit install`
+writes into the common git directory, which every worktree of this
+repository shares: `git -C <worktree> rev-parse --git-path hooks`
+answers with the primary checkout's `.git/hooks` from every one of them,
+so one session installing it installs it for every other. Nothing here
+installs it, so the list is enforced by a run rather than by a commit.
+Run the gate by hand before committing — the `uv run pre-commit run
+--all-files` above.
 
 ### What gates a merge, and what only reports
 
