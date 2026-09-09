@@ -482,13 +482,13 @@ def _answer(
 ) -> bool:
     """Return a verifier's verdict, a refusal spelled either way being False.
 
-    These four packages do not agree on how to decline: handed an r above
-    the group order, btclib_secp256k1 raises `ValueError`, secp256k1-py's
+    These packages do not agree on how to decline: handed an r above the
+    group order, btclib_secp256k1 raises `ValueError`, secp256k1-py's
     deserializer trips an `assert`, and electrum-ecc returns `False` from a
-    length check of its own. All three are the same verdict, and the octets
-    that provoke each spelling are not the same on every platform either --
-    which is why every case below reads the verdict through here rather than
-    asserting the shape of the refusal.
+    length check of its own. Every spelling is the same verdict, and the
+    octets that provoke each one are not the same on every platform either
+    -- which is why every case below reads the verdict through here rather
+    than asserting the shape of the refusal.
     """
     try:
         return bool(verify(msg, pubkey, sig))
