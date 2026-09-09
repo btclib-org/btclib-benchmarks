@@ -590,7 +590,7 @@ repos:
       # remembered to type it.
       #
       # Here rather than in a workflow because the lint workflow runs this
-      # very file: one entry gates a commit and CI at once.
+      # very file: one entry gates a local run and CI at once.
       #
       # `--check` and never the write. Rendering in CI would be the coupling
       # the split between measuring and publishing exists to remove, a
