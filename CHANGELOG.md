@@ -4241,6 +4241,22 @@ together and the output still pointing at `tests/` (closes #276).
   states the setting's own predicate and no longer compares it with
   MD013's exemption, which is wider.
 
+### `REPOSITORY.md` reads the wiki and the projects board back
+
+- **`.has_wiki` and `.has_projects` are read back under *Features*, in
+  the call that reads `has_issues` and `.visibility`** (issue
+  btclib-org/.github#550): section 11 of the repository standard turns
+  both off on every tree and has a copy read both back, and the call
+  answers `false` for both here, so the record agrees with the rule.
+- **The paragraph under *What this file passes over* that put the pair
+  outside the perimeter goes.** The loop there lists the fields no rule
+  reaches and this file quotes in no `--jq` object; the pair is now
+  neither, and stays out of the list by the loop's own rule rather than
+  by a sentence beside it. The entry *`has_wiki` and `has_projects`
+  leave the file* above says section 11 puts both outside the
+  perimeter; section 11 puts both inside it, and this entry is what the
+  file holds.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
