@@ -228,8 +228,9 @@ standing is a pull request that was closed rather than merged.
 
 ```shell
 gh api repos/btclib-org/btclib-benchmarks \
-  --jq '{issues: .has_issues, visibility: .visibility}'
-# {"issues":true,"visibility":"public"}
+  --jq '{issues: .has_issues, visibility: .visibility,
+         wiki: .has_wiki, projects: .has_projects}'
+# {"issues":true,"projects":false,"visibility":"public","wiki":false}
 ```
 
 Issues are on: they are where a benchmark that has stopped measuring
@@ -241,6 +242,14 @@ Public is the half of section 10's `scorecard` bar a copy reads back,
 and this tree runs no `scorecard` sentinel: *What is not configured,
 and why* below is that decision, and the answer above is what keeps it
 a decision rather than an impediment.
+
+[Section 11 of the repository
+standard](https://github.com/btclib-org/.github/blob/main/README.md#11-github-settings)
+turns the wiki and the projects board off on every tree: an unused wiki
+is a second place a reader can land looking for what the tracker
+already records, and the projects board is a per-user view of the same
+issues the tracker holds. The call above answers `false` for both, and
+the record agrees with the rule.
 
 ## Topics
 
@@ -523,11 +532,6 @@ the standard does state a rule about, and a field this file does quote
 in a `--jq` object, the bracket in the second keeping that line from
 matching itself. Recording a field on no rule grows this file with
 GitHub's API rather than with the standard.
-
-`has_wiki` and `has_projects` are outside the perimeter by section 11's
-own sentence, which states no rule about either, so this file neither
-reads them back nor explains an answer to them; that sentence is what
-the loop above would count, which is why the pair is not in its list.
 
 **A field the standard scopes to a releasing tree.** `.homepage` is the
 *About* link on this repository's page and `pyproject.toml`'s
