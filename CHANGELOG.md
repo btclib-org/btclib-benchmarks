@@ -4172,6 +4172,29 @@ together and the output still pointing at `tests/` (closes #276).
   btclib-org/.github#886, whose interim instruction leaves both standing,
   so this paragraph is deliberately not the standard's word for word.
 
+### `CLAUDE.md` carries the shared primary-checkout section byte for byte
+
+- **`## The primary checkout is the maintainer's` now matches
+  `btclib-org/.github`'s `CLAUDE.md` byte for byte** (issue
+  btclib-org/.github#739), which is what `tests/verbatim_test.py`'s
+  `EXPECTED_DRIFT["CLAUDE.md"]` in `.github` excuses until every port
+  lands. The paragraph describing this tree's environment build is
+  dropped rather than moved: `CONTRIBUTING.md`'s *The environment and
+  the gates* already carries it. The two sentences btclib-org/.github#886
+  left standing on `refs/heads/main` are dropped with it: what settles
+  that is section 14's byte-for-byte rule this port applies, not
+  btclib-org/.github#886 itself, folded into stream S2 of
+  btclib-org/.github#976 with its interim instruction left in force
+  meanwhile rather than a decision of its own.
+- **The entry *The worktree fence's create, push and guard take the
+  standard's form* above names the push paragraph as
+  `btclib-org/.github`'s `CLAUDE.md` at `20ad654` byte for byte, names
+  that copy as the converged form, and gives the create paragraph's
+  citation clause as this tree's own** (issue btclib-org/.github#739):
+  none of that holds any more — the section, push and create paragraphs
+  included, is `btclib-org/.github`'s `CLAUDE.md` at `5f2eda9`, and the
+  file names no converged sha of its own.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

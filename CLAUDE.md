@@ -73,59 +73,61 @@ which machine ran it.
 
 ## The primary checkout is the maintainer's
 
-**Never work in it.** No edit, no `git add`, no commit, no branch switch,
-no rebase, no `git stash`, no `pre-commit run` — the hooks fix files in
-place. It is the maintainer's window on the tree: whatever is open in
-their editor, whatever they have half-staged, and the branch they are
-looking at are theirs, and one working tree has one index and one HEAD to
-lose. Reading it is fine — `git log`, `git show`, `git diff`, `gh`, and a
-`git fetch`, which writes refs and leaves the work tree alone.
+**Never work in it.** No edit, no `git add`, no commit, no branch
+switch, no rebase, no `git stash` — the hooks fix files in place. It is a
+local reference only, and it stays on `main`.
 
-**But `git fetch` moves `refs/remotes/origin/main` without moving the work
-tree**, so a `grep` or a `Read` against the checkout's files answers for
-whenever it was last brought forward, not for now. The read that cannot go
-stale is `git show origin/main:<path>`: it answers from the ref `git
-fetch` just moved, never from the tree. Where the checkout has to be
-current rather than merely readable, a fast-forward of a clean `main`
-brings it up:
+Reading it is fine, but `git fetch` moves `refs/remotes/origin/main` and
+leaves the work tree where it was, so a `grep` or a `Read` against the
+checkout answers for whenever it was last brought forward, not for now.
+The read that cannot go stale is `git show origin/main:<path>`: it
+answers from the ref `git fetch` just moved, never from the tree.
+
+Where the checkout has to be current rather than merely readable, a
+fast-forward of a clean `main` brings it up:
 
 ```shell
 git fetch origin && git merge --ff-only origin/main
 ```
 
 That writes no commit, switches no branch and runs no hook, so it is on
-the permitted side of *never work in it*, not an exception to it. Stop if
-the checkout is not on `main` or is not clean: that is no longer bringing
-it forward.
+the permitted side of *never work in it*, not an exception to it. Stop
+if the checkout is not on `main` or is not clean: that is no longer
+bringing it forward.
 
-**Every session works in a worktree**, its own, from the first edit,
-named `wt-<tracker>-<issue>-<repo>-<role>` rather than after the issue
-alone, most general part first: an issue filed in `btclib-org/.github`'s
-tracker is the key and the repository is a detail of it —
-`btclib-org/.github#255` is one issue owed by seven repositories,
-`btclib-org/.github#177` by two — so the repository is what varies
-underneath an issue rather than the other way round, which is why `repo`
-comes after `issue`. Naming it that way also sorts every worktree of one
-issue together, which is what a port leaves behind. `tracker` is the
-repository whose issue tracker holds the issue: an issue number is unique
-only within one tracker, so `btclib-org/.github#45` and
-`btclib-org/btclib#45` are different issues that would otherwise name the
-same worktree. `issue` is what prevents the collision that has actually
-happened — two worktrees of different work sharing a generic basename in
-one repository's own `.git`, keyed on its path's basename. `repo`
-prevents a different collision, a *path* one rather than a `.git` one:
-two repositories each keep their own `.git/worktrees/<basename>` and
-cannot collide there, but the workers of one session share one scratchpad
-directory, so a session carrying one issue into several repositories
-computes the same target path for each of them, and `git worktree add`
-refuses a directory that already exists — or worse, a second worker reads
-the first one's tree. `role` covers the narrower case of a coder and its
-reviewer holding a worktree at once, which the ordinary sequence avoids
-by each removing its own.
+**Every session works in a worktree**, its own, from the first edit, named
+`wt-<tracker>-<issue>-<repo>-<role>` rather than after the issue alone, most
+general part first: an issue filed in `btclib-org/.github`'s tracker is the key
+and the repository is a detail of it — `btclib-org/.github#255` is one issue
+owed by seven repositories, `btclib-org/.github#177` by two — so the repository
+is what varies underneath an issue rather than the other way round, which is why
+`repo` comes after `issue`. Naming it that way also sorts every worktree of one
+issue together, which is what a port leaves behind.
 
-An issue of `btclib-org/.github`'s tracker worked in `btclib` by a coder
-names its worktree `wt-github-255-btclib-coder`, and the editing, the
-gates and the commits all happen in the worktree before the push.
+Each of the four parts earns its place against a different collision,
+and none of them is the same collision. `tracker` is the repository
+whose issue tracker holds the issue: an issue number is unique only
+within one tracker, so `btclib-org/.github#45` and
+`btclib-org/btclib#45` are different issues that would otherwise name
+the same worktree. `issue` is what prevents the collision that has
+actually happened — two worktrees of different work sharing a generic
+basename in one repository's own `.git`, keyed on its path's basename.
+`repo` prevents a different collision, a *path* one rather than a `.git`
+one: two repositories each keep their own `.git/worktrees/<basename>`
+and cannot collide there, but the workers of one session share one
+scratchpad directory, so a session carrying one issue into several
+repositories computes the same target path for each of them, and `git
+worktree add` refuses a directory that already exists — or worse, a
+second worker reads the first one's tree. `role` covers the narrower
+case of a coder and its reviewer holding a worktree at once, which the
+ordinary sequence avoids by each removing its own.
+
+An issue of `btclib-org/.github`'s tracker, worked in `btclib` by a coder, names
+its worktree `wt-github-255-btclib-coder`. The environment is created in the
+worktree, not the checkout, by whatever that tree's own `CONTRIBUTING.md` names
+under *The environment and the gates*, and a session reads that section, not
+this one, for the command. The editing, the gates and the commits all happen in
+the worktree before the push.
 
 ```shell
 WT=<scratchpad>/wt-<tracker>-<issue>-<repo>-<role>
@@ -133,15 +135,14 @@ git worktree add "$WT" origin/main -b <branch>
 git -C "$WT" push origin HEAD:refs/heads/<branch>
 ```
 
-`-b <branch>` sits after the path and the commit-ish so that the
-placeholder ends the command, which is section 9 of the standard's rule.
-With the placeholder ahead of `"$WT"`, its `<` and its `>` are
-redirections performed left to right, so the `>` is reached only where
-the reader's own directory already holds the name `branch`: there the
-`<` succeeds, the line runs, and the `>` takes `"$WT"` as its target —
-a path with no directory at it is the file it creates. Ordinarily
-nothing holds that name, so the `<` fails first (`no such file or
-directory: branch`) and the line ends before the `>` opens anything.
+`-b <branch>` sits after the path and the commit-ish so that the placeholder
+ends the command, which is section 9 of `btclib-org/.github`'s rule. With the
+placeholder ahead of `"$WT"`, its `<` and its `>` are redirections performed
+left to right, so the `>` is reached only where the reader's own directory
+already holds the name `branch`: there the `<` succeeds, the line runs, and the
+`>` takes `"$WT"` as its target — a path with no directory at it is the file it
+creates. Ordinarily nothing holds that name, so the `<` fails first (`no such
+file or directory: branch`) and the line ends before the `>` opens anything.
 
 The push names the worktree with `git -C "$WT"` because a `cd` binds the
 shell that runs it: a session that runs each line as its own command
@@ -151,32 +152,12 @@ worktree's. `env -C <dir>` is the same binding for a command that takes
 no `-C` of its own. Neither binding rescues the assignment above it: a
 session that loses the `cd` loses `WT` with it, and `git -C ""` is
 documented to leave the working directory unchanged, so that push lands
-the same way, exit 0 and no diagnostic. What the `-C` buys is a path
-that can be written out in full; write it out.
-
-Giving the worktree an environment is `CONTRIBUTING.md`'s *The
-environment and the gates*, and its `uv sync --locked` is most of the
-work here: `electrum-ecc` publishes no wheel, so it is built from its
-sdist and compiles a libsecp256k1 of its own on the way, and the C
-toolchain that needs is named beside the command there rather than here.
-`coincurve` and `secp256k1` arrive as wheels their publishers built
-where the index serves one for this interpreter and platform -- which
-is what `.python-version` pins 3.13 for, neither of them building from
-source without pkg-config and a toolchain. Section 9's *A line that
-writes goes in a fence of its own* keeps that build out of the block
-above: it runs in the directory the shell is standing in, and no line of
-that block moves the shell, `git -C` binding the one command it is
-given, so that directory is the primary checkout above — where
-`.gitignore` covers the `.venv` a build would leave. Chaining
-it with an `&&` is no answer, and neither is what the block does
-unfilled: it is a syntax error to `/bin/zsh` 5.9, to the `bash` 3.2.57
-macOS ships as `/bin/bash` and `/bin/sh`, and to `bash` 5.3.15, each
-reading it as a script, while the same lines with values filled in parse
-cleanly, so the stop is the placeholders' shape. It does not move with
-an edit to any one of them: filling `<scratchpad>` alone, or `<branch>`
-alone, leaves the same error at the same line, line 1 still ending on
-the `>` of `<role>`. Filling all of them is what changes the parse. An
-interactive paste of the block is unmeasured here.
+the same way, exit 0 and no diagnostic. That silence is `git`'s rather
+than the binding's: the BSD `env` macOS ships documents no case for an
+empty `-C` and refuses one — `cannot change directory to ''`, exit 125 —
+so a line bound with `env -C` stops there instead of running against the
+wrong tree. What the `-C` buys is a path that can be written out in
+full; write it out.
 
 Removing the worktree is part of finishing, and it stands in a block of
 its own: the block above ends in a placeholder, and a shell that
@@ -192,38 +173,18 @@ whatever worktree that path names.
 git worktree remove --force "${WT:?}"
 ```
 
-The venv is the whole of the cost, and it buys the thing that matters: a
-commit cannot contain work that was never in it. Expect `origin/main` to
-move while you work, so `git fetch && git rebase origin/main` before
-pushing, resolving in favour of *both* sides (their change and yours,
-both CHANGELOG.md bullets).
-
-What the fence says about the create, the push and the removal converged
-in `btclib-org/.github`'s `CLAUDE.md` at `20ad654`, which is what a
-later reader compares it against rather than an issue's quotation of it.
-The environment paragraph above is this tree's own.
-
 **Never `git stash` in a worktree either: `refs/stash` is shared.** A
-worktree isolates files, not refs. The stash is a single ref in the
-common `.git`, so `git stash push` pushes onto the same stack every other
-session pops from — and on a clean tree it creates nothing, so the `git
-stash pop` that follows applies and *drops* whatever another session
-shelved. Commit to your own branch instead: a branch is per-worktree in
-the way the stash only looks to be. What is already lost is still in the
-object store — `git fsck --unreachable` names the commit and `git stash
-store <sha>` puts the ref back.
+worktree isolates files, not refs, so `git stash push` pushes onto the
+same stack every other session pops from. Commit to your own branch
+instead.
 
 **Do not rewrite `refs/heads/main`, and move it only onto
 `origin/main`.** That name is the local branch's, and no ruleset reaches
 it: a ruleset binds the forge's copy. The fast-forward above moves it
 onto `origin/main` and is inside that, where a merge, a commit on `main`
-or an `update-ref` to a branch tip leaves the ref somewhere `origin/main`
-is not. `git update-ref`, or a push carrying another session's commits,
-leaves every working tree's files alone and moves the base under them, so
-their next commit — built on the older copy — reverts what just landed.
-Your own branch is what you push, and the pull request is what moves
-`origin/main`: CONTRIBUTING.md's *Pull requests* has how a branch under
-review is corrected and how it is merged.
+or an `update-ref` to a branch tip leaves the ref somewhere
+`origin/main` is not. Your own branch is what you push, and the pull
+request is what moves `origin/main`.
 
 ## Model
 
