@@ -4195,6 +4195,52 @@ together and the output still pointing at `tests/` (closes #276).
   included, is `btclib-org/.github`'s `CLAUDE.md` at `5f2eda9`, and the
   file names no converged sha of its own.
 
+### The gate runs section 4's local hooks
+
+- **`reasonless-coverage-pragma`, `unquoted-placeholder` and
+  `check-changelog` join `.pre-commit-config.yaml`, each block
+  `btclib-org/.github`'s own, its pointers to sections of `README.md`
+  re-aimed at the organization standard, `README.md` here being the
+  benchmarks' page** (issue btclib-org/.github#965, issue
+  btclib-org/.github#706, issue btclib-org/.github#21).
+  `tests/hooks_test.py`'s `LOCAL` in `btclib-org/.github` is what
+  compares the ids, and the `BACKLOG` rows there excusing this tree are
+  that tracker's to drop. The tree is clean under the two pygrep hooks:
+  `git grep -nE '#\s*pragma: no (cover|branch)$' -- '*.py'` answers
+  nothing, and so does the placeholder pattern over every markdown file
+  the hook selects. The entry *A pragma's reason names its case, and the
+  ones excusing nothing go* above stated the rule the first hook now
+  refuses at the gate, and it stands.
+- **`.github/scripts/check_changelog.py` is `btclib-org/.github`'s byte
+  for byte** (issue btclib-org/.github#21): section 14 of the
+  organization standard owes it of every repository, and
+  `tests/verbatim_test.py` there compares it. `check-changelog` runs it
+  ahead of `markdownlint-cli2`, whose `--fix` would otherwise repair the
+  seam it exists to name.
+- **`check-docstring-first` passes over that script** (issue
+  btclib-org/.github#995): the script carries an attribute docstring the
+  hook reads as a second module docstring, and `btclib-org/.github` runs
+  no `check-docstring-first` of its own, so the file passes the gate
+  there and fails it here. The exclusion is the price of carrying the
+  file byte for byte rather than repairing a copy the verbatim test
+  would refuse, and it goes the day the script passes the hook.
+- **`toml-comment-width`'s `name:` states the pattern's own predicate,
+  80 bytes with an unbroken final token exempt, and its comment is
+  `btclib-org/.github`'s** (issue btclib-org/.github#843, issue
+  btclib-org/.github#885). The entry *`toml-comment-width`'s comment
+  claims no other tool's amnesty* above left the `name:` and the `entry:`
+  for the rest of btclib-org/.github#843, and `btclib-org/.github`'s own
+  entry for it settles which moves: the name, the `entry:` staying as it
+  is. Gone
+  with the comment are its sentence on the `#` lookahead naming
+  `addopts` and `skip`, which the pattern says itself, its paragraph on
+  a non-ASCII byte's count, which the bytes sentence now says, and the
+  paragraph above the block on what the hook closed, which is history.
+- **`.yamllint.yaml` is `btclib-org/.github`'s byte for byte** (issue
+  btclib-org/.github#883): the `allow-non-breakable-words` comment
+  states the setting's own predicate and no longer compares it with
+  MD013's exemption, which is wider.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
