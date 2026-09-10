@@ -4257,6 +4257,27 @@ together and the output still pointing at `tests/` (closes #276).
   perimeter; section 11 puts both inside it, and this entry is what the
   file holds.
 
+### `check_vendored_vectors.py` names its siblings and its departures
+
+- **The module docstring names `btclib`'s and `btclib-secp256k1`'s
+  copies of the same name, what this copy shares with them and where it
+  departs** (issue btclib-org/.github#446): section 14 of the repository
+  standard says every copy owes a header sentence naming what it parses
+  and where it departs from the siblings of the same name, so that a
+  reader holding two copies knows which difference was decided. The
+  departures named are what the diff against each sibling's blob shows:
+  the README path alone on argv with the issue title fixed in the
+  module, and skip reasons confined to a missing repo/path/commit triple
+  or a `behind` other than 0, the shapes the siblings skip besides being
+  ones `vectors/README.md` does not carry.
+- **`_FIELD`'s separator is `[ \t]+`, `btclib`'s, with its comment beside
+  it** (closes #312): `\s` matches the newline ending a bare key's own
+  line, so a key written with no value, not last in its block, captured
+  the following line as its value; section 14 of the repository standard
+  says a fix not about one tree's entry shape is carried to every copy,
+  and the header sentence above calling the block parsing shared is what
+  this bullet keeps true.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
