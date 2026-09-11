@@ -4293,6 +4293,24 @@ together and the output still pointing at `tests/` (closes #276).
   markdown half of the same hook. No tracked Python line ends inside a
   word, and the tree tracks no rst, so the widening reflows nothing.
 
+### The issue-form hooks join the check-jsonschema block
+
+- **`check-github-issue-config` and `check-github-issue-forms` sit
+  beside `check-dependabot` and `check-readthedocs` in the
+  `check-jsonschema` block, at its `rev: 0.38.0`, the pair section 4 of
+  the organization standard names in its *schemas* bullet** (issue
+  btclib-org/.github#767): a form whose `type:` is misspelt is still
+  yaml, so `check-yaml` passes it, and the reader who meets the defect
+  is a person on the *New issue* page rather than a run. Both hooks
+  carry `types: [yaml]` and select narrowly, `config.yml` under that
+  spelling for the first and the directory's yaml that is neither
+  `config.yml` nor `config.yaml` for the second; `.github/ISSUE_TEMPLATE/`
+  holds `config.yml`, `bug_report.yml`, `feature_request.yml` and
+  `question.yml`, so `check-hooks-apply` finds work for each. The
+  comment above the pair is `btclib-org/.github`'s own, its words
+  unchanged. Every file in the directory validates as it stands, and a
+  copy of `bug_report.yml` with a misspelt `type:` is refused.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
