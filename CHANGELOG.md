@@ -4278,6 +4278,21 @@ together and the output still pointing at `tests/` (closes #276).
   and the header sentence above calling the block parsing shared is what
   this bullet keeps true.
 
+### The hyphen hook reads Python and rst beside markdown
+
+- **`no-hyphen-at-end-of-line` selects `types_or: [markdown, python,
+  rst]`, the type list section 4 of the organization standard gives
+  it** (issue btclib-org/.github#921): docutils leaves a docstring's
+  source break inside the paragraph it builds and html collapses it to
+  a space, so a built page reads the hyphen and a space as a markdown
+  one does, and pygrep reading one line at a time refuses a `#` comment
+  sharing the file alongside it. The comment above the hook is
+  `btclib-org/.github`'s own, with its `README.md` read as this file's
+  phrase for the standard, as the neighbouring hook comments do. *A
+  markdown line does not end inside a word*, above, describes the
+  markdown half of the same hook. No tracked Python line ends inside a
+  word, and the tree tracks no rst, so the widening reflows nothing.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
