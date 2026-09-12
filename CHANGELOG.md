@@ -4358,6 +4358,28 @@ together and the output still pointing at `tests/` (closes #276).
   rewording made in one tree alone would put the copies back out of
   agreement.
 
+### A `testpaths` entry's `..` defends the resolve without a symlink
+
+- **The call on `wanted` was left to the symlinked-spelling case,
+  whose assertions all sit after a `pytest.skip`** (issue
+  btclib-org/.github#1022): on a platform that refuses `os.symlink` --
+  a Windows account without the privilege -- nothing here notices the
+  call's removal.
+  `test_a_testpaths_entry_is_the_directory_its_parent_segment_reaches`
+  asks for neither the link nor the privilege: a `testpaths` entry whose
+  `..` leaves the directory it names, `tests/../src`, is the directory
+  it reaches, and a command line naming `tests` is not above that. With
+  `wanted = [path for path in testpaths]`, and `Path.symlink_to` made to
+  refuse so that the case beside it skips, the whole suite is green
+  without this case and red with it.
+- **The claim that the suite fails when either `.resolve()` is removed
+  holds where no link can be made.** *A case defends each `.resolve()`,
+  and `..` is a second reason for them* above states it with the
+  symlinked-spelling case as the whole of the defence on `wanted`.
+- **`bitcoin-core-rpc` carries the same call and the same skipping
+  case**, and its copy of this one is the half of that issue still
+  outstanding.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
