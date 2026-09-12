@@ -44,6 +44,18 @@ exclude_patterns: list[str] = []
 # library's
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
+# anchors for h1 to h6, so a link into a heading of a root markdown file
+# resolves here, spelled as GitHub derives the fragment from the heading
+# text. The key is 0 where it is unset and myst then generates no anchor,
+# so the fragment is an xref to a target no page has and -W fails on a
+# link the forge renders correctly. Six is every level markdown heads at,
+# which makes the number a fixed point rather than a value re-derived
+# from headings that move: section 14 of btclib-org/.github's README.md
+# ports CONTRIBUTING.md's shared half into every repository, so a heading
+# added there moves a depth read off this tree's own files
+# (btclib-org/.github#715)
+myst_heading_anchors = 6
+
 
 # -- Links out of the included root markdown files ----------------------------
 
