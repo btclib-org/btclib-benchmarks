@@ -4330,6 +4330,34 @@ together and the output still pointing at `tests/` (closes #276).
   where it is unset, and exits 0 at 6. Without that link the two depths
   write output trees `diff -r` reports identical.
 
+### `REVIEWING.md` and `.gitattributes` are the standard's current copies
+
+- **`REVIEWING.md`'s shared half is `btclib-org/.github`'s, byte for
+  byte** (issue btclib-org/.github#353). *The verdict* names the three
+  lines a summary ends with, has the ack of record posted as a review of
+  type COMMENT rather than as a forge approval, and says why a `NACK`
+  and a review that ends without a verdict are not the same thing —
+  which is the verdict `claude-review.yml` here already asks its prompt
+  for and reads back. *What a tier-2 repository carries, and what it
+  does not*, earlier in this section, has *The verdict* naming the ack of
+  record as an approving review, which is the wording this replaces.
+  *Landing and review*, earlier still, has every collateral finding filed
+  as an issue rather than asked for in a comment; *Every collateral
+  finding becomes an issue* now leaves a finding about the wording of
+  prose no user reads at the foot of the review instead, on
+  btclib-org/.github#976's authority. What a review of this tree checks
+  stays under `## This repository in particular`, where the comparison
+  stops.
+- **`.gitattributes` states what the union driver costs at the seam**
+  (issue btclib-org/.github#1026). Union joins two sides' added lines
+  directly, so the blank line above a `###` heading goes, and section
+  4's `check-changelog` hook is what reports it; not setting the driver
+  at all is the rejected alternative, at the price of resolving that one
+  anchor by hand. The paragraphs are the standard's own bytes: a comment
+  on that issue asks the port to reword a clause in them, and a
+  rewording made in one tree alone would put the copies back out of
+  agreement.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
