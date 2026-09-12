@@ -4311,6 +4311,25 @@ together and the output still pointing at `tests/` (closes #276).
   unchanged. Every file in the directory validates as it stands, and a
   copy of `bug_report.yml` with a misspelt `type:` is refused.
 
+### The documentation build generates an anchor at every heading level
+
+- **`docs/source/conf.py` sets `myst_heading_anchors` to 6, the depth
+  section 2 of the organization standard fixes** (issue
+  btclib-org/.github#715). Six is every level markdown heads at, so the
+  number stays put where one read off the root files moves with them:
+  `CONTRIBUTING.md`'s shared half is section 14's port into every
+  repository of the organization, and a heading added there would move a
+  depth derived that way in each of them at once.
+
+- **The key is ahead of the content rather than a repair**, no root
+  markdown file here spelling a link into a heading and every fragment
+  they carry sitting in an absolute url out of the tree. With
+  `[the review](./CONTRIBUTING.md#the-review)` added to `README.md`, the
+  documentation build exits 1 on `local id not found in doc
+  'contributing_link'` under `-D myst_heading_anchors=0`, the key's value
+  where it is unset, and exits 0 at 6. Without that link the two depths
+  write output trees `diff -r` reports identical.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
