@@ -4424,6 +4424,33 @@ together and the output still pointing at `tests/` (closes #276).
   pages were measured against and here they are older, and a red whose
   resolution nobody can read afterwards holds no evidence.
 
+### The symlink case's pragma takes the case, not the handler alone
+
+- **The `# pragma: no cover` sits on the case's `def`** (issue
+  btclib-org/.github#1042): an exclusion on a line that introduces a
+  block takes the whole block, so it reaches the assertions after the
+  skip as well. On the `except` it reaches the handler and the
+  `pytest.skip` alone, which are the lines that do not run wherever the
+  link is made, and a platform refusing `os.symlink` then meets the skip
+  and a coverage floor it cannot reach in the same run -- the exit code
+  the floor's and the failure naming a percentage rather than a symlink.
+  Measured with a plugin making `Path.symlink_to` raise `OSError`: with
+  the pragma on the `except` the documented `uv run pytest` exits 1 with
+  the lines after the skip named missing, and with it on the `def` the
+  same run meets the floor and the case reports `SKIPPED`.
+- **The comment above the line says why coverage can ask nothing of the
+  case, and what the exclusion costs**: the body is reachable only where
+  the platform makes a symbolic link, so a floor over a `source` naming
+  `tests` asks about the runner rather than about the suite, and dead
+  code inside the case stops being flagged in exchange.
+- **The docstring's sentence -- a platform that refuses says so as a
+  skip, which `-ra` reports -- is what the move makes true of the run**:
+  the case skips either way, and with the pragma on the `except` the run
+  it skips in fails the floor.
+- **`btclib` and `bitcoin-core-rpc` carry the same shape**, so the issue
+  stays open on this landing and the citation above is `issue` rather
+  than `closes`.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
