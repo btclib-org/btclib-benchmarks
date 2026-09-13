@@ -4257,6 +4257,268 @@ together and the output still pointing at `tests/` (closes #276).
   perimeter; section 11 puts both inside it, and this entry is what the
   file holds.
 
+### `check_vendored_vectors.py` names its siblings and its departures
+
+- **The module docstring names `btclib`'s and `btclib-secp256k1`'s
+  copies of the same name, what this copy shares with them and where it
+  departs** (issue btclib-org/.github#446): section 14 of the repository
+  standard says every copy owes a header sentence naming what it parses
+  and where it departs from the siblings of the same name, so that a
+  reader holding two copies knows which difference was decided. The
+  departures named are what the diff against each sibling's blob shows:
+  the README path alone on argv with the issue title fixed in the
+  module, and skip reasons confined to a missing repo/path/commit triple
+  or a `behind` other than 0, the shapes the siblings skip besides being
+  ones `vectors/README.md` does not carry.
+- **`_FIELD`'s separator is `[ \t]+`, `btclib`'s, with its comment beside
+  it** (closes #312): `\s` matches the newline ending a bare key's own
+  line, so a key written with no value, not last in its block, captured
+  the following line as its value; section 14 of the repository standard
+  says a fix not about one tree's entry shape is carried to every copy,
+  and the header sentence above calling the block parsing shared is what
+  this bullet keeps true.
+
+### The hyphen hook reads Python and rst beside markdown
+
+- **`no-hyphen-at-end-of-line` selects `types_or: [markdown, python,
+  rst]`, the type list section 4 of the organization standard gives
+  it** (issue btclib-org/.github#921): docutils leaves a docstring's
+  source break inside the paragraph it builds and html collapses it to
+  a space, so a built page reads the hyphen and a space as a markdown
+  one does, and pygrep reading one line at a time refuses a `#` comment
+  sharing the file alongside it. The comment above the hook is
+  `btclib-org/.github`'s own, with its `README.md` read as this file's
+  phrase for the standard, as the neighbouring hook comments do. *A
+  markdown line does not end inside a word*, above, describes the
+  markdown half of the same hook. No tracked Python line ends inside a
+  word, and the tree tracks no rst, so the widening reflows nothing.
+
+### The issue-form hooks join the check-jsonschema block
+
+- **`check-github-issue-config` and `check-github-issue-forms` sit
+  beside `check-dependabot` and `check-readthedocs` in the
+  `check-jsonschema` block, at its `rev: 0.38.0`, the pair section 4 of
+  the organization standard names in its *schemas* bullet** (issue
+  btclib-org/.github#767): a form whose `type:` is misspelt is still
+  yaml, so `check-yaml` passes it, and the reader who meets the defect
+  is a person on the *New issue* page rather than a run. Both hooks
+  carry `types: [yaml]` and select narrowly, `config.yml` under that
+  spelling for the first and the directory's yaml that is neither
+  `config.yml` nor `config.yaml` for the second; `.github/ISSUE_TEMPLATE/`
+  holds `config.yml`, `bug_report.yml`, `feature_request.yml` and
+  `question.yml`, so `check-hooks-apply` finds work for each. The
+  comment above the pair is `btclib-org/.github`'s own, its words
+  unchanged. Every file in the directory validates as it stands, and a
+  copy of `bug_report.yml` with a misspelt `type:` is refused.
+
+### The documentation build generates an anchor at every heading level
+
+- **`docs/source/conf.py` sets `myst_heading_anchors` to 6, the depth
+  section 2 of the organization standard fixes** (issue
+  btclib-org/.github#715). Six is every level markdown heads at, so the
+  number stays put where one read off the root files moves with them:
+  `CONTRIBUTING.md`'s shared half is section 14's port into every
+  repository of the organization, and a heading added there would move a
+  depth derived that way in each of them at once.
+
+- **The key is ahead of the content rather than a repair**, no root
+  markdown file here spelling a link into a heading and every fragment
+  they carry sitting in an absolute url out of the tree. With
+  `[the review](./CONTRIBUTING.md#the-review)` added to `README.md`, the
+  documentation build exits 1 on `local id not found in doc
+  'contributing_link'` under `-D myst_heading_anchors=0`, the key's value
+  where it is unset, and exits 0 at 6. Without that link the two depths
+  write output trees `diff -r` reports identical.
+
+### `REVIEWING.md` and `.gitattributes` are the standard's current copies
+
+- **`REVIEWING.md`'s shared half is `btclib-org/.github`'s, byte for
+  byte** (issue btclib-org/.github#353). *The verdict* names the three
+  lines a summary ends with, has the ack of record posted as a review of
+  type COMMENT rather than as a forge approval, and says why a `NACK`
+  and a review that ends without a verdict are not the same thing —
+  which is the verdict `claude-review.yml` here already asks its prompt
+  for and reads back. *What a tier-2 repository carries, and what it
+  does not*, earlier in this section, has *The verdict* naming the ack of
+  record as an approving review, which is the wording this replaces.
+  *Landing and review*, earlier still, has every collateral finding filed
+  as an issue rather than asked for in a comment; *Every collateral
+  finding becomes an issue* now leaves a finding about the wording of
+  prose no user reads at the foot of the review instead, on
+  btclib-org/.github#976's authority. What a review of this tree checks
+  stays under `## This repository in particular`, where the comparison
+  stops.
+- **`.gitattributes` states what the union driver costs at the seam**
+  (issue btclib-org/.github#1026). Union joins two sides' added lines
+  directly, so the blank line above a `###` heading goes, and section
+  4's `check-changelog` hook is what reports it; not setting the driver
+  at all is the rejected alternative, at the price of resolving that one
+  anchor by hand. The paragraphs are the standard's own bytes: a comment
+  on that issue asks the port to reword a clause in them, and a
+  rewording made in one tree alone would put the copies back out of
+  agreement.
+
+### A `testpaths` entry's `..` defends the resolve without a symlink
+
+- **The call on `wanted` was left to the symlinked-spelling case,
+  whose assertions all sit after a `pytest.skip`** (issue
+  btclib-org/.github#1022): on a platform that refuses `os.symlink` --
+  a Windows account without the privilege -- nothing here notices the
+  call's removal.
+  `test_a_testpaths_entry_is_the_directory_its_parent_segment_reaches`
+  asks for neither the link nor the privilege: a `testpaths` entry whose
+  `..` leaves the directory it names, `tests/../src`, is the directory
+  it reaches, and a command line naming `tests` is not above that. With
+  `wanted = [path for path in testpaths]`, and `Path.symlink_to` made to
+  refuse so that the case beside it skips, the whole suite is green
+  without this case and red with it.
+- **The claim that the suite fails when either `.resolve()` is removed
+  holds where no link can be made.** *A case defends each `.resolve()`,
+  and `..` is a second reason for them* above states it with the
+  symlinked-spelling case as the whole of the defence on `wanted`.
+- **`bitcoin-core-rpc` carries the same call and the same skipping
+  case**, and its copy of this one is the half of that issue still
+  outstanding.
+
+### The tree gains the `deps-oldest` sentinel, and the badge with it
+
+- **No workflow here resolved a dependency downwards, so every `>=`
+  `pyproject.toml` declares was a claim no run had installed** (issue
+  btclib-org/.github#323): section 10's *Which trees carry which
+  sentinel* names this repository for `deps-oldest`, and neither the
+  workflow nor its badge was here.
+  `.github/workflows/deps-oldest.yml` takes every direct dependency to
+  the oldest release its own specifier allows and puts the suite
+  through it, the mirror of `deps-latest.yml`'s `--upgrade`. Its badge
+  sits after `deps-latest` and before `os-macos`, the calendar's order
+  over that stretch, and its instant is that same calendar's rather
+  than this file's or the workflow's to restate.
+- **The resolution mode is the job's `env` and not a flag on the step
+  that resolves.** `uv lock` records a non-default mode inside
+  `uv.lock` and a uv command under the default `highest` reads that
+  lock as stale, so `uv run --locked` refuses the lock the step above
+  it has just written: measured with uv 0.12.7 on a project carrying
+  this tree's own `dependencies`, exit 2 without the variable, and
+  `uv lock --check` exit 0 with it.
+- **The cell is 3.11, `requires-python`'s own floor, where
+  `.python-version` pins 3.13.** That pin is a ceiling two comparands'
+  wheels set, its own header giving the reason, and what a floor run
+  asks is the other end. A project carrying this tree's `dependencies`
+  alone resolves and installs at their floors on 3.11, and on a
+  `git archive` export whose `[dependency-groups]` entries are held at
+  the releases the committed `uv.lock` already carries there, the suite
+  passes.
+- **The first scheduled run is red at the resolution rather than at any
+  comparand's floor.** `uv lock --resolution lowest-direct --dry-run`
+  warns on every `[dependency-groups]` entry but `ruff>=0.16`, then
+  fails building one of the releases it took them to; #320 is that
+  finding. Section 10 answers such a run with an issue against the
+  floor rather than with a workflow silenced, and the cell stays on
+  3.11: the same command under 3.13 fails on the same build, so no
+  interpreter was on offer that would have passed.
+- **`pytest --no-cov`, and a record of what each comparand's install
+  resolved to.** Section 10 gives `--no-cov` to a sentinel cell that
+  runs the suite, `test.yml`'s coverage job being where the 100%
+  ratchet is measured and gated; the record step is `deps-latest.yml`'s
+  read from the other end -- the versions there are newer than the
+  pages were measured against and here they are older, and a red whose
+  resolution nobody can read afterwards holds no evidence.
+
+### The symlink case's pragma takes the case, not the handler alone
+
+- **The `# pragma: no cover` sits on the case's `def`** (issue
+  btclib-org/.github#1042): an exclusion on a line that introduces a
+  block takes the whole block, so it reaches the assertions after the
+  skip as well. On the `except` it reaches the handler and the
+  `pytest.skip` alone, which are the lines that do not run wherever the
+  link is made, and a platform refusing `os.symlink` then meets the skip
+  and a coverage floor it cannot reach in the same run -- the exit code
+  the floor's and the failure naming a percentage rather than a symlink.
+  Measured with a plugin making `Path.symlink_to` raise `OSError`: with
+  the pragma on the `except` the documented `uv run pytest` exits 1 with
+  the lines after the skip named missing, and with it on the `def` the
+  same run meets the floor and the case reports `SKIPPED`.
+- **The comment above the line says why coverage can ask nothing of the
+  case, and what the exclusion costs**: the body is reachable only where
+  the platform makes a symbolic link, so a floor over a `source` naming
+  `tests` asks about the runner rather than about the suite, and dead
+  code inside the case stops being flagged in exchange.
+- **The docstring's sentence -- a platform that refuses says so as a
+  skip, which `-ra` reports -- is what the move makes true of the run**:
+  the case skips either way, and with the pragma on the `except` the run
+  it skips in fails the floor.
+- **`btclib` and `bitcoin-core-rpc` carry the same shape**, so the issue
+  stays open on this landing and the citation above is `issue` rather
+  than `closes`.
+
+### A run coverage's configuration never reached is refused
+
+- **`tests/conftest.py` let a run coverage read no configuration for
+  pass as the gate** (closes btclib-org/.github#443): coverage looks for
+  its configuration in the directory the process started in, so
+  `env -C tests uv run pytest` finds no `fail_under`, no `source` and no
+  `branch = true`, while pytest walks up and reads `pyproject.toml` all
+  the same. That asymmetry is what the hook keys on, rather than the
+  floor's own value, which `pyproject.toml` is the one place for; what
+  it raises is `pytest.UsageError`, which pytest prints without a
+  traceback and exits 4 for, so the exit code says the run measured
+  nothing rather than that something in the tree failed.
+- **What such a run measures is not what the floor is about.** `omit`
+  and `source` go unread together, so the six numbered benchmarks and
+  `src/btclib_benchmarks/_results.py` -- part of what that `omit` keeps out --
+  are measured beside the modules the floor is for; the statement
+  columns stand alone, `branch = true` having gone unread with them; and
+  the report ends with no `Required test coverage` line at all.
+- **The message names the root as the remedy, and `--cov-config` as one
+  that restores the floor and not the file set.** coverage sorts each
+  `source` entry into a directory or an importable name with
+  `os.path.isdir` against the directory the run started in
+  (`inorout.py`), and `scripts`, `src` and `tests` are directories at
+  the root alone: from `tests/` each is taken for a module, none is
+  imported, and what the floor is then held against is nothing at all.
+- **Section 8 of the organization standard leaves a tree to point such a
+  run at its configuration or to make it say it is ungated, and the
+  family took the second limb.** The guard is each tree's own
+  `tests/conftest.py`. A sentence in `CONTRIBUTING.md` telling a reader
+  to start from the root is the rejected alternative, on the defect
+  being that a plausible spelling switches the floor off in silence:
+  what the sentence buys is a silent failure somebody had been told
+  about.
+- **Left alone are `--no-cov`, `--help`, `--collect-only` and an
+  explicit `--cov-fail-under`, none of them a run held to a floor it
+  cannot see.** `--markers` and `--fixtures` from `tests/` are refused
+  with the rest, that exemption being an enumeration rather than every
+  run pytest-cov leaves ungated. The sentinels that run the suite meet
+  the guard from the root and pass `--no-cov` besides, `test.yml`'s
+  coverage job is the run the ratchet is measured on, and
+  `.github/mutation/*.toml`'s `test-command` passes `--no-cov` too.
+
+### The yamllint preamble names what holds each format, in the present tense
+
+- **`.pre-commit-config.yaml`'s yamllint preamble stated `117 columns at
+  the worst`, and no command re-derives that number.** It is a width read
+  off the workflows, and a yamllint run at any `line-length` answers
+  about the tree in front of it instead -- the longest yaml line here is
+  `.pre-commit-config.yaml`'s pygrep entry, which is one unbroken token
+  and exempt. Section 9 of the organization standard asks that a number
+  in prose come from a command, and this one has none to come from
+  (issue btclib-org/.github#880).
+- **Three clauses of the same sentence were in the past tense**: the
+  workflows *were* a place prose could grow, toml *was* the other, and
+  the hook below is what *closed* it. The reason the hook is in the gate
+  does not need the tense, so the sentence gives it without one:
+  markdown is markdownlint's, a Python docstring and a whole-line
+  comment are `max-doc-length`'s, a toml comment is
+  `toml-comment-width`'s, and the prose in a yaml file is this hook's or
+  nothing's.
+- **The last of those is what prettier sitting directly above would make
+  a reader doubt, so the sentence says what prettier does with a
+  comment.** It reformats the same files and explodes an over-long flow
+  sequence, and it returns a long comment at the width it was written,
+  which is what leaves yaml prose to this hook.
+- **`the hook above` named markdownlint rather than the hook it sat
+  under.** Each tool is named.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
