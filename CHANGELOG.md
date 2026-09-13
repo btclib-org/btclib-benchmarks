@@ -4525,6 +4525,12 @@ together and the output still pointing at `tests/` (closes #276).
   `btclib-org/.github`** (issue btclib-org/.github#1075): what is filed
   is one test, and an entry's body past three lines is refused.
 
+### The lint gate's prose names a local run, not a commit
+
+- **`.pre-commit-config.yaml` and `.vscode/extensions.json` say
+  what a local run enforces and the inert `git commit` recipe goes**
+  (issue btclib-org/.github#966).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
