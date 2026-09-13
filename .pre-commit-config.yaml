@@ -356,12 +356,15 @@ repos:
       # Section 4 of the organization standard is the rule: what such a
       # line renders as, why nothing else here catches it, what this
       # pattern cannot see, and what the measurement was before it was
-      # proposed
+      # proposed. The types are where a build renders prose from --
+      # markdown, and what docutils reads, an rst page and a Python
+      # docstring -- so a comment sharing a Python file with a docstring
+      # is refused alongside it, one line at a time being all pygrep reads
       - id: no-hyphen-at-end-of-line
         name: a word is not wrapped at its own hyphen
         language: pygrep
         entry: "[A-Za-z0-9]-$"
-        types: [markdown]
+        types_or: [markdown, python, rst]
       # a placeholder that is a whole argument, in quotes. Section 9 of
       # the organization standard is the rule and what the quoting costs
       # a paste; section 4 is where this hook is, which quotes it
@@ -429,14 +432,15 @@ repos:
       - id: taplo-format
         name: taplo (toml, in place fixes)
         exclude: ^uv\.lock$
-  # the shape of a yaml file, which nothing else here reads: the hook
-  # above holds markdown to 80 columns and ruff holds a Python docstring
-  # and a whole-line comment to the same, and the workflows were a place
-  # prose could grow without a limit -- 117 columns at the worst. Toml
-  # was the other, and the hook below is what closed it. Width is the
-  # half of this a sibling gate could in principle have covered; a key
-  # written twice, a block indented under nothing, a value that is octal
-  # by accident are read by nothing else at all.
+  # the shape of a yaml file, which nothing else here reads:
+  # markdownlint holds markdown to 80 columns, ruff holds a Python
+  # docstring and a whole-line comment to the same, toml-comment-width
+  # below holds a toml comment there too, and the prose in a yaml file
+  # is held to a width by this hook or by nothing -- prettier above
+  # rewraps no comment. Width is the half of this a sibling gate could
+  # in principle have covered; a key written twice, a block indented
+  # under nothing, a value that is octal by accident are read by
+  # nothing else at all.
   # Configured in .yamllint.yaml rather than in args here, as codespell
   # and typos are configured in pyproject.toml: the default set, the two
   # rules left off, and a width that is not 80 need a paragraph each.
@@ -480,6 +484,16 @@ repos:
     hooks:
       - id: check-dependabot
       - id: check-readthedocs
+      # .github/ISSUE_TEMPLATE/ is read the same way and by nothing else
+      # here either: a form whose `type:` is misspelt is still yaml, and
+      # the reader who meets it is a person on the New issue page rather
+      # than a run. Each brings its own files: and types: -- config.yml
+      # under that spelling for the first, the directory's yaml that is
+      # neither config.yml nor config.yaml for the second, a markdown
+      # template for neither -- so check-hooks-apply above is what says
+      # this tree still holds one of each
+      - id: check-github-issue-config
+      - id: check-github-issue-forms
   # the workflows carry expressions and logic no schema reads, and
   # nothing else here validated them: an unknown key, a typo in a
   # context reference, an action input that does not exist, a job
