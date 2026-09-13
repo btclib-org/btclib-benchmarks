@@ -4531,6 +4531,12 @@ together and the output still pointing at `tests/` (closes #276).
   what a local run enforces and the inert `git commit` recipe goes**
   (issue btclib-org/.github#966).
 
+### `links.yml` calls the organization's reusable workflow
+
+- **The lychee job lives in `btclib-org/.github`** (issue
+  btclib-org/.github#35): this file keeps the trigger, the schedule and
+  the files it checks.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
