@@ -3,9 +3,12 @@ name: codeql
 
 # Code scanning, as a file rather than as a repository setting. GitHub's
 # default setup analyses a language set at a query suite from a workflow
-# it generates and does not show; here the languages, the suite, the
-# schedule and the action versions are read the way the rest of CI is
-# read, with every action pinned to a commit SHA.
+# it generates and does not show; here the analysis job is
+# btclib-org/.github's reusable-codeql.yml, called at @main so a change
+# to the matrix, the pins or the category reaches this tree in one
+# landing (section 10 of that repository's README.md, btclib-org/.github#35)
+# -- what stays here is the trigger, the schedule, the concurrency group
+# named literally and the aggregate job.
 #
 # Nothing has to be turned off first, which is the one thing to check
 # before adding this file to a repository -- default setup and an
@@ -19,10 +22,10 @@ name: codeql
 # recorded with the rest of what is set outside the tree. Turning the
 # setting on is what would make every analysis here red.
 #
-# What there is to analyse, on a repository that ships no importable
-# package, is two things and they are not the same size. The workflow
-# files are the larger one: this tree runs third-party build scripts on a
-# runner and has just grown a set of scheduled workflows, and an
+# What the reusable workflow analyses, on a repository that ships no
+# importable package, is two things and they are not the same size. The
+# workflow files are the larger one: this tree runs third-party build
+# scripts on a runner and carries a set of scheduled workflows, and an
 # expression interpolated into a `run:` block is the finding the actions
 # queries make. The Python is the helpers under `scripts/` -- they parse
 # vendored JSON and CSV, a saved run and a rendered page, which is the
@@ -105,79 +108,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  analyze:
-    # the language is in the name because it is what a failure is about:
-    # one job per language, so a red check names which analysis broke
-    # instead of a matrix cell to open. It also lets the two run at once
-    name: Analyze ${{ matrix.language }} with CodeQL
-    # a draft pull request is work in progress and spends no runner here
-    # either; a closed one spends none either, the trigger above taking
-    # the closed event only to supersede a run this pull request's own
-    # group is still holding -- the same condition test.yml and docs.yml
-    # carry on their own jobs. push and schedule carry no pull_request
-    # context, so both sides of this read empty there and stay true
-    if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
-    runs-on: ubuntu-latest
+  codeql:
+    uses: btclib-org/.github/.github/workflows/reusable-codeql.yml@main
+    # permissions do not inherit through a call: the analyze job the
+    # reusable workflow runs wants security-events: write for its SARIF
+    # upload and actions: read for the CodeQL action's own run-metadata
+    # read (redundant while this repository is public, kept so the file
+    # does not quietly stop working the day it stops being one), so the
+    # calling job declares both here, which is what caps what the called
+    # workflow may be granted
     permissions:
-      # where the alerts are uploaded to; the one write in this workflow
       security-events: write
       contents: read
-      # what the `actions` analysis reads: the workflow files are its
-      # source, and analyze queries the run's own metadata
       actions: read
-    strategy:
-      # so one language's failure does not hide the other's result
-      fail-fast: false
-      matrix:
-        # what CodeQL supports of what is here. The tree is Python,
-        # workflows, markdown, toml and vendored test vectors, and the
-        # first two of those are the ones it has queries for
-        language: [actions, python]
-    # far above what an analysis of this tree needs, the same way the
-    # gate bounds the suite: what it buys is that a hung job releases the
-    # runner rather than holding it for six hours.
-    # `gh run list --workflow=codeql.yml --limit 1` is what re-measures it
-    timeout-minutes: 30
-    steps:
-      # every action is pinned to a commit SHA, the tag in the comment: a
-      # tag, let alone a branch, is a name its owner can move, and these
-      # run in the one job here that can write security events
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # see the checkout of the coverage job in test.yml
-          persist-credentials: false
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          languages: ${{ matrix.language }}
-          # `none` is the only mode either language has: neither is
-          # compiled, so the database is built from the sources without a
-          # build. Said out loud rather than left to be inferred, since
-          # the value is what an autobuild step would otherwise be needed
-          # for. Nothing is installed first either, and here that is a
-          # decision rather than an omission: this project's declared
-          # dependencies are the comparands it measures, and none of
-          # them is what this analysis is about -- an alert against a
-          # comparand belongs to the project that publishes it
-          build-mode: none
-          # `queries` is deliberately unset, which is the default query
-          # suite: the init action has no query_suite input, its
-          # `queries` input adding queries to the default suite instead
-          # (`security-extended` being the widening default setup calls
-          # `extended`). Passing nothing is therefore the analysis the
-          # setting would have performed, and the note is here because
-          # "no input" is otherwise indistinguishable from "nobody
-          # decided"
-
-      - name: Analyze
-        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          # what keeps the two languages' results apart in the same
-          # commit's analysis: without a distinct category the second
-          # upload replaces the first rather than adding to it
-          category: /language:${{ matrix.language }}
 
   # the aggregate btclib-org/.github#459 asks of every codeql.yml in the
   # organization. A matrix reports one check context per cell, so a
@@ -200,8 +143,13 @@ jobs:
     # ordering, and nothing else -- the same rule test.yml's aggregate
     # states: what the step below judges is every job the run reports,
     # so a job of this workflow left out of this list is judged without
-    # being waited for and turns the gate red until it is added here
-    needs: [analyze]
+    # being waited for and turns the gate red until it is added here.
+    # The calling job's own id is what to name: a call does not appear as
+    # a row of its own in the run's job listing, only the rows the called
+    # workflow produces do -- "codeql / Analyze actions" and
+    # "codeql / Analyze python" here, prefixed with this job's id -- and
+    # needing the id is what still waits for both
+    needs: [codeql]
     # !cancelled() rather than always(): a run superseded by the
     # concurrency group above is one a newer run speaks for, and this
     # job skips instead of failing for it -- a skip satisfying a rule
