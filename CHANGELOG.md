@@ -4537,6 +4537,12 @@ together and the output still pointing at `tests/` (closes #276).
   btclib-org/.github#35): this file keeps the trigger, the schedule and
   the files it checks.
 
+### `codeql.yml` calls the organization's reusable workflow
+
+- **The CodeQL analyze job lives in `btclib-org/.github`** (issue
+  btclib-org/.github#35): this file keeps the trigger, the schedule and
+  the aggregate job.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
