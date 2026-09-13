@@ -4493,6 +4493,32 @@ together and the output still pointing at `tests/` (closes #276).
   coverage job is the run the ratchet is measured on, and
   `.github/mutation/*.toml`'s `test-command` passes `--no-cov` too.
 
+### The yamllint preamble names what holds each format, in the present tense
+
+- **`.pre-commit-config.yaml`'s yamllint preamble stated `117 columns at
+  the worst`, and no command re-derives that number.** It is a width read
+  off the workflows, and a yamllint run at any `line-length` answers
+  about the tree in front of it instead -- the longest yaml line here is
+  `.pre-commit-config.yaml`'s pygrep entry, which is one unbroken token
+  and exempt. Section 9 of the organization standard asks that a number
+  in prose come from a command, and this one has none to come from
+  (issue btclib-org/.github#880).
+- **Three clauses of the same sentence were in the past tense**: the
+  workflows *were* a place prose could grow, toml *was* the other, and
+  the hook below is what *closed* it. The reason the hook is in the gate
+  does not need the tense, so the sentence gives it without one:
+  markdown is markdownlint's, a Python docstring and a whole-line
+  comment are `max-doc-length`'s, a toml comment is
+  `toml-comment-width`'s, and the prose in a yaml file is this hook's or
+  nothing's.
+- **The last of those is what prettier sitting directly above would make
+  a reader doubt, so the sentence says what prettier does with a
+  comment.** It reformats the same files and explodes an over-long flow
+  sequence, and it returns a long comment at the width it was written,
+  which is what leaves yaml prose to this hook.
+- **`the hook above` named markdownlint rather than the hook it sat
+  under.** Each tool is named.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
