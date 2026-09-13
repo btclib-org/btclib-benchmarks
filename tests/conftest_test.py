@@ -9,19 +9,36 @@ the run that reaches it with a subset selected is, by construction, not
 the run that measures this file. The position of `--cov` in addopts is
 here for the same reason -- it is a property of the command line no run
 of that command line can report on.
+
+The guard beside it is driven the same way, with one exception: the run
+it refuses cannot be the run reporting on it either, so the case it
+exists for is taken in a subprocess started from `tests/`.
 """
 
 from __future__ import annotations
 
+import os
 import re
+import subprocess
+import sys
 from argparse import Namespace
 from pathlib import Path
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, cast
 
 import pytest
-from conftest import coverage_fail_under
+from conftest import (
+    CoverageConfiguration,
+    configuration_went_unread,
+    coverage_configuration,
+    coverage_fail_under,
+    pytest_configure,
+)
 
 _ROOT = Path(__file__).parents[1]
+# what pytest reads its own configuration from here, which the guard
+# compares against what coverage read and the message names
+_INIPATH = _ROOT / "pyproject.toml"
 # what `[tool.pytest.ini_options]` testpaths names, joined onto the
 # rootdir the way tests/conftest.py's pytest_configure joins it
 _TESTPATHS = [_ROOT / "tests"]
@@ -35,8 +52,9 @@ def _options(**asked_for: object) -> Namespace:
 
     The defaults are what pytest leaves on that namespace for a command
     line that passed none of these: `-k` and `-m` empty strings, the
-    three collection flags `None`, `--lf` False, and `--cov-fail-under`
-    None. A case names the flag it is about and inherits the rest.
+    three collection flags `None`, `--lf` False, `--help` and
+    `--collect-only` False, and `--cov-fail-under` None. A case names
+    the flag it is about and inherits the rest.
     """
     defaults: dict[str, object] = {
         "cov_fail_under": None,
@@ -47,6 +65,8 @@ def _options(**asked_for: object) -> Namespace:
         "ignore": None,
         "ignore_glob": None,
         "lf": False,
+        "help": False,
+        "collectonly": False,
     }
     return Namespace(**(defaults | asked_for))
 
@@ -336,3 +356,316 @@ def test_an_explicit_threshold_survives_either_kind_of_run() -> None:
     # zero is a threshold somebody asked for, not a missing answer: it
     # has to survive the `is not None` test rather than be falsy
     assert _threshold(cov_fail_under=0) == 0
+
+
+def _cov_config(config_file: str | None) -> CoverageConfiguration:
+    """Build what the guard reads of coverage's own configuration.
+
+    One attribute is the whole of it: the file coverage took its
+    settings from, `None` where it took them from none.
+    """
+    return cast("CoverageConfiguration", SimpleNamespace(config_file=config_file))
+
+
+def _controller(config_file: str | None) -> object:
+    """Build the controller pytest-cov leaves on its plugin.
+
+    A stand-in reachable by the attribute path `coverage_configuration`
+    walks, and nothing else of one.
+    """
+    return SimpleNamespace(cov=SimpleNamespace(config=_cov_config(config_file)))
+
+
+def _went_unread(
+    config_file: str | None = None,
+    *,
+    inipath: Path | None = _INIPATH,
+    asked: float | None = None,
+    asked_for_help: bool = False,
+    collect_only: bool = False,
+) -> bool:
+    """Ask the guard about the run the issue is about, unless told otherwise.
+
+    Its defaults are that run -- coverage having read nothing, pytest
+    having read this tree's pyproject.toml, and no flag passed -- so a
+    case below names only what it changes about it, as `_threshold`
+    does for the threshold beside it.
+    """
+    return configuration_went_unread(
+        _cov_config(config_file),
+        inipath,
+        asked,
+        asked_for_help=asked_for_help,
+        collect_only=collect_only,
+    )
+
+
+def _config(
+    controller: object | None,
+    known: Namespace,
+    *,
+    rootpath: Path = _ROOT,
+    **asked: object,
+) -> pytest.Config:
+    """Build what `pytest_configure` reads of a `pytest.Config`.
+
+    Building the real thing means starting a second pytest inside this
+    one, so what the hook reads of one is stood in for instead:
+    `config.option` and the copy pytest-cov holds beside it,
+    `testpaths`, the directory the run was invoked from, the
+    configuration pytest read and the root to run from, and the plugin
+    the guard walks to.
+    """
+    plugin = SimpleNamespace(cov_controller=controller)
+    return cast(
+        "pytest.Config",
+        SimpleNamespace(
+            known_args_namespace=known,
+            option=_options(**asked),
+            getini=lambda _name: ["tests"],
+            invocation_params=SimpleNamespace(dir=rootpath),
+            rootpath=rootpath,
+            inipath=_INIPATH,
+            pluginmanager=SimpleNamespace(getplugin=lambda _name: plugin),
+        ),
+    )
+
+
+def test_a_run_coverage_read_a_configuration_for_is_not_refused() -> None:
+    """The guard is silent where the configuration reached the run.
+
+    The gate itself is this case -- `uv run pytest` from the rootdir,
+    where coverage reads pyproject.toml -- so a guard firing here would
+    refuse the run it exists to protect.
+    """
+    assert not _went_unread(str(_INIPATH))
+
+
+def test_a_run_coverage_read_no_configuration_for_is_refused() -> None:
+    """A run held to a floor it cannot see is refused.
+
+    This is the defect the guard is for: coverage looks for its
+    configuration in the directory the process started in, so from
+    `tests/` it finds no `fail_under`, no `source` and no
+    `branch = true`, which leaves the run measuring a different set of
+    files against nothing (btclib-org/.github#443). pytest reads its own
+    configuration all the same, and that asymmetry is what the guard
+    keys on.
+    """
+    assert _went_unread()
+
+
+def test_nothing_measuring_is_not_an_ungated_run() -> None:
+    """`--no-cov` is left alone.
+
+    Section 10 of the organization standard has a sentinel cell that
+    runs the suite pass it, and the suite step of `os-macos.yml`,
+    `os-ubuntu.yml`, `deps-latest.yml` and `deps-oldest.yml` is where
+    that happens here. A run measuring no coverage has no configuration
+    to be missing.
+    """
+    assert not configuration_went_unread(
+        None, _INIPATH, None, asked_for_help=False, collect_only=False
+    )
+
+
+def test_an_explicit_threshold_is_not_overruled_by_the_guard() -> None:
+    """`--cov-fail-under` outranks the guard as it does the threshold.
+
+    The standard has the hook never overruling a caller who named the
+    threshold, and the guard is that same hook: what it exists to catch
+    is a floor going off with nobody having asked, which a named one is
+    not. Zero is a threshold somebody asked for, so it has to survive
+    the `is not None` test rather than be read as falsy.
+    """
+    assert not _went_unread(asked=0)
+
+
+@pytest.mark.parametrize(
+    "exempted",
+    [{"asked_for_help": True}, {"collect_only": True}],
+    ids=lambda exempted: next(iter(exempted)),
+)
+def test_a_run_no_floor_applies_to_is_not_refused(exempted: dict[str, Any]) -> None:
+    """The two runs pytest-cov never gates are left alone.
+
+    `--help` exits before a session, and pytest-cov never fails a
+    `--collect-only` run on the floor whatever its report prints: its
+    `pytest_runtestloop` returns on `options.collectonly` ahead of the
+    comparison that raises the exit code, where `pytest_terminal_summary`
+    reads the threshold alone and prints `FAIL Required test coverage of
+    100.0% not reached` all the same -- which `--collect-only` from the
+    rootdir here does, at exit 0. Refusing either would answer a
+    question about a floor neither is held to.
+    """
+    assert not _went_unread(**exempted), exempted
+
+
+def test_without_a_configuration_pytest_read_there_is_nothing_to_name() -> None:
+    """The guard needs pytest's own answer, not only coverage's.
+
+    What the message tells a reader is where the configuration pytest
+    found is, so a run that found none leaves it with nothing to say;
+    and the two tools finding none alike is no asymmetry to report.
+    """
+    assert not _went_unread(inipath=None)
+
+
+def test_no_pytest_cov_plugin_is_nothing_measuring() -> None:
+    """A run without the plugin registered reads as unmeasured.
+
+    pytest-cov registers its plugin only where a `--cov` reached the
+    parser, from addopts here rather than from a command line, and
+    `getplugin` hands back `None` where none did.
+    """
+    config = cast(
+        "pytest.Config",
+        SimpleNamespace(pluginmanager=SimpleNamespace(getplugin=lambda _name: None)),
+    )
+    assert coverage_configuration(config) is None
+
+
+def test_no_cov_leaves_the_controller_unbuilt() -> None:
+    """The plugin without a controller reads as unmeasured too.
+
+    `--no-cov` returns from `CovPlugin.__init__` before `start()`, so
+    the plugin is registered and its `cov_controller` is still `None`:
+    the same `getattr` default answers for that and for no plugin.
+    """
+    assert coverage_configuration(_config(None, Namespace(cov_fail_under=0.0))) is None
+
+
+def test_the_configuration_is_the_controllers_own() -> None:
+    """The attribute path to coverage's configuration is pinned.
+
+    The hook is keyed on a path through pytest-cov it does not own: the
+    plugin under `_cov`, its `cov_controller`, that controller's `cov`
+    and the `config` on it. Renaming either of the first two reads as
+    nothing measuring and leaves the guard silent, which is the
+    direction that fails without saying so; renaming what is below them
+    raises instead.
+    """
+    config = _config(_controller("/somewhere/setup.cfg"), Namespace(cov_fail_under=0.0))
+    measuring = coverage_configuration(config)
+
+    assert measuring is not None
+    assert measuring.config_file == "/somewhere/setup.cfg"
+
+
+def test_the_guards_own_names_are_ones_pytest_fills_in(
+    pytestconfig: pytest.Config,
+) -> None:
+    """`help` and `collectonly` are still pytest's own spellings.
+
+    The hook reads them as attributes rather than with a default, both
+    being pytest's own rather than a plugin's, so a rename is an
+    `AttributeError` in `pytest_configure` and not a silent refusal.
+    This run's own configuration is what says they are still there, and
+    `_options` above is a stand-in that could otherwise carry a name
+    pytest has stopped filling in.
+    """
+    absent = [
+        name
+        for name in ("help", "collectonly")
+        if not hasattr(pytestconfig.option, name)
+    ]
+    assert not absent, f"pytest no longer fills in {absent}"
+
+
+def test_the_hook_refuses_a_run_that_cannot_see_its_floor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`pytest_configure` raises, and the message names all three paths.
+
+    The function above decides; this is what wires it to a run.
+    `pytest.UsageError` is what pytest prints without a traceback and
+    exits `4` for, so the exit code says the run measured nothing rather
+    than that something in the tree failed.
+
+    Each path is asserted with the words around it, and the run is moved
+    out of the rootdir first, because the three slots hold the same text
+    otherwise: a gate run starts at the rootdir, so `Path.cwd()` and
+    `rootpath` are one directory there and the configuration pytest read
+    is a path under it. A message that filled a slot from the wrong one
+    of the three would pass every assertion that only asked whether the
+    text occurs.
+    """
+    monkeypatch.chdir(tmp_path)
+    started_in = Path.cwd()
+    known = Namespace(cov_fail_under=0.0)
+
+    with pytest.raises(pytest.UsageError) as raised:
+        pytest_configure(_config(_controller(None), known))
+
+    message = str(raised.value)
+    assert f"the directory the run started in, {started_in}," in message
+    assert f"pytest read {_INIPATH}." in message
+    assert f"Run from {_ROOT};" in message
+    # --cov-config is named with what it does not restore and never on
+    # its own: a reader sent to it alone gets a run held to the floor
+    # over a different set of files, which is what this message opens by
+    # naming
+    assert "--cov-config restores the floor and not the file set" in message
+    # the raise is ahead of the write, so the copy pytest-cov reads is
+    # left holding what pytest-cov itself put there
+    assert known.cov_fail_under == 0.0
+
+
+def test_a_selection_does_not_excuse_the_configuration_missing() -> None:
+    """Asking for less is refused the same way.
+
+    A selective run is gated at zero by `coverage_fail_under`, so
+    nothing was taken from it -- but `source`, `omit` and `branch = true`
+    went unread as well, and its report is a measurement of a different
+    set of files. Iterating on one module from inside `tests/` reads a
+    percentage that is not about this tree, which is what the guard says
+    instead. The decision above cannot see a selection at all; the hook
+    is where one arrives, so this is where that is asserted.
+    """
+    config = _config(
+        _controller(None),
+        Namespace(cov_fail_under=0.0),
+        file_or_dir=["inputs_test.py"],
+        keyword="keys",
+    )
+
+    with pytest.raises(pytest.UsageError, match="coverage read no configuration"):
+        pytest_configure(config)
+
+
+def test_a_run_started_from_tests_says_it_is_ungated(tmp_path: Path) -> None:
+    """The guard stops a real run started from `tests/`.
+
+    Everything above is the decision driven as a function; this is the
+    invocation the issue is about, and the only case that says the two
+    are wired together -- that `tests/conftest.py` is loaded at all on
+    such a run, and that what it raises reaches whoever typed it. The
+    run costs no collection: `pytest_configure` is ahead of it, so the
+    subprocess is refused before it imports a test module.
+
+    `COVERAGE_FILE` is redirected because pytest-cov erases the data
+    file it is pointed at as it starts, absent `--cov-append`, which
+    would otherwise destroy the data file of the run reading this.
+    """
+    environment = dict(os.environ)
+    environment.pop("PYTEST_ADDOPTS", None)
+    environment["COVERAGE_FILE"] = str(tmp_path / "coverage-data")
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+
+    completed = subprocess.run(
+        [sys.executable, "-m", "pytest", "-p", "no:cacheprovider"],
+        cwd=str(_ROOT / "tests"),
+        env=environment,
+        capture_output=True,
+        encoding="utf-8",
+        check=False,
+        # a child that hangs fails as this case rather than holding the
+        # whole gate, this suite registering no per-test timeout
+        timeout=120,
+    )
+
+    assert completed.returncode == pytest.ExitCode.USAGE_ERROR, completed.stderr
+    # pytest writes a usage error to stderr, where nothing of the run's
+    # own output is, so the assertion is on the stream that carries it
+    assert "coverage read no configuration" in completed.stderr
+    assert str(_ROOT) in completed.stderr

@@ -4451,6 +4451,48 @@ together and the output still pointing at `tests/` (closes #276).
   stays open on this landing and the citation above is `issue` rather
   than `closes`.
 
+### A run coverage's configuration never reached is refused
+
+- **`tests/conftest.py` let a run coverage read no configuration for
+  pass as the gate** (closes btclib-org/.github#443): coverage looks for
+  its configuration in the directory the process started in, so
+  `env -C tests uv run pytest` finds no `fail_under`, no `source` and no
+  `branch = true`, while pytest walks up and reads `pyproject.toml` all
+  the same. That asymmetry is what the hook keys on, rather than the
+  floor's own value, which `pyproject.toml` is the one place for; what
+  it raises is `pytest.UsageError`, which pytest prints without a
+  traceback and exits 4 for, so the exit code says the run measured
+  nothing rather than that something in the tree failed.
+- **What such a run measures is not what the floor is about.** `omit`
+  and `source` go unread together, so the six numbered benchmarks and
+  `src/btclib_benchmarks/_results.py` -- part of what that `omit` keeps out --
+  are measured beside the modules the floor is for; the statement
+  columns stand alone, `branch = true` having gone unread with them; and
+  the report ends with no `Required test coverage` line at all.
+- **The message names the root as the remedy, and `--cov-config` as one
+  that restores the floor and not the file set.** coverage sorts each
+  `source` entry into a directory or an importable name with
+  `os.path.isdir` against the directory the run started in
+  (`inorout.py`), and `scripts`, `src` and `tests` are directories at
+  the root alone: from `tests/` each is taken for a module, none is
+  imported, and what the floor is then held against is nothing at all.
+- **Section 8 of the organization standard leaves a tree to point such a
+  run at its configuration or to make it say it is ungated, and the
+  family took the second limb.** The guard is each tree's own
+  `tests/conftest.py`. A sentence in `CONTRIBUTING.md` telling a reader
+  to start from the root is the rejected alternative, on the defect
+  being that a plausible spelling switches the floor off in silence:
+  what the sentence buys is a silent failure somebody had been told
+  about.
+- **Left alone are `--no-cov`, `--help`, `--collect-only` and an
+  explicit `--cov-fail-under`, none of them a run held to a floor it
+  cannot see.** `--markers` and `--fixtures` from `tests/` are refused
+  with the rest, that exemption being an enumeration rather than every
+  run pytest-cov leaves ungated. The sentinels that run the suite meet
+  the guard from the root and pass `--no-cov` besides, `test.yml`'s
+  coverage job is the run the ratchet is measured on, and
+  `.github/mutation/*.toml`'s `test-command` passes `--no-cov` too.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
