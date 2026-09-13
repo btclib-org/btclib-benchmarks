@@ -4380,6 +4380,50 @@ together and the output still pointing at `tests/` (closes #276).
   case**, and its copy of this one is the half of that issue still
   outstanding.
 
+### The tree gains the `deps-oldest` sentinel, and the badge with it
+
+- **No workflow here resolved a dependency downwards, so every `>=`
+  `pyproject.toml` declares was a claim no run had installed** (issue
+  btclib-org/.github#323): section 10's *Which trees carry which
+  sentinel* names this repository for `deps-oldest`, and neither the
+  workflow nor its badge was here.
+  `.github/workflows/deps-oldest.yml` takes every direct dependency to
+  the oldest release its own specifier allows and puts the suite
+  through it, the mirror of `deps-latest.yml`'s `--upgrade`. Its badge
+  sits after `deps-latest` and before `os-macos`, the calendar's order
+  over that stretch, and its instant is that same calendar's rather
+  than this file's or the workflow's to restate.
+- **The resolution mode is the job's `env` and not a flag on the step
+  that resolves.** `uv lock` records a non-default mode inside
+  `uv.lock` and a uv command under the default `highest` reads that
+  lock as stale, so `uv run --locked` refuses the lock the step above
+  it has just written: measured with uv 0.12.7 on a project carrying
+  this tree's own `dependencies`, exit 2 without the variable, and
+  `uv lock --check` exit 0 with it.
+- **The cell is 3.11, `requires-python`'s own floor, where
+  `.python-version` pins 3.13.** That pin is a ceiling two comparands'
+  wheels set, its own header giving the reason, and what a floor run
+  asks is the other end. A project carrying this tree's `dependencies`
+  alone resolves and installs at their floors on 3.11, and on a
+  `git archive` export whose `[dependency-groups]` entries are held at
+  the releases the committed `uv.lock` already carries there, the suite
+  passes.
+- **The first scheduled run is red at the resolution rather than at any
+  comparand's floor.** `uv lock --resolution lowest-direct --dry-run`
+  warns on every `[dependency-groups]` entry but `ruff>=0.16`, then
+  fails building one of the releases it took them to; #320 is that
+  finding. Section 10 answers such a run with an issue against the
+  floor rather than with a workflow silenced, and the cell stays on
+  3.11: the same command under 3.13 fails on the same build, so no
+  interpreter was on offer that would have passed.
+- **`pytest --no-cov`, and a record of what each comparand's install
+  resolved to.** Section 10 gives `--no-cov` to a sentinel cell that
+  runs the suite, `test.yml`'s coverage job being where the 100%
+  ratchet is measured and gated; the record step is `deps-latest.yml`'s
+  read from the other end -- the versions there are newer than the
+  pages were measured against and here they are older, and a red whose
+  resolution nobody can read afterwards holds no evidence.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
