@@ -4519,6 +4519,12 @@ together and the output still pointing at `tests/` (closes #276).
 - **`the hook above` named markdownlint rather than the hook it sat
   under.** Each tool is named.
 
+### A changelog entry is its title and at most three lines
+
+- **`REVIEWING.md`, `CONTRIBUTING.md` and `check_changelog.py` follow
+  `btclib-org/.github`** (issue btclib-org/.github#1075): what is filed
+  is one test, and an entry's body past three lines is refused.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
