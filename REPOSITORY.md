@@ -21,8 +21,8 @@ it that no section below reads back is a gap rather than a decision, and
 ```shell
 gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
   --jq '.required_status_checks | {strict, contexts}'
-# {"contexts":["Lint and type-check","test: every job passed",
-#              "docs / Build the documentation"],
+# {"contexts":["test: every job passed","docs / Build the documentation",
+#              "lint / Lint and type-check"],
 #  "strict":true}
 ```
 
@@ -65,7 +65,7 @@ hidden until GitHub had an outage, and why the fix does not try to
 enumerate the ways a job can die: the job asks the API what this run's
 jobs concluded, and a conclusion is a conclusion however it was reached.
 
-The third is `docs.yml`'s call to `btclib-org/.github`'s
+Also required is `docs.yml`'s call to `btclib-org/.github`'s
 `reusable-docs.yml` (issue btclib-org/.github#35). `docs.yml`'s own job
 contributes no name of its own: the context joins the calling job's id
 (`docs`) to the called job's own name (`Build the documentation`),

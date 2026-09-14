@@ -4561,6 +4561,12 @@ together and the output still pointing at `tests/` (closes #276).
   btclib-org/.github#35): this file keeps the trigger, the concurrency
   group and the workflow-level permissions.
 
+### `REPOSITORY.md` puts the lint rename's check at the rule's tail
+
+- **The transcript now puts `lint / Lint and type-check` last** (issue
+  btclib-org/.github#35); the preceding entry's last, `docs / Build the
+  documentation`, is not.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
