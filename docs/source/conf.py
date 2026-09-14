@@ -5,8 +5,9 @@
 """Sphinx configuration.
 
 The version is read out of pyproject.toml rather than from installed
-metadata: the docs group's `--only-group docs` sync skips installing
-this project, so there is no distribution to ask.
+metadata, so the value does not depend on whether this project happens
+to be installed in the environment building the documentation
+(btclib-org/.github#35).
 """
 
 from __future__ import annotations

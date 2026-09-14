@@ -4543,6 +4543,12 @@ together and the output still pointing at `tests/` (closes #276).
   btclib-org/.github#35): this file keeps the trigger, the schedule and
   the aggregate job.
 
+### `docs.yml` calls the organization's reusable workflow
+
+- **The documentation build lives in `btclib-org/.github`** (issue
+  btclib-org/.github#35): this file keeps the trigger and the
+  concurrency group; `.readthedocs.yaml` now matches its interpreter.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

@@ -65,15 +65,23 @@ hidden until GitHub had an outage, and why the fix does not try to
 enumerate the ways a job can die: the job asks the API what this run's
 jobs concluded, and a conclusion is a conclusion however it was reached.
 
-The third is `docs.yml`'s only job, and it is named directly because
-there is only one — an aggregate over a single cell would be a job
-whose whole purpose is to repeat another's answer. It runs the
-`sphinx-build -W` command `.readthedocs.yaml` already runs, on the
-interpreter that file pins, so a cross-reference this project's
-`{include}`-based pages cannot resolve fails here rather than only on
-Read the Docs, after the merge, on a page nobody watches. That was not
-hypothetical: the pull request that filed [ISS 95][iss95] hit it twice,
-and only because the build was run by hand.
+The third is `docs.yml`'s call to `btclib-org/.github`'s
+`reusable-docs.yml` (issue btclib-org/.github#35). `docs.yml`'s own job
+contributes no name of its own: the context joins the calling job's id
+(`docs`) to the called job's own name (`Build the documentation`),
+producing `docs / Build the documentation`. It runs the `sphinx-build
+-W` command `.readthedocs.yaml` also runs, on the interpreter
+`.python-version` pins rather than the `"3.14"` this job used to
+hardcode — the reusable workflow takes no `python-version` input,
+section 10 of the standard's `README.md` leaving a gate's interpreter
+to `.python-version` with no exception named for this one, and
+`.readthedocs.yaml` now names that same pin by hand instead of 3.14,
+since Read the Docs cannot read the file directly. A cross-reference
+this project's `{include}`-based pages cannot resolve still fails here
+rather than only on Read the Docs, after the merge, on a page nobody
+watches. That was not hypothetical: the pull request that filed
+[ISS 95][iss95] hit it twice, and only because the build was run by
+hand.
 
 [iss95]: https://github.com/btclib-org/btclib-benchmarks/issues/95
 
