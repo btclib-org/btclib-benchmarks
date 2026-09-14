@@ -4549,6 +4549,12 @@ together and the output still pointing at `tests/` (closes #276).
   btclib-org/.github#35): this file keeps the trigger and the
   concurrency group; `.readthedocs.yaml` now matches its interpreter.
 
+### `REPOSITORY.md`'s transcript catches up with the renamed check
+
+- **The pasted `gh api` output under *Required checks on main* still
+  named `Build the documentation`** (issue btclib-org/.github#35): a
+  fresh read answers `docs / Build the documentation`, already last.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
