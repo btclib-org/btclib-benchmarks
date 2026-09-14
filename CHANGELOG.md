@@ -4555,6 +4555,12 @@ together and the output still pointing at `tests/` (closes #276).
   named `Build the documentation`** (issue btclib-org/.github#35): a
   fresh read answers `docs / Build the documentation`, already last.
 
+### `lint.yml` calls the organization's reusable workflow
+
+- **The pre-commit run lives in `btclib-org/.github`** (issue
+  btclib-org/.github#35): this file keeps the trigger, the concurrency
+  group and the workflow-level permissions.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
