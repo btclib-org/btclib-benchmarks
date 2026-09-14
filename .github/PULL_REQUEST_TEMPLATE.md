@@ -17,8 +17,9 @@
 
 - [ ] the lint gate is clean: `uv run pre-commit run --all-files`
 - [ ] the suite passes, with its coverage gate: `uv run pytest`
-- [ ] the documentation builds: `uv run --locked --only-group docs
-      sphinx-build -W -n -b html docs/source docs/build/html`
+- [ ] the documentation builds: `uv run --locked --no-default-groups
+      --group docs sphinx-build -W -n -b html docs/source
+      docs/build/html`
 - [ ] `CHANGELOG.md` has an entry, if a user would notice the change
 - [ ] every commit carries a verified signature
 

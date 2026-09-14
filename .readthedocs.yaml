@@ -32,14 +32,18 @@
 # Required
 version: 2
 
-# 3.14, and not `.python-version`'s 3.13: that floor is set by
-# comparands a documentation build never installs, and docs.yml pins 3.14
-# for this same build, so one interpreter keeps "does the build pass" a
-# single question
+# `.python-version`'s 3.13, not the org's 3.14: docs.yml no longer pins
+# an interpreter of its own -- it calls btclib-org/.github's
+# reusable-docs.yml, which takes none -- so this file is the only place
+# the documentation build's interpreter is chosen, and naming
+# `.python-version`'s own pin here is what keeps "does the build pass" a
+# single question again. Read the Docs cannot read that file directly,
+# so the version is copied rather than referenced, and moves when it
+# does (issue btclib-org/.github#35)
 build:
   os: ubuntu-24.04
   tools:
-    python: "3.14"
+    python: "3.13"
   # build.commands rather than the sphinx: and python: keys, which cannot
   # express installing a dependency group and are rejected when it is
   # present. uv installs the docs group from uv.lock, which is why there
@@ -52,24 +56,23 @@ build:
   # --locked makes the uv version irrelevant to what gets installed --
   # uv.lock decides that, and a uv too old to read the lock fails loudly
   # rather than resolving something else.
-  # --only-group docs, and not the siblings' --no-default-groups --group
-  # docs, for the reason docs.yml gives at its own build step: the
-  # comparands are this project's own dependencies rather than a group of
-  # their own, so --no-default-groups still installs coincurve and
-  # secp256k1, neither of which publishes a cp314 wheel or builds from
-  # source without pkg-config and a toolchain. That is not a prediction
-  # -- the sibling command run on this tree under 3.14 fails building
-  # secp256k1 from source, which is also what failed the first version of
-  # docs.yml's job. --only-group skips the project and its dependencies,
-  # correct while no page imports anything; the day one does, this line
-  # grows the install rather than the whole project's being restored.
+  # --no-default-groups --group docs, not this file's former
+  # --only-group docs: btclib-org/.github's reusable-docs.yml runs the
+  # former unconditionally for every caller, and docs.yml now calls it,
+  # so the two builds run one command rather than each answering "does
+  # the build pass" on terms of its own. That installs the project and
+  # its own dependencies -- coincurve and secp256k1 included -- though
+  # no page under docs/source imports anything; `.python-version`'s pin
+  # at 3.13 is what makes the install succeed at all, both wrappers
+  # publishing a wheel for it and neither for 3.14
+  # (issue btclib-org/.github#35)
   # -n turns an unresolved sphinx-domain cross-reference into a warning
   # and -W turns that warning, like every other, into an error; the
   # build fails at its end rather than at the first warning, so one
   # broken page does not hide the next
   commands:
     - pip install uv
-    - uv sync --locked --only-group docs
+    - uv sync --locked --no-default-groups --group docs
     - >-
-      uv run --locked --only-group docs
+      uv run --locked --no-default-groups --group docs
       sphinx-build -W -n -b html docs/source $READTHEDOCS_OUTPUT/html

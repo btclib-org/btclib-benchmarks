@@ -257,8 +257,12 @@ gated at 100% coverage; every lint hook; and the documentation build.
 ```shell
 uv run pytest
 uv run pre-commit run --all-files
-uv run --locked --only-group docs \
+uv run --locked --no-default-groups --group docs \
   sphinx-build -W -n -b html docs/source docs/build/html
+if grep -rn 'href="#\./' docs/build/html --include='*.html'; then
+  echo "::error::the links above resolve to no page (unresolved relative path)"
+  exit 1
+fi
 ```
 
 The documentation build is the one a contributor used to meet by having
@@ -272,6 +276,18 @@ of the content that will exercise it rather than catching anything here
 yet; `btclib-org/.github`'s README.md "The documentation" has the
 reason it is on regardless. `-W` fails at the end of the build rather
 than at the first warning, so one broken page does not hide the next.
+
+**`--no-default-groups --group docs`, not this tree's own `--only-group
+docs`.** `docs.yml` calls `btclib-org/.github`'s `reusable-docs.yml`,
+which runs the former unconditionally, so the local command matches
+what gates the pull request rather than a request of its own; no page
+under `docs/source` carries an autodoc directive, so `--only-group
+docs` still succeeds here, it is simply no longer the command that
+decides the check (issue btclib-org/.github#35). The `grep` after the
+build is `reusable-docs.yml`'s own second step: what myst renders for a
+link it cannot resolve is an anchor on the page already rendering it,
+which `-W` and `-n` do not fail on, so the check reads the built HTML
+for one directly.
 
 A fixture that is a key or a signature trips detect-secrets, correctly: it
 cannot tell a private key published in a BIP from a credential. Record the

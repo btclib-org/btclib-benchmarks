@@ -1,10 +1,23 @@
 ---
 name: docs
 
-# runs the same sphinx-build .readthedocs.yaml does, on the same
-# interpreter, so that a markdown link sphinx cannot resolve under -W
-# fails here rather than only on Read the Docs, after the merge, on a
-# page nobody watches. The uv sync differs -- see the step below
+# the third gate, and a question of its own: does the documentation
+# build. Without it nothing in CI builds it, only Read the Docs does,
+# with -W, so a markdown link these `{include}`-based pages get wrong
+# fails here rather than only after the merge, on a service whose
+# failure is not a check on the pull request.
+#
+# The build itself, the checkout and the unresolved-link check are
+# btclib-org/.github's: reusable-docs.yml, called at @main so a fix
+# there reaches this tree in one landing (section 10 of its README.md).
+# What stays here is the trigger and the concurrency group. Landing
+# this caller drops the `python-version: "3.14"` this job used to pin
+# to match .readthedocs.yaml: the reusable workflow takes no such
+# input, section 10 leaving a gate's interpreter to `.python-version`
+# with no exception named for this one, so the build now runs on 3.13,
+# this tree's own pin. `.readthedocs.yaml` moves to the same pin in
+# the same change, rather than the two disagreeing; its own comment
+# has the reason (btclib-org/.github#35)
 on:
   push:
     branches: [main]
@@ -45,44 +58,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # the checkout, the uv setup, the build and the unresolved-link check
+  # are btclib-org/.github's; the draft and closed declines are the
+  # called workflow's own, reading github.event.pull_request.draft and
+  # github.event.action off this caller's trigger. This tree has no git
+  # submodule for the checkout to initialize and no script of its own to
+  # run against the built pages, so both inputs are left at their
+  # defaults
   docs:
-    name: Build the documentation
-    # a draft pull request is work in progress and spends no runner here
-    # either. A closed one spends none either -- the trigger above takes
-    # the closed event only to supersede a run this pull request's own
-    # group is still holding
-    if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      # 3.14, not .python-version's 3.13: that floor is set by two
-      # wrapper comparands this job never installs, and .readthedocs.yaml
-      # pins 3.14 for the same build run elsewhere -- one interpreter
-      # keeps "does the build pass" one question rather than two
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        with:
-          enable-cache: true
-          python-version: "3.14"
-
-      # --only-group docs, not --no-default-groups --group docs: the
-      # comparands are this project's own dependencies rather than a
-      # group of their own, so the latter still installs every one of
-      # them -- coincurve and secp256k1 included, and neither publishes a
-      # cp314 wheel or builds from source under it. --only-group skips
-      # the project's own dependencies and the project itself, which is
-      # correct today: no page under docs/source carries an autodoc
-      # directive, so nothing sphinx reads here imports btclib. The day
-      # one does, the import fails loudly under -W rather than printing
-      # a bare title, which is this job's whole reason to exist -- and
-      # installing btclib for that day is this line's to grow, not the
-      # whole project's install to restore.
-      - name: Build the documentation
-        run: >-
-          uv run --locked --only-group docs
-          sphinx-build -W -n -b html docs/source docs/build/html
+    uses: btclib-org/.github/.github/workflows/reusable-docs.yml@main
