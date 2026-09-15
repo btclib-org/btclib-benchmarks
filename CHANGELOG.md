@@ -4573,6 +4573,12 @@ together and the output still pointing at `tests/` (closes #276).
   (issue btclib-org/.github#1102): nothing under this tree's mypy roots
   matches today; anchored before something does.
 
+### `local-link-prefix` permits an explicit `../` destination too
+
+- **The lookahead excused `./` and refused `../`, though whether a
+  destination leaves the repository is `links.yml`'s to answer.** It
+  now permits `../` too (issue btclib-org/.github#1095).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
