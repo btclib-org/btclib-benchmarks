@@ -4579,6 +4579,18 @@ together and the output still pointing at `tests/` (closes #276).
   destination leaves the repository is `links.yml`'s to answer.** It
   now permits `../` too (issue btclib-org/.github#1095).
 
+### `links.yml`'s `targets:` reaches every tracked markdown file
+
+- **The lychee `targets:` string left `.claude/` and `.github/` markdown
+  outside its glob.** It now reaches every tracked `*.md` file (issue
+  btclib-org/.github#1104).
+
+### `CONTRIBUTING.md`'s docs-gate grep matches what CI runs
+
+- **The local reproduction of the docs gate still grepped `href="#\./`,
+  under-catching relative to `reusable-docs.yml`'s widened check.** It
+  now greps `href="#\.\.\?/` too (issue btclib-org/.github#1105).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
