@@ -446,7 +446,17 @@ warn_unreachable = true
 # runs it, a typing construct missing from it is a type error here
 # instead of a runtime failure on the matrix
 python_version = "3.11"
-exclude = ["build"]
+# a regular expression, `re.search`'d against each discovered path
+# (mypy/modulefinder.py's matches_exclude) rather than a glob -- so an
+# unanchored "build" would match the substring anywhere in a path, not
+# only a top-level build/ directory a packaging tool writes. No tracked
+# path under this tree's own mypy roots carries it today (issue
+# btclib-org/.github#1102), so the anchor drops nothing here now -- it
+# is what stops the day one is added, such as scripts/build_report.py,
+# from leaving the type gate with no diagnostic. `^` ties the match to
+# the start of the relative path matches_exclude builds, and the
+# trailing "/" is what stops it also matching a file merely named build
+exclude = ["^build/"]
 # `scripts` is for the eight files still reached by path -- the six
 # numbered benchmarks, `artifacts.py` and `render.py`, not part of the
 # installed `btclib_benchmarks` package: the same `sys.path` entry

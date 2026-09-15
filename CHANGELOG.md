@@ -4567,6 +4567,12 @@ together and the output still pointing at `tests/` (closes #276).
   btclib-org/.github#35); the preceding entry's last, `docs / Build the
   documentation`, is not.
 
+### `[tool.mypy] exclude` is anchored to the `build/` directory it means
+
+- **`"build"` was an unanchored regex, matching any path with that substring**
+  (issue btclib-org/.github#1102): nothing under this tree's mypy roots
+  matches today; anchored before something does.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
