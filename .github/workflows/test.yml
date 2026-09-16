@@ -92,19 +92,22 @@ jobs:
       # libsecp256k1's autogen.sh, which is what autoconf, automake and
       # libtool are for. The other wrappers resolve to wheels here and
       # build on the sentinels' other images instead -- `secp256k1`
-      # wants pkg-config when it does, and os-ubuntu.yml and
-      # os-macos.yml each name the cell where that happens. Four
-      # tools, and no step asks apt for any of them: both `ubuntu-latest`
-      # and `ubuntu-24.04-arm` carry all four already --
+      # wants pkg-config when it does, and scripts/artifacts.py's own
+      # docstring and os-macos.yml each name the cell where that
+      # happens; os-ubuntu.yml names its own cell, `ubuntu-24.04-arm`,
+      # in the comment beside the pre-suite-script it passes rather than
+      # in a step of its own, now that its steps are
+      # btclib-org/.github's reusable-os-suite.yml (btclib-org/.github#35).
+      # Four tools, and no step asks apt for any of them: both
+      # `ubuntu-latest` and `ubuntu-24.04-arm` carry all four already --
       # actions/runner-images' own manifests for Ubuntu24.04 and its
       # arm64 image list pkg-config 1.8.1, autoconf 2.71, automake 1.16.5
       # and libtool 2.4.7 among the preinstalled software. ISS 96 is the
       # thirty minutes and a red gate one hung `apt-get update` cost on a
       # step that was asking for what the image already had.
-      # This is the toolchain comment os-ubuntu.yml cites. os-macos.yml
-      # carries one of its own instead of citing this: the macOS images list
-      # pkgconf and none of the three autotools, so what is free here is
-      # a step there
+      # os-macos.yml carries a toolchain comment of its own: the macOS
+      # images list pkgconf and none of the three autotools, so what is
+      # free here is a step there
 
       # which of an index's two artifacts each comparand's install
       # resolved to, printed before the assertions that are about to be

@@ -26,9 +26,10 @@ name: os-ubuntu
 # the runner out of an sdist, one reached through ctypes -- so which
 # architecture the interpreter targets decides which artifact the suite
 # then holds to the vendored vectors. That is a different question from
-# the one the helpers answer, and the `Record which artifact` step below
-# is what keeps the two apart in a log. os-macos.yml is the same argument
-# on the platform whose images resolve differently again.
+# the one the helpers answer, and passing `scripts/artifacts.py` as
+# this job's `pre-suite-script` is what keeps the two apart in a log.
+# os-macos.yml is the same argument on the platform whose images
+# resolve differently again.
 
 on:
   schedule:
@@ -69,72 +70,36 @@ concurrency:
 
 jobs:
   suite-ubuntu:
-    name: Run the suite on ${{ matrix.python }}, ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      # every cell to the end: which interpreter fails on which image is
-      # the whole answer, and stopping at the first one hides the rest
-      fail-fast: false
-      matrix:
-        # both images. What differs between them is the architecture the
-        # interpreter and every comparand under it are built for, and
-        # `ubuntu-24.04-arm` is the only place this project is asked
-        # about aarch64 at all
-        os:
-          - ubuntu-latest
-          - ubuntu-24.04-arm
-        # both ends are set by a comparand rather than chosen. 3.13 is
-        # the ceiling: coincurve and secp256k1 publish no cp314 wheel,
-        # and this project installs its comparands rather than mocking
-        # them. 3.11 is the floor: secp256k1lab declares it, and
-        # scripts/04-pure-python.py imports that unguarded
-        python:
-          - "3.11"
-          - "3.12"
-          - "3.13"
-    # far above what a run of the suite needs, the sdist builds below
-    # included, and it bounds a hung job rather than a slow one: the
-    # queueing this workflow exists to move happens before a job starts
-    # and is not counted here
-    timeout-minutes: 30
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # see the checkout of the coverage job in test.yml
-          persist-credentials: false
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        with:
-          enable-cache: true
-          python-version: ${{ matrix.python }}
-
-      # no step installs a C toolchain: see the toolchain comment on the
-      # coverage job of test.yml, which is about both of the images above
-
-      # which of an index's two artifacts each comparand's install
-      # resolved to, and here it is the aarch64 half of that record that
-      # earns the step. `uv.lock` carries no aarch64 wheel for
-      # `secp256k1`, so on `ubuntu-24.04-arm` -- the aarch64 half of the
-      # matrix above -- its libsecp256k1 is compiled on the runner, and
-      # the sdist that builds it downloads a revision four years older
-      # than the one its wheels carry. Those cells therefore hold the
-      # pages' claims against a different binary from the one the pages
-      # are measured on, and the tag this prints is what says so instead
-      # of leaving the next aarch64-only divergence to be blamed on the
-      # wrapper.
-      # Recorded and not asserted, for the reason the same step gives in
-      # test.yml
-      - name: Record which artifact each comparand's install resolved to
-        run: |
-          uv run --locked --no-default-groups --group test \
-            python scripts/artifacts.py
-
-      # --no-cov, against the --cov that `addopts` carries: what a cell
-      # here asks is whether an (image, interpreter) pair passes, and the
-      # coverage job of test.yml is where the 100% ratchet is measured
-      # and gated. Instrumenting these cells as well would measure the
-      # same lines over again for nothing
-      - name: Run pytest
-        run: uv run --locked --no-default-groups --group test pytest --no-cov
+    # the checkout, the interpreter setup and the suite run over each
+    # cell are btclib-org/.github's: reusable-os-suite.yml, called at
+    # @main so a fix there reaches this tree in one landing (section 10
+    # of its README.md). What stays here is the trigger, the
+    # concurrency group and this job's own id, and the two lists below,
+    # which are this tree's own claim about the images and the
+    # interpreters it sweeps rather than a value the called workflow
+    # could default (btclib-org/.github#35)
+    #
+    # both ends of the interpreter range below are set by a comparand
+    # rather than chosen -- os-macos.yml's own matrix cites this rather
+    # than restating it. 3.13 is the ceiling: coincurve and secp256k1
+    # publish no cp314 wheel, and this project installs its comparands
+    # rather than mocking them. 3.11 is the floor: secp256k1lab declares
+    # it, and scripts/04-pure-python.py imports that unguarded
+    #
+    # which of an index's two artifacts each comparand's install
+    # resolved to is scripts/artifacts.py's own subject, passed below as
+    # pre-suite-script; here it is the aarch64 half of that record that
+    # earns the step. `uv.lock` carries no aarch64 wheel for
+    # `secp256k1`, so on `ubuntu-24.04-arm` -- the cell where a build of
+    # `secp256k1` wants `pkg-config` -- its libsecp256k1 is compiled on
+    # the runner, and the sdist that builds it downloads a revision four
+    # years older than the one its wheels carry. Those cells therefore
+    # hold the pages' claims against a different binary from the one the
+    # pages are measured on, and the tag scripts/artifacts.py prints is
+    # what says so instead of leaving the next aarch64-only divergence
+    # to be blamed on the wrapper
+    uses: btclib-org/.github/.github/workflows/reusable-os-suite.yml@main
+    with:
+      runners: '["ubuntu-latest", "ubuntu-24.04-arm"]'
+      python-versions: '["3.11", "3.12", "3.13"]'
+      pre-suite-script: scripts/artifacts.py

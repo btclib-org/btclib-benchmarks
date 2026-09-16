@@ -246,10 +246,13 @@ what `autoconf`, `automake` and `libtool` have to be there for. The
 other wrappers resolve to a wheel where the index serves one for the
 interpreter `.python-version` pins *and* the platform in hand, and are
 built from source where it does not, which is when a build of
-`secp256k1` wants `pkg-config`; `os-ubuntu.yml` and `os-macos.yml` each
-name a cell where that happens. The interpreter half of that is what
-the pin is for, and the comment there says why. `secp256k1lab` comes
-from a git tag, having no release on any index.
+`secp256k1` wants `pkg-config`; `scripts/artifacts.py`'s own docstring
+and `os-macos.yml` each name a cell where that happens, `os-ubuntu.yml`
+naming its own, `ubuntu-24.04-arm`, beside the `pre-suite-script` it
+passes rather than in a step of its own (btclib-org/.github#35). The
+interpreter half of that is what the pin is for, and the comment there
+says why. `secp256k1lab` comes from a git tag, having no release on any
+index.
 
 The gates are three commands, and CI runs exactly them: the suite,
 gated at 100% coverage; every lint hook; and the documentation build.

@@ -143,6 +143,8 @@ jobs:
           uv run --locked --no-default-groups --group test \
             python scripts/artifacts.py
 
-      # --no-cov for the reason os-ubuntu.yml gives beside its own
+      # --no-cov for the reason btclib-org/.github's reusable-os-suite.yml
+      # gives beside its own, which os-ubuntu.yml calls rather than
+      # giving the reason itself now (btclib-org/.github#35)
       - name: Run pytest
         run: uv run --locked --no-default-groups --group test pytest --no-cov
