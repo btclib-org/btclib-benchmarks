@@ -4615,6 +4615,12 @@ together and the output still pointing at `tests/` (closes #276).
   the script reads the open section off disk, and the rebase that eats
   the seam stages nothing.
 
+### `check_changelog.py` states the rebase discipline it does not run
+
+- **The docstring cited `CONTRIBUTING.md`'s "Committing and rebasing",
+  a heading no tracked file holds.** It now states the discipline in
+  its own words (issue btclib-org/.github#1137).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
