@@ -4609,6 +4609,12 @@ together and the output still pointing at `tests/` (closes #276).
   headings, and `REVIEWING.md` a question asking whether the branch's
   own entry is last** (issue btclib-org/.github#1097): no gate reads it.
 
+### `check-changelog` runs on every invocation of the gate
+
+- **`always_run: true`, and no `files:`** (issue btclib-org/.github#1138):
+  the script reads the open section off disk, and the rebase that eats
+  the seam stages nothing.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
