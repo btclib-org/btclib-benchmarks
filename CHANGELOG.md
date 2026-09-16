@@ -4621,6 +4621,12 @@ together and the output still pointing at `tests/` (closes #276).
   a heading no tracked file holds.** It now states the discipline in
   its own words (issue btclib-org/.github#1137).
 
+### `mutation.yml` calls `btclib-org/.github`'s reusable workflow
+
+- **The mutation sentinel's own job becomes a call to
+  `btclib-org/.github`'s `reusable-mutation.yml`, its three scopes kept
+  as one profile's sessions** (issue btclib-org/.github#35).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
