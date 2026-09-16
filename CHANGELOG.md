@@ -4603,6 +4603,12 @@ together and the output still pointing at `tests/` (closes #276).
   `btclib-org/.github`'s `reusable-os-suite.yml`, `os-macos.yml`
   keeping its own** (issue btclib-org/.github#35).
 
+### `CONTRIBUTING.md` gains the command naming an open section's order
+
+- **`CONTRIBUTING.md` gains the `awk` command naming the open section's
+  headings, and `REVIEWING.md` a question asking whether the branch's
+  own entry is last** (issue btclib-org/.github#1097): no gate reads it.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
