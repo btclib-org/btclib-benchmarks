@@ -4651,6 +4651,12 @@ together and the output still pointing at `tests/` (closes #276).
   line calls, instead of pointing below at a condition the caller's own
   job does not carry** (issue btclib-org/.github#1177).
 
+### `claude-review.yml` takes the `closed` pull request type
+
+- **The `on: pull_request: types:` list omitted `closed`, owed unless a
+  workflow's group disables `cancel-in-progress` and says so beside the
+  trigger -- this file's does not** (issue btclib-org/.github#1182).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
