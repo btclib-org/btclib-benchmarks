@@ -4645,6 +4645,12 @@ together and the output still pointing at `tests/` (closes #276).
   whose prompt, fork-condition comment and last-review verdict check replace
   this file's** (issue btclib-org/.github#35, issue btclib-org/.github#1169).
 
+### `links.yml`'s `ready_for_review` comment names where the draft condition is
+
+- **The comment names `reusable-links.yml`, which this file's `uses:`
+  line calls, instead of pointing below at a condition the caller's own
+  job does not carry** (issue btclib-org/.github#1177).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
