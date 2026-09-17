@@ -4633,6 +4633,12 @@ together and the output still pointing at `tests/` (closes #276).
   fixed, stating instead why `sqlite3` reads only the two columns and
   the count this needs** (issue btclib-org/.github#1152).
 
+### `deps-latest.yml` calls `btclib-org/.github`'s reusable workflow
+
+- **The upgrade sentinel's own two jobs become one call to
+  `btclib-org/.github`'s `reusable-deps-latest.yml`** (issue
+  btclib-org/.github#35): `scripts/artifacts.py` is now `pre-suite-script`.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
