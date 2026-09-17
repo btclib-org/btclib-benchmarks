@@ -564,10 +564,10 @@ section 11 calls it "a releasing tree's" where it names what a copy
 records that has another form in the tree. *What is not configured, and
 why* above is this repository's answer to releasing.
 
-**A credential this repository does not hold.** `claude-review.yml` reads
-`secrets.CLAUDE_CODE_OAUTH_TOKEN` and `vars.CLAUDE_REVIEW_ENABLED`, and
-section 11 of the standard makes both the organization's rather than each
-repository's:
+**A credential this repository does not hold.** `claude-review.yml`
+passes `secrets.CLAUDE_CODE_OAUTH_TOKEN` to the workflow it calls, whose
+jobs are guarded by `vars.CLAUDE_REVIEW_ENABLED`, and section 11 of the
+standard makes both the organization's rather than each repository's:
 
 ```shell
 gh api repos/btclib-org/btclib-benchmarks/actions/secrets \
