@@ -4627,6 +4627,12 @@ together and the output still pointing at `tests/` (closes #276).
   `btclib-org/.github`'s `reusable-mutation.yml`, its three scopes kept
   as one profile's sessions** (issue btclib-org/.github#35).
 
+### `mutation_counts.py`'s aside drops a crash cosmic-ray 8.5.0 already fixed
+
+- **The `cosmic-ray dump` aside drops a crash claim cosmic-ray 8.5.0
+  fixed, stating instead why `sqlite3` reads only the two columns and
+  the count this needs** (issue btclib-org/.github#1152).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
