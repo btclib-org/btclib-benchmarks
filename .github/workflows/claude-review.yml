@@ -106,9 +106,9 @@ jobs:
     permissions:
       contents: read
       # what posting the review, or the answer to a mention, takes
-      pull-requests: write
+      pull-requests: write # posting the review, and the reply to a mention
       # the OIDC token the action mints during its own startup, whatever
       # the Anthropic credential is
-      id-token: write
+      id-token: write # the OIDC token the action mints at its own startup
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
