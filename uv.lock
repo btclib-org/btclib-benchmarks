@@ -387,42 +387,42 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 check = [
-    { name = "check-sdist" },
-    { name = "pyroma" },
-    { name = "twine" },
+    { name = "check-sdist", specifier = ">=1.6.0" },
+    { name = "pyroma", specifier = ">=5.0.1" },
+    { name = "twine", specifier = ">=7.0.0" },
 ]
 dev = [
-    { name = "check-sdist" },
-    { name = "cosmic-ray" },
-    { name = "coverage" },
-    { name = "furo" },
-    { name = "mypy" },
-    { name = "myst-parser" },
-    { name = "pre-commit" },
-    { name = "pyroma" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-randomly" },
+    { name = "check-sdist", specifier = ">=1.6.0" },
+    { name = "cosmic-ray", specifier = ">=8.7.0" },
+    { name = "coverage", specifier = ">=7.16.0" },
+    { name = "furo", specifier = ">=2025.12.19" },
+    { name = "mypy", specifier = ">=2.3.1" },
+    { name = "myst-parser", specifier = ">=5.1.0" },
+    { name = "pre-commit", specifier = ">=4.6.2" },
+    { name = "pyroma", specifier = ">=5.0.1" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "pytest-randomly", specifier = ">=5.0.0" },
     { name = "ruff", specifier = ">=0.16" },
-    { name = "sphinx" },
-    { name = "twine" },
+    { name = "sphinx", specifier = ">=9.0.4" },
+    { name = "twine", specifier = ">=7.0.0" },
 ]
 docs = [
-    { name = "furo" },
-    { name = "myst-parser" },
-    { name = "sphinx" },
+    { name = "furo", specifier = ">=2025.12.19" },
+    { name = "myst-parser", specifier = ">=5.1.0" },
+    { name = "sphinx", specifier = ">=9.0.4" },
 ]
 lint = [
-    { name = "mypy" },
-    { name = "pre-commit" },
+    { name = "mypy", specifier = ">=2.3.1" },
+    { name = "pre-commit", specifier = ">=4.6.2" },
     { name = "ruff", specifier = ">=0.16" },
 ]
-mutation = [{ name = "cosmic-ray" }]
+mutation = [{ name = "cosmic-ray", specifier = ">=8.7.0" }]
 test = [
-    { name = "coverage" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-randomly" },
+    { name = "coverage", specifier = ">=7.16.0" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "pytest-randomly", specifier = ">=5.0.0" },
 ]
 
 [[package]]
