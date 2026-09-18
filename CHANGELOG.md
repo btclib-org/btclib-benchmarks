@@ -4663,6 +4663,12 @@ together and the output still pointing at `tests/` (closes #276).
   comment, the leading prose kept** (issue btclib-org/.github#1164): the
   auditor reads a permission's own line, not the one above it.
 
+### `check_vendored_vectors.py` takes the issue title as a second positional
+
+- **The ledger path and the issue title are now both positional,
+  matching the contract `btclib-secp256k1`'s copy keeps despite passing
+  through one ledger exactly as this one does** (closes #313).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
