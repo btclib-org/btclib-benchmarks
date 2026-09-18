@@ -26,10 +26,14 @@ nothing reads as "checked and clean" that was not checked at all.
 btclib and btclib-secp256k1 each carry a copy under this same name,
 over the pin file of their own tree. What the copies share is owed to
 every copy in the same campaign: the parsing of a fenced block, the
-`gh` calls, a field's spelling. Where this copy departs: it takes the
-README path alone, the issue title being `_ISSUE_TITLE` below, where
-the siblings take the title as a second positional, btclib passing two
-ledgers through its copy; and it skips an entry for a missing
+`gh` calls, a field's spelling, and the argument list -- the ledger
+path and the issue title, both positional. btclib-secp256k1 keeps that
+same two-positional contract while passing through one ledger exactly
+as this copy does, because a caller's argument list is the half of the
+copies meant to stay identical; this copy takes the title as an
+argument for the same reason rather than fixing it in the module,
+which would buy a second shape for the same job and nothing else.
+Where this copy still departs: it skips an entry for a missing
 repo/path/commit triple or a `behind` other than 0 and for nothing
 else, where the siblings also name a heading owning no fenced block
 and a path carrying a `<name>` placeholder -- shapes
@@ -39,7 +43,8 @@ A path upstream has renamed or deleted is reported rather than raising:
 it has no commit to name as a tip, and a pin standing on a file that is
 not there any more is the drift nobody would otherwise notice.
 
-    python .github/scripts/check_vendored_vectors.py vectors/README.md
+    python .github/scripts/check_vendored_vectors.py \
+        vectors/README.md "Vendored vectors behind upstream"
 """
 
 from __future__ import annotations
@@ -51,8 +56,6 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-
-_ISSUE_TITLE = "Vendored vectors behind upstream"
 
 # resolved once: S607 is what a bare "gh" in a subprocess list would be, a
 # partial executable path relying on PATH's own search order rather than
@@ -215,7 +218,7 @@ def _issue_body(readme_path: Path, drifted: list[Drift], skipped: list[str]) -> 
     return "\n".join(lines)
 
 
-def _open_issue_number() -> str | None:
+def _open_issue_number(title: str) -> str | None:
     result = subprocess.run(  # noqa: S603
         [
             _GH,
@@ -224,7 +227,7 @@ def _open_issue_number() -> str | None:
             "--state",
             "open",
             "--search",
-            f'"{_ISSUE_TITLE}" in:title',
+            f'"{title}" in:title',
             "--json",
             "number",
         ],
@@ -236,9 +239,17 @@ def _open_issue_number() -> str | None:
     return str(issues[0]["number"]) if issues else None
 
 
-def report(readme_path: Path, drifted: list[Drift], skipped: list[str]) -> None:
-    """Open, update, or close the tracking issue, whichever applies."""
-    number = _open_issue_number()
+def report(
+    readme_path: Path, title: str, drifted: list[Drift], skipped: list[str]
+) -> None:
+    """Open, update, or close the tracking issue, whichever applies.
+
+    The title is the caller's rather than fixed here: it is the search
+    term that finds an issue already open as well as the title a new one
+    is created under, which is the argument-list contract this copy
+    keeps identical to the siblings'.
+    """
+    number = _open_issue_number(title)
     if not drifted:
         if number is not None:
             subprocess.run(  # noqa: S603
@@ -256,7 +267,7 @@ def report(readme_path: Path, drifted: list[Drift], skipped: list[str]) -> None:
     body = _issue_body(readme_path, drifted, skipped)
     if number is None:
         subprocess.run(  # noqa: S603
-            [_GH, "issue", "create", "--title", _ISSUE_TITLE, "--body", body],
+            [_GH, "issue", "create", "--title", title, "--body", body],
             check=True,
         )
     else:
@@ -268,6 +279,13 @@ def report(readme_path: Path, drifted: list[Drift], skipped: list[str]) -> None:
 def main() -> int:
     """Check the README named on argv, report drift, and say so on stdout.
 
+    The title names the issue this run opens, updates or closes. It is
+    required, which is what makes it a positional beside the path: a
+    default would file this ledger's drift onto whichever issue the
+    default happened to name, and would put the argument list back at
+    odds with the siblings'. The one option here is a boolean, so what
+    reads it is the filter below rather than a parser.
+
     --dry-run skips opening, updating or closing the issue: what the
     pull_request trigger of vendored-vectors.yml passes, so a change to
     this script or to the README is exercised without the run editing
@@ -275,16 +293,16 @@ def main() -> int:
     """
     args = [a for a in sys.argv[1:] if a != "--dry-run"]
     dry_run = len(args) != len(sys.argv) - 1
-    if len(args) != 1:
+    if len(args) != 2:
         # a human running this by hand is the only way here, the workflow
-        # passing the path every time: without this check, `args[0]` below
+        # passing both every time: without this check, the indexing below
         # would answer with an IndexError naming a list instead
         print(
-            f"usage: {Path(sys.argv[0]).name} <README path> [--dry-run]",
+            f"usage: {Path(sys.argv[0]).name} <README path> <issue title> [--dry-run]",
             file=sys.stderr,
         )
         return 2
-    readme_path = Path(args[0])
+    readme_path, title = Path(args[0]), args[1]
     drifted, skipped = find_drift(readme_path)
     for drift in drifted:
         if drift.path_is_gone:
@@ -303,7 +321,7 @@ def main() -> int:
     if not drifted:
         print("Every checked pin is still at upstream's tip.")
     if not dry_run:
-        report(readme_path, drifted, skipped)
+        report(readme_path, title, drifted, skipped)
     return 0
 
 

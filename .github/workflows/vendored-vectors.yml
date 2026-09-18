@@ -112,4 +112,4 @@ jobs:
             args=(--dry-run)
           fi
           python3 .github/scripts/check_vendored_vectors.py \
-            vectors/README.md "${args[@]}"
+            vectors/README.md "Vendored vectors behind upstream" "${args[@]}"
