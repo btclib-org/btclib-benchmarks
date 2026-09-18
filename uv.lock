@@ -297,15 +297,15 @@ wheels = [
 
 [[package]]
 name = "btclib"
-version = "2026.8.29"
+version = "2026.9.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bitcoin-core-rpc" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/37/f4/c81f04a768953a4b8dd94e74e65c9d960802db2feecc7b25402ccf46b0dc/btclib-2026.8.29.tar.gz", hash = "sha256:14ff793bd3093ad8da72c1ab51a8154b174d94b91642f4e13a7430ae2d24dd6f", size = 9578070, upload-time = "2026-08-29T10:54:25.873Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ef/a3/9b60a066c0be31087c68ee5c8823074699950ab6fa825ed4ddbfcb19f2fc/btclib-2026.9.13.tar.gz", hash = "sha256:5c9bec875128bf25c3cbafe69f59238cdd555f15ea8c93ae470455e1d58f6aa3", size = 10130030, upload-time = "2026-09-12T23:32:03.263Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/1e/d42da02f97c820c7820c14853ac2548e9b11c92acd2fb1aee40b92dc4ed5/btclib-2026.8.29-py3-none-any.whl", hash = "sha256:ca405f850da01f43e54fbbb5e7a149806e386c371dce0f1196c895d037e4a325", size = 1003873, upload-time = "2026-08-29T10:54:23.218Z" },
+    { url = "https://files.pythonhosted.org/packages/74/10/5f13f5f8899bac3db89c8d3c18a378f4ea9dd132d259eca0dede83fac8b2/btclib-2026.9.13-py3-none-any.whl", hash = "sha256:2211010a83bed2776037e7bede8961aeecc365dba432e939fee9c11c694af908", size = 1161618, upload-time = "2026-09-12T23:32:01.163Z" },
 ]
 
 [[package]]

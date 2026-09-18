@@ -129,6 +129,7 @@ from typing import TYPE_CHECKING
 from btclib import b58
 from btclib.curves import curve, sec_point
 from btclib.ecc import bms, dh, dsa, ellswift, ssa
+from btclib.key import PrvKeyData
 from btclib.script import taproot
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
 
@@ -267,6 +268,20 @@ def _keys(operation: str) -> list[bytes]:
     return _rotated(_KEYS, operation)
 
 
+def _bms_prv_key(prvkey: bytes) -> PrvKeyData:
+    """Return the `key.PrvKeyData` `bms.sign` now requires from a raw scalar.
+
+    Every other call this file makes on `_keys()` bytes -- `dsa.sign_`,
+    `ssa.sign_`, `ssa.Signer`, `pub_keyinfo_from_prv_key` -- still takes them
+    raw; `bms.sign` alone has migrated. `pub_keyinfo_from_prv_key`'s own
+    defaults on these same bytes are mainnet and compressed, which is what
+    `ADDRESSES` below is built from, so this matches them rather than
+    inventing a different pair. Called at fixture-build time, never inside a
+    timed call.
+    """
+    return PrvKeyData(int.from_bytes(prvkey, "big"))
+
+
 def _messages(operation: str) -> list[bytes]:
     """Return the messages one operation reads."""
     return _rotated(_MESSAGES, operation)
@@ -308,7 +323,7 @@ COUNTERPARTIES = _DH_POINTS[1:] + _DH_POINTS[:1]
 
 ADDRESSES = [b58.p2pkh(pubkey) for pubkey in BMS_VERIFY_KEYS]
 BMS_SIGS = [
-    bms.sign(msg, prvkey)
+    bms.sign(msg, _bms_prv_key(prvkey))
     for msg, prvkey in zip(_messages("bms_verify"), _keys("bms_verify"), strict=True)
 ]
 # ElligatorSwift encoding draws a random field element, so an encoded form is
@@ -397,7 +412,15 @@ SSA_VERIFY_CYCLE = cycle(
     list(zip(_messages("ssa_verify"), XONLY, SSA_SIGS, strict=True))
 )
 DH_CYCLE = cycle(list(zip(DH_SCALARS, COUNTERPARTIES, strict=True)))
-BMS_SIGN_CYCLE = cycle(list(zip(_messages("bms_sign"), _keys("bms_sign"), strict=True)))
+BMS_SIGN_CYCLE = cycle(
+    list(
+        zip(
+            _messages("bms_sign"),
+            [_bms_prv_key(k) for k in _keys("bms_sign")],
+            strict=True,
+        )
+    )
+)
 BMS_VERIFY_CYCLE = cycle(
     list(zip(_messages("bms_verify"), ADDRESSES, BMS_SIGS, strict=True))
 )
