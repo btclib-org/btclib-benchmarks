@@ -118,9 +118,9 @@ jobs:
     # calling job declares both here, which is what caps what the called
     # workflow may be granted
     permissions:
-      security-events: write
+      security-events: write # the SARIF upload
       contents: read
-      actions: read
+      actions: read # the CodeQL action's run-metadata read
 
   # the aggregate btclib-org/.github#459 asks of every codeql.yml in the
   # organization. A matrix reports one check context per cell, so a
@@ -165,8 +165,12 @@ jobs:
       # what asking the API for this run's own jobs takes, and the same
       # read test.yml's aggregate holds for the same question.
       # REPOSITORY.md's "Token permissions" is where the elevations are
-      # read back
-      actions: read
+      # read back. The trailing comment repeats it in one line for the
+      # reason btclib's codeql.yml gives on its own block: zizmor's
+      # undocumented-permissions audit (persona=auditor) reads the
+      # permission's own line rather than a comment above it
+      # (btclib-org/.github#1164)
+      actions: read # the run's job listing, which contents: read misses
     steps:
       # what test.yml's aggregate does, in this workflow: it asks the run
       # what its jobs concluded rather than reading `needs.*.result`.
