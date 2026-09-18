@@ -27,7 +27,8 @@ and is the only part a reader could doubt.
 - **buidl** is imported as `buidl.pecc` rather than through `buidl.ecc`,
   which prefers the compiled `buidl.cecc` where a separate build step has
   produced one.
-- **python-ecdsa** and **secp256k1lab** have nothing to turn off.
+- **python-ecdsa**, **secp256k1lab** and **starkbank-ecdsa** have nothing to
+  turn off.
 
 ## Two packages worth a note
 
@@ -78,6 +79,25 @@ reason the pair is a pair rather than a choice between two rows.
 The four ECDSA combinations are four rows and not two: the check runs once
 on the signature the grinding loop settled on, so grinding and verifying add
 rather than multiply.
+
+A third flag joins the ECDSA table alone: `hedged` or `deterministic`,
+naming whether the nonce a signature is made under draws fresh entropy on
+top of RFC 6979 or is reproducible from the key and the message alone. Every
+row but one derives deterministically -- pycoin and buidl.pecc through their
+own RFC 6979, python-ecdsa through `sign_digest_deterministic`, btclib
+through `dsa.sign_` with no `extra_entropy` -- and starkbank-ecdsa is the
+exception: `Ecdsa.sign` derives through `RandomInteger.rfc6979`, which mixes
+a fresh draw into RFC 6979's K-init on every call, RFC 6979 §3.6 and the
+package's own README both calling that hedging. Nothing here takes the draw
+as an argument, so the silence rule above reaches it exactly as it reaches
+grind and verify: a row with no argument for it states `deterministic` as
+plainly as the one row that hedges states `hedged`.
+
+Measured against the row itself -- `RandomInteger.between`, the call that
+draws the entropy, timed alone against a full `Ecdsa.sign` -- the draw is a
+small fraction of the call. So the hedge is priced into the label and not
+into a number: the label says the call drew fresh entropy, and whether
+that draw moves the row is not a claim this page makes.
 
 ## The inputs
 
@@ -132,6 +152,8 @@ import secp256k1lab.bip340
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
+from ellipticcurve.ecdsa import Ecdsa as StarkbankEcdsa
+from ellipticcurve.privateKey import PrivateKey as StarkbankPrivateKey
 from secp256k1lab.secp256k1 import G as LAB_G
 
 from btclib_benchmarks import _inputs
@@ -163,6 +185,7 @@ RELEASE_DATES = {
     "ecdsa": ("0.19.2", "2026-03-26"),
     "pycoin": ("0.92718.20260405", "2026-04-05"),
     "buidl": ("0.2.36", "2022-02-28"),
+    "starkbank-ecdsa": ("2.3.1", "2026-04-23"),
 }
 
 
@@ -205,6 +228,7 @@ def provenance() -> Provenance:
         ("buidl", "being imported as buidl.pecc, not buidl.ecc"),
         ("ecdsa", "having no compiled backend at all"),
         ("secp256k1lab", "having no compiled backend at all"),
+        ("starkbank-ecdsa", "having no compiled backend at all"),
     )
     return Provenance(
         columns=["package", "version", "released", "held to Python by"],
@@ -238,6 +262,7 @@ ECDSA_CALLS = 100
 PYCOIN_CALLS = 20
 BUIDL_CALLS = 10
 BTCLIB_CALLS = 50
+STARKBANK_CALLS = 20
 
 MESSAGES = _inputs.messages()[:CALLS]
 PRVKEYS = _inputs.keys()[:CALLS]
@@ -459,6 +484,27 @@ def dsa_verify_buidl() -> None:
     key.point.verify(digest, sig)
 
 
+def dsa_sign_starkbank() -> None:
+    """Time an ECDSA signature through starkbank-ecdsa, which hedges its nonce.
+
+    `Ecdsa.sign` takes a message rather than a digest, hashing it with SHA-256
+    itself -- there is no entry point that takes an already-hashed value, so
+    the pool's 32 bytes are handed over as their own hex string rather than
+    reduced to an integer the way pycoin's and buidl's are. What the row
+    prices beyond the arithmetic every other row shares is that hash and the
+    fresh draw `RandomInteger.rfc6979` mixes into RFC 6979's K-init on every
+    call, both described above.
+    """
+    msg, key, _, _ = next(DSA_STARKBANK)
+    StarkbankEcdsa.sign(msg.hex(), key)
+
+
+def dsa_verify_starkbank() -> None:
+    """Time an ECDSA verification through starkbank-ecdsa."""
+    msg, _, pubkey, sig = next(DSA_STARKBANK)
+    StarkbankEcdsa.verify(msg.hex(), sig, pubkey)
+
+
 # ---------------------------------------------------------------- BIP340
 
 
@@ -656,6 +702,18 @@ BUIDL_SSA_SIGS = [
     key.sign_schnorr(msg, AUX)
     for key, msg in zip(BUIDL_SSA_KEYS, MESSAGES, strict=False)
 ]
+# the public key is read once here rather than inside the verify row: it is
+# a point multiplication, `PrivateKey.publicKey` recomputing it on every
+# call, and a verify row that paid for one would be timing a derivation
+# nothing else on this page charges to verifying
+STARKBANK_KEYS = [
+    StarkbankPrivateKey(secret=scalar) for scalar in SCALARS[:STARKBANK_CALLS]
+]
+STARKBANK_PUBKEYS = [key.publicKey() for key in STARKBANK_KEYS]
+STARKBANK_SIGS = [
+    StarkbankEcdsa.sign(msg.hex(), key)
+    for key, msg in zip(STARKBANK_KEYS, MESSAGES, strict=False)
+]
 
 # one cycle per row
 PUBKEY_BTCLIB = cycle(SCALARS)
@@ -670,6 +728,9 @@ DSA_PYCOIN = cycle(
     list(zip(SCALARS, PYCOIN_DIGESTS, PYCOIN_PAIRS, PYCOIN_SIGS, strict=False))
 )
 DSA_BUIDL = cycle(list(zip(BUIDL_KEYS, PYCOIN_DIGESTS, BUIDL_SIGS, strict=False)))
+DSA_STARKBANK = cycle(
+    list(zip(MESSAGES, STARKBANK_KEYS, STARKBANK_PUBKEYS, STARKBANK_SIGS, strict=False))
+)
 SSA_BTCLIB_SIGN = cycle(
     [(msg, prvkey, AUX) for msg, prvkey in zip(MESSAGES, PRVKEYS, strict=True)]
 )
@@ -703,13 +764,34 @@ TABLES: tuple[tuple[str, Rows], ...] = (
     (
         "ECDSA sign, over a 32-byte digest",
         (
-            ("btclib, nogrind, noverify", dsa_sign_btclib_nogrind_noverify, 3_000),
-            ("btclib, nogrind, verify", dsa_sign_btclib_nogrind_verify, 500),
-            ("btclib, grind, noverify", dsa_sign_btclib_grind_noverify, 1_300),
-            ("btclib, grind, verify", dsa_sign_btclib_grind_verify, 500),
-            ("python-ecdsa, nogrind, noverify", dsa_sign_ecdsa, 1_700),
-            ("pycoin, nogrind, noverify", dsa_sign_pycoin, 88),
-            ("buidl.pecc, nogrind, noverify", dsa_sign_buidl, 17),
+            (
+                "btclib, nogrind, noverify, deterministic",
+                dsa_sign_btclib_nogrind_noverify,
+                3_000,
+            ),
+            (
+                "btclib, nogrind, verify, deterministic",
+                dsa_sign_btclib_nogrind_verify,
+                500,
+            ),
+            (
+                "btclib, grind, noverify, deterministic",
+                dsa_sign_btclib_grind_noverify,
+                1_300,
+            ),
+            (
+                "btclib, grind, verify, deterministic",
+                dsa_sign_btclib_grind_verify,
+                500,
+            ),
+            (
+                "python-ecdsa, nogrind, noverify, deterministic",
+                dsa_sign_ecdsa,
+                1_700,
+            ),
+            ("pycoin, nogrind, noverify, deterministic", dsa_sign_pycoin, 88),
+            ("buidl.pecc, nogrind, noverify, deterministic", dsa_sign_buidl, 17),
+            ("starkbank-ecdsa, nogrind, noverify, hedged", dsa_sign_starkbank, 350),
         ),
     ),
     (
@@ -719,6 +801,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
             ("python-ecdsa", dsa_verify_ecdsa, 450),
             ("pycoin", dsa_verify_pycoin, 28),
             ("buidl.pecc", dsa_verify_buidl, 8),
+            ("starkbank-ecdsa", dsa_verify_starkbank, 100),
         ),
     ),
     (
