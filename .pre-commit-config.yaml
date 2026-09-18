@@ -530,12 +530,12 @@ repos:
   # safe: a token persisted where a later step can read it, a cache
   # restored into the job that builds what gets published, an expression
   # interpolated into a shell script, a trigger that runs a fork's code
-  # with write access. The default persona is the gate; --persona=auditor
-  # adds advice, none of it a defect -- today undocumented-permissions
-  # alone, where claude-review.yml, codeql.yml and test.yml each write a
-  # scope's reason above it rather than trailing it, and a trailing
-  # comment is what that audit reads -- and is worth running by hand
-  # rather than on every commit
+  # with write access. --persona=auditor runs on every commit rather than
+  # by hand, because this tree measures zero under it: claude-review.yml
+  # and test.yml write a scope's reason on the grant's own line, which is
+  # what undocumented-permissions -- the one audit the persona has ever
+  # flagged here -- reads. A finding it raises from here on is this
+  # tree's own regression, not advice to weigh (btclib-org/.github#1164)
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.30.0
     hooks:
@@ -554,7 +554,7 @@ repos:
         # detection fails and the progress bar lands in the log, which is
         # pre-commit.ci (zizmor issue 582) -- not reproducible from here,
         # and not a reason to drop a flag its author put there
-        args: [--offline, --no-progress]
+        args: [--offline, --no-progress, --persona=auditor]
   # ruff replaces autoflake, bandit, black, copyright_notice_precommit,
   # docformatter, flake8, isort, pydocstringformatter, pydocstyle, pylint,
   # pyupgrade, and yesqa

@@ -163,7 +163,7 @@ jobs:
       # scope: it asks the API what this run's own jobs concluded.
       # REPOSITORY.md records it beside the others
       contents: read
-      actions: read
+      actions: read # asks the API for this run's own job list, instead of trusting needs.*.result
     steps:
       # one required status check in branch protection instead of one per
       # matrix cell, which would have to be re-listed on every change to

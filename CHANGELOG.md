@@ -4681,6 +4681,12 @@ together and the output still pointing at `tests/` (closes #276).
   the docs sync narrows the dependency groups, not the project.** It now points
   at `docs/source/conf.py`'s own docstring for the reason (closes #340).
 
+### `claude-review.yml` and `test.yml` take the trailing comments too
+
+- **`claude-review.yml` and `test.yml` take the trailing comment
+  `codeql.yml` already carries, and the hook and CI both gain
+  `--persona=auditor`** (issue btclib-org/.github#1164).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
