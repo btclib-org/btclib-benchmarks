@@ -4657,6 +4657,12 @@ together and the output still pointing at `tests/` (closes #276).
   workflow's group disables `cancel-in-progress` and says so beside the
   trigger -- this file's does not** (issue btclib-org/.github#1182).
 
+### `codeql.yml` documents the permission grants `zizmor --persona=auditor` flags
+
+- **The three grants `zizmor --persona=auditor` flags take a trailing
+  comment, the leading prose kept** (issue btclib-org/.github#1164): the
+  auditor reads a permission's own line, not the one above it.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
