@@ -4669,6 +4669,18 @@ together and the output still pointing at `tests/` (closes #276).
   matching the contract `btclib-secp256k1`'s copy keeps despite passing
   through one ledger exactly as this one does** (closes #313).
 
+### `[dependency-groups]` entries gain the floor `ruff` already had
+
+- **Every group entry but `ruff>=0.16` had no floor, so `lowest-direct`
+  took it to the oldest release ever served.** Each now matches what
+  `uv.lock` resolves on `3.11` (closes #320).
+
+### `pyproject.toml`'s version comment drops the docs-install premise
+
+- **The comment above `version` said the docs build has no installed package;
+  the docs sync narrows the dependency groups, not the project.** It now points
+  at `docs/source/conf.py`'s own docstring for the reason (closes #340).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

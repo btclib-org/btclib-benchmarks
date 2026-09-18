@@ -30,9 +30,8 @@ build-backend = "uv_build"
 
 [project]
 name = "btclib-benchmarks"
-# the one place the version is declared, and docs/source/conf.py parses
-# this file rather than the installed metadata, which would need the
-# package installed to build the documentation
+# the one place the version is declared; docs/source/conf.py's own
+# docstring says why it reads this file rather than installed metadata
 version = "2026.9"
 description = "Benchmarks of btclib and btclib_secp256k1 against their comparands"
 readme = "README.md"
@@ -166,20 +165,31 @@ issues = "https://github.com/btclib-org/btclib-benchmarks/issues"
 pull_requests = "https://github.com/btclib-org/btclib-benchmarks/pulls"
 
 [dependency-groups]
-test = ["coverage", "pytest", "pytest-cov", "pytest-randomly"]
-lint = ["mypy", "pre-commit", "ruff>=0.16"]
+# every entry carries a lower bound, the release the committed uv.lock
+# already holds for the 3.11 fork: uv reads a group entry as a direct
+# dependency, so an unbounded one takes --resolution lowest-direct to
+# the earliest release the index ever served rather than to a version
+# this tree runs, builds documentation with, or would accept out of a
+# uv sync (issue #320)
+test = [
+    "coverage>=7.16.0",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-randomly>=5.0.0",
+]
+lint = ["mypy>=2.3.1", "pre-commit>=4.6.2", "ruff>=0.16"]
 # what inspects the distribution before it would be published -- and here
 # nothing is published, so this is a lint of the packaging. Named `check`,
 # not `build`, the name section 1 of btclib-org/.github keeps for the tools
 # that build a distribution, a frontend and the wheel repairers, which
 # btclib-secp256k1 holds under it beside a `check` like this one
-check = ["check-sdist", "pyroma", "twine"]
-docs = ["furo", "myst-parser", "sphinx"]
+check = ["check-sdist>=1.6.0", "pyroma>=5.0.1", "twine>=7.0.0"]
+docs = ["furo>=2025.12.19", "myst-parser>=5.1.0", "sphinx>=9.0.4"]
 # what the mutation workflow and a local session both run against;
 # .github/mutation/*.toml is the scope and CONTRIBUTING.md's own section
 # on it is the recipe, so this group is the one thing cosmic-ray needs
 # to be installed at all
-mutation = ["cosmic-ray"]
+mutation = ["cosmic-ray>=8.7.0"]
 dev = [
     { include-group = "test" },
     { include-group = "lint" },
