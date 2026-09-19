@@ -41,6 +41,8 @@ import pycoin.symbols.btc
 import pytest
 import secp256k1lab.secp256k1
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
+from ellipticcurve.ecdsa import Ecdsa as StarkbankEcdsa
+from ellipticcurve.privateKey import PrivateKey as StarkbankPrivateKey
 
 from btclib_benchmarks import _vectors
 
@@ -125,6 +127,21 @@ def _embit(msg: bytes, prvkey: bytes) -> bool:
     return bool(key.get_public_key().verify(key.sign(msg, grind=False), msg))
 
 
+def _starkbank(msg: bytes, prvkey: bytes) -> bool:
+    """Sign and verify through starkbank-ecdsa, hedged and over a message.
+
+    `Ecdsa.sign` takes a message and hashes it itself, so the digest goes
+    over as its own hex string rather than as the integer pycoin's and
+    buidl's round trips reduce it to. The hedge does not threaten this
+    check: RFC 6979's own entropy makes the nonce as unpredictable as this
+    package's does, and a round trip is over one call's signature and its
+    own verification, never a second call's.
+    """
+    key = StarkbankPrivateKey(secret=int.from_bytes(prvkey, "big"))
+    signature = StarkbankEcdsa.sign(msg.hex(), key)
+    return bool(StarkbankEcdsa.verify(msg.hex(), signature, key.publicKey()))
+
+
 # one entry per package that signs ECDSA in these pages, each answering
 # "does this package verify what it just signed": the signature never
 # leaves the package that made it, which is what makes this checkable
@@ -136,6 +153,7 @@ ECDSA_ROUND_TRIPS: dict[str, Callable[[bytes, bytes], bool]] = {
     "buidl": _buidl,
     "python-bitcoinlib": _bitcoinlib,
     "embit": _embit,
+    "starkbank-ecdsa": _starkbank,
 }
 
 

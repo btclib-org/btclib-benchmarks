@@ -123,7 +123,7 @@ jobs:
         run: brew install autoconf automake libtool
 
       - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           enable-cache: true
           python-version: ${{ matrix.python }}
@@ -143,6 +143,8 @@ jobs:
           uv run --locked --no-default-groups --group test \
             python scripts/artifacts.py
 
-      # --no-cov for the reason os-ubuntu.yml gives beside its own
+      # --no-cov for the reason btclib-org/.github's reusable-os-suite.yml
+      # gives beside its own, which os-ubuntu.yml calls rather than
+      # giving the reason itself now (btclib-org/.github#35)
       - name: Run pytest
         run: uv run --locked --no-default-groups --group test pytest --no-cov

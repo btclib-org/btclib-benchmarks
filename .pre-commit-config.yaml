@@ -275,6 +275,11 @@ repos:
   # markdownlint-cli2 below on purpose: that hook's `--fix` repairs the
   # very seam the third check exists to name, so a hook reading the
   # file after it would find nothing left to report.
+  #
+  # `always_run: true`, and no `files:`: the rebase that eats the seam
+  # stages nothing, so a hook keyed on the diff is unreachable after the
+  # event the blank-line check exists to name. Section 4 carries the
+  # rest.
   - repo: local
     hooks:
       - id: check-changelog
@@ -282,7 +287,7 @@ repos:
         entry: python3 .github/scripts/check_changelog.py
         language: system
         pass_filenames: false
-        files: ^(CHANGELOG\.md|\.github/scripts/check_changelog\.py)$
+        always_run: true
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.23.2
     hooks:
@@ -337,7 +342,7 @@ repos:
   - repo: local
     hooks:
       - id: local-link-prefix
-        name: a local markdown link destination begins with ./
+        name: a local markdown link destination begins with ./ or ../
         language: pygrep
         # one line, and no literal space in it -- "\x20" is the space the
         # reference branch allows -- so yamllint reads the value as a
@@ -346,7 +351,7 @@ repos:
         # folded scalar was rejected: folding joins lines with a space,
         # which would land inside the regex
         entry: |-
-          (?<![`!\[])(?:!?\[(?:[^]]|\]\([^)]*\))*\]\(|^\x20{0,3}\[[^]]+\]:\s*)(?!\./|#|[A-Za-z][A-Za-z0-9+.-]*:)[^)\s]
+          (?<![`!\[])(?:!?\[(?:[^]]|\]\([^)]*\))*\]\(|^\x20{0,3}\[[^]]+\]:\s*)(?!\.\.?/|#|[A-Za-z][A-Za-z0-9+.-]*:)[^)\s]
         types: [markdown]
       # a line that ends inside a word, at that word's own hyphen.
       # Section 4 of the organization standard is the rule: what such a
@@ -525,12 +530,12 @@ repos:
   # safe: a token persisted where a later step can read it, a cache
   # restored into the job that builds what gets published, an expression
   # interpolated into a shell script, a trigger that runs a fork's code
-  # with write access. The default persona is the gate; --persona=auditor
-  # adds advice, none of it a defect -- today concentrated in
-  # claude-review.yml, a secret read outside a dedicated environment and
-  # a job short a concurrency limit or a documented permission, with one
-  # further note in test.yml -- and is worth running by hand rather than
-  # on every commit
+  # with write access. --persona=auditor runs on every commit rather than
+  # by hand, because this tree measures zero under it: claude-review.yml
+  # and test.yml write a scope's reason on the grant's own line, which is
+  # what undocumented-permissions -- the one audit the persona has ever
+  # flagged here -- reads. A finding it raises from here on is this
+  # tree's own regression, not advice to weigh (btclib-org/.github#1164)
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.30.1
     hooks:
@@ -549,7 +554,7 @@ repos:
         # detection fails and the progress bar lands in the log, which is
         # pre-commit.ci (zizmor issue 582) -- not reproducible from here,
         # and not a reason to drop a flag its author put there
-        args: [--offline, --no-progress]
+        args: [--offline, --no-progress, --persona=auditor]
   # ruff replaces autoflake, bandit, black, copyright_notice_precommit,
   # docformatter, flake8, isort, pydocstringformatter, pydocstyle, pylint,
   # pyupgrade, and yesqa

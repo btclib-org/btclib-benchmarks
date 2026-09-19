@@ -4567,6 +4567,144 @@ together and the output still pointing at `tests/` (closes #276).
   btclib-org/.github#35); the preceding entry's last, `docs / Build the
   documentation`, is not.
 
+### `[tool.mypy] exclude` is anchored to the `build/` directory it means
+
+- **`"build"` was an unanchored regex, matching any path with that substring**
+  (issue btclib-org/.github#1102): nothing under this tree's mypy roots
+  matches today; anchored before something does.
+
+### `local-link-prefix` permits an explicit `../` destination too
+
+- **The lookahead excused `./` and refused `../`, though whether a
+  destination leaves the repository is `links.yml`'s to answer.** It
+  now permits `../` too (issue btclib-org/.github#1095).
+
+### `links.yml`'s `targets:` reaches every tracked markdown file
+
+- **The lychee `targets:` string left `.claude/` and `.github/` markdown
+  outside its glob.** It now reaches every tracked `*.md` file (issue
+  btclib-org/.github#1104).
+
+### `CONTRIBUTING.md`'s docs-gate grep matches what CI runs
+
+- **The local reproduction of the docs gate still grepped `href="#\./`,
+  under-catching relative to `reusable-docs.yml`'s widened check.** It
+  now greps `href="#\.\.\?/` too (issue btclib-org/.github#1105).
+
+### `deps-oldest.yml` calls `btclib-org/.github`'s reusable workflow
+
+- **The floor sentinel's own job becomes a call to
+  `btclib-org/.github`'s `reusable-deps-oldest.yml`** (issue
+  btclib-org/.github#35): `scripts/artifacts.py` is now `pre-suite-script`.
+
+### `os-ubuntu.yml` calls `btclib-org/.github`'s reusable workflow
+
+- **The ubuntu sentinel's own job becomes a call to
+  `btclib-org/.github`'s `reusable-os-suite.yml`, `os-macos.yml`
+  keeping its own** (issue btclib-org/.github#35).
+
+### `CONTRIBUTING.md` gains the command naming an open section's order
+
+- **`CONTRIBUTING.md` gains the `awk` command naming the open section's
+  headings, and `REVIEWING.md` a question asking whether the branch's
+  own entry is last** (issue btclib-org/.github#1097): no gate reads it.
+
+### `check-changelog` runs on every invocation of the gate
+
+- **`always_run: true`, and no `files:`** (issue btclib-org/.github#1138):
+  the script reads the open section off disk, and the rebase that eats
+  the seam stages nothing.
+
+### `check_changelog.py` states the rebase discipline it does not run
+
+- **The docstring cited `CONTRIBUTING.md`'s "Committing and rebasing",
+  a heading no tracked file holds.** It now states the discipline in
+  its own words (issue btclib-org/.github#1137).
+
+### `mutation.yml` calls `btclib-org/.github`'s reusable workflow
+
+- **The mutation sentinel's own job becomes a call to
+  `btclib-org/.github`'s `reusable-mutation.yml`, its three scopes kept
+  as one profile's sessions** (issue btclib-org/.github#35).
+
+### `mutation_counts.py`'s aside drops a crash cosmic-ray 8.5.0 already fixed
+
+- **The `cosmic-ray dump` aside drops a crash claim cosmic-ray 8.5.0
+  fixed, stating instead why `sqlite3` reads only the two columns and
+  the count this needs** (issue btclib-org/.github#1152).
+
+### `deps-latest.yml` calls `btclib-org/.github`'s reusable workflow
+
+- **The upgrade sentinel's own two jobs become one call to
+  `btclib-org/.github`'s `reusable-deps-latest.yml`** (issue
+  btclib-org/.github#35): `scripts/artifacts.py` is now `pre-suite-script`.
+
+### `claude-review.yml` calls `btclib-org/.github`'s reusable workflow
+
+- **The review and the mention become one call to `reusable-claude-review.yml`,
+  whose prompt, fork-condition comment and last-review verdict check replace
+  this file's** (issue btclib-org/.github#35, issue btclib-org/.github#1169).
+
+### `links.yml`'s `ready_for_review` comment names where the draft condition is
+
+- **The comment names `reusable-links.yml`, which this file's `uses:`
+  line calls, instead of pointing below at a condition the caller's own
+  job does not carry** (issue btclib-org/.github#1177).
+
+### `claude-review.yml` takes the `closed` pull request type
+
+- **The `on: pull_request: types:` list omitted `closed`, owed unless a
+  workflow's group disables `cancel-in-progress` and says so beside the
+  trigger -- this file's does not** (issue btclib-org/.github#1182).
+
+### `codeql.yml` documents the permission grants `zizmor --persona=auditor` flags
+
+- **The three grants `zizmor --persona=auditor` flags take a trailing
+  comment, the leading prose kept** (issue btclib-org/.github#1164): the
+  auditor reads a permission's own line, not the one above it.
+
+### `check_vendored_vectors.py` takes the issue title as a second positional
+
+- **The ledger path and the issue title are now both positional,
+  matching the contract `btclib-secp256k1`'s copy keeps despite passing
+  through one ledger exactly as this one does** (closes #313).
+
+### `[dependency-groups]` entries gain the floor `ruff` already had
+
+- **Every group entry but `ruff>=0.16` had no floor, so `lowest-direct`
+  took it to the oldest release ever served.** Each now matches what
+  `uv.lock` resolves on `3.11` (closes #320).
+
+### `pyproject.toml`'s version comment drops the docs-install premise
+
+- **The comment above `version` said the docs build has no installed package;
+  the docs sync narrows the dependency groups, not the project.** It now points
+  at `docs/source/conf.py`'s own docstring for the reason (closes #340).
+
+### `claude-review.yml` and `test.yml` take the trailing comments too
+
+- **`claude-review.yml` and `test.yml` take the trailing comment
+  `codeql.yml` already carries, and the hook and CI both gain
+  `--persona=auditor`** (issue btclib-org/.github#1164).
+
+### `02-btclib-vs-btclib.py`'s two `bms.sign` calls build `key.PrvKeyData` now
+
+- **`ecc.bms.sign` now requires a `key.PrvKeyData`, not the raw bytes this
+  file's two calls into it still passed.** `_bms_prv_key` builds one at
+  `pub_keyinfo_from_prv_key`'s own defaults (closes #353).
+
+### `04-pure-python.py`'s roster gains `starkbank-ecdsa`, closing its own "every"
+
+- **The docstring's "every pure-Python implementation" omitted
+  `starkbank-ecdsa`, with no row and no stated reason.** It now has
+  one, held to the page's own checks (closes #328).
+
+### The ECDSA sign table states a nonce's hedge beside its other two flags
+
+- **`Ecdsa.sign` mixes fresh entropy into RFC 6979's derivation, where
+  every other signing row here is deterministic.** The table now states
+  `deterministic` or `hedged` beside `grind` and `verify` (issue #328).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

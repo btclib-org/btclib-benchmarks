@@ -78,6 +78,23 @@ pull request will be answered against.
 release notes move only for something a user has to *act* on, in the
 repositories that publish.
 
+Where that entry goes is [section 9][s9]'s — the end of the open
+section — and no gate reads it: `check-changelog` is handed the file and
+no base, so it cannot tell which entry the branch wrote. The open
+section's headings, in the order the file holds them, a branch's own
+last:
+
+```shell
+awk '/^## /{n++} n==1 && /^### /' CHANGELOG.md
+```
+
+`n==1` takes the open section, from the first `##` heading to the next,
+and the scan is `/^## /` rather than `/^## v/`: a section headed
+`## Unreleased` is no match for `/^## v/`, which counts from the first
+release heading instead and prints a released section's entries — or
+nothing, where the tree has released nothing — while reading as a
+check that passed.
+
 ### One subject, opened as soon as it is written
 
 A pull request answers one question. Issues that share a subject are one
@@ -246,10 +263,13 @@ what `autoconf`, `automake` and `libtool` have to be there for. The
 other wrappers resolve to a wheel where the index serves one for the
 interpreter `.python-version` pins *and* the platform in hand, and are
 built from source where it does not, which is when a build of
-`secp256k1` wants `pkg-config`; `os-ubuntu.yml` and `os-macos.yml` each
-name a cell where that happens. The interpreter half of that is what
-the pin is for, and the comment there says why. `secp256k1lab` comes
-from a git tag, having no release on any index.
+`secp256k1` wants `pkg-config`; `scripts/artifacts.py`'s own docstring
+and `os-macos.yml` each name a cell where that happens, `os-ubuntu.yml`
+naming its own, `ubuntu-24.04-arm`, beside the `pre-suite-script` it
+passes rather than in a step of its own (btclib-org/.github#35). The
+interpreter half of that is what the pin is for, and the comment there
+says why. `secp256k1lab` comes from a git tag, having no release on any
+index.
 
 The gates are three commands, and CI runs exactly them: the suite,
 gated at 100% coverage; every lint hook; and the documentation build.
@@ -259,7 +279,7 @@ uv run pytest
 uv run pre-commit run --all-files
 uv run --locked --no-default-groups --group docs \
   sphinx-build -W -n -b html docs/source docs/build/html
-if grep -rn 'href="#\./' docs/build/html --include='*.html'; then
+if grep -rn 'href="#\.\.\?/' docs/build/html --include='*.html'; then
   echo "::error::the links above resolve to no page (unresolved relative path)"
   exit 1
 fi

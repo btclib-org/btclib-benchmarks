@@ -33,11 +33,10 @@ name: deps-latest
 # pinned in .pre-commit-config.yaml and bumped by pre-commit.ci's weekly
 # pull request -- that pull request runs the merge gate, so ruff,
 # check-sdist, pyroma and the other pinned hooks already have their
-# sentinel. mypy is the exception and the reason the lint job below is
-# here at all: its hook is local and shells out to uv, so it is the lock
-# that pins it. Not sphinx at latest either: docs.yml builds the
-# documentation from the lock, and this project subscribes no
-# documentation service that would build it otherwise.
+# sentinel. mypy is the exception, its hook being local and shelling out
+# to uv, so it is the lock that pins it. Not sphinx at latest either:
+# docs.yml builds the documentation from the lock, and this project
+# subscribes no documentation service that would build it otherwise.
 #
 # Nothing here gates anything, by construction: a separate workflow, with
 # no aggregate job, named by no branch protection rule. That is the
@@ -76,6 +75,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # the checkout, the uv setup, the runner-image step, the hook cache,
+  # the upgrade and the suite and lint runs over it are
+  # btclib-org/.github's: reusable-deps-latest.yml, called at @main so a
+  # fix there reaches this tree in one landing (section 10 of its
+  # README.md). What stays here is the trigger, the concurrency group,
+  # the workflow-level permissions and this job's own id, and the facts
+  # the called workflow asks a caller for rather than states itself: the
+  # matrix and `pre-suite-script` (btclib-org/.github#35)
+  #
   # one image and the two ends of the interpreter range, where
   # os-ubuntu.yml runs both images and everything between: the variable
   # here is which release of each comparand the resolver picks, and
@@ -87,132 +95,20 @@ jobs:
   # The low end earns its place rather than being symmetry: a comparand
   # dropping 3.11 does not fail to resolve, it resolves to an older
   # release there and keeps the job green while 3.11 quietly stops being
-  # measured against what everybody else runs
-  suite-latest:
-    name: "Run the suite on ${{ matrix.python }}, dependencies at latest"
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.11", "3.13"]
-    # far above what a run of the suite needs, the resolution the upgrade
-    # below performs and the sdist builds under it included: what it
-    # bounds is a hung job
-    timeout-minutes: 30
-    steps:
-      # every action is pinned to a commit SHA, the tag in the comment: a
-      # tag, let alone a branch, is a name its owner can move
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # see the checkout of the coverage job in test.yml
-          persist-credentials: false
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        with:
-          # a week where nothing moved is a full hit, and a week where
-          # something did is the week this job has work to do anyway
-          enable-cache: true
-          python-version: ${{ matrix.python }}
-
-      # --upgrade re-resolves every entry to the newest release that
-      # satisfies pyproject.toml, which nothing else off a pull request
-      # does. It prints one "Update <pkg> vA -> vB" line per package it
-      # moves, so the log names the suspects without a diff of uv.lock; a
-      # run that moved nothing says so, and its green means nothing new.
-      # This rewrites uv.lock, harmless on an ephemeral checkout and
-      # worth knowing before running the same command in a working tree
-      - name: Upgrade every dependency to its latest release
-        run: uv lock --upgrade
-
-      # the record is worth more here than anywhere else: this is the one
-      # job where a comparand's version is not the one the pages were
-      # measured against, so the tags it prints are what a reader
-      # compares with the provenance block of a page before believing
-      # that a row moved
-      - name: Record which artifact each comparand's install resolved to
-        run: |
-          uv run --locked --no-default-groups --group test \
-            python scripts/artifacts.py
-
-      # still --locked, which is not a contradiction: the step above just
-      # wrote that lock, so this asserts nothing moved between the two
-      # and keeps the convention that no uv command in these workflows
-      # installs from a lock it has not checked.
-      # --no-cov for the reason os-ubuntu.yml gives beside its own
-      - name: Run pytest
-        run: uv run --locked --no-default-groups --group test pytest --no-cov
-
-  # mypy is the whole reason this job exists, and it is worth being
-  # explicit about how little else differs from the lint gate: the hooks
-  # pinned by rev in .pre-commit-config.yaml are the same ones a commit
-  # runs, because pre-commit.ci bumps those and this cannot. What the
-  # upgrade reaches is pre-commit itself and, through the local hook that
-  # shells out to uv, mypy -- the tool whose new release adds a check the
-  # existing code base fails, on a schedule of its own
-  lint-latest:
-    name: Lint and type-check, dependencies at latest
-    runs-on: ubuntu-latest
-    # nothing here takes minutes; a job that does is hung
-    timeout-minutes: 20
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        with:
-          enable-cache: true
-
-      # ImageOS is set by the runner image, not by this workflow, so the
-      # env context holds nothing for it and a shell is where it is read.
-      # btclib-org/.github's reusable-lint.yml carries the same step and
-      # the rest of this reasoning; lint.yml no longer does, having
-      # called that workflow rather than run it itself
-      # (btclib-org/.github#35)
-      - name: Identify the runner image
-        id: image
-        run: echo "os=${ImageOS:-unknown}" >> "$GITHUB_OUTPUT"
-
-      # the hook environments are the slow part and the upgrade below
-      # does not touch them, which is why they are cached here at all.
-      # The key carries the runner image as well as the config hash
-      # because what is cached is virtualenvs: on the config hash alone
-      # an ubuntu-latest rotation is not a graceful miss but a hit,
-      # handing the job environments built on the previous image. This is
-      # the job that can least afford one -- it runs to report what a new
-      # release breaks, so a failure the cache caused is read as the
-      # thing this workflow was watching for and chased in the tree
-      # instead.
-      # btclib-org/.github's reusable-lint.yml uses the same key,
-      # deliberately rather than by coincidence, now that lint.yml calls
-      # it rather than caching this environment itself -- the two are
-      # meant to agree, and its own file is where to re-read the key
-      # (btclib-org/.github#35)
-      - name: Cache the pre-commit environments
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/pre-commit
-          key: >-
-            pre-commit-${{ runner.os }}-${{ steps.image.outputs.os }}-${{
-            hashFiles('.pre-commit-config.yaml', '.python-version') }}
-          # a prefix that still names the image, so a partial restore
-          # cannot cross an image boundary either
-          restore-keys: |
-            pre-commit-${{ runner.os }}-${{ steps.image.outputs.os }}-
-
-      - name: Upgrade every dependency to its latest release
-        run: uv lock --upgrade
-
-      # --all-files, so pre-commit does not stash the rewritten uv.lock:
-      # it stashes unstaged changes only when it was given neither
-      # --all-files nor --files, and a stash here would hand the mypy
-      # hook back the committed lock and quietly type check the pinned
-      # mypy, which is the one thing this job is for
-      - name: Run every hook
-        run: >-
-          uv run --locked --only-group lint
-          pre-commit run --all-files --show-diff-on-failure
+  # measured against what everybody else runs. This tree has no git
+  # submodule and no hook resolving a release name in its own refs, so
+  # `submodules`, `fetch-depth` and `fetch-tags` are left at their
+  # defaults
+  #
+  # `pre-suite-script` runs between the upgrade and pytest, where
+  # `scripts/artifacts.py` ran before this tree called that workflow: the
+  # record is worth more here than anywhere else, this being the one job
+  # where a comparand's version is not the one the pages were measured
+  # against, so the tags it prints are what a reader compares with the
+  # provenance block of a page before believing that a row moved
+  deps-latest:
+    uses: btclib-org/.github/.github/workflows/reusable-deps-latest.yml@main
+    with:
+      runners: '["ubuntu-latest"]'
+      python-versions: '["3.11", "3.13"]'
+      pre-suite-script: scripts/artifacts.py

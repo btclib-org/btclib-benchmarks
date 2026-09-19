@@ -73,6 +73,9 @@ import secp256k1lab.bip340
 from btclib.bip32 import bip32
 from btclib.curves import curve
 from btclib.ecc import dsa, ssa
+from ellipticcurve.ecdsa import Ecdsa as StarkbankEcdsa
+from ellipticcurve.publicKey import PublicKey as StarkbankPublicKey
+from ellipticcurve.signature import Signature as StarkbankSignature
 from pycoin.ecdsa.secp256k1 import secp256k1_generator as pycoin_generator
 from pycoin.encoding.sec import sec_to_public_pair
 from pycoin.satoshi.der import sigdecode_der
@@ -335,6 +338,60 @@ def _secp256k1_py_verify(pubkey: bytes, digest: bytes, sig: bytes) -> bool:
     return bool(key.ecdsa_verify(digest, key.ecdsa_deserialize(sig), raw=True))
 
 
+class _RawDigest:
+    """A message stand-in whose `.encode` hands back its bytes untouched.
+
+    `ellipticcurve.ecdsa.Ecdsa.verify` takes a message and hashes it itself
+    -- `hashfunc(toBytes(message)).digest()`, with `toBytes` calling
+    `message.encode(encoding)` -- and offers no entry point for a value
+    that is already a digest. Duck-typing the one call `toBytes` makes is
+    what stands in for that entry point: paired with `_IdentityHash` below,
+    the digest this file already hashed reaches `Ecdsa.verify` unchanged,
+    which is what every other row in `DSA_VERIFIERS` is handed too.
+    """
+
+    def __init__(self, digest: bytes) -> None:
+        self._digest = digest
+
+    def encode(self, encoding: str) -> bytes:
+        del encoding  # unused: the digest is returned as it is, not re-encoded
+        return self._digest
+
+
+class _IdentityHash:
+    """A hash object, `hashlib`'s shape, whose digest is what it was given.
+
+    `Ecdsa.verify` calls `hashfunc(data).digest()` once; nothing here asks
+    for `.update` or a zero-argument construction, which `rfc6979`'s hedging
+    inside `Ecdsa.sign` does and this class could not answer -- verification
+    performs no derivation, so `_RawDigest` and this class are a pair the
+    sign side of this package has no equivalent for.
+    """
+
+    def __init__(self, data: bytes) -> None:
+        self._data = data
+
+    def digest(self) -> bytes:
+        return self._data
+
+
+def _starkbank_verify(pubkey: bytes, digest: bytes, sig: bytes) -> bool:
+    """Verify through starkbank-ecdsa, its own SHA-256 of the message bypassed.
+
+    `PublicKey.fromString` wants the two coordinates with no leading tag,
+    where `pubkey` here carries SEC's own 0x04 -- stripped before parsing,
+    as every other entry in this table that takes coordinates rather than
+    the compressed point does its own way.
+    """
+    point = StarkbankPublicKey.fromString(pubkey[1:].hex())
+    signature = StarkbankSignature.fromDer(sig)
+    return bool(
+        StarkbankEcdsa.verify(
+            _RawDigest(digest), signature, point, hashfunc=_IdentityHash
+        )
+    )
+
+
 # every implementation of ECDSA verification this project times, each handed
 # the public key uncompressed, the SHA-256 of the message, and the signature
 # in DER. Four of them convert: electrum-ecc wants 64 bytes, buidl and pycoin
@@ -366,6 +423,7 @@ DSA_VERIFIERS: dict[str, Callable[[bytes, bytes, bytes], bool]] = {
         int.from_bytes(digest, "big"),
         sigdecode_der(sig),
     ),
+    "starkbank-ecdsa": _starkbank_verify,
 }
 
 # the two cases that are bitcoin's rule rather than ECDSA's. A signature and
@@ -389,6 +447,7 @@ LOW_S_IS_THE_CALLER_S = (
     "python-ecdsa",
     "buidl.pecc",
     "pycoin",
+    "starkbank-ecdsa",
 )
 
 # and the cases two packages answer wrongly, which is what a file of

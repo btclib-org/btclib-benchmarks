@@ -459,10 +459,13 @@ def test_nothing_measuring_is_not_an_ungated_run() -> None:
     """`--no-cov` is left alone.
 
     Section 10 of the organization standard has a sentinel cell that
-    runs the suite pass it, and the suite step of `os-macos.yml`,
-    `os-ubuntu.yml`, `deps-latest.yml` and `deps-oldest.yml` is where
-    that happens here. A run measuring no coverage has no configuration
-    to be missing.
+    runs the suite pass it, and the suite step of `os-macos.yml` is
+    where that happens here -- `os-ubuntu.yml`'s, `deps-oldest.yml`'s
+    and `deps-latest.yml`'s own cells moved into `btclib-org/.github`'s
+    `reusable-os-suite.yml`, `reusable-deps-oldest.yml` and
+    `reusable-deps-latest.yml` (issue btclib-org/.github#35), which pass
+    the same flag by name. A run measuring no coverage has no
+    configuration to be missing.
     """
     assert not configuration_went_unread(
         None, _INIPATH, None, asked_for_help=False, collect_only=False
