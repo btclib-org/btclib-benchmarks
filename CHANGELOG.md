@@ -4687,6 +4687,12 @@ together and the output still pointing at `tests/` (closes #276).
   `codeql.yml` already carries, and the hook and CI both gain
   `--persona=auditor`** (issue btclib-org/.github#1164).
 
+### `02-btclib-vs-btclib.py`'s two `bms.sign` calls build `key.PrvKeyData` now
+
+- **`ecc.bms.sign` now requires a `key.PrvKeyData`, not the raw bytes this
+  file's two calls into it still passed.** `_bms_prv_key` builds one at
+  `pub_keyinfo_from_prv_key`'s own defaults (closes #353).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
