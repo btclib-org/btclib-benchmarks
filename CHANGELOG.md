@@ -4693,6 +4693,18 @@ together and the output still pointing at `tests/` (closes #276).
   file's two calls into it still passed.** `_bms_prv_key` builds one at
   `pub_keyinfo_from_prv_key`'s own defaults (closes #353).
 
+### `04-pure-python.py`'s roster gains `starkbank-ecdsa`, closing its own "every"
+
+- **The docstring's "every pure-Python implementation" omitted
+  `starkbank-ecdsa`, with no row and no stated reason.** It now has
+  one, held to the page's own checks (closes #328).
+
+### The ECDSA sign table states a nonce's hedge beside its other two flags
+
+- **`Ecdsa.sign` mixes fresh entropy into RFC 6979's derivation, where
+  every other signing row here is deterministic.** The table now states
+  `deterministic` or `hedged` beside `grind` and `verify` (issue #328).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

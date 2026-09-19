@@ -114,6 +114,12 @@ dependencies = [
     # will not start says more than one with a row silently missing, so
     # the floor moved instead of the import growing a guard
     "secp256k1lab",
+    # pure Python throughout, no compiled backend to find or decline, and the
+    # only advisory against it (GHSA-92vm-mxjf-jqf3, a signature verifying
+    # with no check that it is non-zero) was fixed in 2.0.1, well below this
+    # floor. It offers ECDSA sign and verify and nothing past them -- no
+    # BIP340, no address encoding, no point multiplication exposed as such
+    "starkbank-ecdsa>=2.3.1",
 ]
 keywords = [
     "bitcoin",
@@ -506,6 +512,7 @@ module = [
     "buidl.*",
     "ecdsa.*",
     "electrum_ecc.*",
+    "ellipticcurve.*",
     "embit.*",
     "pycoin.*",
     "secp256k1.*",
