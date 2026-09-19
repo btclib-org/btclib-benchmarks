@@ -10,12 +10,16 @@ name: vendored vectors
 # refreshing a vector file changes what every comparand is held to, which
 # is a decision the script does not get to make.
 #
-# issues: write is new to this repository -- no other workflow grants it,
-# and three decline it in as many words, each for its own reason:
-# links.yml, deps-latest.yml and mutation.yml. This one takes it, on
-# purpose: a dead link is noticed the next time somebody follows it,
-# where a vendored vector is trusted without anybody looking at it again,
-# and an issue is what carries that past the one email a failed run sends
+# The checkout, the optional interpreter setup and the re-check itself
+# are btclib-org/.github's: reusable-vendored-vectors.yml, called at
+# @main so a fix there reaches this tree in one landing (section 10 of
+# its README.md). What stays here is the trigger, the cron minute, the
+# concurrency group and the ledger this tree checks.
+#
+# issues: write here is granted by no other workflow in this tree, and
+# three decline it in as many words, each for its own reason: links.yml,
+# deps-latest.yml and mutation.yml. The reason this one takes it is the
+# called workflow's own header, not this file's to restate.
 
 on:
   schedule:
@@ -62,54 +66,20 @@ concurrency:
 
 jobs:
   vectors:
-    name: Check the vendored pins against upstream
-    # a draft pull request is work in progress and spends no runner here
-    # either: the same condition the gates carry, and ready_for_review is
-    # a trigger type above for the same reason. A closed pull request
-    # spends none either -- the trigger above takes the closed event only
-    # to supersede a run this ref's group is still holding
-    if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
-    runs-on: ubuntu-latest
-    # one API call per pin; a job past this is hung on one
-    timeout-minutes: 10
-    # the elevation, on the job that needs it and nowhere else. issues:
-    # write is what the script's gh issue create/edit/close calls take, on
-    # the tracking issue this run opens, updates or closes
+    uses: btclib-org/.github/.github/workflows/reusable-vendored-vectors.yml@main
+    # permissions do not inherit through a call: the check job the
+    # reusable workflow runs wants issues: write for its gh issue
+    # create/edit/close calls, so the calling job declares it here,
+    # which is what caps what the called workflow may be granted
     permissions:
       contents: read
-      issues: write # gh issue create/edit/close, in the step below
-    steps:
-      # every action pinned to a commit SHA with the tag in the comment:
-      # a tag, let alone a branch, is a name its owner can move
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # see the checkout of the coverage job in test.yml
-          persist-credentials: false
-
-      # no uv and no interpreter to install: the script imports the
-      # standard library alone and shells out to gh, and a GitHub-hosted
-      # runner already carries both. Nothing of this project is installed
-      # to run it, which is what leaves the `uv --locked` every other step
-      # here uses with nothing to lock.
-      # --dry-run on the pull_request trigger only: a fork's read-only
-      # token could not write the issue anyway, and a same-repository pull
-      # request testing a change to this script or to the pins should not
-      # edit or close whatever tracking issue is open at the time as a side
-      # effect of that test.
-      # The flag reaches the shell through the environment rather than
-      # through a `${{ }}` inside the script, which would be text pasted
-      # into it; the array built from it, rather than an unquoted
-      # expansion, is what keeps an empty value from becoming an empty
-      # argument
-      - name: Re-check every pin already at upstream's tip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DRY_RUN: ${{ github.event_name == 'pull_request' && '--dry-run' || '' }}
-        run: |
-          args=()
-          if [ -n "$DRY_RUN" ]; then
-            args=(--dry-run)
-          fi
-          python3 .github/scripts/check_vendored_vectors.py \
-            vectors/README.md "Vendored vectors behind upstream" "${args[@]}"
+      issues: write # gh issue create/edit/close, in the called workflow
+    with:
+      # cardinality 1: this tree pins one ledger, vectors/README.md, and
+      # no tf2-verdict ledger the way btclib's own caller does
+      ledgers: >-
+        [{"ledger": "vectors/README.md",
+        "title": "Vendored vectors behind upstream"}]
+      # python-version left at its default, the empty string: this tree
+      # runs the check against the runner's own python3, installing no
+      # interpreter for it, same as before the conversion

@@ -4705,6 +4705,12 @@ together and the output still pointing at `tests/` (closes #276).
   every other signing row here is deterministic.** The table now states
   `deterministic` or `hedged` beside `grind` and `verify` (issue #328).
 
+### `vendored-vectors.yml` calls `btclib-org/.github`'s reusable workflow
+
+- **The vector sentinel's own job becomes a call to
+  `btclib-org/.github`'s `reusable-vendored-vectors.yml`** (issue
+  btclib-org/.github#1196): the calling job now grants `issues: write`.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
