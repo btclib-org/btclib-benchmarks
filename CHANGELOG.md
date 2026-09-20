@@ -4723,6 +4723,12 @@ together and the output still pointing at `tests/` (closes #276).
   section 9's order**, `_GRANDFATHERED_ENTRIES` freezing this tree's own
   count below the marker (issue btclib-org/.github#1215).
 
+### The `check-changelog` hook's comment names no count
+
+- **`.pre-commit-config.yaml`'s comment above `check-changelog` pointed
+  at a count of the docstring's checks that had gone stale; the count
+  is gone now rather than corrected** (issue btclib-org/.github#1225).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
