@@ -4717,6 +4717,12 @@ together and the output still pointing at `tests/` (closes #276).
   `reusable-vendored-vectors.yml` passes now, not one trigger**
   (closes #362).
 
+### `check_changelog.py` gains a fifth check, an entry misplaced above the rule
+
+- **The hook now refuses an entry landed above `RULE_HEADING` out of
+  section 9's order**, `_GRANDFATHERED_ENTRIES` freezing this tree's own
+  count below the marker (issue btclib-org/.github#1215).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
