@@ -4711,6 +4711,12 @@ together and the output still pointing at `tests/` (closes #276).
   `btclib-org/.github`'s `reusable-vendored-vectors.yml`** (issue
   btclib-org/.github#1196): the calling job now grants `issues: write`.
 
+### `check_vendored_vectors.py`'s docstring names every guarded trigger
+
+- **`--dry-run`'s docstring names what
+  `reusable-vendored-vectors.yml` passes now, not one trigger**
+  (closes #362).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
