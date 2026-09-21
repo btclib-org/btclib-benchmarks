@@ -4753,6 +4753,12 @@ together and the output still pointing at `tests/` (closes #276).
   now section 10 of `btclib-org/.github`'s `README.md`'s conditional,
   not a bare `true`** (issue btclib-org/.github#1226).
 
+### `REPOSITORY.md` marks its one observation
+
+- **The plan-name reading is marked a fact about a changing world,
+  section 11's own words for the purpose** (issue
+  btclib-org/.github#1017).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
