@@ -53,16 +53,17 @@ on:
     # this pull request's own concurrency group is still holding
     # survives either unless the closed event lands in that same group
     # -- which this type is what makes it do, cancel-in-progress below
-    # turning the landing into the cancellation. That was meant to be
-    # *this* pull request's own group and nothing else's: github.ref for
-    # a closed, merged pull request resolves to the base branch's ref
-    # rather than refs/pull/N/merge, which this workflow has no push
-    # trigger to collide with -- but the weekly schedule and a
-    # workflow_dispatch both also run on the default branch and would
-    # resolve to that same ref. The concurrency block below groups a
-    # pull_request run by the pull request's own number instead, immune
-    # to that under any action, on the reasoning test.yml's own trigger
-    # records from where it was observed to matter
+    # deciding whether that landing cancels it or only queues behind
+    # it. That was meant to be *this* pull request's own group and
+    # nothing else's: github.ref for a closed, merged pull request
+    # resolves to the base branch's ref rather than refs/pull/N/merge,
+    # which this workflow has no push trigger to collide with -- but
+    # the weekly schedule and a workflow_dispatch both also run on the
+    # default branch and would resolve to that same ref. The
+    # concurrency block below groups a pull_request run by the pull
+    # request's own number instead, immune to that under any action,
+    # on the reasoning test.yml's own trigger records from where it
+    # was observed to matter
     types: [opened, reopened, synchronize, ready_for_review, closed]
     paths:
       - .github/workflows/links.yml
@@ -89,7 +90,16 @@ permissions:
 # what groups either, unchanged
 concurrency:
   group: links-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # true for a new push, and for a pull request closed without merging;
+  # wrong only for a closed, merged one, and what makes it wrong is the
+  # absence of a push trigger above: nothing runs this workflow on the
+  # commit a merge creates, so the run in flight is the only reading the
+  # merged content gets before the schedule comes round, and cancelling
+  # it says nothing (section 10 of btclib-org/.github's README.md). So
+  # the expression is false there and true everywhere else -- a closed,
+  # merged run still lands in the group and queues behind whatever is
+  # running instead of cancelling it
+  cancel-in-progress: ${{ !(github.event.action == 'closed' && github.event.pull_request.merged) }}
 
 jobs:
   # the job itself is btclib-org/.github's, called at @main so a fix there

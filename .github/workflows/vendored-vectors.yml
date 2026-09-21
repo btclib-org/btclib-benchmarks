@@ -42,8 +42,8 @@ on:
     # merge or a close is neither a push nor a synchronize, so a run this
     # pull request's own concurrency group is still holding survives
     # either unless the closed event lands in that same group -- which
-    # this type is what makes it do, cancel-in-progress below turning the
-    # landing into the cancellation
+    # this type is what makes it do, cancel-in-progress below deciding
+    # whether that landing cancels it or only queues behind it
     types: [opened, reopened, synchronize, ready_for_review, closed]
     paths:
       - .github/workflows/vendored-vectors.yml
@@ -62,7 +62,10 @@ permissions:
 # carries pull_request context, so github.ref is still what groups either
 concurrency:
   group: vendored-vectors-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # true everywhere but a closed, merged pull request, for the reason
+  # links.yml gives at this key, this workflow having no push trigger
+  # either
+  cancel-in-progress: ${{ !(github.event.action == 'closed' && github.event.pull_request.merged) }}
 
 jobs:
   vectors:
