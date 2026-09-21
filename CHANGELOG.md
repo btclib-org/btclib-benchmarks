@@ -4735,6 +4735,12 @@ together and the output still pointing at `tests/` (closes #276).
   `required-version` and `uv-pre-commit`'s `rev:` now match it, so neither
   runs an older `uv` (issue btclib-org/.github#1229).
 
+### This tree's `ledgers` comment explains its one cell by itself
+
+- **The comment gave this tree's single ledger cell by contrast with
+  btclib's two; btclib's tf2 verdict ledger is gone, so it has none
+  either** (closes btclib-org/.github#1237).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

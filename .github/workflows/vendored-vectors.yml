@@ -75,8 +75,7 @@ jobs:
       contents: read
       issues: write # gh issue create/edit/close, in the called workflow
     with:
-      # cardinality 1: this tree pins one ledger, vectors/README.md, and
-      # no tf2-verdict ledger the way btclib's own caller does
+      # cardinality 1: this tree pins one ledger, vectors/README.md
       ledgers: >-
         [{"ledger": "vectors/README.md",
         "title": "Vendored vectors behind upstream"}]
