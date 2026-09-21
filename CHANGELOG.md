@@ -4729,6 +4729,12 @@ together and the output still pointing at `tests/` (closes #276).
   at a count of the docstring's checks that had gone stale; the count
   is gone now rather than corrected** (issue btclib-org/.github#1225).
 
+### The `uv` floor matches the pin `dependabot-core` bundles
+
+- **`dependabot-core`'s `uv/Dockerfile` pins `uv 0.12.17`.**
+  `required-version` and `uv-pre-commit`'s `rev:` now match it, so neither
+  runs an older `uv` (issue btclib-org/.github#1229).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
