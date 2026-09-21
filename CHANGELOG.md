@@ -4747,6 +4747,12 @@ together and the output still pointing at `tests/` (closes #276).
   shipped tree, whichever tool wrote it.** `tests/sdist_dotted_names_test.py`
   gates it (issue btclib-org/.github#1070).
 
+### `links.yml` and `vendored-vectors.yml` take the conditional
+
+- **Each takes `closed` with no `push` trigger, so `cancel-in-progress` is
+  now section 10 of `btclib-org/.github`'s `README.md`'s conditional,
+  not a bare `true`** (issue btclib-org/.github#1226).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
