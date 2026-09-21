@@ -4741,6 +4741,12 @@ together and the output still pointing at `tests/` (closes #276).
   btclib's two; btclib's tf2 verdict ledger is gone, so it has none
   either** (closes btclib-org/.github#1237).
 
+### `source-exclude`'s cache list becomes a shape, with its own gate
+
+- **`source-exclude`'s cache list is a shape now: a dot-prefixed path under a
+  shipped tree, whichever tool wrote it.** `tests/sdist_dotted_names_test.py`
+  gates it (issue btclib-org/.github#1070).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

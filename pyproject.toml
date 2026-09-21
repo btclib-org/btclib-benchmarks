@@ -272,15 +272,49 @@ source-exclude = [
     # directory `docs/**` otherwise sweeps whole: with the gate's output
     # in place the sdist carries none of it
     "/docs/build",
-    # a cache a linter or type checker writes beside the file it has
-    # just checked. The ones the gates here write land at the root,
-    # which no pattern above reaches; these answer the copy that lands
-    # under a directory taken whole -- planted under tests/ and
-    # scripts/, neither reaches the sdist. __pycache__, *.pyc and *.pyo
-    # are the backend's own default excludes, and are not repeated here
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
+    # a cache a tool writes beside what it has just read, taken out by a
+    # property such caches share -- a dot-prefixed basename, at any depth under
+    # a tree the archive carries whole -- rather than by the name of the tool
+    # that wrote it. A name is one somebody has already thought of, and
+    # check-sdist, the gate over this list, compares the archive against the
+    # tree it was built from, so it refuses only a cache that is on disk while
+    # it runs; the lint workflow runs the hooks over a checkout and no step of
+    # it runs the suite (issue btclib-org/.github#1070).
+    #
+    # One anchor per tree source-include above carries whole rather than a name
+    # per tool: src/ gets its own despite no package key narrowing what ships,
+    # because source-include's own "src/**" sweeps the directory whole rather
+    # than the package alone. The anchors are what leave the root's own dotted
+    # files in the archive: unanchored, ".*" takes .python-version out with it,
+    # an exclusion dropping what an include above asks for.
+    #
+    # Measured by planting and building: a planted docs/.mypy_cache/,
+    # results/.pytest_cache/, scripts/.ruff_cache/,
+    # src/btclib_benchmarks/.mypy_cache/, tests/.hypothesis/ and
+    # vectors/.pytest_cache/ are each absent from the sdist built next, and each
+    # is carried by the sdist the same tree builds with these lines taken out.
+    #
+    # A root dotted file needs no anchor of its own: every shape entry above is
+    # anchored under a tree and reaches no root file, and a planted root
+    # .coverage and .coverage.abc123 are absent from the sdist with no entry
+    # naming either, source-include never sweeping the root wholesale. Planted
+    # beside them, the root's own .python-version -- named by source-include --
+    # still ships, which is the control that says the absence is the include
+    # list's and not a bug in the build.
+    #
+    # tests/sdist_dotted_names_test.py is this property's own gate for the other
+    # direction, over what the shape would silently drop: it asks git rather
+    # than the disk, so it answers where check-sdist cannot, and its census
+    # finds no tracked dotted path under any of these trees.
+    #
+    # __pycache__, *.pyc and *.pyo are the backend's own default
+    # excludes, and are not repeated here
+    "/docs/**/.*",
+    "/results/**/.*",
+    "/scripts/**/.*",
+    "/src/**/.*",
+    "/tests/**/.*",
+    "/vectors/**/.*",
     # the same kind of leftover, and this one is not hypothetical: the
     # check-sdist hook runs with --inject-junk, whose list plants an
     # egg-info under tests/ for the length of the run, where `tests/**`
