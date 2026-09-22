@@ -4759,6 +4759,18 @@ together and the output still pointing at `tests/` (closes #276).
   section 11's own words for the purpose** (issue
   btclib-org/.github#1017).
 
+### `pyroma` moves out of `pre-commit autoupdate`'s reach
+
+- **`.pre-commit-config.yaml`'s `pyroma` hook is now a `repo: local` hook,
+  its version the `check` group's `uv_build` bound rather than a `rev:`
+  `autoupdate` could bump to a prerelease** (issue btclib-org/.github#1199).
+
+### `ci:`'s `skip:` list gains `pyroma`, beside `mypy` and `twine-check`
+
+- **The comment above the list already gives the reason: `pyroma` now
+  shells out to `uv`, which pre-commit.ci does not have** (issue
+  btclib-org/.github#1199).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
