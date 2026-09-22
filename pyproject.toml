@@ -189,7 +189,20 @@ lint = ["mypy>=2.3.1", "pre-commit>=4.6.2", "ruff>=0.16"]
 # not `build`, the name section 1 of btclib-org/.github keeps for the tools
 # that build a distribution, a frontend and the wheel repairers, which
 # btclib-secp256k1 holds under it beside a `check` like this one
-check = ["check-sdist>=1.6.0", "pyroma>=5.0.1", "twine>=7.0.0"]
+check = [
+    "check-sdist>=1.6.0",
+    "pyroma>=5.0.1",
+    "twine>=7.0.0",
+    # pyroma builds the project it is pointed at to read its metadata, and
+    # asks `build` to do it without isolation first, which imports the
+    # backend out of this environment. Absent from it, the build falls
+    # back to an isolated one that resolves [build-system]'s requires from
+    # an index. This is that requirement's uv_build, and
+    # .pre-commit-config.yaml's own pyroma hook is what section 12 of the
+    # organization standard asks for: a hook building the project uses a
+    # backend [build-system] admits
+    "uv_build>=0.12.0,<0.13",
+]
 docs = ["furo>=2025.12.19", "myst-parser>=5.1.0", "sphinx>=9.0.4"]
 # what the mutation workflow and a local session both run against;
 # .github/mutation/*.toml is the scope and CONTRIBUTING.md's own section
