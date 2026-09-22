@@ -4771,6 +4771,12 @@ together and the output still pointing at `tests/` (closes #276).
   shells out to `uv`, which pre-commit.ci does not have** (issue
   btclib-org/.github#1199).
 
+### `REPOSITORY.md`'s `(nothing)` becomes the bare `#` already read as empty
+
+- **The organization variable-name listing's recorded answer is an
+  empty comment now, not the word `(nothing)`** (issue
+  btclib-org/.github#1263).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

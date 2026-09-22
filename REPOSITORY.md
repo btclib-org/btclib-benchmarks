@@ -584,7 +584,7 @@ gh api orgs/btclib-org/actions/secrets \
   --jq '.secrets[] | "\(.name) \(.visibility)"'
 # CLAUDE_CODE_OAUTH_TOKEN all
 gh api orgs/btclib-org/actions/variables --jq '.variables[].name'
-# (nothing)
+#
 gh api orgs/btclib-org/actions/variables --jq '.total_count'
 # 0
 ```
