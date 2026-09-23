@@ -4777,6 +4777,12 @@ together and the output still pointing at `tests/` (closes #276).
   empty comment now, not the word `(nothing)`** (issue
   btclib-org/.github#1263).
 
+### `.pre-commit-config.yaml`'s `check-changelog` runs from `btclib-org/.github`
+
+- **The hook is `repo: https://github.com/btclib-org/.github`, pinned by
+  `rev:`; this tree's own `check_changelog.py` and `mutation_counts.py`
+  are gone** (issue btclib-org/.github#1293).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
