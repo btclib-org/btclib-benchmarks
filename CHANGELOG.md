@@ -4783,6 +4783,12 @@ together and the output still pointing at `tests/` (closes #276).
   `rev:`; this tree's own `check_changelog.py` and `mutation_counts.py`
   are gone** (issue btclib-org/.github#1293).
 
+### `REPOSITORY.md`'s *No `windows.yml`* block opens at column zero
+
+- **Its fence and commands are unindented, like every other block in the
+  file, and the sentence after it, now outside the bullet, names
+  `windows.yml` rather than "this workflow"** (closes #373).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

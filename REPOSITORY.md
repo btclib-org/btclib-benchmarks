@@ -495,17 +495,17 @@ scanning's non-provider patterns and validity checks, is read back under
   installs and then fails to import for want of the library it wraps.
   The two halves of the first, re-derived:
 
-  ```shell
-  curl -s https://pypi.org/pypi/secp256k1/json |
-    jq '[.urls[].filename | select(test("win"))] | length'
-  # 0
-  gh api -X GET search/code --jq .total_count \
-    -f q='pkgconf repo:actions/runner-images path:images/windows'
-  # 0
-  ```
+```shell
+curl -s https://pypi.org/pypi/secp256k1/json |
+  jq '[.urls[].filename | select(test("win"))] | length'
+# 0
+gh api -X GET search/code --jq .total_count \
+  -f q='pkgconf repo:actions/runner-images path:images/windows'
+# 0
+```
 
-  The day both answers stop being zero, this workflow is `os-macos.yml`
-  with the images and the schedule swapped.
+The day both answers stop being zero, `windows.yml` is `os-macos.yml`
+with the images and the schedule swapped.
 
 ## What this file passes over
 
