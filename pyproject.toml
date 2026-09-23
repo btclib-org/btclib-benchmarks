@@ -708,10 +708,10 @@ ignore = [
     "SLF001", # private member access
     "INP001", # implicit namespace package
 ]
-# the workflow's own helper, read by `mutation.yml` and run standalone
-# (`python .github/scripts/mutation_counts.py`): the same INP001 argument
-# as `scripts/*.py` above, this directory not being a package either, and
-# T201 for the one line worth reading in the log its own docstring names
+# the vendored-vector checker, read by `vendored-vectors.yml` and run
+# standalone (`python .github/scripts/check_vendored_vectors.py`): the
+# same INP001 argument as `scripts/*.py` above, this directory not being
+# a package either, and T201 for what a weekly run's log says happened
 ".github/scripts/*.py" = [
     "T201",   # print
     "INP001", # implicit namespace package
