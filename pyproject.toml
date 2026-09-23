@@ -806,6 +806,7 @@ parametrize-names-type = "csv"
 
 [tool.ruff.lint.flake8-copyright]
 # COPYRIGHT is the one place the notice text is written down; this is all
-# three of its lines as one regex, anchored so that the notice opens the
-# file rather than merely appearing in its first 4096 bytes
-notice-rgx = "^# Copyright \\(c\\) The btclib developers\\n# Distributed under the MIT software license, see the accompanying\\n# LICENSE file or https://opensource\\.org/license/mit for the full text\\."
+# three of its lines as one regex, preceded by an optional #! line so
+# that the notice opens the file or follows a shebang, rather than
+# merely appearing anywhere in its first 4096 bytes
+notice-rgx = "^(#![^\\n]*\\n)?# Copyright \\(c\\) The btclib developers\\n# Distributed under the MIT software license, see the accompanying\\n# LICENSE file or https://opensource\\.org/license/mit for the full text\\."

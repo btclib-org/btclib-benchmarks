@@ -4789,6 +4789,12 @@ together and the output still pointing at `tests/` (closes #276).
   file, and the sentence after it, now outside the bullet, names
   `windows.yml` rather than "this workflow"** (closes #373).
 
+### `notice-rgx` tolerates one shebang line ahead of the notice
+
+- **`notice-rgx` is now `COPYRIGHT` transcribed preceded by one optional
+  `#!` line, `^(#![^\n]*\n)?`, so the notice opens the file or follows a
+  shebang** (issue btclib-org/.github#1294).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
