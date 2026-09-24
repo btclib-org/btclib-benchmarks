@@ -680,13 +680,19 @@ ignore = [
     # every one a call through such a table
     "boolean-positional-value-in-call",
     # FIX refuses a TODO, a FIXME, an XXX or a HACK wherever one opens a
-    # comment: unfinished work belongs in an issue, searchable,
-    # assignable and closeable, not in a comment beside code that reads
-    # as finished. TD disciplines the same four markers' format instead
-    # of refusing them, and is not even a superset of what FIX catches --
-    # HACK draws no TD diagnostic at all -- so a repository that finishes
-    # what it starts keeps the refusal and leaves TD here
-    "TD",
+    # comment: unfinished work belongs in an issue, searchable, assignable and
+    # closeable, not in a comment beside code that reads as finished. TD
+    # disciplines the first three markers' format instead of refusing them, and
+    # is not even a superset of what FIX catches -- HACK draws no TD diagnostic
+    # at all -- so a repository that finishes what it starts keeps the refusal
+    # and leaves TD here
+    "invalid-todo-tag",
+    "missing-todo-author",
+    "missing-todo-link",
+    "missing-todo-colon",
+    "missing-todo-description",
+    "invalid-todo-capitalization",
+    "missing-space-after-todo-colon",
 ]
 
 [tool.ruff.lint.per-file-ignores]
