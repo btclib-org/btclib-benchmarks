@@ -4795,6 +4795,12 @@ together and the output still pointing at `tests/` (closes #276).
   `#!` line, `^(#![^\n]*\n)?`, so the notice opens the file or follows a
   shebang** (issue btclib-org/.github#1294).
 
+### `[tool.ruff.lint] ignore` names TD by its seven rule names
+
+- **`TD001` through `TD007` replace the bare family code `"TD"`, so the
+  entry names what it turns off, with nothing to look up**
+  (issue btclib-org/.github#1304).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
