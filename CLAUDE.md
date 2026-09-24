@@ -205,7 +205,8 @@ Do not use Fable unless explicitly instructed.
   was an advisory against btclib. Do not "tidy" them into a group.
 - **Both ends of the interpreter range are set by a comparand**, not
   chosen. 3.13 is the ceiling: `coincurve` and `secp256k1` publish no
-  cp314 wheel and neither builds without `pkg-config`. 3.11 is the
+  cp314 wheel, `secp256k1`'s sdist wants `pkg-config`, and `coincurve`'s
+  does not build at all, `.python-version`'s comment saying why. 3.11 is the
   floor: `secp256k1lab` declares it and `scripts/04-pure-python.py` imports
   it unguarded. Raising either means checking a package index first.
   `coincurve` and `secp256k1` and no others hold the ceiling: `electrum-ecc`

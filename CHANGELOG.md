@@ -4801,6 +4801,12 @@ together and the output still pointing at `tests/` (closes #276).
   entry names what it turns off, with nothing to look up**
   (issue btclib-org/.github#1304).
 
+### The 3.13 ceiling stays, and stops naming the organization's pin
+
+- **`.python-version` stays at 3.13, `coincurve` and `secp256k1` installing
+  on nothing newer; the prose says the newest CPython rather than 3.14, and
+  that `coincurve`'s sdist does not build** (issue btclib-org/.github#1324).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
