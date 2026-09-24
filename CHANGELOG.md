@@ -4807,6 +4807,12 @@ together and the output still pointing at `tests/` (closes #276).
   on nothing newer; the prose says the newest CPython rather than 3.14, and
   that `coincurve`'s sdist does not build** (issue btclib-org/.github#1324).
 
+### `codeql-passed` and `test-passed` no longer skip while draft
+
+A skipped required check reads as passing, so both aggregates now fail
+a first step on the draft flag instead of skipping on it (issue
+btclib-org/.github#1327).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

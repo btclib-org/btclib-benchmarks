@@ -153,11 +153,14 @@ jobs:
     # !cancelled() rather than always(): a run superseded by the
     # concurrency group above is one a newer run speaks for, and this
     # job skips instead of failing for it -- a skip satisfying a rule
-    # that names this context the same as a pass. The draft and closed
-    # halves are the analysis job's own condition, so a draft skips
-    # uniformly rather than being reported as a failure for an analysis
-    # this workflow declined to run
-    if: ${{ !cancelled() && !github.event.pull_request.draft && github.event.action != 'closed' }}
+    # that names this context the same as a pass. The draft flag is not
+    # part of this condition: a skipped required check reads as passing,
+    # and this job's own check run does not exist until codeql has
+    # settled, so declining it here while draft would leave the draft's
+    # skip as the only check of this name on the sha until a later run's
+    # own aggregate exists. The closed condition stays: a closed pull
+    # request has nothing left to become ready (btclib-org/.github#1327)
+    if: ${{ !cancelled() && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -192,6 +195,15 @@ jobs:
       # in two files: `needs` reaches nothing outside its own workflow and
       # a step is not shared between two, so an aggregate is per workflow
       # whatever it is written in
+      # a skipped required check reads as passing, so the draft flag
+      # moves from the job's own `if:` above into this first step: the
+      # job still runs while draft, and reports a failure instead of a
+      # skip (btclib-org/.github#1327)
+      - name: Fail while this pull request is a draft
+        if: github.event.pull_request.draft
+        run: |
+          echo "::error::this pull request is a draft"
+          exit 1
       - name: Fail unless every other job of this run succeeded
         env:
           GH_TOKEN: ${{ github.token }}

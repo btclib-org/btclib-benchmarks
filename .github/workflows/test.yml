@@ -145,9 +145,15 @@ jobs:
     # has to wait for -- a job added outside this list is judged without
     # being waited for, and turns the gate red until it is added here
     needs: [coverage]
-    # the closed one for the same reason, added at the trigger above:
-    # a closed pull request skips uniformly rather than tripping this
-    # gate over a job it deliberately never ran
+    # the closed condition, added at the trigger above: a closed pull
+    # request skips uniformly rather than tripping this gate over a job
+    # it deliberately never ran. The draft flag is not part of this
+    # condition: a skipped required check reads as passing, and this
+    # job's own check run does not exist until coverage has settled, so
+    # declining it here while draft would leave the draft's skip as the
+    # only check of this name on the sha until a later run's own
+    # aggregate exists -- the first step below fails outright on it
+    # instead (btclib-org/.github#1327)
     # not always(): a cancellation of this run itself -- the concurrency
     # group superseding it with a newer push -- would still reach this
     # job and have it fail explicitly below, turning a cancellation the
@@ -155,7 +161,7 @@ jobs:
     # behind it. !cancelled() lets this job be skipped in that case
     # instead, which satisfies the check same as any other skip, while a
     # single job of the run cancelled on its own still fails below
-    if: ${{ !cancelled() && !github.event.pull_request.draft && github.event.action != 'closed' }}
+    if: ${{ !cancelled() && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -221,6 +227,15 @@ jobs:
       # same surprise in another spelling is recorded in `lint.yml` beside
       # its concurrency group: `github.workflow` under a call is the
       # caller's name, which is why both groups are named literally.
+      # a skipped required check reads as passing, so the draft flag
+      # moves from the job's own `if:` above into this first step: the
+      # job still runs while draft, and reports a failure instead of a
+      # skip (btclib-org/.github#1327)
+      - name: Fail while this pull request is a draft
+        if: github.event.pull_request.draft
+        run: |
+          echo "::error::this pull request is a draft"
+          exit 1
       - name: Fail unless every other job of this run succeeded
         env:
           GH_TOKEN: ${{ github.token }}
