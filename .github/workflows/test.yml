@@ -83,8 +83,8 @@ jobs:
           # `.python-version` is the one place the reference interpreter
           # is named and uv reads it, so a number written here would be a
           # second copy of it. That file also carries why it says 3.13
-          # where the rest of the organization says 3.14 -- a comparand's
-          # wheels rather than a preference -- and the range the
+          # rather than the newest CPython -- a comparand's wheels rather
+          # than a preference -- and the range the
           # sentinels sweep has its own ends for the same kind of reason
 
       # one comparand builds a libsecp256k1 of its own on this cell:

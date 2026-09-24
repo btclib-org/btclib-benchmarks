@@ -52,7 +52,7 @@ against the packages they are usefully compared with.
 What a benchmark here can compare is bounded by what its comparands
 publish: `coincurve` and `secp256k1` build no `cp314` wheel yet, and, on
 macOS, `secp256k1`'s sdist does not build on an Intel runner. "The
-interpreter is 3.13, not 3.14" below is the first's reason, and
+interpreter is 3.13, not the newest" below is the first's reason, and
 `os-macos.yml`'s own header is the second's.
 
 The benchmarks, each answering a different question:
@@ -108,12 +108,15 @@ A run also writes itself to `results/<name>.json`, and
 commands rather than one, for the reason under "One run of each,
 published" below.
 
-### The interpreter is 3.13, not 3.14
+### The interpreter is 3.13, not the newest
 
-`coincurve` and `secp256k1` publish wheels up to `cp313` and no further,
-and neither builds from source without `pkg-config` and a C toolchain. A
-benchmark that cannot install its comparands measures nothing, so
-`.python-version` pins 3.13 where the rest of this org pins 3.14.
+`coincurve` and `secp256k1` publish wheels up to `cp313` and no further.
+`secp256k1`'s sdist builds only where `pkg-config` is installed, and
+`coincurve`'s does not build at all: its build hook looks for `cffi`'s
+`LICENSE` at the root of `cffi`'s `.dist-info`, and the `cffi` its build
+resolves keeps it under `licenses/`. A benchmark that cannot install its
+comparands measures nothing, so `.python-version` pins 3.13 rather than
+the newest CPython.
 
 Raise the pin when both publish a `cp314` wheel. No other wrapper
 holds any part of it: `btclib-secp256k1` publishes past `cp313`

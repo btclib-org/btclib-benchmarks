@@ -32,7 +32,7 @@
 # Required
 version: 2
 
-# `.python-version`'s 3.13, not the org's 3.14: docs.yml no longer pins
+# `.python-version`'s 3.13, not the newest CPython: docs.yml no longer pins
 # an interpreter of its own -- it calls btclib-org/.github's
 # reusable-docs.yml, which takes none -- so this file is the only place
 # the documentation build's interpreter is chosen, and naming

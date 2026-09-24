@@ -1,9 +1,12 @@
-# 3.13 and not the 3.14 the rest of this org pins, and the reason is a
-# comparand rather than a preference: coincurve and secp256k1, two of the
-# wrappers scripts/01-libsecp256k1.py exists to compare, publish
-# wheels up to cp313 and no further, and neither builds from source
-# without pkg-config and a toolchain. A benchmark that cannot install
-# its comparands measures nothing -- and the documentation build now
+# 3.13 and not the newest CPython, and the reason is a comparand rather
+# than a preference: coincurve and secp256k1, two of the wrappers
+# scripts/01-libsecp256k1.py exists to compare, publish wheels up to
+# cp313 and no further. secp256k1's sdist builds only where pkg-config
+# is installed, and coincurve's does not build at all: its build hook
+# looks for cffi's LICENSE at the root of cffi's .dist-info, and the
+# cffi its build resolves keeps it under licenses/. A benchmark that
+# cannot install its comparands measures nothing -- and the
+# documentation build now
 # holds the same floor for a different reason: .readthedocs.yaml and
 # docs.yml both install these two wrappers through the uniform install
 # command btclib-org/.github's reusable-docs.yml runs for every
