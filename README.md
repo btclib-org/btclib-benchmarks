@@ -215,7 +215,10 @@ the two are separate commands on purpose — the prose around a table gets
 rewritten far more often than a machine gets measured, and it must not
 cost a fresh run or a hand-edited number to do it. `CONTRIBUTING.md` has
 both commands, and `REVIEWING.md` what a pull request is answered
-against.
+against. How the organization decides, and who holds which role, is its
+[GOVERNANCE.md](https://github.com/btclib-org/.github/blob/main/GOVERNANCE.md);
+what it intends to do, and what it deliberately does not, is its
+[ROADMAP.md](https://github.com/btclib-org/.github/blob/main/ROADMAP.md).
 
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
 [libraries]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
