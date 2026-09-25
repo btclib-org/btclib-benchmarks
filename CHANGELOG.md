@@ -4825,6 +4825,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   `ASSURANCE_CASE.md` argues why a published number can be trusted;
   both are in the documentation** (issue btclib-org/.github#1321).
 
+### `CONTRIBUTING.md` and `README.md` link `GOVERNANCE.md` and `ROADMAP.md`
+
+- **`CONTRIBUTING.md`'s shared part names both, and `README.md` names them
+  beside its pointer to `CONTRIBUTING.md` and `REVIEWING.md`** (issue
+  btclib-org/.github#1359).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
