@@ -4819,6 +4819,12 @@ btclib-org/.github#1327).
 full shas, in its output and in the tracking issue, so two commits alike in
 their first twelve characters print as two (issue btclib-org/.github#1343).
 
+### `ARCHITECTURE.md` and `ASSURANCE_CASE.md` join the root
+
+- **`CLAUDE.md`'s *Architecture* moves to `ARCHITECTURE.md`, and
+  `ASSURANCE_CASE.md` argues why a published number can be trusted;
+  both are in the documentation** (issue btclib-org/.github#1321).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

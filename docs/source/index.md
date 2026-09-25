@@ -8,7 +8,9 @@
 :maxdepth: 2
 :hidden:
 
+architecture_link
 contributing_link
 reviewing_link
+assurance_case_link
 changelog_link
 ```
