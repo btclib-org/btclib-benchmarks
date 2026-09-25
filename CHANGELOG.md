@@ -4813,6 +4813,12 @@ A skipped required check reads as passing, so both aggregates now fail
 a first step on the draft flag instead of skipping on it (issue
 btclib-org/.github#1327).
 
+### `REVIEWING.md` links Conventional Comments at its GitLab Pages address
+
+`REVIEWING.md` links `https://conventionalcomments.gitlab.io/`, a name the
+`*.gitlab.io` certificate covers, which `conventionalcomments.org` can present
+and fail the TLS check (issue btclib-org/.github#1341).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
