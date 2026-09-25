@@ -74,6 +74,10 @@ The benchmarks, each answering a different question:
   implements of every comparand here: a payment made and found, and what
   a recipient's setup costs before either
 
+[ARCHITECTURE](./ARCHITECTURE.md) is the design behind them: the shared
+modules under `src/btclib_benchmarks/`, and why measuring and publishing
+stay two separate commands.
+
 ## Why this is its own repository
 
 The comparands are third-party packages: `ecdsa`, `pycoin`, `buidl`,
@@ -228,6 +232,8 @@ the provenance of each package before any number — released, git ref,
 editable, or shadowed on `sys.path` — and asserts that every comparand
 agrees with btclib before timing any of them. A number produced without
 that header is not a result from this project; treat it as unverified.
+[ASSURANCE_CASE.md](./ASSURANCE_CASE.md) argues why that check holds,
+what this project defends and what it does not.
 
 A vulnerability in a package this project measures belongs upstream,
 with the package that has it. Dependabot alerts raised here are alerts

@@ -22,54 +22,12 @@ pull request will be answered against.
 
 ## Architecture
 
-The benchmarks, one question each:
-
-- `scripts/02-btclib-vs-btclib.py` — btclib's libsecp256k1 path against its own
-  pure-Python arithmetic
-- `scripts/03-libraries.py` — btclib, libsecp256k1 on, against other
-  Python bitcoin libraries
-- `scripts/04-pure-python.py` — every pure-Python implementation of one
-  operation, libsecp256k1 as the reference line
-- `scripts/01-libsecp256k1.py` — btclib_secp256k1 against the other
-  wrappers of the same C library, and which revision of it each vendors
-- `scripts/05-key-reuse.py` — what a verifier pays per signature under a key
-  it already has, raw against prepared, on both paths and against
-  python-ecdsa's `precompute()`
-- `scripts/06-silentpayments.py` — BIP352, which only `btclib_secp256k1`
-  implements of every comparand here
-
-`src/btclib_benchmarks/_provenance.py`, `src/btclib_benchmarks/_inputs.py`,
-`src/btclib_benchmarks/_vectors.py` and `scripts/artifacts.py` are what
-the suite covers.
-`src/btclib_benchmarks/_results.py` and `scripts/render.py` are the
-non-benchmarks besides those, and they are outside the gate on purpose —
-see below.
-
-Measuring and publishing are two commands, which `CONTRIBUTING.md`
-carries. A benchmark writes `results/<name>.json`: the numbers as
-measured, the packages block, and what the run block states.
-`scripts/render.py` writes `results/<name>.md` from that file, replacing
-only what lies between the `<!-- run: begin -->`-style markers and
-leaving every word of prose alone. So a heading is reworded and
-re-published without a machine, where otherwise it costs either a fresh
-run — different numbers — or an edited block, whose numbers no run ever
-printed.
-
-Three rules follow, and breaking any of them puts the coupling back:
-
-- **`render.py` and `_results.py` import no benchmark.** Importing one
-  builds its fixtures and runs its cross-comparand assertions.
-- **Nothing derived is stored.** Ratios, savings, break-evens and the
-  sort are computed at render time from the microseconds beside them, and
-  the column widths from the labels. A number in the JSON is a number a
-  clock produced.
-- **Neither module is covered**, and that is the same decision: a page is
-  written by a command a person runs, and putting the rewording of a
-  heading behind the suite is the coupling this split removes. The
-  `render-check` hook is what says a page still matches its run.
-
-`results/machine.toml` overrides the one line a process may get wrong,
-which machine ran it.
+[ARCHITECTURE.md](./ARCHITECTURE.md) is the design: what each script
+measures, the four shared modules under `src/btclib_benchmarks/`, and why
+`render.py` and `_results.py` import no benchmark and are outside the
+suite's 100% floor on purpose. Read it before adding a script or touching
+the split between measuring and publishing, where breaking any of the
+three rules it states puts the coupling back.
 
 ## The primary checkout is the maintainer's
 
