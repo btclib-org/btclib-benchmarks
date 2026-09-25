@@ -4831,6 +4831,11 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   beside its pointer to `CONTRIBUTING.md` and `REVIEWING.md`** (issue
   btclib-org/.github#1359).
 
+### `REVIEWING.md` lets a filed issue carry its fix
+
+- **An issue filed from a review may say the fix where one is known**,
+  the filing bar standing as it was (issue btclib-org/.github#1378).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
