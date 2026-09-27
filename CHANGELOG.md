@@ -4836,6 +4836,24 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
 - **An issue filed from a review may say the fix where one is known**,
   the filing bar standing as it was (issue btclib-org/.github#1378).
 
+### Dependabot's `pre-commit` ecosystem is named as unused, not as absent
+
+- **`.github/dependabot.yml` and `.pre-commit-config.yaml` say the
+  ecosystem exists and is not configured here**, pre-commit.ci's weekly
+  autoupdate moving `rev:` instead (issue btclib-org/.github#1391).
+
+### An aggregate accepts its own `needs` job listed unfinished
+
+- **`codeql.yml`'s and `test.yml`'s aggregates accept their `needs`
+  job's row listed unfinished where that job's result is `success` or
+  `skipped`** (issue btclib-org/.github#1395).
+
+### `REPOSITORY.md` reads back classic signatures off and SHA pinning on
+
+- **Classic `required_signatures` reads `false`, and `allowed_actions`
+  and `sha_pinning_required` are read back**, section 11 having the
+  reasons (issue btclib-org/.github#1409).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
