@@ -140,15 +140,17 @@ jobs:
     # passed" would produce one ambiguous check, and test.yml's aggregate
     # is the one main already requires
     name: "codeql: every job passed"
-    # ordering, and nothing else -- the same rule test.yml's aggregate
-    # states: what the step below judges is every job the run reports,
-    # so a job of this workflow left out of this list is judged without
-    # being waited for and turns the gate red until it is added here.
+    # ordering, and the result the step below reads for codeql's own
+    # rows where the listing still shows them unfinished -- the same rule
+    # test.yml's aggregate states: what the step below judges is every
+    # job the run reports, so a job of this workflow left out of this
+    # list is judged without being waited for and turns the gate red
+    # until it is added here.
     # The calling job's own id is what to name: a call does not appear as
     # a row of its own in the run's job listing, only the rows the called
     # workflow produces do -- "codeql / Analyze actions" and
-    # "codeql / Analyze python" here, prefixed with this job's id -- and
-    # needing the id is what still waits for both
+    # "codeql / Analyze python" here, prefixed with that job's id, it
+    # declaring no name -- and needing the id is what still waits for both
     needs: [codeql]
     # !cancelled() rather than always(): a run superseded by the
     # concurrency group above is one a newer run speaks for, and this
@@ -207,6 +209,7 @@ jobs:
       - name: Fail unless every other job of this run succeeded
         env:
           GH_TOKEN: ${{ github.token }}
+          CODEQL_RESULT: ${{ needs.codeql.result }}
         run: |
           set -euo pipefail
           # `.status` beside the conclusion so that an unfinished job says
@@ -229,8 +232,28 @@ jobs:
           # touches nothing those jobs read
           bad=$(printf '%s\n' "${jobs}" |
             awk -F'\t' '$1 != "success" && $1 != "skipped" && $1 != "unfinished"')
-          unfinished=$(printf '%s\n' "${jobs}" |
-            awk -F'\t' '$1 == "unfinished"' | wc -l | tr -d ' ')
+          # a row of codeql's that the listing still shows unfinished is
+          # accepted where codeql's own result is success or skipped:
+          # `needs` does not let this job start before codeql concludes,
+          # so such a row is the listing lagging and not the run
+          # (btclib-org/.github#1395). A row is codeql's where its name
+          # starts with that job's id and then a space, a slash and a
+          # space, the prefix GitHub lists a called workflow's jobs under;
+          # with any other result the prefix is empty and nothing is
+          # accepted this way
+          prefix=""
+          case "${CODEQL_RESULT}" in
+            success | skipped) prefix="codeql / " ;;
+          esac
+          lagging=$(printf '%s\n' "${jobs}" | awk -F'\t' -v p="${prefix}" \
+            '$1 == "unfinished" && p != "" && index($3, p) == 1')
+          if [ -n "${lagging}" ]; then
+            echo "listed unfinished, accepted as codeql's (${CODEQL_RESULT}):"
+            printf '%s\n' "${lagging}"
+          fi
+          counted=$(printf '%s\n' "${jobs}" | awk -F'\t' -v p="${prefix}" \
+            '$1 == "unfinished" && !(p != "" && index($3, p) == 1)')
+          unfinished=$(printf '%s' "${counted}" | awk 'END { print NR }')
           # each annotation names the rows it is about, an annotation
           # being what the checks page shows without the log being
           # opened. `%0A` is a newline to one, and the tab goes with it:
@@ -245,18 +268,19 @@ jobs:
             annotate "these jobs of the run did not succeed:" "${bad}"
             verdict=1
           fi
-          # exactly one job of the run may be unfinished, and it is this
-          # one. Counted rather than excluded by name, a name being what
-          # goes stale when this job is renamed -- and none unfinished at
-          # all is refused too, a listing with no job running not being a
-          # listing of the run this step is running in
+          # beside codeql's accepted rows, exactly one job of the run may
+          # be unfinished, and it is this one. Counted rather than
+          # excluded by name, a name being what goes stale when this job
+          # is renamed -- and none unfinished at all is refused too, a
+          # listing with no job running not being a listing of the run
+          # this step is running in
           if [ "${unfinished}" -ne 1 ]; then
             # no colon on this one, and rows after it only if there are
             # any: nothing unfinished is the case that says nothing, and
             # a colon would promise a list
             annotate \
               "this check should be the run's one unfinished job; ${unfinished} are" \
-              "$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 == "unfinished"')"
+              "${counted}"
             verdict=1
           fi
           exit "${verdict}"

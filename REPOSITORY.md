@@ -185,21 +185,17 @@ that do gate a release on the tag.
 ```shell
 gh api repos/btclib-org/btclib-benchmarks/branches/main/protection\
 /required_signatures --jq '.enabled'
-# true
+# false
 ```
 
-An unsigned commit is refused by the push rather than noticed later — of
-everyone the protections are enforced against, which by the section above
-is everyone but the maintainer. What holds for that account is reading the
-commit before pushing it, `git log -1 --format='%G? %GS'`, an `N` being a
-defect to fix rather than to explain.
-
-Note what none of this can cover: a squash performed by GitHub's web button —
-or by `gh pr merge`, which asks the same endpoint — is signed by GitHub's
-own web-flow key, not by the maintainer's, and shows as verified by
-GitHub. That is a property of the merge rather than something to paper
-over, and it is why the procedure above lands a commit that already
-exists instead of asking the forge to write one.
+Classic protection's own copy of the rule is off, and `main-integrity`
+above is what requires a signature: [the standard states that value for
+every
+repository](https://github.com/btclib-org/.github/blob/main/README.md#branch-protection-and-rulesets).
+That ruleset has no bypass actor, so an unsigned commit is refused by the
+push rather than noticed later, the maintainer's included. Reading a
+commit before pushing it, `git log -1 --format='%G? %GS'`, is what
+catches it first, an `N` being a defect to fix rather than to explain.
 
 ## Merge methods
 
@@ -345,6 +341,20 @@ gh api -X PUT \
   -f default_workflow_permissions=read \
   -F can_approve_pull_request_reviews=false
 ```
+
+## Allowed actions and SHA pinning
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks/actions/permissions
+# {"enabled":true,"allowed_actions":"all","sha_pinning_required":true}
+gh api orgs/btclib-org/actions/permissions \
+  --jq '{allowed_actions, sha_pinning_required}'
+# {"allowed_actions":"all","sha_pinning_required":true}
+```
+
+The organization gives the same two answers, `sha_pinning_required`
+being set at that level: [section 11 has the reasons for both
+fields](https://github.com/btclib-org/.github/blob/main/README.md#tokens-publishing-scanning).
 
 ## Security and analysis
 

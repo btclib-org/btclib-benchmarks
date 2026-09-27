@@ -138,7 +138,8 @@ jobs:
 
   test-passed:
     name: "test: every job passed"
-    # what this list does now is order this job last, and nothing else:
+    # what this list does now is order this job last, and hand the step
+    # below coverage's own result for the one case the step reads it:
     # what the step below judges is every job the run reports, which is a
     # different set that happens to coincide while this workflow has two
     # jobs. So the rule the gate depends on is that whatever it can see it
@@ -206,12 +207,16 @@ jobs:
       # because a job with no conclusion yet is not the same fact as this
       # job. Leaving an unfinished job out by name would go stale the day
       # this one is renamed, so it is counted instead: exactly one job of
-      # the run may be unfinished, and it is this one. A second job that
-      # has not finished is then waited for by being refused rather than
-      # accepted, and none unfinished at all is refused too -- if no job of
-      # the run is running, the listing is not describing the run this step
-      # is running in, and a check that aggregates nothing is not a check
-      # that passed.
+      # the run may be unfinished, and it is this one, beside coverage's
+      # own row where the listing still shows it unfinished and coverage's
+      # own result is success or skipped -- `needs` does not let this job
+      # start before coverage concludes, so that row is the listing
+      # lagging and not the run (btclib-org/.github#1395). Any other job
+      # that has not finished is then waited for by being refused rather
+      # than accepted, and none unfinished at all is refused too -- if no
+      # job of the run is running, the listing is not describing the run
+      # this step is running in, and a check that aggregates nothing is
+      # not a check that passed.
       #
       # All of which holds while the run is this workflow's own, and stops
       # holding under `workflow_call`. A called workflow's jobs run inside
@@ -239,6 +244,7 @@ jobs:
       - name: Fail unless every other job of this run succeeded
         env:
           GH_TOKEN: ${{ github.token }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
         run: |
           set -euo pipefail
           # `.status` beside the conclusion so that an unfinished job says
@@ -251,8 +257,7 @@ jobs:
           # awk and not grep: a tab in a grep pattern is one implementation's
           # extension and a literal "t" in another's, and the runner's is the
           # second -- where awk's field separator is POSIX. Which is also
-          # why the count below is an awk filter piped to `wc` rather than
-          # `grep -c`
+          # why the count below is taken with awk rather than `grep -c`
           # `skipped` is a conclusion this accepts, and section 10 of
           # the organization standard is where that sits: it asks for a
           # step failing on anything but `success` and `skipped`, and
@@ -261,8 +266,24 @@ jobs:
           # touches nothing those jobs read
           bad=$(printf '%s\n' "${jobs}" |
             awk -F'\t' '$1 != "success" && $1 != "skipped" && $1 != "unfinished"')
-          unfinished=$(printf '%s\n' "${jobs}" |
-            awk -F'\t' '$1 == "unfinished"' | wc -l | tr -d ' ')
+          # coverage's row is the one whose name is exactly the `name:`
+          # that job declares, a second copy of it that a rename leaves
+          # matching nothing -- which refuses a lagging row again rather
+          # than accepting any other. With a result other than success or
+          # skipped the name is empty and nothing is accepted this way
+          name=""
+          case "${COVERAGE_RESULT}" in
+            success | skipped) name="Run the suite, gated at 100% coverage" ;;
+          esac
+          lagging=$(printf '%s\n' "${jobs}" | awk -F'\t' -v n="${name}" \
+            '$1 == "unfinished" && n != "" && $3 == n')
+          if [ -n "${lagging}" ]; then
+            echo "listed unfinished, accepted as coverage's (${COVERAGE_RESULT}):"
+            printf '%s\n' "${lagging}"
+          fi
+          counted=$(printf '%s\n' "${jobs}" | awk -F'\t' -v n="${name}" \
+            '$1 == "unfinished" && !(n != "" && $3 == n)')
+          unfinished=$(printf '%s' "${counted}" | awk 'END { print NR }')
           # both are reported before exiting rather than the first one
           # reached: a gate that says what it saw says all of it
           #
@@ -290,7 +311,7 @@ jobs:
             # would promise a list
             annotate \
               "this check should be the run's one unfinished job; ${unfinished} are" \
-              "$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 == "unfinished"')"
+              "${counted}"
             verdict=1
           fi
           exit "${verdict}"
