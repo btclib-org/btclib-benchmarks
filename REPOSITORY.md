@@ -41,21 +41,25 @@ this list going stale the first time it changed.
 
 What it judges is therefore not what `needs` waits for, and the two sets
 coincide only for as long as `test-passed` is the workflow's only other
-job. So the rule is that
-whatever the gate can see it has to wait for: it allows exactly one
-unfinished job, which is itself, and a job of the run outside its
-`needs` turns it red until it is added there. Counted rather than
-excluded by name, a name being what goes stale when this job is renamed
-— and refused when nothing is unfinished at all, because a listing with
-no job running is not describing the run the gate is running in.
+job. So the rule is that whatever the gate can see it has to wait for:
+it allows exactly one unfinished job, which is itself, beside
+`coverage`'s own row where the listing still shows it unfinished after
+being read again and `coverage`'s result is `success` or `skipped` —
+`needs` does not let the gate start before `coverage` concludes, so that
+row is the listing lagging and not the run — and a job of the run
+outside its `needs` turns it red until it is added there. Counted rather
+than excluded by name, a name being what goes stale when this job is
+renamed — and refused when nothing is unfinished at all, because a
+listing with no job running is not describing the run the gate is
+running in.
 
-What that job must not do is decide from `needs.*.result`, which is how
-it was written until an outage showed what that context can miss. With
-codeload answering 503 and then 429, a cell died in "Set up job" with
-the download of an action abandoned after three attempts; the job is red
-in the run, the failure never reached the needs context, and the step
-that fails the gate was skipped. The one required check went green over
-a red matrix, twice.
+What that job must not do is decide from `needs.*.result` alone, which
+is how it was written until an outage showed what that context can miss.
+With codeload answering 503 and then 429, a cell died in "Set up job"
+with the download of an action abandoned after three attempts; the job
+is red in the run, the failure never reached the needs context, and the
+step that fails the gate was skipped. The one required check went green
+over a red matrix, twice.
 
 It is not that every setup failure does this — a cell pointed at an
 action SHA that does not exist dies in the same step and does arrive as

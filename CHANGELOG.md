@@ -4854,6 +4854,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   and `sha_pinning_required` are read back**, section 11 having the
   reasons (issue btclib-org/.github#1409).
 
+### An aggregate reads a lagging `needs` row again and fails on a failed result
+
+- **`codeql.yml`'s and `test.yml`'s aggregates read a lagging row again,
+  and fail on a `needs` result other than `success` or `skipped`** (issue
+  btclib-org/.github#1416) (issue btclib-org/.github#1424).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
