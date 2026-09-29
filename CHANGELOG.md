@@ -4860,6 +4860,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   and fail on a `needs` result other than `success` or `skipped`** (issue
   btclib-org/.github#1416) (issue btclib-org/.github#1424).
 
+### The pinned `btclib-org/.github` rev is allowlisted inline
+
+- **detect-secrets reads the pinned sha as a secret, and the baseline
+  recorded only the previous one**: a `# pragma: allowlist secret` on the
+  `rev:` line holds for any sha, and the stale entry goes.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
