@@ -4866,6 +4866,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   recorded only the previous one**: a `# pragma: allowlist secret` on the
   `rev:` line holds for any sha, and the stale entry goes.
 
+### `[tool.uv]`'s floor rises to the `uv` `dependabot-core` bundles
+
+- **`required-version` reads `>=0.12.19`, the pin in `dependabot-core`'s
+  `uv/Dockerfile`**: the old floor admitted a `uv` older than the one the
+  updater writes `uv.lock` with (issue btclib-org/.github#1438).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
