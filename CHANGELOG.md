@@ -4872,6 +4872,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   `uv/Dockerfile`**: the old floor admitted a `uv` older than the one the
   updater writes `uv.lock` with (issue btclib-org/.github#1438).
 
+### `CONTRIBUTING.md` points a newcomer at `good first issue`
+
+- **An issue carrying the label is small and self-contained** (issue
+  btclib-org/.github#1362): *The issue tracker* says so, and links the
+  organization-wide search for the open ones.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
