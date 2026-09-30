@@ -244,108 +244,26 @@ jobs:
         run: |
           echo "::error::this pull request is a draft"
           exit 1
+      # the script is btclib-org/.github's, served from there at main under a
+      # `path:` of its own and sparse on .github/scripts, so no copy of it is
+      # kept in this tree: the wait and the verdict are tested where it lives
+      # (section 10 of that repository's README.md)
+      - name: Check out the check script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: btclib-org/.github
+          ref: main
+          path: btclib-org-github
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+      # coverage's row is the one whose name is exactly the `name:` that job
+      # declares, a second copy of it that a rename leaves matching nothing
+      # -- which refuses a lagging row again rather than accepting any other
       - name: Fail unless every other job of this run succeeded
         env:
           GH_TOKEN: ${{ github.token }}
           COVERAGE_RESULT: ${{ needs.coverage.result }}
-        run: |
-          set -euo pipefail
-          # coverage's row is the one whose name is exactly the `name:`
-          # that job declares, a second copy of it that a rename leaves
-          # matching nothing -- which refuses a lagging row again rather
-          # than accepting any other. With a result other than success or
-          # skipped the name is empty and nothing is accepted this way
-          name=""
-          case "${COVERAGE_RESULT}" in
-            success | skipped) name="Run the suite, gated at 100% coverage" ;;
-          esac
-          # such a row is read again, up to three times ten seconds apart,
-          # before it is accepted: coverage's result is not the listing's
-          # equal, `needs` having missed matrix cells that died in *Set up
-          # job* (btclib-org/btclib#1001), and a row that concludes between
-          # reads is judged below on its conclusion. Only a row this step
-          # would tolerate is waited for, which is a row whose job's result
-          # is success or skipped; a listing with no such row is read once
-          # (btclib-org/.github#1416)
-          reads=0
-          while :; do
-            # `.status` beside the conclusion so that an unfinished job
-            # says which kind it is: queued and running are one word to
-            # `.conclusion` and two facts to a reader of the log
-            jobs=$(gh api --paginate \
-              "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" \
-              --jq '.jobs[] | "\(.conclusion // "unfinished")\t\(.status)\t\(.name)"')
-            lagging=$(printf '%s\n' "${jobs}" | awk -F'\t' -v n="${name}" \
-              '$1 == "unfinished" && n != "" && $3 == n')
-            if [ -z "${lagging}" ] || [ "${reads}" -eq 3 ]; then
-              break
-            fi
-            reads=$((reads + 1))
-            echo "listed unfinished, read again in 10 s (${reads} of 3):"
-            printf '%s\n' "${lagging}"
-            sleep 10
-          done
-          printf '%s\n' "${jobs}"
-          # awk and not grep: a tab in a grep pattern is one implementation's
-          # extension and a literal "t" in another's, and the runner's is the
-          # second -- where awk's field separator is POSIX. Which is also
-          # why the count below is taken with awk rather than `grep -c`
-          # `skipped` is a conclusion this accepts, and section 10 of
-          # the organization standard is where that sits: it asks for a
-          # step failing on anything but `success` and `skipped`, and
-          # names what produces the second -- a run superseded by its
-          # concurrency group, and a `changes` job that found the diff
-          # touches nothing those jobs read
-          bad=$(printf '%s\n' "${jobs}" |
-            awk -F'\t' '$1 != "success" && $1 != "skipped" && $1 != "unfinished"')
-          if [ -n "${lagging}" ]; then
-            echo "still listed unfinished, accepted as coverage's (${COVERAGE_RESULT}):"
-            printf '%s\n' "${lagging}"
-          fi
-          counted=$(printf '%s\n' "${jobs}" | awk -F'\t' -v n="${name}" \
-            '$1 == "unfinished" && !(n != "" && $3 == n)')
-          unfinished=$(printf '%s' "${counted}" | awk 'END { print NR }')
-          # every refusal is reported before exiting rather than the first
-          # one reached: a gate that says what it saw says all of it
-          #
-          # and each annotation names the rows it is about, because an
-          # annotation is what the checks page shows without the log being
-          # opened -- the same argument as printing the listing before
-          # judging it, one reader further out. `%0A` is a newline to an
-          # annotation, which is otherwise one line, and the tab goes with
-          # it: the columns line up in a log and not in this. A literal `%`
-          # would want `%25` and passes through unescaped, which no name a
-          # matrix builds can contain
-          annotate() {
-            printf '::error::%s' "$1"
-            printf '%s' "$2" | tr '\t' ' ' | awk '{ printf "%%0A%s", $0 }'
-            printf '\n'
-          }
-          verdict=0
-          # coverage's own result is judged beside the listing and not only
-          # through it: a failure `needs` reports with no row of coverage's
-          # listed as failed, or with its row missing, is still a failure
-          # (btclib-org/.github#1424). This turns a pass into a fail and
-          # never the reverse, so the judgements of the listing below lose
-          # nothing
-          case "${COVERAGE_RESULT}" in
-            success | skipped) ;;
-            *)
-              annotate "coverage's own result is '${COVERAGE_RESULT}'" ""
-              verdict=1
-              ;;
-          esac
-          if [ -n "${bad}" ]; then
-            annotate "these jobs of the run did not succeed:" "${bad}"
-            verdict=1
-          fi
-          if [ "${unfinished}" -ne 1 ]; then
-            # no colon on this one, and rows after it only if there are any:
-            # nothing unfinished is the case that says nothing, and a colon
-            # would promise a list
-            annotate \
-              "this check should be the run's one unfinished job; ${unfinished} are" \
-              "${counted}"
-            verdict=1
-          fi
-          exit "${verdict}"
+        run: >-
+          python3 btclib-org-github/.github/scripts/check_run_jobs.py
+          coverage "${COVERAGE_RESULT}"
+          --row "coverage=Run the suite, gated at 100% coverage"
