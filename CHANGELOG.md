@@ -4878,6 +4878,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   btclib-org/.github#1362): *The issue tracker* says so, and links the
   organization-wide search for the open ones.
 
+### `codeql.yml`'s aggregate runs `check_run_jobs.py`
+
+- **The aggregate's step runs `check_run_jobs.py`, served from
+  `btclib-org/.github`,** which reads the jobs listing again up to a
+  deadline (issue btclib-org/.github#1463).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
