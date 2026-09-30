@@ -4890,6 +4890,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   `btclib-org/.github`,** which reads the jobs listing again up to a
   deadline (issue btclib-org/.github#1470).
 
+### `CLAUDE.md`'s shared section is the one `btclib-org/.github` carries
+
+- **The primary-checkout section is the shared text, byte for byte**
+  (issue btclib-org/.github#1494), and the *Model* section is two
+  sentences; `CLAUDE.md` counts no modules or scripts.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
