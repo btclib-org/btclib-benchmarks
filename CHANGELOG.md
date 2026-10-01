@@ -4913,6 +4913,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   `reusable-lint.yml`'s `Sign-off` job checks** (issue
   btclib-org/.github#1467).
 
+### The primary-checkout section uses one form for the checkout
+
+- **The section writes the checkout as `"${checkout:?}"` throughout, says
+  what `<scratchpad>` is and names the pull** (issue
+  btclib-org/.github#1500).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
