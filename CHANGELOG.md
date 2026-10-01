@@ -4907,6 +4907,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   btclib-org/.github#1482): the Dependabot service refused `0.12.19` with
   `tool_version_not_supported`.
 
+### A `Signed-off-by:` trailer on every commit of a pull request
+
+- **`CONTRIBUTING.md`'s shared half asks every commit for the trailer, which
+  `reusable-lint.yml`'s `Sign-off` job checks** (issue
+  btclib-org/.github#1467).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
