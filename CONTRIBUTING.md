@@ -352,10 +352,12 @@ Run the gate by hand before committing — the `uv run pre-commit run
 
 ### What gates a merge, and what only reports
 
-The three commands above are the three required checks, so nothing
-reaches a review without having passed them or passing them beside it on
-the same sha, and a reviewer may rely on that rather than establishing it
-again; `REVIEWING.md` has what the reliance takes. One command names the
+The commands above are required checks, and so is `lint / Dependency
+review`, which has no local command: it asks the forge's dependency graph
+what a pull request adds. So nothing reaches a review without having passed
+them or passing them beside it on the same sha, and a reviewer may rely on
+that rather than establishing it again; `REVIEWING.md` has what the
+reliance takes. One command names the
 contexts `main` requires,
 
 ```shell

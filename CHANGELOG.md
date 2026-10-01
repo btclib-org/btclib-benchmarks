@@ -4896,6 +4896,11 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   (issue btclib-org/.github#1494), and the *Model* section is two
   sentences; `CLAUDE.md` counts no modules or scripts.
 
+### `Dependency review` is a required check
+
+- **`REPOSITORY.md` reads `lint / Dependency review` back with the other
+  required checks** (issue btclib-org/.github#1465).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
