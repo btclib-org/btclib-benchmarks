@@ -4925,6 +4925,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   fails** (issue btclib-org/.github#1508), so an outage of that site no
   longer fails the `-n -W` docs build.
 
+### `CONTRIBUTING.md` says the maintainer self-merges while the bot review is off
+
+- **`CONTRIBUTING.md` says no ack of record exists while `claude-review.yml`
+  is off, and that a local review of a named sha, by a reviewer other than
+  the author, stands in** (issue btclib-org/.github#1527).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
