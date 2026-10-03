@@ -360,6 +360,18 @@ The organization gives the same two answers, `sha_pinning_required`
 being set at that level: [section 11 has the reasons for both
 fields](https://github.com/btclib-org/.github/blob/main/README.md#tokens-publishing-scanning).
 
+## Sign-off on web commits
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks --jq .web_commit_signoff_required
+# true
+gh api orgs/btclib-org --jq .web_commit_signoff_required
+# true
+```
+
+Set at the organization level, [for the reason section 11
+gives](https://github.com/btclib-org/.github/blob/main/README.md#signatures).
+
 ## Security and analysis
 
 ```shell
@@ -534,15 +546,15 @@ derives from the tree. No call here reads any of that back, a scope of
 the settings the standard asks about reaching none of it.
 
 **A field of that document no rule reaches.** `allow_forking`,
-`allow_update_branch`, `has_discussions`, `has_downloads`, `is_template`
-and `web_commit_signoff_required` are in it, in none of this file's
-`--jq` objects, and named nowhere in the standard:
+`allow_update_branch`, `has_discussions`, `has_downloads` and
+`is_template` are in it, in none of this file's `--jq` objects, and
+named nowhere in the standard:
 
 ```shell
 std=$(gh api repos/btclib-org/.github/contents/README.md \
         -H 'Accept: application/vnd.github.raw')
 for f in allow_forking allow_update_branch has_discussions has_downloads \
-         is_template web_commit_signoff_required; do
+         is_template; do
   printf '%s %s %s\n' "$f" \
     "$(printf '%s' "$std" | grep -c "$f")" "$(grep -c "\.$f" REPOSITORY.md)"
 done
