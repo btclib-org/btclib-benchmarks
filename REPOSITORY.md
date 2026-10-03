@@ -22,7 +22,8 @@ it that no section below reads back is a gap rather than a decision, and
 gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
   --jq '.required_status_checks | {strict, contexts}'
 # {"contexts":["test: every job passed","docs / Build the documentation",
-#              "lint / Lint and type-check","lint / Dependency review"],
+#              "lint / Lint and type-check","lint / Dependency review",
+#              "lint / Sign-off"],
 #  "strict":true}
 ```
 
