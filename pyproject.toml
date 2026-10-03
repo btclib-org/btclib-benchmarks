@@ -81,14 +81,19 @@ dependencies = [
     # numbered lower than the guess, PEP 440 comparing (2026, 8, 21) below
     # (2026, 9). [tool.uv.sources] stood in for it with the branch, and now
     # that it is out the source entry is gone and this floor is the whole
-    # of the pin
-    "btclib>=2026.8.21",
+    # of the pin. btclib 2026.9.24 deleted `btclib.to_pub_key`
+    # (btclib-org/btclib#1188), which the scripts no longer import
+    "btclib>=2026.10.3",
+    # `btclib.bip32` is `btclib_wallet.bip32` from btclib 2026.9.29, which
+    # is where `scripts/03-libraries.py` and `tests/vectors_test.py` read it
+    "btclib-wallet>=2026.9.30",
     # `ssa.Signer` and the parsed-key entry points these rows call
     # shipped in 0.8.0.3 -- the floor named the release before it
     # existed, [tool.uv.sources] stood in for it below, and now that it
     # is out the source entry is gone and this floor is the whole of the
-    # pin
-    "btclib-secp256k1>=0.8.0.3",
+    # pin. 0.8.0.9 is the floor the `secp256k1` extra of btclib 2026.10.3
+    # declares
+    "btclib-secp256k1>=0.8.0.9",
     "buidl>=0.2.36",
     "coincurve>=21.0.0",
     "ecdsa>=0.19.2",

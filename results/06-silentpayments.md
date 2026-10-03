@@ -4,7 +4,7 @@
 other comparand on [the wrappers page][wrappers] does, and found two whole
 modules with no sibling to be read against there: `ellswift` and
 `silentpayments`. `ellswift`'s two deterministic calls turned out to have a
-real second arithmetic after all — btclib's own pure-Python `ecc/ellswift.py`
+real second arithmetic after all — btclib's own pure-Python `btclib_ecc/ecc/ellswift.py`
 dispatches through the same switch [btclib's own page][two-paths] already
 reads every row through, so `decode` and `xdh` are timed there now, against
 Python rather than against a same-package ratio. `silentpayments` has no

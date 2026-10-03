@@ -12,10 +12,11 @@ python  : 3.13.14
 
 ## The benchmarks
 
-Not btclib against btclib-secp256k1: `pip install btclib` installs both, and
-every row is btclib called the same way. What differs is which arithmetic
-answers — the libsecp256k1 that btclib-secp256k1 compiles into a cffi
-extension, or the Python of `curves/curve_group.py` with the dispatch off.
+Not btclib against btclib-secp256k1: `pip install btclib[secp256k1]` installs
+both, and every row is btclib called the same way. What differs is which
+arithmetic answers — the libsecp256k1 that btclib-secp256k1 compiles into a
+cffi extension, or the Python of `btclib_ecc/curves/curve_group.py` with the
+dispatch off.
 
 The inputs are drawn from a seed written into the script, as [the wrappers
 table][wrappers] draws its own: a secret key and a message per call, and

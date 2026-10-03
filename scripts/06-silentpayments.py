@@ -9,7 +9,7 @@ three other wrappers of `results/01-libsecp256k1.md` do not, and found two
 whole modules with no sibling to be read against: `ellswift` and
 `silentpayments`. `ellswift`'s two deterministic calls turned out to have a
 real second arithmetic after all -- btclib's own pure-Python
-`ecc/ellswift.py` dispatches through the same switch every row of
+`btclib_ecc/ecc/ellswift.py` dispatches through the same switch every row of
 `02-btclib-vs-btclib.py` already reads, so `decode` and `xdh` are timed
 there now, against Python rather than against a same-package ratio.
 `silentpayments` has no such split anywhere in btclib: `pkgutil.iter_modules`

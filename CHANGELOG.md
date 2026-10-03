@@ -4955,6 +4955,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   off: the organization variable `CLAUDE_REVIEW_ENABLED` is `true`, and
   the paragraph is rewritten for it** (issue btclib-org/.github#452).
 
+### The scripts and the suite run on btclib 2026.10.3
+
+- **They import `PrvKeyData` where `btclib.to_pub_key` was, and `btclib_ecc`
+  and `btclib_wallet` where the curve, the schemes and BIP32 now are, on
+  `btclib>=2026.10.3`** (closes #428).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

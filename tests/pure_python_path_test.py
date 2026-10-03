@@ -20,10 +20,10 @@ point is replaced with a function that raises, the switch is thrown, and
 every operation is called once. A row that has quietly kept a foot in C
 raises instead of answering.
 
-The predicate is left alone deliberately. `_libsecp256k1_serves` lives
-beside the bindings imports and matches the same name, but it is the
-question rather than an answer: replacing it breaks the dispatch for every
-row and proves nothing about any of them.
+The predicates are left alone deliberately. `_libsecp256k1_serves` and
+`is_libsecp256k1_serving` live beside the bindings imports and match the
+same name, but they are the question rather than an answer: replacing them
+breaks the dispatch for every row and proves nothing about any of them.
 
 In a subprocess, because none of this can be undone in the process that
 does it -- neither the switch, which `02-btclib-vs-btclib.py` documents, nor
@@ -68,6 +68,8 @@ def raiser(name):
     return f
 
 
+PREDICATES = {"_libsecp256k1_serves", "is_libsecp256k1_serving"}
+
 B.python_arithmetic_only()
 
 # the names btclib bound at import time, `from btclib_secp256k1 import x as
@@ -76,10 +78,10 @@ B.python_arithmetic_only()
 for module in list(sys.modules.values()):
     if not isinstance(module, types.ModuleType):
         continue
-    if not (module.__name__ or "").startswith("btclib."):
+    if not (module.__name__ or "").startswith(("btclib.", "btclib_ecc.")):
         continue
     for attribute in dir(module):
-        if "libsecp256k1" in attribute and attribute != "_libsecp256k1_serves":
+        if "libsecp256k1" in attribute and attribute not in PREDICATES:
             value = getattr(module, attribute)
             if callable(value) and not isinstance(value, type):
                 setattr(module, attribute, raiser(module.__name__ + "." + attribute))

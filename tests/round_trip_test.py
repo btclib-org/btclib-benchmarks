@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING
 
 import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
-import btclib.ecc.dsa
+import btclib_ecc.ecc.dsa
 import buidl.ecc
 import buidl.pecc
 import ecdsa
@@ -40,7 +40,7 @@ import embit.ec
 import pycoin.symbols.btc
 import pytest
 import secp256k1lab.secp256k1
-from btclib.to_pub_key import pub_keyinfo_from_prv_key
+from btclib.key import PrvKeyData
 from ellipticcurve.ecdsa import Ecdsa as StarkbankEcdsa
 from ellipticcurve.privateKey import PrivateKey as StarkbankPrivateKey
 
@@ -71,8 +71,10 @@ def _bitcoinlib_key(prvkey: bytes) -> bitcoinlib_key.CECKey:
 
 def _btclib(msg: bytes, prvkey: bytes) -> bool:
     """Sign and verify through btclib, one signature and no grinding."""
-    signature = btclib.ecc.dsa.sign_(msg, prvkey, grind=False)
-    return btclib.ecc.dsa.verify_(msg, pub_keyinfo_from_prv_key(prvkey)[0], signature)
+    signature = btclib_ecc.ecc.dsa.sign_(msg, prvkey, grind=False)
+    return btclib_ecc.ecc.dsa.verify_(
+        msg, PrvKeyData(int.from_bytes(prvkey, "big")).pub.sec, signature
+    )
 
 
 def _ecdsa(msg: bytes, prvkey: bytes) -> bool:
@@ -170,7 +172,7 @@ def test_a_package_verifies_the_signature_it_just_made(
 # Compressed SEC in every case, that being the one serialization all of
 # them offer
 PUBLIC_KEYS: dict[str, Callable[[int], bytes]] = {
-    "btclib": lambda scalar: pub_keyinfo_from_prv_key(scalar)[0],
+    "btclib": lambda scalar: PrvKeyData(scalar).pub.sec,
     "secp256k1lab": lambda scalar: (scalar * LAB_G).to_bytes_compressed(),
     "buidl.pecc": lambda scalar: buidl.pecc.PrivateKey(scalar).point.sec(),
     "ecdsa": lambda scalar: ecdsa.SigningKey.from_secret_exponent(
