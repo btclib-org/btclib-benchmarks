@@ -20,8 +20,8 @@ paragraph each, and none of the six is the same story:
 
 - **btclib** takes `btclib-secp256k1` as its `secp256k1` extra, which bundles
   libsecp256k1 and compiles it into a cffi extension at install time, so a
-  wheel from PyPI is enhanced by installing `btclib[secp256k1]`. Which revision it
-  bundles is in [the wrappers table][wrappers].
+  wheel from PyPI is enhanced by installing `btclib[secp256k1]`. Which
+  revision it bundles is in [the wrappers table][wrappers].
 - **pycoin** bundles nothing and builds nothing. `pycoin.ecdsa.native` is a
   ctypes loader that asks the machine for a library by name, and a PyPI
   install therefore gets pure Python unless one is already there. Here one
