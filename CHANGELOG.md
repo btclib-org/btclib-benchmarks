@@ -4949,6 +4949,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   merge** (issue btclib-org/.github#1550): `lint / Sign-off` is a required
   check.
 
+### `CONTRIBUTING.md` says the Claude review in CI is on
+
+- **`CONTRIBUTING.md`'s *The review* no longer says `claude-review.yml` is
+  off: the organization variable `CLAUDE_REVIEW_ENABLED` is `true`, and
+  the paragraph is rewritten for it** (issue btclib-org/.github#452).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
