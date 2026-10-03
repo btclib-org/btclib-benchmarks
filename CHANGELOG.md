@@ -4957,13 +4957,9 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
 
 ### The scripts and the suite run on btclib 2026.10.3
 
-- **They import the curve and the schemes from `btclib_ecc`, BIP32 from
-  `btclib_wallet`, and derive a public key with `btclib.key.PrvKeyData`**
-  (closes #428): btclib 2026.9.24 deleted `btclib.to_pub_key`.
-- **`btclib-ecc` and `btclib-wallet` are dependencies, and the
-  `btclib-secp256k1` floor is btclib's `secp256k1` extra's.**
-- **The `taproot_tweak` row is handed a `PubKeyData`, not octets, and
-  `results/` predates this.**
+- **`btclib_ecc`, `btclib_wallet` and `PrvKeyData` replace what btclib
+  2026.9.24 and later moved; the `taproot_tweak` row takes a `PubKeyData`,
+  and `results/` predates it** (closes #428).
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28

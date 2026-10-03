@@ -10,8 +10,8 @@ the same switch [btclib's own page][two-paths] already reads every row
 through, so `decode` and `xdh` are timed there now, against Python rather
 than against a same-package ratio. btclib_wallet's `silent_payments` has a
 Python arm, but no page times it against the bindings, so this page is the
-whole of where it is priced: one comparand, and every ratio between two of its own calls rather
-than between two packages.
+whole of where it is priced: one comparand, and every ratio between two of
+its own calls rather than between two packages.
 
 ## This run
 

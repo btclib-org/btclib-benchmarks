@@ -440,12 +440,13 @@ ELLSWIFT_XDH_CYCLE = cycle(
 def python_arithmetic_only() -> None:
     """Turn btclib's libsecp256k1 dispatch off, everywhere at once.
 
-    `_libsecp256k1_serves` reads `_libsecp256k1_available` on every call,
-    so this one assignment reaches every module that asks either predicate. Naming modules instead is what leaves a row meant
-    to measure Python measuring C, and it does so silently: a pure-Python
-    public key comes back at libsecp256k1 speed, `PrvKeyData.pub` asking
-    `curves.sec_point`, which is the module such a list forgets. A row
-    added below cannot reintroduce that.
+    `_libsecp256k1_serves` and `is_libsecp256k1_serving` read
+    `_libsecp256k1_available` on every call, so this one assignment reaches
+    every module that asks either. Naming modules instead is what leaves a
+    row meant to measure Python measuring C, and it does so silently: a
+    pure-Python public key comes back at libsecp256k1 speed,
+    `PrvKeyData.pub` asking `curves.sec_point`, which is the module such a
+    list forgets. A row added below cannot reintroduce that.
 
     Called once, after every fixture above is built: those go through
     libsecp256k1 too, and there is no reason to slow them down.
