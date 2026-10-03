@@ -4937,6 +4937,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   `--locked`, bar the jobs that re-lock on purpose** (issue
   btclib-org/.github#1538).
 
+### `REPOSITORY.md` reads back the web sign-off setting
+
+- **`REPOSITORY.md` reads `web_commit_signoff_required` back** (issue
+  btclib-org/.github#1540): section 11 of the standard states the
+  organization setting.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
