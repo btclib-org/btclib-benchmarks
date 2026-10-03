@@ -304,7 +304,8 @@ def python_arithmetic_only() -> None:
     every module that asks either. Patching those modules one at a time is
     what leaves a row meant to measure Python measuring C, and it does so
     silently: a public key derived through `PrvKeyData.pub` asks
-    `curves.sec_point`, which is the module such a list forgets. No row added below can reintroduce that.
+    `curves.sec_point`, which is the module such a list forgets. No row added
+    below can reintroduce that.
 
     Called before anything is timed, and after every fixture above is built:
     those want libsecp256k1, and there is no reason to slow them down.

@@ -483,8 +483,8 @@ a mutant a test caught.
 Every floor in `pyproject.toml` is a minimum a comparand upgrades past
 without a word, `btclib`, `btclib-ecc`, `btclib-wallet` and
 `btclib-secp256k1` included now that all resolve from a released index
-rather than a branch: `uv sync --locked` reinstalls the revision the lock names and never looks at whether a
-newer release has shipped since. So a measurement taken without asking
+rather than a branch: `uv sync --locked` reinstalls the revision the lock
+names and never looks at whether a newer release has shipped since. So a measurement taken without asking
 for the upgrade is a measurement of whatever was current the day the
 lock was last written, which is not what a page's provenance block
 claims it measured. Ask for it first, every time:
