@@ -8,11 +8,11 @@ That script's whole premise is that each operation in it can be answered
 twice, once in C and once in Python, and `python_arithmetic_only` is how it
 asks for the second. The premise is not self-evident and it has already
 been wrong once: BIP32 derivation was a row until this check was written,
-and it never had a Python path at all -- `bip32._prv_key_derivation` calls
-`btclib_secp256k1.keys.prvkey_tweak_add` whatever the dispatch says, btclib
-saying why beside the call, so the switch moved only the public key derived
-for the fingerprint. Its pair read far narrower than every other, and nothing
-but arithmetic on the printed table said so.
+and at the time its derivation had no Python path -- `bip32._prv_key_derivation`
+called `btclib_secp256k1.keys.prvkey_tweak_add` whatever the dispatch said, so
+the switch moved only the public key derived for the fingerprint. Its pair
+read far narrower than every other, and nothing but arithmetic on the printed
+table said so.
 
 What is checked here is the thing a timing cannot check: not how long the
 Python path takes, but that it *is* the Python path. Every bindings entry

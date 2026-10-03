@@ -17,25 +17,20 @@ point at infinity, and for anything outside what libsecp256k1's entry points
 take.
 
 Which operations have two arithmetics is not a judgement call:
-`_libsecp256k1_serves` is the predicate every dispatch site asks, and the
-modules holding one are in `btclib_ecc`, which btclib depends on for the
-curve arithmetic and most of the schemes, and in `btclib`. The rows
-below are the ones reachable through a public function. `commit_nonce` and
+every dispatch site asks `btclib_ecc.curves.curve._libsecp256k1_serves`, or
+`is_libsecp256k1_serving` in btclib and btclib_wallet, and both read the one
+switch `python_arithmetic_only` throws. The rows below are the ones reachable
+through a public function. `commit_nonce` and
 `pedersen` have none: anti-exfil signing and Pedersen commitments are
 protocol machinery rather than operations an application performs.
 
 ## Why BIP32 derivation is not a row
 
-btclib's BIP32 has one arithmetic. `_prv_key_derivation` calls
-`btclib_secp256k1.keys.prvkey_tweak_add` and `_pub_key_offsets` builds a
-`PubkeyTweakChain`, neither gated on the dispatch, and btclib gives the
-reason beside the call: BIP32 is defined for secp256k1 and nothing else, so
-no other curve needs a fallback. Throwing the switch leaves the derivation in
-C and moves only the public key derived for the fingerprint, so a row for it
-would compare C against C with a Python step added. Its ratio was far
-narrower than every other, which is how that showed.
+btclib_wallet's BIP32 has a Python arm behind `is_libsecp256k1_serving`, and
+it is not a row here yet. The dispatch is on the bindings being there and not
+on the curve, BIP32 being defined for secp256k1 alone.
 
-That a row belongs here is therefore a property to prove.
+That a row belongs here is a property to prove.
 `tests/pure_python_path_test.py` blocks every libsecp256k1 entry point and
 asserts each operation still answers. BIP32 derivation is timed in
 `scripts/03-libraries.py`, where being C is the premise.
@@ -296,6 +291,8 @@ def _messages(operation: str) -> list[bytes]:
 # no public key are most of them
 PUBKEYS_33 = _rotated(_PUBKEYS_33, "pubkey_parse_33")
 DSA_VERIFY_KEYS = [_pub_key(k) for k in _keys("dsa_verify")]
+# a `PubKeyData` caches its lift (`point` is a cached_property), so a column
+# that wrapped the octets in the timed call would time a cached lift
 TAPROOT_KEYS = [_prv_key_data(k).pub for k in _keys("taproot_tweak")]
 ELLSWIFT_KEYS = [_pub_key(k) for k in _keys("ellswift_decode")]
 BMS_VERIFY_KEYS = [_pub_key(k) for k in _keys("bms_verify")]
@@ -444,8 +441,7 @@ def python_arithmetic_only() -> None:
     """Turn btclib's libsecp256k1 dispatch off, everywhere at once.
 
     `_libsecp256k1_serves` reads `_libsecp256k1_available` on every call,
-    so this one assignment reaches the nine modules that imported the
-    predicate by name. Naming modules instead is what leaves a row meant
+    so this one assignment reaches every module that asks either predicate. Naming modules instead is what leaves a row meant
     to measure Python measuring C, and it does so silently: a pure-Python
     public key comes back at libsecp256k1 speed, `PrvKeyData.pub` asking
     `curves.sec_point`, which is the module such a list forgets. A row

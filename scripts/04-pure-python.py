@@ -300,8 +300,7 @@ def python_arithmetic_only() -> None:
     """Turn btclib's libsecp256k1 dispatch off, everywhere at once.
 
     `_libsecp256k1_serves` reads `_libsecp256k1_available` on every call, so
-    this one assignment reaches the nine modules that imported the predicate
-    by name. Patching those modules one at a time is what leaves a row meant
+    this one assignment reaches every module that asks either predicate. Patching those modules one at a time is what leaves a row meant
     to measure Python measuring C, and it does so silently: a public key
     derived through `PrvKeyData.pub` asks `curves.sec_point`, which is the
     module such a list forgets. No row added below can reintroduce that.

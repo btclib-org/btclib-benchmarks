@@ -187,15 +187,9 @@ it is what a caller outside the fast case gets.
 
 ## Why BIP32 derivation is not a row, and how that is enforced
 
-btclib's BIP32 has no pure-Python path. `_prv_key_derivation` calls
-`btclib_secp256k1.keys.prvkey_tweak_add` and `_pub_key_offsets` builds a
-`PubkeyTweakChain`, neither gated on the dispatch, and btclib gives the
-reason beside the call — BIP32 is defined for secp256k1 and nothing else, so
-there is no other curve for a fallback to serve. Throwing the switch leaves
-the derivation in C and moves only the public key derived for the
-fingerprint, so a pair of rows for it would compare C against C with a Python
-step added. Its pair was far narrower than every other, which is what that
-looks like from the outside.
+btclib_wallet's BIP32 has a Python arm behind `is_libsecp256k1_serving`, and
+it is not a row here yet. The dispatch is on the bindings being there and not
+on the curve, BIP32 being defined for secp256k1 alone.
 
 BIP32 derivation is timed in [the libraries table][libs] instead, where being
 C is the premise.

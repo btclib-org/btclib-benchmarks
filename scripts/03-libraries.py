@@ -595,7 +595,7 @@ def dsa_sign_btclib_grind_noverify() -> None:
 
 
 def dsa_sign_btclib_grind_verify() -> None:
-    """Time ECDSA signing as `pip install btclib` performs it.
+    """Time ECDSA signing as btclib with its bindings performs it.
 
     Both defaults, which is what a caller who writes `dsa.sign_(msg, key)`
     gets. The check is of the signature the loop settled on and not of every
