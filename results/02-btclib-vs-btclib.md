@@ -185,7 +185,7 @@ that is not secp256k1, for a zero scalar, for the point at infinity, and for
 anything else outside libsecp256k1's entry points. What this table says about
 it is what a caller outside the fast case gets.
 
-## Why BIP32 derivation is not a row, and how that is enforced
+## BIP32 derivation is not a row yet
 
 btclib_wallet's BIP32 has a Python arm behind `is_libsecp256k1_serving`, and
 it is not a row here yet. The dispatch is on the bindings being there and not

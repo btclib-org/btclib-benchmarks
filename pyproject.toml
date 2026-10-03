@@ -80,8 +80,8 @@ dependencies = [
     # and `dsa.sign_`'s `grind=` are `btclib_ecc`'s from btclib 2026.9.30,
     # which moved the curve and the schemes there
     "btclib>=2026.10.3",
-    # the curve and the schemes, imported directly by six files; the floor
-    # is the one btclib 2026.10.3 requires
+    # the curve and the schemes, which the scripts and the suite import
+    # directly; the floor is the one btclib 2026.10.3 requires
     "btclib-ecc>=2026.10.2",
     # `btclib.bip32` is `btclib_wallet.bip32` from btclib 2026.9.29, which
     # is where `scripts/03-libraries.py` and `tests/vectors_test.py` read it

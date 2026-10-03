@@ -24,7 +24,7 @@ through a public function. `commit_nonce` and
 `pedersen` have none: anti-exfil signing and Pedersen commitments are
 protocol machinery rather than operations an application performs.
 
-## Why BIP32 derivation is not a row
+## BIP32 derivation is not a row yet
 
 btclib_wallet's BIP32 has a Python arm behind `is_libsecp256k1_serving`, and
 it is not a row here yet. The dispatch is on the bindings being there and not
@@ -291,8 +291,9 @@ def _messages(operation: str) -> list[bytes]:
 # no public key are most of them
 PUBKEYS_33 = _rotated(_PUBKEYS_33, "pubkey_parse_33")
 DSA_VERIFY_KEYS = [_pub_key(k) for k in _keys("dsa_verify")]
-# a `PubKeyData` caches its lift (`point` is a cached_property), so a column
-# that wrapped the octets in the timed call would time a cached lift
+# a `PubKeyData` caches its lift (`point` is a cached_property), so a
+# pure-Python column that read past the end of this list would time a
+# cached lift for every key it read a second time
 TAPROOT_KEYS = [_prv_key_data(k).pub for k in _keys("taproot_tweak")]
 ELLSWIFT_KEYS = [_pub_key(k) for k in _keys("ellswift_decode")]
 BMS_VERIFY_KEYS = [_pub_key(k) for k in _keys("bms_verify")]

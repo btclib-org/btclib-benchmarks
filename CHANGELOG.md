@@ -4957,9 +4957,9 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
 
 ### The scripts and the suite run on btclib 2026.10.3
 
-- **`btclib_ecc`, `btclib_wallet` and `PrvKeyData` replace what btclib
-  2026.9.24 and later moved; the `taproot_tweak` row takes a `PubKeyData`,
-  and `results/` predates it** (closes #428).
+- **The scripts import `btclib_ecc`, `btclib_wallet` and `btclib.key` for
+  what btclib 2026.9.24 on removed; `taproot_tweak` takes a `PubKeyData`,
+  and `results/` is not re-measured** (closes #428).
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
