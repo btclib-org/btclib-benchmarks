@@ -4967,6 +4967,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   approval describe the rule before issue btclib-org/.github#1362 (issue
   btclib-org/.github#1569).
 
+### `REPOSITORY.md` reads the review switch as the organization's
+
+- **`REPOSITORY.md` no longer reads an empty organization variable store as
+  the review's off state; it records only that this repository sets none**
+  (issue btclib-org/.github#1560).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
