@@ -291,10 +291,10 @@ def _messages(operation: str) -> list[bytes]:
 # no public key are most of them
 PUBKEYS_33 = _rotated(_PUBKEYS_33, "pubkey_parse_33")
 DSA_VERIFY_KEYS = [_pub_key(k) for k in _keys("dsa_verify")]
-# a `PubKeyData` caches its lift (`point` is a cached_property), so a
-# pure-Python column that read past the end of this list would time a
-# cached lift for every key it read a second time
-TAPROOT_KEYS = [_prv_key_data(k).pub for k in _keys("taproot_tweak")]
+# octets, not `PubKeyData`: the Python arm caches the lift on the key
+# (`point` is a cached_property), so `taproot_tweak` builds a fresh key
+# per call and every call lifts afresh
+TAPROOT_KEYS = [_pub_key(k) for k in _keys("taproot_tweak")]
 ELLSWIFT_KEYS = [_pub_key(k) for k in _keys("ellswift_decode")]
 BMS_VERIFY_KEYS = [_pub_key(k) for k in _keys("bms_verify")]
 
@@ -612,8 +612,12 @@ def bms_verify() -> None:
 
 
 def taproot_tweak() -> None:
-    """Time tweaking a public key into a taproot output key."""
-    taproot.output_pubkey(next(TAPROOT_CYCLE))[0]
+    """Time tweaking a public key into a taproot output key.
+
+    The `PubKeyData` is built here, from octets, for the reason
+    `TAPROOT_KEYS` gives; its construction is in the time.
+    """
+    taproot.output_pubkey(PubKeyData(next(TAPROOT_CYCLE)))[0]
 
 
 def ellswift_decode() -> None:

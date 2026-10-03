@@ -35,7 +35,11 @@ from __future__ import annotations
 import importlib
 import subprocess
 import sys
+from itertools import cycle
 from pathlib import Path
+
+import pytest
+from btclib.key import PubKeyData
 
 # `import` cannot spell it: the six scripts are named for the pages
 # they publish, which begin with a number and hold hyphens. Nothing
@@ -147,3 +151,28 @@ def test_every_operation_answers_without_the_bindings() -> None:
     # probe that found nothing
     answered = [line for line in lines if line.startswith("PYTHON ")]
     assert len(answered) == len(TWO_PATHS.OPERATIONS)
+
+
+def test_taproot_tweak_hands_each_call_a_key_with_no_cached_point(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The Python arm caches `PubKeyData.point`; a row must not reuse a key.
+
+    A key read twice would be lifted once, and the Python column would time
+    the cache. Here one fixture is cycled twice and the call that reads it
+    stands in for the Python arm, which reads `point`.
+    """
+    seen: list[bool] = []
+
+    def python_arm(internal_pubkey: PubKeyData) -> tuple[bytes, int]:
+        seen.append("point" in vars(internal_pubkey))
+        _ = internal_pubkey.point
+        return b"", 0
+
+    monkeypatch.setattr(TWO_PATHS.taproot, "output_pubkey", python_arm)
+    monkeypatch.setattr(
+        TWO_PATHS, "TAPROOT_CYCLE", cycle([TWO_PATHS.TAPROOT_KEYS[0]])
+    )
+    TWO_PATHS.taproot_tweak()
+    TWO_PATHS.taproot_tweak()
+    assert seen == [False, False]

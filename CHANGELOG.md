@@ -4958,8 +4958,8 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
 ### The scripts and the suite run on btclib 2026.10.3
 
 - **The scripts import `btclib_ecc`, `btclib_wallet` and `btclib.key` for
-  what btclib 2026.9.24 on removed; `taproot_tweak` takes a `PubKeyData`,
-  and `results/` is not re-measured** (closes #428).
+  what btclib 2026.9.24 on removed; `taproot_tweak` builds its `PubKeyData`
+  in the timed call; `results/` is not re-measured** (closes #428).
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
