@@ -37,9 +37,11 @@ import subprocess
 import sys
 from itertools import cycle
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import pytest
-from btclib.key import PubKeyData
+if TYPE_CHECKING:
+    import pytest
+    from btclib.key import PubKeyData
 
 # `import` cannot spell it: the six scripts are named for the pages
 # they publish, which begin with a number and hold hyphens. Nothing
@@ -170,9 +172,7 @@ def test_taproot_tweak_hands_each_call_a_key_with_no_cached_point(
         return b"", 0
 
     monkeypatch.setattr(TWO_PATHS.taproot, "output_pubkey", python_arm)
-    monkeypatch.setattr(
-        TWO_PATHS, "TAPROOT_CYCLE", cycle([TWO_PATHS.TAPROOT_KEYS[0]])
-    )
+    monkeypatch.setattr(TWO_PATHS, "TAPROOT_CYCLE", cycle([TWO_PATHS.TAPROOT_KEYS[0]]))
     TWO_PATHS.taproot_tweak()
     TWO_PATHS.taproot_tweak()
     assert seen == [False, False]
