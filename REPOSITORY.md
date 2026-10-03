@@ -159,15 +159,15 @@ gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
 
 **The bypass mode is the whole of the design.** `pull_request` excuses
 its holder from the rule *while merging a pull request* and at no other
-time, so it answers the one thing a one-maintainer repository cannot do
-— produce an approving review from somebody else — and answers nothing
-further. A direct push to `main` is refused for everyone, the holder
-included.
+time. The maintainer uses it only in an emergency, a fix landing before
+anybody else can approve it; every other pull request, the maintainer's
+included, waits for that approval. A direct push to `main` is refused for
+everyone, the holder included.
 
 `enforce_admins` is false, and that is what clears the *classic*
 protection's own review requirement for the maintainer; the ruleset
-bypass alone would not be enough, and turning it on would deadlock every
-merge instead, that requirement having no bypass list to be named in.
+bypass alone would not be enough, and turning it on would close the
+emergency path, that requirement having no bypass list to be named in.
 
 What lands, therefore, is a squash GitHub composes at the button and
 signs with its own web-flow key. That the signer is GitHub rather than

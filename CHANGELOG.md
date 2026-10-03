@@ -4955,6 +4955,18 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   off: the organization variable `CLAUDE_REVIEW_ENABLED` is `true`, and
   the paragraph is rewritten for it** (issue btclib-org/.github#452).
 
+### The bypass is for emergencies
+
+- **`CONTRIBUTING.md`, `REVIEWING.md` and `REPOSITORY.md` say
+  every pull request lands with an approving review from somebody other than
+  its author; the bypass is for emergencies** (issue btclib-org/.github#1362).
+
+### Earlier entries on how a pull request lands
+
+- Entries above that have the maintainer landing without another person's
+  approval describe the rule before issue btclib-org/.github#1362 (issue
+  btclib-org/.github#1569).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
