@@ -7,35 +7,30 @@
 Not btclib against btclib-secp256k1. Every row is btclib called through the
 same public function, and its two columns are the two arithmetics that answer
 underneath -- the libsecp256k1 that btclib-secp256k1 bundles and compiles into
-a cffi extension, or the Python of `curves/curve_group.py`. `pip install
-btclib` installs both, so neither column is a package a reader chooses
-between, and the ratio is what the Python costs when libsecp256k1 declines.
+a cffi extension, or the Python of `btclib_ecc/curves/curve_group.py`.
+`pip install btclib[secp256k1]` installs both, so neither column is a package
+a reader chooses between, and the ratio is what the Python costs when
+libsecp256k1 declines.
 
 It declines for every curve that is not secp256k1, for a zero scalar, for the
 point at infinity, and for anything outside what libsecp256k1's entry points
 take.
 
 Which operations have two arithmetics is not a judgement call:
-`_libsecp256k1_serves` is the predicate every dispatch site asks, and the
-modules holding one are `curves/sec_point.py`, `curves/curve.py`,
-`ecc/dsa.py`, `ecc/ssa.py`, `ecc/dh.py`, `ecc/bms.py`, `ecc/ellswift.py`,
-`ecc/commit_nonce.py`, `ecc/pedersen.py` and `script/taproot.py`. The rows
-below are the ones reachable through a public function. `commit_nonce` and
+every dispatch site asks `btclib_ecc.curves.curve._libsecp256k1_serves`, or
+`is_libsecp256k1_serving` in btclib and btclib_wallet, and both read the one
+switch `python_arithmetic_only` throws. The rows below are the ones reachable
+through a public function. `commit_nonce` and
 `pedersen` have none: anti-exfil signing and Pedersen commitments are
 protocol machinery rather than operations an application performs.
 
-## Why BIP32 derivation is not a row
+## BIP32 derivation is not a row yet
 
-btclib's BIP32 has one arithmetic. `_prv_key_derivation` calls
-`btclib_secp256k1.keys.prvkey_tweak_add` and `_pub_key_offsets` builds a
-`PubkeyTweakChain`, neither gated on the dispatch, and btclib gives the
-reason beside the call: BIP32 is defined for secp256k1 and nothing else, so
-no other curve needs a fallback. Throwing the switch leaves the derivation in
-C and moves only the public key derived for the fingerprint, so a row for it
-would compare C against C with a Python step added. Its ratio was far
-narrower than every other, which is how that showed.
+btclib_wallet's BIP32 has a Python arm behind `is_libsecp256k1_serving`, and
+it is not a row here yet. The dispatch is on the bindings being there and not
+on the curve, BIP32 being defined for secp256k1 alone.
 
-That a row belongs here is therefore a property to prove.
+That a row belongs here is a property to prove.
 `tests/pure_python_path_test.py` blocks every libsecp256k1 entry point and
 asserts each operation still answers. BIP32 derivation is timed in
 `scripts/03-libraries.py`, where being C is the premise.
@@ -127,11 +122,12 @@ from itertools import cycle
 from typing import TYPE_CHECKING
 
 from btclib import b58
-from btclib.curves import curve, sec_point
-from btclib.ecc import bms, dh, dsa, ellswift, ssa
-from btclib.key import PrvKeyData
+from btclib.ecc import bms, ellswift
+from btclib.key import PrvKeyData, PubKeyData
 from btclib.script import taproot
-from btclib.to_pub_key import pub_keyinfo_from_prv_key
+from btclib_ecc.curves import curve, sec_point
+from btclib_ecc.ecc import dh, dsa, ssa
+from btclib_ecc.ecc import ellswift as ecc_ellswift
 
 from btclib_benchmarks import _inputs
 from btclib_benchmarks._provenance import from_a_declared_source, origin_of
@@ -268,18 +264,21 @@ def _keys(operation: str) -> list[bytes]:
     return _rotated(_KEYS, operation)
 
 
-def _bms_prv_key(prvkey: bytes) -> PrvKeyData:
-    """Return the `key.PrvKeyData` `bms.sign` now requires from a raw scalar.
+def _prv_key_data(prvkey: bytes) -> PrvKeyData:
+    """Return the `key.PrvKeyData` of a raw scalar, mainnet and compressed.
 
+    `bms.sign` requires one, and `_pub_key` derives a public key through one.
     Every other call this file makes on `_keys()` bytes -- `dsa.sign_`,
-    `ssa.sign_`, `ssa.Signer`, `pub_keyinfo_from_prv_key` -- still takes them
-    raw; `bms.sign` alone has migrated. `pub_keyinfo_from_prv_key`'s own
-    defaults on these same bytes are mainnet and compressed, which is what
-    `ADDRESSES` below is built from, so this matches them rather than
-    inventing a different pair. Called at fixture-build time, never inside a
-    timed call.
+    `ssa.sign_`, `ssa.Signer` -- takes them raw. Mainnet and compressed are
+    what `ADDRESSES` below is built from. Called at fixture-build time,
+    never inside a timed call, except by `pubkey`, which times it.
     """
     return PrvKeyData(int.from_bytes(prvkey, "big"))
+
+
+def _pub_key(prvkey: bytes) -> bytes:
+    """Return the compressed SEC public key of a raw scalar."""
+    return _prv_key_data(prvkey).pub.sec
 
 
 def _messages(operation: str) -> list[bytes]:
@@ -291,10 +290,13 @@ def _messages(operation: str) -> list[bytes]:
 # a derivation is a generator multiplication, and the operations that need
 # no public key are most of them
 PUBKEYS_33 = _rotated(_PUBKEYS_33, "pubkey_parse_33")
-DSA_VERIFY_KEYS = [pub_keyinfo_from_prv_key(k)[0] for k in _keys("dsa_verify")]
-TAPROOT_KEYS = [pub_keyinfo_from_prv_key(k)[0] for k in _keys("taproot_tweak")]
-ELLSWIFT_KEYS = [pub_keyinfo_from_prv_key(k)[0] for k in _keys("ellswift_decode")]
-BMS_VERIFY_KEYS = [pub_keyinfo_from_prv_key(k)[0] for k in _keys("bms_verify")]
+DSA_VERIFY_KEYS = [_pub_key(k) for k in _keys("dsa_verify")]
+# octets, not `PubKeyData`: the Python arm caches the lift on the key
+# (`point` is a cached_property), so `taproot_tweak` builds a fresh key
+# per call and every call lifts afresh
+TAPROOT_KEYS = [_pub_key(k) for k in _keys("taproot_tweak")]
+ELLSWIFT_KEYS = [_pub_key(k) for k in _keys("ellswift_decode")]
+BMS_VERIFY_KEYS = [_pub_key(k) for k in _keys("bms_verify")]
 
 # ECDSA signatures for the rows that verify and recover, made here with
 # grind=False so that each is one signature
@@ -310,26 +312,25 @@ SSA_SIGS = [
     ssa.sign_(msg, prvkey).serialize()
     for msg, prvkey in zip(_messages("ssa_verify"), _keys("ssa_verify"), strict=True)
 ]
-XONLY = [pub_keyinfo_from_prv_key(k)[0][1:] for k in _keys("ssa_verify")]
+XONLY = [_pub_key(k)[1:] for k in _keys("ssa_verify")]
 
 # Diffie-Hellman needs a counterparty: each key is paired with the point of
 # the next key in its own slice, which keeps every pair distinct
 DH_SCALARS = [int.from_bytes(k, "big") for k in _keys("dh_shared_secret")]
 _DH_POINTS = [
-    sec_point.point_from_octets(pub_keyinfo_from_prv_key(k)[0])
-    for k in _keys("dh_shared_secret")
+    sec_point.point_from_octets(_pub_key(k)) for k in _keys("dh_shared_secret")
 ]
 COUNTERPARTIES = _DH_POINTS[1:] + _DH_POINTS[:1]
 
-ADDRESSES = [b58.p2pkh(pubkey) for pubkey in BMS_VERIFY_KEYS]
+ADDRESSES = [b58.p2pkh(PubKeyData(pubkey)) for pubkey in BMS_VERIFY_KEYS]
 BMS_SIGS = [
-    bms.sign(msg, _bms_prv_key(prvkey))
+    bms.sign(msg, _prv_key_data(prvkey))
     for msg, prvkey in zip(_messages("bms_verify"), _keys("bms_verify"), strict=True)
 ]
 # ElligatorSwift encoding draws a random field element, so an encoded form is
 # a fixture and never a row: decoding one is what is deterministic, and what
 # the dispatch is on
-ELLS = [ellswift.encode_var(pubkey) for pubkey in ELLSWIFT_KEYS]
+ELLS = [ecc_ellswift.encode_var(pubkey) for pubkey in ELLSWIFT_KEYS]
 
 # the x-only ECDH is deterministic like the decode above it and unlike the
 # encoding that built ELLS: no field element is drawn inside the call, only
@@ -337,8 +338,7 @@ ELLS = [ellswift.encode_var(pubkey) for pubkey in ELLSWIFT_KEYS]
 # key paired with the next one's encoding in its own slice
 ELLSWIFT_XDH_KEYS = _keys("ellswift_xdh")
 _ELLSWIFT_XDH_ELLS = [
-    ellswift.encode_var(pub_keyinfo_from_prv_key(prvkey)[0])
-    for prvkey in ELLSWIFT_XDH_KEYS
+    ecc_ellswift.encode_var(_pub_key(prvkey)) for prvkey in ELLSWIFT_XDH_KEYS
 ]
 ELLSWIFT_XDH_COUNTERPARTIES = _ELLSWIFT_XDH_ELLS[1:] + _ELLSWIFT_XDH_ELLS[:1]
 
@@ -416,7 +416,7 @@ BMS_SIGN_CYCLE = cycle(
     list(
         zip(
             _messages("bms_sign"),
-            [_bms_prv_key(k) for k in _keys("bms_sign")],
+            [_prv_key_data(k) for k in _keys("bms_sign")],
             strict=True,
         )
     )
@@ -441,13 +441,13 @@ ELLSWIFT_XDH_CYCLE = cycle(
 def python_arithmetic_only() -> None:
     """Turn btclib's libsecp256k1 dispatch off, everywhere at once.
 
-    `_libsecp256k1_serves` reads `_libsecp256k1_available` on every call,
-    so this one assignment reaches the nine modules that imported the
-    predicate by name. Naming modules instead is what leaves a row meant
-    to measure Python measuring C, and it does so silently: a pure-Python
-    public key comes back at libsecp256k1 speed, `to_pub_key` asking
-    `curves.sec_point`, which is the module such a list forgets. A row
-    added below cannot reintroduce that.
+    `_libsecp256k1_serves` and `is_libsecp256k1_serving` read
+    `_libsecp256k1_available` on every call, so this one assignment reaches
+    every module that asks either. Naming modules instead is what leaves a
+    row meant to measure Python measuring C, and it does so silently: a
+    pure-Python public key comes back at libsecp256k1 speed,
+    `PrvKeyData.pub` asking `curves.sec_point`, which is the module such a
+    list forgets. A row added below cannot reintroduce that.
 
     Called once, after every fixture above is built: those go through
     libsecp256k1 too, and there is no reason to slow them down.
@@ -474,7 +474,7 @@ def pubkey() -> None:
     `generator_mult` below is the multiplication inside this one, without
     the serialization: the two rows together say what each half costs.
     """
-    pub_keyinfo_from_prv_key(next(PUBKEY_CYCLE))[0]
+    _pub_key(next(PUBKEY_CYCLE))
 
 
 def point_parse_33() -> None:
@@ -612,13 +612,17 @@ def bms_verify() -> None:
 
 
 def taproot_tweak() -> None:
-    """Time tweaking a public key into a taproot output key."""
-    taproot.output_pubkey(next(TAPROOT_CYCLE))[0]
+    """Time tweaking a public key into a taproot output key.
+
+    The `PubKeyData` is built here, from octets, for the reason
+    `TAPROOT_KEYS` gives; its construction is in the time.
+    """
+    taproot.output_pubkey(PubKeyData(next(TAPROOT_CYCLE)))[0]
 
 
 def ellswift_decode() -> None:
     """Time decoding an ElligatorSwift-encoded public key."""
-    ellswift.decode_var(next(ELLSWIFT_CYCLE))
+    ecc_ellswift.decode_var(next(ELLSWIFT_CYCLE))
 
 
 def ellswift_xdh() -> None:

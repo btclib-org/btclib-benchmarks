@@ -70,9 +70,9 @@ import pycoin.symbols.btc
 import pytest
 import secp256k1
 import secp256k1lab.bip340
-from btclib.bip32 import bip32
-from btclib.curves import curve
-from btclib.ecc import dsa, ssa
+from btclib_ecc.curves import curve
+from btclib_ecc.ecc import dsa, ssa
+from btclib_wallet import bip32
 from ellipticcurve.ecdsa import Ecdsa as StarkbankEcdsa
 from ellipticcurve.publicKey import PublicKey as StarkbankPublicKey
 from ellipticcurve.signature import Signature as StarkbankSignature

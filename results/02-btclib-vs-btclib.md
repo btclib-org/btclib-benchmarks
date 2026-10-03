@@ -12,10 +12,11 @@ python  : 3.13.14
 
 ## The benchmarks
 
-Not btclib against btclib-secp256k1: `pip install btclib` installs both, and
-every row is btclib called the same way. What differs is which arithmetic
-answers — the libsecp256k1 that btclib-secp256k1 compiles into a cffi
-extension, or the Python of `curves/curve_group.py` with the dispatch off.
+Not btclib against btclib-secp256k1: `pip install btclib[secp256k1]` installs
+both, and every row is btclib called the same way. What differs is which
+arithmetic answers — the libsecp256k1 that btclib-secp256k1 compiles into a
+cffi extension, or the Python of `btclib_ecc/curves/curve_group.py` with the
+dispatch off.
 
 The inputs are drawn from a seed written into the script, as [the wrappers
 table][wrappers] draws its own: a secret key and a message per call, and
@@ -184,17 +185,11 @@ that is not secp256k1, for a zero scalar, for the point at infinity, and for
 anything else outside libsecp256k1's entry points. What this table says about
 it is what a caller outside the fast case gets.
 
-## Why BIP32 derivation is not a row, and how that is enforced
+## BIP32 derivation is not a row yet
 
-btclib's BIP32 has no pure-Python path. `_prv_key_derivation` calls
-`btclib_secp256k1.keys.prvkey_tweak_add` and `_pub_key_offsets` builds a
-`PubkeyTweakChain`, neither gated on the dispatch, and btclib gives the
-reason beside the call — BIP32 is defined for secp256k1 and nothing else, so
-there is no other curve for a fallback to serve. Throwing the switch leaves
-the derivation in C and moves only the public key derived for the
-fingerprint, so a pair of rows for it would compare C against C with a Python
-step added. Its pair was far narrower than every other, which is what that
-looks like from the outside.
+btclib_wallet's BIP32 has a Python arm behind `is_libsecp256k1_serving`, and
+it is not a row here yet. The dispatch is on the bindings being there and not
+on the curve, BIP32 being defined for secp256k1 alone.
 
 BIP32 derivation is timed in [the libraries table][libs] instead, where being
 C is the premise.

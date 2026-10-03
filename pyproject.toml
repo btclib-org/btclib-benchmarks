@@ -69,26 +69,30 @@ requires-python = ">=3.11"
 # numbers in the tables were taken against.
 #
 # `btclib` and `btclib_secp256k1` are comparands too, at their published
-# releases and not a checkout: `pip install btclib` is what an end user
-# gets, and that is the only performance an end user has. Measuring a
-# working tree instead is a different question, and scripts/README.md
-# says how to ask it without making it the default.
+# releases and not a checkout: what `pip install btclib[secp256k1]` gives
+# is what an end user gets, and that is the only performance an end user
+# has. Measuring a working tree instead is a different question, and
+# README.md's *Measuring a working tree instead of a release* says how to
+# ask it without making it the default.
 dependencies = [
-    # `grind=` on dsa.sign_ and the `_libsecp256k1_available` switch --
-    # btclib's private *dispatch*, which these scripts reach into -- shipped
-    # in 2026.8.21. The floor named "2026.9" before that release existed, a
-    # placeholder for whichever one carried them; the actual release is
-    # numbered lower than the guess, PEP 440 comparing (2026, 8, 21) below
-    # (2026, 9). [tool.uv.sources] stood in for it with the branch, and now
-    # that it is out the source entry is gone and this floor is the whole
-    # of the pin
-    "btclib>=2026.8.21",
+    # the latest release, which a comparand is measured at (issue #428).
+    # The private switch these scripts throw, `_libsecp256k1_available`,
+    # and `dsa.sign_`'s `grind=` are `btclib_ecc`'s from btclib 2026.9.30,
+    # which moved the curve and the schemes there
+    "btclib>=2026.10.3",
+    # the curve and the schemes, which the scripts and the suite import
+    # directly; the floor is the one btclib 2026.10.3 requires
+    "btclib-ecc>=2026.10.2",
+    # `btclib.bip32` is `btclib_wallet.bip32` from btclib 2026.9.29, which
+    # is where `scripts/03-libraries.py` and `tests/vectors_test.py` read it
+    "btclib-wallet>=2026.9.30",
     # `ssa.Signer` and the parsed-key entry points these rows call
     # shipped in 0.8.0.3 -- the floor named the release before it
     # existed, [tool.uv.sources] stood in for it below, and now that it
     # is out the source entry is gone and this floor is the whole of the
-    # pin
-    "btclib-secp256k1>=0.8.0.3",
+    # pin. 0.8.0.9 is the floor the `secp256k1` extra of btclib 2026.10.3
+    # declares
+    "btclib-secp256k1>=0.8.0.9",
     "buidl>=0.2.36",
     "coincurve>=21.0.0",
     "ecdsa>=0.19.2",

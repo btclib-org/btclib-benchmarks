@@ -8,11 +8,11 @@ That script's whole premise is that each operation in it can be answered
 twice, once in C and once in Python, and `python_arithmetic_only` is how it
 asks for the second. The premise is not self-evident and it has already
 been wrong once: BIP32 derivation was a row until this check was written,
-and it never had a Python path at all -- `bip32._prv_key_derivation` calls
-`btclib_secp256k1.keys.prvkey_tweak_add` whatever the dispatch says, btclib
-saying why beside the call, so the switch moved only the public key derived
-for the fingerprint. Its pair read far narrower than every other, and nothing
-but arithmetic on the printed table said so.
+and at the time its derivation had no Python path -- `bip32._prv_key_derivation`
+called `btclib_secp256k1.keys.prvkey_tweak_add` whatever the dispatch said, so
+the switch moved only the public key derived for the fingerprint. Its pair
+read far narrower than every other, and nothing but arithmetic on the printed
+table said so.
 
 What is checked here is the thing a timing cannot check: not how long the
 Python path takes, but that it *is* the Python path. Every bindings entry
@@ -20,10 +20,10 @@ point is replaced with a function that raises, the switch is thrown, and
 every operation is called once. A row that has quietly kept a foot in C
 raises instead of answering.
 
-The predicate is left alone deliberately. `_libsecp256k1_serves` lives
-beside the bindings imports and matches the same name, but it is the
-question rather than an answer: replacing it breaks the dispatch for every
-row and proves nothing about any of them.
+The predicates are left alone deliberately. `_libsecp256k1_serves` and
+`is_libsecp256k1_serving` live beside the bindings imports and match the
+same name, but they are the question rather than an answer: replacing them
+breaks the dispatch for every row and proves nothing about any of them.
 
 In a subprocess, because none of this can be undone in the process that
 does it -- neither the switch, which `02-btclib-vs-btclib.py` documents, nor
@@ -35,7 +35,13 @@ from __future__ import annotations
 import importlib
 import subprocess
 import sys
+from itertools import cycle
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pytest
+    from btclib.key import PubKeyData
 
 # `import` cannot spell it: the six scripts are named for the pages
 # they publish, which begin with a number and hold hyphens. Nothing
@@ -68,6 +74,8 @@ def raiser(name):
     return f
 
 
+PREDICATES = {"_libsecp256k1_serves", "is_libsecp256k1_serving"}
+
 B.python_arithmetic_only()
 
 # the names btclib bound at import time, `from btclib_secp256k1 import x as
@@ -76,10 +84,10 @@ B.python_arithmetic_only()
 for module in list(sys.modules.values()):
     if not isinstance(module, types.ModuleType):
         continue
-    if not (module.__name__ or "").startswith("btclib."):
+    if not (module.__name__ or "").startswith(("btclib.", "btclib_ecc.")):
         continue
     for attribute in dir(module):
-        if "libsecp256k1" in attribute and attribute != "_libsecp256k1_serves":
+        if "libsecp256k1" in attribute and attribute not in PREDICATES:
             value = getattr(module, attribute)
             if callable(value) and not isinstance(value, type):
                 setattr(module, attribute, raiser(module.__name__ + "." + attribute))
@@ -145,3 +153,26 @@ def test_every_operation_answers_without_the_bindings() -> None:
     # probe that found nothing
     answered = [line for line in lines if line.startswith("PYTHON ")]
     assert len(answered) == len(TWO_PATHS.OPERATIONS)
+
+
+def test_taproot_tweak_hands_each_call_a_key_with_no_cached_point(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The Python arm caches `PubKeyData.point`; a row must not reuse a key.
+
+    A key read twice would be lifted once, and the Python column would time
+    the cache. Here one fixture is cycled twice and the call that reads it
+    stands in for the Python arm, which reads `point`.
+    """
+    seen: list[bool] = []
+
+    def python_arm(internal_pubkey: PubKeyData) -> tuple[bytes, int]:
+        seen.append("point" in vars(internal_pubkey))
+        _ = internal_pubkey.point
+        return b"", 0
+
+    monkeypatch.setattr(TWO_PATHS.taproot, "output_pubkey", python_arm)
+    monkeypatch.setattr(TWO_PATHS, "TAPROOT_CYCLE", cycle([TWO_PATHS.TAPROOT_KEYS[0]]))
+    TWO_PATHS.taproot_tweak()
+    TWO_PATHS.taproot_tweak()
+    assert seen == [False, False]
