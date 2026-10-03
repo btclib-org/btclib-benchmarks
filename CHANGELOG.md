@@ -4931,6 +4931,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   is off, and that a local review of a named sha, by a reviewer other than
   the author, stands in** (issue btclib-org/.github#1527).
 
+### `dependabot.yml` does not say that every workflow passes `--locked`
+
+- **`.github/dependabot.yml` says the workflows install from `uv.lock` with
+  `--locked`, bar the jobs that re-lock on purpose** (issue
+  btclib-org/.github#1538).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
