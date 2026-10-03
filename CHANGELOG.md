@@ -4943,6 +4943,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   btclib-org/.github#1540): section 11 of the standard states the
   organization setting.
 
+### The `Sign-off` check is required
+
+- **A pull request whose commits lack the `Signed-off-by:` trailer cannot
+  merge** (issue btclib-org/.github#1550): `lint / Sign-off` is a required
+  check.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35

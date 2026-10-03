@@ -59,7 +59,9 @@ exactly them, so a red run there is a local run that was not done.
 **Every commit of a pull request carries a `Signed-off-by:` trailer
 naming its author**, which certifies the [Developer Certificate of
 Origin][dco]. `git commit -s` adds it, and `git rebase --signoff <base>`
-adds it to commits already made. [The standard's *Signatures*][s-sigs]
+adds it to commits already made. The `Sign-off` check is required, so a
+pull request whose commits lack the trailer cannot merge; its failure
+prints the command that adds it. [The standard's *Signatures*][s-sigs]
 says why a signature does not replace it, and which commits the
 `Sign-off` job skips.
 
@@ -369,12 +371,12 @@ Run the gate by hand before committing — the `uv run pre-commit run
 
 ### What gates a merge, and what only reports
 
-The commands above are required checks, and so is `lint / Dependency
-review`, which has no local command: it asks the forge's dependency graph
-what a pull request adds. So nothing reaches a review without having passed
-them or passing them beside it on the same sha, and a reviewer may rely on
-that rather than establishing it again; `REVIEWING.md` has what the
-reliance takes. One command names the
+The commands above are required checks, and so are `lint / Dependency
+review` and `lint / Sign-off`. The first has no local command: it asks the
+forge's dependency graph what a pull request adds. So nothing reaches a
+review without having passed them or passing them beside it on the same
+sha, and a reviewer may rely on that rather than establishing it again;
+`REVIEWING.md` has what the reliance takes. One command names the
 contexts `main` requires,
 
 ```shell
