@@ -4957,7 +4957,7 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
 
 ### The bypass is for emergencies
 
-- **Every pull request, the maintainer's included, lands with an owner's
+- **Every pull request, the maintainer's included, needs another person's
   approval** (issue btclib-org/.github#1362): `CONTRIBUTING.md` takes the
   shared half, and `REPOSITORY.md` keeps the bypass as the emergency path.
 

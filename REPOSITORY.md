@@ -160,7 +160,7 @@ gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
 **The bypass mode is the whole of the design.** `pull_request` excuses
 its holder from the rule *while merging a pull request* and at no other
 time. The maintainer uses it only in an emergency, a fix landing before
-another owner can approve it; every other pull request, the maintainer's
+anybody else can approve it; every other pull request, the maintainer's
 included, waits for that approval. A direct push to `main` is refused for
 everyone, the holder included.
 
