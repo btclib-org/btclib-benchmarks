@@ -288,8 +288,9 @@ record.** Then rely on it, and say whose it is. Two runs qualify: the
 workflows of the required checks, running beside a review on the same
 commit — `CONTRIBUTING.md` names which checks those are — and an author
 handing over a branch they gated themselves and said so. What is relied
-on is that those gates run and hold the merge, not the colour of a
-check, which stays none of a reviewer's business for the reason below.
+on is that those gates run and, except under the maintainer's `--admin`,
+hold the merge, not the colour of a check, which stays none of a
+reviewer's business for the reason below.
 
 The sha is the whole of the condition: a run on another tree is not a run
 on this one, so a rebase voids it — the branch was gated, and then the
@@ -337,12 +338,14 @@ one, is where the rule lives.
   go, not to be shortened.
 - If the branch was rebased: does `CHANGELOG.md` still say what the
   branch meant it to say, and the release notes with it where the
-  repository has them? Section 9 marks them `merge=union`, so they never
-  conflict and a rebase can put back a line the branch had removed.
+  repository has them? Section 9 says how a rebase conflict there is
+  resolved, and at git's default conflict style deleting the markers
+  loses a line both sides share.
 - Does the branch's own `CHANGELOG.md` entry sit **last in the open
   section**? Section 9 puts it there and `check-changelog` reads no
-  position, so a green gate says nothing about it; `CONTRIBUTING.md` has
-  the command that prints the section's headings in order.
+  position within the open section, so a green gate says nothing about
+  it; `CONTRIBUTING.md` has the command that prints the section's
+  headings in order.
 - A new or changed workflow: section 10 of the standard, and
   `REPOSITORY.md` before any rule or setting is touched. A renamed job
   is a required check renamed out of existence.
@@ -394,8 +397,9 @@ unfinished review.** Somebody who reads a diff and says what they found
 is worth more than the same person saying nothing because a verdict on
 the whole change was the price of speaking, and the readings worth
 having are the ones nobody was assigned. What a pull request lands on is
-the ack of record; every other comment on it is evidence a person weighs
-before pressing.
+the ack of record and an approving review from somebody other than its
+author. Every other comment on it is evidence a person weighs before
+pressing.
 
 **A `NACK` is a decision and ending without a verdict is not.** Both
 leave the pull request unacked, which is what makes them easy to read as

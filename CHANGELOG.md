@@ -4960,6 +4960,46 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
 - **The scripts import `btclib_ecc`, `btclib_wallet` and `btclib.key` for
   what btclib 2026.9.24 on removed; `taproot_tweak` builds its `PubKeyData`
   in the timed call; `results/` is not re-measured** (closes #428).
+### The bypass is for emergencies
+
+- **`CONTRIBUTING.md`, `REVIEWING.md` and `REPOSITORY.md` say
+  every pull request lands with an approving review from somebody other than
+  its author; the bypass is for emergencies** (issue btclib-org/.github#1362).
+
+### Earlier entries on how a pull request lands
+
+- Entries above that have the maintainer landing without another person's
+  approval describe the rule before issue btclib-org/.github#1362 (issue
+  btclib-org/.github#1569).
+
+### `REPOSITORY.md` reads the review switch as the organization's
+
+- **`REPOSITORY.md` no longer reads an empty organization variable store as
+  the review's off state; it records only that this repository sets none**
+  (issue btclib-org/.github#1560).
+
+### The forms set a type, and the history files lose `merge=union`
+
+- **The forms set `type:` and no kind label, `.gitattributes` goes and
+  `REVIEWING.md` is the standard's copy** (issue btclib-org/.github#1584,
+  issue btclib-org/.github#1582). Entries above on `merge=union` predate it.
+
+### Earlier entries on `.gitattributes`
+
+- Entries above on `.gitattributes` or the union driver predate their
+  removal (issue btclib-org/.github#1582).
+
+### `--admin` waits for no required check
+
+- **`CONTRIBUTING.md`'s emergency paragraph says `--admin` skips the
+  required checks too** (issue btclib-org/.github#1597):
+  `REVIEWING.md`'s "hold the merge" excepts it.
+
+### `check-changelog` refuses an entry added to an older release
+
+- **A `###` heading under a release older than the newest, absent from
+  the file at the merge base with `origin/main`, is refused**
+  (issue btclib-org/.github#1614).
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28

@@ -12,9 +12,9 @@ name: test
 # keeps this cell rather than subtracting it -- a matrix with the gate's
 # cell cut out of it is one whose shape has to be re-derived from this
 # file before it can be read. What the trade costs is stated once, in
-# os-ubuntu.yml's header: a regression on 3.11, on 3.12 or on aarch64 is not refused
-# before a merge and sits on main until the sentinel for it runs
-# (btclib-org/.github#85)
+# os-ubuntu.yml's header: a regression on 3.11, on 3.12 or on aarch64 is
+# not refused before a merge and sits on main until the sentinel for it
+# runs (btclib-org/.github#85)
 on:
   push:
     branches: [main]

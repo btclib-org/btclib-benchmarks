@@ -159,15 +159,15 @@ gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
 
 **The bypass mode is the whole of the design.** `pull_request` excuses
 its holder from the rule *while merging a pull request* and at no other
-time, so it answers the one thing a one-maintainer repository cannot do
-— produce an approving review from somebody else — and answers nothing
-further. A direct push to `main` is refused for everyone, the holder
-included.
+time. The maintainer uses it only in an emergency, a fix landing before
+anybody else can approve it; every other pull request, the maintainer's
+included, waits for that approval. A direct push to `main` is refused for
+everyone, the holder included.
 
 `enforce_admins` is false, and that is what clears the *classic*
 protection's own review requirement for the maintainer; the ruleset
-bypass alone would not be enough, and turning it on would deadlock every
-merge instead, that requirement having no bypass list to be named in.
+bypass alone would not be enough, and turning it on would close the
+emergency path, that requirement having no bypass list to be named in.
 
 What lands, therefore, is a squash GitHub composes at the button and
 signs with its own web-flow key. That the signer is GitHub rather than
@@ -596,36 +596,33 @@ records that has another form in the tree. *What is not configured, and
 why* above is this repository's answer to releasing.
 
 **A credential this repository does not hold.** `claude-review.yml`
-passes `secrets.CLAUDE_CODE_OAUTH_TOKEN` to the workflow it calls, whose
-jobs are guarded by `vars.CLAUDE_REVIEW_ENABLED`, and section 11 of the
-standard makes both the organization's rather than each repository's:
+passes `secrets.CLAUDE_CODE_OAUTH_TOKEN` to the workflow it calls, and
+section 11 of the standard makes it the organization's rather than each
+repository's:
 
 ```shell
 gh api repos/btclib-org/btclib-benchmarks/actions/secrets \
   --jq '.total_count'
 # 0
-gh api repos/btclib-org/btclib-benchmarks/actions/variables \
-  --jq '.total_count'
-# 0
 gh api orgs/btclib-org/actions/secrets \
   --jq '.secrets[] | "\(.name) \(.visibility)"'
 # CLAUDE_CODE_OAUTH_TOKEN all
-gh api orgs/btclib-org/actions/variables --jq '.variables[].name'
-#
-gh api orgs/btclib-org/actions/variables --jq '.total_count'
-# 0
 ```
 
 The organization's secret store answering with a name is what makes this
-repository's two zeros an absence rather than an endpoint that answers
-empty for everyone. The variable store prints nothing at all when it
-answers, so its own `total_count` of `0` is what shows the call reached
-it: one that does not reach it prints an error and exits non-zero.
-Section 11 reads that empty name list as `vars.CLAUDE_REVIEW_ENABLED`'s
-off state, an undefined `vars.X` being the empty string. Both stores are
-read because a variable set here would take precedence over one of the
-same name set on the organization, so the organization's answer alone
-would not show the switch off for this tree.
+repository's zero an absence rather than an endpoint that answers empty
+for everyone.
+
+**A switch this repository does not set.** `claude-review.yml` calls
+`btclib-org/.github`'s `reusable-claude-review.yml`, whose jobs guard on
+`vars.CLAUDE_REVIEW_ENABLED`; a variable set here would take precedence
+over one of the same name on the organization, so the repository's own
+store is read too:
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks/actions/variables --jq .total_count
+# 0
+```
 
 **A facility nothing here uses.** Environments, self-hosted runners,
 webhooks, deploy keys, autolinks and custom property values each answer
