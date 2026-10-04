@@ -1,7 +1,7 @@
 ---
 name: Question
 description: Ask what a table measures, or why it is measured that way
-labels: [question]
+type: Task
 
 body:
   - type: markdown
