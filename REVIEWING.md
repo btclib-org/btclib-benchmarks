@@ -288,8 +288,9 @@ record.** Then rely on it, and say whose it is. Two runs qualify: the
 workflows of the required checks, running beside a review on the same
 commit — `CONTRIBUTING.md` names which checks those are — and an author
 handing over a branch they gated themselves and said so. What is relied
-on is that those gates run and hold the merge, not the colour of a
-check, which stays none of a reviewer's business for the reason below.
+on is that those gates run and, except under the maintainer's `--admin`,
+hold the merge, not the colour of a check, which stays none of a
+reviewer's business for the reason below.
 
 The sha is the whole of the condition: a run on another tree is not a run
 on this one, so a rebase voids it — the branch was gated, and then the
@@ -342,8 +343,9 @@ one, is where the rule lives.
   loses a line both sides share.
 - Does the branch's own `CHANGELOG.md` entry sit **last in the open
   section**? Section 9 puts it there and `check-changelog` reads no
-  position, so a green gate says nothing about it; `CONTRIBUTING.md` has
-  the command that prints the section's headings in order.
+  position within the open section, so a green gate says nothing about
+  it; `CONTRIBUTING.md` has the command that prints the section's
+  headings in order.
 - A new or changed workflow: section 10 of the standard, and
   `REPOSITORY.md` before any rule or setting is touched. A renamed job
   is a required check renamed out of existence.
