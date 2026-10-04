@@ -4984,6 +4984,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
 - Entries above on `.gitattributes` or the union driver predate their
   removal (issue btclib-org/.github#1582).
 
+### `--admin` waits for no required check
+
+- **`CONTRIBUTING.md`'s emergency paragraph says `--admin` skips the
+  required checks too** (issue btclib-org/.github#1597):
+  `REVIEWING.md`'s "hold the merge" excepts it.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
