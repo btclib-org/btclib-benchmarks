@@ -4979,6 +4979,11 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   `REVIEWING.md` is the standard's copy** (issue btclib-org/.github#1584,
   issue btclib-org/.github#1582). Entries above on `merge=union` predate it.
 
+### Earlier entries on `.gitattributes`
+
+- Entries above on `.gitattributes` or the union driver predate their
+  removal (issue btclib-org/.github#1582).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
