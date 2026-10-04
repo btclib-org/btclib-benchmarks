@@ -357,7 +357,6 @@ source-exclude = [
 git-only = [
     ".claude/",
     "COPYRIGHT",
-    ".gitattributes",
     ".gitignore",
     ".markdownlint.jsonc",
     ".readthedocs.yaml",

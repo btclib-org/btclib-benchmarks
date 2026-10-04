@@ -4973,6 +4973,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   the review's off state; it records only that this repository sets none**
   (issue btclib-org/.github#1560).
 
+### The forms set a type, and the history files lose `merge=union`
+
+- **The forms set `type:` and no kind label, `.gitattributes` goes and
+  `REVIEWING.md` is the standard's copy** (issue btclib-org/.github#1584,
+  issue btclib-org/.github#1582). Entries above on `merge=union` predate it.
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
