@@ -4990,6 +4990,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   required checks too** (issue btclib-org/.github#1597):
   `REVIEWING.md`'s "hold the merge" excepts it.
 
+### `check-changelog` refuses an entry added to an older release
+
+- **A `###` heading under a release older than the newest, absent from
+  the file at the merge base with `origin/main`, is refused**
+  (issue btclib-org/.github#1614).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
