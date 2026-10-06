@@ -4990,15 +4990,16 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   required checks too** (issue btclib-org/.github#1597):
   `REVIEWING.md`'s "hold the merge" excepts it.
 
-### `01-libsecp256k1.py`'s `main` docstring counts no tables
-
-- **The docstring said `main` prints six tables; `TABLES` holds more.** It
-  now says every table, so adding one makes no sentence false (closes #398).
 ### `check-changelog` refuses an entry added to an older release
 
 - **A `###` heading under a release older than the newest, absent from
   the file at the merge base with `origin/main`, is refused**
   (issue btclib-org/.github#1614).
+
+### `01-libsecp256k1.py`'s `main` docstring counts no tables
+
+- **The docstring says `main` prints every table, not a number of them**
+  (closes #398).
 
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
