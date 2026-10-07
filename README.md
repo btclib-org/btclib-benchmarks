@@ -95,7 +95,7 @@ actually about, and btclib's own lock carries nothing it does not use.
 ## Running them
 
 Nothing is installed, and nothing is released: the scripts are run from
-a checkout, and `CONTRIBUTING.md`'s *A version, and no release* is what
+a checkout, and `CONTRIBUTING.md`'s *No release* says what
 the version in `pyproject.toml` is for.
 
 ```shell
