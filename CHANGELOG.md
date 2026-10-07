@@ -1,10 +1,9 @@
 # Changelog
 
-Every change, in full: what changed, why, and what it cost. The headings
-are `project.version`, a released *state of the benchmarks* rather than
-a release -- `CONTRIBUTING.md`'s *A version, and no release* has what
-that means here, and why there are no release notes for this file to be
-the record behind.
+The history of this repository is `git log` of `main`. Nothing here is
+released, so no entry is added. The entries below were written before
+that, grouped under the version they were written for, and stay as they
+are.
 
 ## v2026.9 (work in progress, not released yet)
 
