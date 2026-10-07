@@ -177,13 +177,10 @@ not for a particular signer, and asks it of everyone.
 A third ruleset, `tag-integrity`, targets tags rather than `main` and so
 sits outside the aggregation above: `target: tag`, `refs/tags/v*`,
 `required_signatures`, **no bypass actor at all**. There is no
-publish-on-tag workflow here to protect — there is no release, as
-`CONTRIBUTING.md`'s *A version, and no release* says — so the reason is
-consistency rather than a publish trigger: that section's tagging step
-says "Signed, as every tag in this organization is", and the ruleset
-enforces that rather than leaving it to be remembered by hand. It carries no
-`deletion` or `non_fast_forward` rule, matching the sibling repositories
-that do gate a release on the tag.
+publish-on-tag workflow here to protect, and no tag to cut:
+`CONTRIBUTING.md`'s *No release*. It carries no `deletion` or
+`non_fast_forward` rule, matching the sibling repositories that do gate a
+release on the tag.
 
 ## Signed commits
 
@@ -301,9 +298,8 @@ a list of what each one asks the API for.
 
 The bound is what the same command says is absent: no job holds
 `contents: write` or `packages: write`. Nothing a run does reaches the
-tree or an index — a version is a signed tag a person pushes — and that
-is why there is no `publishing` section in this file for a job to sit
-under.
+tree or an index, which is why there is no `publishing` section in this
+file for a job to sit under.
 
 What those declarations sit on top of is a repository setting, and it is
 read back rather than assumed:
@@ -489,7 +485,7 @@ scanning's non-provider patterns and validity checks, is read back under
 ## What is not configured, and why
 
 - **No PyPI publishing, and no release workflow.** `CONTRIBUTING.md`'s
-  *A version, and no release* is the whole of that answer. The `check`
+  *No release* is the whole of that answer. The `check`
   dependency group exists so that `check-sdist`, `pyroma` and `twine`
   can still inspect the distribution and its metadata, which is a lint
   of the packaging rather than a step toward a release.

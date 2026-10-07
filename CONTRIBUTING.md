@@ -604,7 +604,7 @@ one they were taken under.
 not wired into CI, and deliberately: a page is written by a command a
 person runs, not by a gate.
 
-### A version, and no release
+### No release
 
 There is no release. Nothing here is published to an index.
 Installing this project puts `src/btclib_benchmarks/` on the path, and
@@ -613,23 +613,17 @@ the scripts are still run from a checkout. So this tree carries no
 why a tier-2 repository carries neither, and a file whose content is its
 own absence is this paragraph instead.
 
-`project.version` names a *state of the benchmarks*, so that a table
-someone kept can be placed against the version that produced it. Cutting
-one is a signed tag, as every tag in this organization is, and
-`REPOSITORY.md`'s `tag-integrity` ruleset refuses an unsigned one:
+This repository cuts no versions and pushes no tags. `project.version`
+in `pyproject.toml` is there for the docs build, which shows it, and
+for the packaging lints, which build an sdist under it. A run records
+neither it nor this repository's commit.
 
-```shell
-git tag -s v<version> -m "v<version>"
-git push origin v<version>
-```
-
-Before tagging, run every benchmark by hand, one at a time. The suite
+Read a fresh run's header before publishing its numbers. The suite
 proves the scripts load and that their comparands agree; it cannot prove
 they still *measure* anything, and that is exactly what rots — a
 comparand renames a method, a backend stops being found, an
-implementation gets a fast path. Read each header before its numbers: a
-row whose backend has silently changed is a number that means something
-other than what its label says.
+implementation gets a fast path. A row whose backend has silently
+changed is a number that means something other than what its label says.
 
 ### What the suite can and cannot check
 

@@ -118,8 +118,6 @@ and an alert against a comparand names the package it is actually about.
 ## The public surface
 
 Nothing here is imported by another project: `src/btclib_benchmarks/`
-ships in the sdist for `check-sdist`, `pyroma` and `twine` to inspect, but
-`project.version` names a *state of the benchmarks* rather than a release,
-and `CONTRIBUTING.md`'s *A version, and no release* is where that is
-argued in full. A reader arrives at a script by running it, not by
-importing the package it depends on.
+ships in the sdist for `check-sdist`, `pyroma` and `twine` to inspect, and
+is released nowhere (`CONTRIBUTING.md`'s *No release*). A reader arrives
+at a script by running it, not by importing the package it depends on.
