@@ -4,7 +4,7 @@
 
 """Timings of btclib as installed, against other Python bitcoin libraries.
 
-`pip install btclib` installs the `btclib_secp256k1` wrapper with it, so
+`pip install btclib[secp256k1]` installs the `btclib_secp256k1` wrapper, so
 this times that path and never the pure-Python fallback, which
 `scripts/04-pure-python.py` covers. Every comparand is timed at its own latest
 PyPI release, on operations it offers: nothing here is compared against a
@@ -180,10 +180,9 @@ import embit.bip32
 import embit.ec
 import pycoin.encoding.b58
 import pycoin.symbols.btc
-from btclib.bip32 import bip32 as btclib_bip32
-from btclib.curves import curve
-from btclib.ecc import dsa, ssa
-from btclib.to_pub_key import pub_keyinfo_from_key
+from btclib_ecc.curves import curve
+from btclib_ecc.ecc import dsa, ssa
+from btclib_wallet import bip32 as btclib_bip32
 
 from btclib_benchmarks import _inputs
 from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS, origin_of
@@ -209,7 +208,7 @@ from btclib_benchmarks._vectors import bip32
 # by the release it was read for, so an upgraded comparand prints
 # `unrecorded` rather than a date that has stopped being true
 RELEASE_DATES = {
-    "btclib": ("2026.8.21", "2026-08-21"),
+    "btclib": ("2026.10.3", "2026-10-03"),
     "ecdsa": ("0.19.2", "2026-03-26"),
     "pycoin": ("0.92718.20260405", "2026-04-05"),
     "buidl": ("0.2.36", "2022-02-28"),
@@ -596,7 +595,7 @@ def dsa_sign_btclib_grind_noverify() -> None:
 
 
 def dsa_sign_btclib_grind_verify() -> None:
-    """Time ECDSA signing as `pip install btclib` performs it.
+    """Time ECDSA signing as btclib with its bindings performs it.
 
     Both defaults, which is what a caller who writes `dsa.sign_(msg, key)`
     gets. The check is of the signature the loop settled on and not of every
@@ -726,7 +725,7 @@ SSA_BTCLIB = cycle(
 # fresh row above it differ by the holding and by nothing else. Which of them
 # saves what is a reading of each library rather than an assumption:
 #
-# - `btclib.ecc.ssa.Signer` holds the `libsecp256k1_ssa.Signer` that
+# - `btclib_ecc.ecc.ssa.Signer` holds the `libsecp256k1_ssa.Signer` that
 #   `ssa.sign_` builds and wipes inside every call, and that is a keypair --
 #   a multiplication of the generator, and about half of what a BIP340
 #   signature costs on this path;
@@ -916,7 +915,7 @@ DERIVATIONS = [chain for chain in CHAINS if chain.path != "m"]
 
 def _btclib_child_pubkey(seed: bytes, path: str) -> bytes:
     root = btclib_bip32.rootxprv_from_seed(seed)
-    return bytes(pub_keyinfo_from_key(btclib_bip32.derive(root, path))[0])
+    return bytes(btclib_bip32.pub_keyinfo_from_xkey(btclib_bip32.derive(root, path))[0])
 
 
 def _pycoin_child_pubkey(seed: bytes, path: str) -> bytes:

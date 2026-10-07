@@ -18,10 +18,10 @@ The last column says which arithmetic answered on the machine that ran
 this, and nothing about how the package got there. That part is one
 paragraph each, and none of the six is the same story:
 
-- **btclib** requires `btclib-secp256k1`, which bundles libsecp256k1 and
-  compiles it into a cffi extension at install time, so a wheel from PyPI
-  is enhanced without anything further being done to it. Which revision it
-  bundles is in [the wrappers table][wrappers].
+- **btclib** takes `btclib-secp256k1` as its `secp256k1` extra, which bundles
+  libsecp256k1 and compiles it into a cffi extension at install time, so a
+  wheel from PyPI is enhanced by installing `btclib[secp256k1]`. Which
+  revision it bundles is in [the wrappers table][wrappers].
 - **pycoin** bundles nothing and builds nothing. `pycoin.ecdsa.native` is a
   ctypes loader that asks the machine for a library by name, and a PyPI
   install therefore gets pure Python unless one is already there. Here one

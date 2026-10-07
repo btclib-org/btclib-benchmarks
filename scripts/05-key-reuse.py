@@ -88,8 +88,8 @@ from typing import TYPE_CHECKING
 import btclib
 import btclib_secp256k1
 import ecdsa
-from btclib.curves import curve, sec_point
-from btclib.ecc import dsa
+from btclib_ecc.curves import curve, sec_point
+from btclib_ecc.ecc import dsa
 
 from btclib_benchmarks import _inputs
 from btclib_benchmarks._provenance import described

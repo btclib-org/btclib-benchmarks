@@ -849,7 +849,7 @@ report the friendlier of the two, and the shape a signing service actually
 runs is the other one.
 
 The btclib pages do not carry this pair yet, and what was stopping them has
-gone. `btclib.ecc.ssa.Signer` delegates to the one timed here and now takes
+gone. `btclib_ecc.ecc.ssa.Signer` delegates to the one timed here and now takes
 the same argument: btclib has grown a `verify` keyword on both its signing
 calls and on that signer, so a held row there prices a policy the caller
 chooses rather than the only one on offer. That was [ISS 23][i23]'s question,

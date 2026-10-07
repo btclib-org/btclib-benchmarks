@@ -149,9 +149,9 @@ import buidl.pecc
 import ecdsa
 import pycoin.symbols.btc
 import secp256k1lab.bip340
-from btclib.curves import curve
-from btclib.ecc import dsa, ssa
-from btclib.to_pub_key import pub_keyinfo_from_prv_key
+from btclib.key import PrvKeyData
+from btclib_ecc.curves import curve
+from btclib_ecc.ecc import dsa, ssa
 from ellipticcurve.ecdsa import Ecdsa as StarkbankEcdsa
 from ellipticcurve.privateKey import PrivateKey as StarkbankPrivateKey
 from secp256k1lab.secp256k1 import G as LAB_G
@@ -180,7 +180,7 @@ from btclib_benchmarks._results import (
 # secp256k1lab is on no index and is taken from a git tag, which is still a
 # release someone cut on a day, so it is recorded like the other four
 RELEASE_DATES = {
-    "btclib": ("2026.8.21", "2026-08-21"),
+    "btclib": ("2026.10.3", "2026-10-03"),
     "secp256k1lab": ("1.0.0", "2025-03-26"),
     "ecdsa": ("0.19.2", "2026-03-26"),
     "pycoin": ("0.92718.20260405", "2026-04-05"),
@@ -299,12 +299,13 @@ SSA_SIGS = [
 def python_arithmetic_only() -> None:
     """Turn btclib's libsecp256k1 dispatch off, everywhere at once.
 
-    `_libsecp256k1_serves` reads `_libsecp256k1_available` on every call, so
-    this one assignment reaches the nine modules that imported the predicate
-    by name. Patching those modules one at a time is what leaves a row meant
-    to measure Python measuring C, and it does so silently: a public key
-    derived through `to_pub_key` asks `curves.sec_point`, which is the module
-    such a list forgets. No row added below can reintroduce that.
+    `_libsecp256k1_serves` and `is_libsecp256k1_serving` read
+    `_libsecp256k1_available` on every call, so this one assignment reaches
+    every module that asks either. Patching those modules one at a time is
+    what leaves a row meant to measure Python measuring C, and it does so
+    silently: a public key derived through `PrvKeyData.pub` asks
+    `curves.sec_point`, which is the module such a list forgets. No row added
+    below can reintroduce that.
 
     Called before anything is timed, and after every fixture above is built:
     those want libsecp256k1, and there is no reason to slow them down.
@@ -348,7 +349,7 @@ def _pycoin_backend() -> str:
 def pubkey_btclib() -> None:
     """Time the generator multiplication btclib answers a public key with."""
     scalar = next(PUBKEY_BTCLIB)
-    pub_keyinfo_from_prv_key(scalar)[0]
+    _ = PrvKeyData(scalar).pub.sec
 
 
 def pubkey_lab() -> None:

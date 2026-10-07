@@ -5001,6 +5001,12 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
 - **The docstring says `main` prints every table, not a number of them**
   (closes #398).
 
+### The scripts and the suite run on btclib 2026.10.3
+
+- **The scripts import `btclib_ecc` and `btclib_wallet`; the public key rows
+  of `02` and `04` time `PrvKeyData(q).pub.sec`; `taproot_tweak` builds its
+  `PubKeyData` per call; `results/` not re-measured** (closes #428) (closes #441).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
