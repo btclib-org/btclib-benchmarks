@@ -29,9 +29,11 @@ vectors are run against both paths.
 
 No row checks what it computed, and nothing in this benchmark asserts: a
 comparison inside a timed loop would be time charged to an arithmetic that
-did not spend it. The operations are not a selection —
-`_libsecp256k1_serves` is the predicate every dispatch site in btclib asks,
-and every operation holding one that a caller would call is below.
+did not spend it. The dispatch sites ask
+`btclib_ecc.curves.curve._libsecp256k1_serves`, or `is_libsecp256k1_serving`
+in btclib and btclib_wallet, and both read the one switch
+`python_arithmetic_only` throws. The rows are operations reachable through a
+public function; BIP32 and silent payments have a Python arm and no row here.
 
 `pubkey_parse_33` carries its size in its name because the size is what it
 is timing: a compressed key is x alone, so parsing one is a modular square
@@ -185,11 +187,11 @@ that is not secp256k1, for a zero scalar, for the point at infinity, and for
 anything else outside libsecp256k1's entry points. What this table says about
 it is what a caller outside the fast case gets.
 
-## BIP32 derivation is not a row yet
+## BIP32 derivation is not a row
 
 btclib_wallet's BIP32 has a Python arm behind `is_libsecp256k1_serving`, and
-it is not a row here yet. The dispatch is on the bindings being there and not
-on the curve, BIP32 being defined for secp256k1 alone.
+it is no row here because none was asked for. The dispatch is on the bindings
+being there and not on the curve, BIP32 being defined for secp256k1 alone.
 
 BIP32 derivation is timed in [the libraries table][libs] instead, where being
 C is the premise.

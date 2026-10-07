@@ -20,15 +20,16 @@ Which operations have two arithmetics is not a judgement call:
 every dispatch site asks `btclib_ecc.curves.curve._libsecp256k1_serves`, or
 `is_libsecp256k1_serving` in btclib and btclib_wallet, and both read the one
 switch `python_arithmetic_only` throws. The rows below are the ones reachable
-through a public function. `commit_nonce` and
-`pedersen` have none: anti-exfil signing and Pedersen commitments are
-protocol machinery rather than operations an application performs.
+through a public function. `btclib_ecc.ecc.commit_nonce` dispatches too,
+and it and `btclib_ecc.ecc.pedersen` have no row: anti-exfil signing and
+Pedersen commitments are protocol machinery rather than operations an
+application performs.
 
-## BIP32 derivation is not a row yet
+## BIP32 derivation is not a row
 
 btclib_wallet's BIP32 has a Python arm behind `is_libsecp256k1_serving`, and
-it is not a row here yet. The dispatch is on the bindings being there and not
-on the curve, BIP32 being defined for secp256k1 alone.
+it is no row here because none was asked for. The dispatch is on the bindings
+being there and not on the curve, BIP32 being defined for secp256k1 alone.
 
 That a row belongs here is a property to prove.
 `tests/pure_python_path_test.py` blocks every libsecp256k1 entry point and

@@ -65,8 +65,9 @@ requires-python = ">=3.11"
 # A floor and not a pin, for the reason btclib's `bench` group gave and
 # this inherits: the premise of the comparison is whatever `pip install`
 # currently gives a user, so a new release is to be picked up and
-# measured rather than refused. Each floor records the release the
-# numbers in the tables were taken against.
+# measured rather than refused. Each floor is the oldest release
+# `deps-oldest` runs the suite against; the provenance block of a page
+# under `results/` names the releases that page was measured at.
 #
 # `btclib` and `btclib_secp256k1` are comparands too, at their published
 # releases and not a checkout: what `pip install btclib[secp256k1]` gives
@@ -75,23 +76,23 @@ requires-python = ">=3.11"
 # README.md's *Measuring a working tree instead of a release* says how to
 # ask it without making it the default.
 dependencies = [
-    # the latest release, which a comparand is measured at (issue #428).
-    # The private switch these scripts throw, `_libsecp256k1_available`,
-    # and `dsa.sign_`'s `grind=` are `btclib_ecc`'s from btclib 2026.9.30,
-    # which moved the curve and the schemes there
+    # the release the scripts are written against, where a public key is
+    # `PrvKeyData(q).pub.sec`: it has no `btclib.to_pub_key`. It requires
+    # the `btclib-ecc` floor below, and its `secp256k1` extra the
+    # `btclib-secp256k1` one
     "btclib>=2026.10.3",
     # the curve and the schemes, which the scripts and the suite import
-    # directly; the floor is the one btclib 2026.10.3 requires
+    # directly, among them the private switch `_libsecp256k1_available`
+    # and `dsa.sign_`'s `grind=`; the floor is the one btclib 2026.10.3
+    # requires
     "btclib-ecc>=2026.10.2",
-    # `btclib.bip32` is `btclib_wallet.bip32` from btclib 2026.9.29, which
-    # is where `scripts/03-libraries.py` and `tests/vectors_test.py` read it
+    # `btclib_wallet.bip32`, which `scripts/03-libraries.py` and
+    # `tests/vectors_test.py` import. 2026.9.30 is the first release
+    # whose `bip32` takes its curve from `btclib_ecc`, the package these
+    # scripts take theirs from
     "btclib-wallet>=2026.9.30",
-    # `ssa.Signer` and the parsed-key entry points these rows call
-    # shipped in 0.8.0.3 -- the floor named the release before it
-    # existed, [tool.uv.sources] stood in for it below, and now that it
-    # is out the source entry is gone and this floor is the whole of the
-    # pin. 0.8.0.9 is the floor the `secp256k1` extra of btclib 2026.10.3
-    # declares
+    # `ssa.Signer`, which these rows call, shipped in 0.8.0.3; 0.8.0.9 is
+    # the floor the `secp256k1` extra of btclib 2026.10.3 declares
     "btclib-secp256k1>=0.8.0.9",
     "buidl>=0.2.36",
     "coincurve>=21.0.0",
