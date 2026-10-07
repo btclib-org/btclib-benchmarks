@@ -2375,7 +2375,7 @@ METHOD = f"{ROUNDS} rounds per row in two halves, minimum kept; calls per table"
 
 
 def main() -> None:
-    """Print the six tables, one operation each, and save the run.
+    """Print every table and save the run.
 
     No order is forced on the timing: with the pure-Python rows gone,
     nothing here changes state a later row would read. The order the rows

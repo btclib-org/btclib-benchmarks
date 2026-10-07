@@ -5001,6 +5001,11 @@ their first twelve characters print as two (issue btclib-org/.github#1343).
   the file at the merge base with `origin/main`, is refused**
   (issue btclib-org/.github#1614).
 
+### `01-libsecp256k1.py`'s `main` docstring counts no tables
+
+- **The docstring says `main` prints every table, not a number of them**
+  (closes #398).
+
 [iss23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [iss28]: https://github.com/btclib-org/btclib-benchmarks/issues/28
 [iss35]: https://github.com/btclib-org/btclib-benchmarks/issues/35
