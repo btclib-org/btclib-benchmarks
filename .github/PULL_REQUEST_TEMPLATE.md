@@ -20,7 +20,6 @@
 - [ ] the documentation builds: `uv run --locked --no-default-groups
       --group docs sphinx-build -W -n -b html docs/source
       docs/build/html`
-- [ ] `CHANGELOG.md` has an entry, if a user would notice the change
 - [ ] every commit carries a verified signature
 
 ## Anything the reviewer should know
