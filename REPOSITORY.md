@@ -182,6 +182,11 @@ publish-on-tag workflow here to protect, and no tag to cut:
 `non_fast_forward` rule, matching the sibling repositories that do gate a
 release on the tag.
 
+A `v*` tag push that brings an unsigned commit is refused. A tag on a
+commit already on `main` is accepted whether it is signed, unsigned or
+lightweight, so the rule does not check a tag's signature
+(btclib-org/.github#1635).
+
 ## Signed commits
 
 ```shell
