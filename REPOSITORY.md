@@ -101,6 +101,9 @@ job runs, and there is no `paths` filter for it to sit out.
 
 `strict` requires a branch to be up to date with main before it merges.
 
+A merge through the maintainer's bypass waits for none of these checks,
+as `CONTRIBUTING.md`'s *Landing it* says.
+
 One context this repository produces is not in that list, and is meant to
 be produced anyway: `codeql.yml`'s `codeql: every job passed`, which
 btclib-org/.github#459 asks every code analysis in the organization to
