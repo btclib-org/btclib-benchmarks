@@ -159,15 +159,17 @@ gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
 
 **The bypass mode is the whole of the design.** `pull_request` excuses
 its holder from the rule *while merging a pull request* and at no other
-time. The maintainer uses it only in an emergency, a fix landing before
-anybody else can approve it; every other pull request, the maintainer's
-included, waits for that approval. A direct push to `main` is refused for
-everyone, the holder included.
+time. It lands a pull request with no approval, whoever its author is.
+[`GOVERNANCE.md`'s *How a decision is
+made*](https://github.com/btclib-org/.github/blob/main/GOVERNANCE.md#how-a-decision-is-made)
+says when the maintainer uses it, and `CONTRIBUTING.md`'s *Landing it*
+gives the commands. A direct push to `main` is refused for everyone, the
+holder included.
 
 `enforce_admins` is false, and that is what clears the *classic*
 protection's own review requirement for the maintainer; the ruleset
 bypass alone would not be enough, and turning it on would close the
-emergency path, that requirement having no bypass list to be named in.
+bypass.
 
 What lands, therefore, is a squash GitHub composes at the button and
 signs with its own web-flow key. That the signer is GitHub rather than
