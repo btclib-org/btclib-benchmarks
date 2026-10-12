@@ -163,11 +163,11 @@ gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
 **The bypass mode is the whole of the design.** `pull_request` excuses
 its holder from the rule *while merging a pull request* and at no other
 time. It lands a pull request with no approval, whoever its author is.
-[`GOVERNANCE.md`'s *How a decision is
-made*](https://github.com/btclib-org/.github/blob/main/GOVERNANCE.md#how-a-decision-is-made)
-says when the maintainer uses it, and `CONTRIBUTING.md`'s *Landing it*
-gives the commands. A direct push to `main` is refused for everyone, the
-holder included.
+btclib-org/.github's
+[`GOVERNANCE.md`](https://github.com/btclib-org/.github/blob/main/GOVERNANCE.md#how-a-decision-is-made),
+*How a decision is made*, says when the maintainer uses it, and
+`CONTRIBUTING.md`'s *Landing it* gives the commands. A direct push to
+`main` is refused for everyone, the holder included.
 
 `enforce_admins` is false, and that is what clears the *classic*
 protection's own review requirement for the maintainer; the ruleset
