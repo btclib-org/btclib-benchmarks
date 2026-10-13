@@ -24,7 +24,7 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 # {"contexts":["test: every job passed","docs / Build the documentation",
 #              "lint / Lint and type-check","lint / Dependency review",
 #              "lint / Sign-off"],
-#  "strict":true}
+#  "strict":false}
 ```
 
 `test: every job passed` is an aggregate rather than a matrix cell.
@@ -99,7 +99,9 @@ cancels anything the ref's concurrency group is still holding, and it
 arrives at the merge rather than before it. On an open pull request the
 job runs, and there is no `paths` filter for it to sit out.
 
-`strict` requires a branch to be up to date with main before it merges.
+`strict` is off: a branch need not be up to date with main to merge. The
+ground is in [section 11 of the
+standard](https://github.com/btclib-org/.github/blob/main/README.md#11-github-settings).
 
 A merge through the maintainer's bypass waits for none of these checks,
 as `CONTRIBUTING.md`'s *Landing it* says.
