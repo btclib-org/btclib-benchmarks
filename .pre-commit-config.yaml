@@ -17,9 +17,9 @@ ci:
   # lands on
   autoupdate_commit_msg: "Update the pinned pre-commit hook revisions"
   autoupdate_schedule: weekly
-  # the hooks pre-commit.ci cannot run: they shell out to uv, which is not
-  # installed there, and the lint workflow covers them.
-  # actionlint-shellcheck runs past pre-commit.ci's time limit
+  # the hooks pre-commit.ci cannot run. mypy, pyroma and twine-check shell
+  # out to uv, which is not installed there. actionlint-shellcheck runs past
+  # pre-commit.ci's time limit. The lint workflow runs them all.
   skip: [mypy, pyroma, twine-check, actionlint-shellcheck]
 
 repos:
