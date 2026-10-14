@@ -2,19 +2,24 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""Every row of `02-btclib-vs-btclib.py` really has a pure-Python path.
+"""Every btclib Python row really has a pure-Python path.
 
-That script's whole premise is that each operation in it can be answered
-twice, once in C and once in Python, and `python_arithmetic_only` is how it
-asks for the second. The premise is not self-evident: an operation whose
-Python arm calls the bindings anyway moves only part of its work, its pair
-reads far narrower than every other, and nothing but arithmetic on the
+`02-btclib-vs-btclib.py`'s whole premise is that each operation in it can be
+answered twice, once in C and once in Python, and `python_arithmetic_only`
+is how it asks for the second. The premise is not self-evident: an operation
+whose Python arm calls the bindings anyway moves only part of its work, its
+pair reads far narrower than every other, and nothing but arithmetic on the
 printed table says so.
+
+`04-pure-python.py` and `05-key-reuse.py` throw the same switch and publish
+btclib's rows after it as Python. A btclib change that routed one of them to
+C would turn a published Python number into a C number, so the same probe
+runs over their btclib Python rows too.
 
 What is checked here is the thing a timing cannot check: not how long the
 Python path takes, but that it *is* the Python path. Every bindings entry
 point is replaced with a function that raises, the switch is thrown, and
-every operation is called once. A row that has quietly kept a foot in C
+every row is called once. A row that has quietly kept a foot in C
 raises instead of answering.
 
 The predicates are left alone deliberately. `_libsecp256k1_serves` and
@@ -30,14 +35,16 @@ the patching, which reaches into modules the rest of the suite imports.
 from __future__ import annotations
 
 import importlib
+import os
 import subprocess
 import sys
 from itertools import cycle
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pytest
+
 if TYPE_CHECKING:
-    import pytest
     from btclib.key import PubKeyData
 
 # `import` cannot spell it: the six scripts are named for the pages
@@ -47,17 +54,27 @@ if TYPE_CHECKING:
 # to what a Python identifier may look like
 TWO_PATHS = importlib.import_module("02-btclib-vs-btclib")
 
+# the scripts whose btclib Python rows the probe calls. 04 and 05 are not
+# imported here: 04 sets `PYCOIN_NATIVE` before pycoin's first import, and
+# importing it while the suite is collected would make every other test run
+# pure-Python pycoin. The probe selects the rows inside its own process
+SCRIPTS_PROBED = ["02-btclib-vs-btclib", "04-pure-python", "05-key-reuse"]
+
 # where `conftest.py` points this process's own import path, spelled again
 # rather than imported from it: mypy resolves modules by path and a test
 # importing its own conftest is a module it cannot find
 SCRIPTS = Path(__file__).parents[1] / "scripts"
 
-# blocks the bindings, throws the switch, and reports one line per
-# operation. Written as a program rather than as a helper module because it
-# has to run somewhere this suite is not: see the docstring
+# blocks the bindings, throws the switch, and reports one line per row,
+# taking the script's name. 02's operations are all btclib's and 04
+# labels its btclib rows so. 05 times `verify_octets` and `verify_point` in C
+# before its switch and in Python after it, so the probe throws the switch
+# and calls them as the second, with `parse_point`.
+# Written as a program rather than as a helper module because it has to run
+# somewhere this suite is not: see the docstring
 PROBE = """
 import importlib, sys, types
-B = importlib.import_module("02-btclib-vs-btclib")
+B = importlib.import_module(sys.argv[1])
 
 
 class BindingsCalled(RuntimeError):
@@ -122,9 +139,22 @@ for name, module in list(sys.modules.items()):
                 # nothing here to write to
                 pass
 
-for name, operation, _, _ in B.OPERATIONS:
+if B.__name__ == "02-btclib-vs-btclib":
+    names = [operation.__name__ for _, operation, _, _ in B.OPERATIONS]
+elif B.__name__ == "04-pure-python":
+    names = [
+        function.__name__
+        for _, rows in B.TABLES
+        for label, function, _ in rows
+        if "btclib" in label
+    ]
+else:
+    names = ["verify_octets", "verify_point", "parse_point"]
+
+for name in names:
+    print("SELECTED " + name)
     try:
-        operation()
+        getattr(B, name)()
     except BindingsCalled as reached:
         print("REACHED " + name + " " + str(reached))
     else:
@@ -132,12 +162,14 @@ for name, operation, _, _ in B.OPERATIONS:
 """
 
 
-def test_every_operation_answers_without_the_bindings() -> None:
+@pytest.mark.parametrize("script", SCRIPTS_PROBED)
+def test_every_row_answers_without_the_bindings(script: str) -> None:
     """Block the bindings, then call every row: each must still answer."""
     # S603 asks whether untrusted input reaches a subprocess: what reaches
-    # this one is this interpreter and the constant above, both written here
+    # this one is this interpreter, the constant above and a name from the
+    # list above
     completed = subprocess.run(  # noqa: S603
-        [sys.executable, "-c", PROBE],
+        [sys.executable, "-c", PROBE, script],
         capture_output=True,
         encoding="utf-8",
         check=True,
@@ -149,10 +181,43 @@ def test_every_operation_answers_without_the_bindings() -> None:
     lines = completed.stdout.splitlines()
     reached = [line for line in lines if line.startswith("REACHED ")]
     assert not reached, "\n".join(reached)
-    # every row reported, so a probe that fell out early cannot pass as a
-    # probe that found nothing
-    answered = [line for line in lines if line.startswith("PYTHON ")]
-    assert len(answered) == len(TWO_PATHS.OPERATIONS)
+    selected = [line.split()[1] for line in lines if line.startswith("SELECTED ")]
+    answered = [line.split()[1] for line in lines if line.startswith("PYTHON ")]
+    # a selection that found nothing, or a probe that fell out early, cannot
+    # pass as a probe that found no row reaching C
+    assert selected
+    assert answered == selected
+
+
+# btclib's bindings first: loading them puts libsecp256k1's symbols in the
+# process, which is how pycoin finds a native library to use at all
+PYCOIN_BACKEND = """
+import btclib_secp256k1
+import pycoin.symbols.btc
+print(*(b.__qualname__ for b in type(pycoin.symbols.btc.network.generator).__mro__))
+"""
+
+
+def test_collecting_the_suite_leaves_pycoin_its_own_backend() -> None:
+    """Importing a script at collection must not decide pycoin's backend.
+
+    `04-pure-python.py` sets `PYCOIN_NATIVE` before pycoin's first import,
+    and pycoin looks its native library up then and never again. A test
+    module importing 04 would make every other test run pure-Python pycoin.
+    """
+    # S603: this interpreter and the constant above
+    fresh = subprocess.run(  # noqa: S603
+        [sys.executable, "-c", PYCOIN_BACKEND],
+        capture_output=True,
+        encoding="utf-8",
+        check=True,
+        env={k: v for k, v in os.environ.items() if k != "PYCOIN_NATIVE"},
+    ).stdout.split()
+    # imported here and not above: an import above would be the first, and
+    # the first decides
+    network = importlib.import_module("pycoin.symbols.btc").network
+    generator = network.generator
+    assert [b.__qualname__ for b in type(generator).__mro__] == fresh
 
 
 def test_taproot_tweak_hands_each_call_a_key_with_no_cached_point(

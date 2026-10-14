@@ -2,32 +2,30 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""Every benchmark loads, and its comparands agree, without timing anything.
+"""Every benchmark loads, and reads no clock while it does.
 
-This is the whole of what a test can hold a benchmark to. A measurement
-cannot be asserted -- the number is a property of the machine, not of the
-code -- so what is checked here is the two things that can be:
+A measurement cannot be asserted -- the number is a property of the machine,
+not of the code -- so this file holds a script to two things:
 
-- the module imports. That covers the fixtures at its top and the block
-  of assertions each of the six builds them with, holding every
-  comparand to what the others answer, or to what a specification
-  publishes, before any of them is timed. A table whose rows are
-  computing different things is worth nothing, and importing the module
-  is what runs that check.
-- it did not time anything while doing so. The `main()` guard is what
-  buys that, checked in the source rather than by timing a reload: a
-  wall clock cannot tell a removed guard from a busy machine, the two
-  reading the same from outside, and a ceiling loose enough to survive
-  a busy machine is one loose enough to miss a removed guard too.
+- the module imports, which builds the fixtures at its top. That the
+  comparands agree is not checked here.
+- it times nothing while doing so. `time.perf_counter` raises for the length
+  of the import, and every script reads its clock through it, so a timing at
+  module level fails whether or not it goes through `main()`. Checking the
+  wall time of an import would not do: it cannot tell a removed guard from a
+  busy machine.
 
 Both are what `main()` is for: a benchmark whose timings run at import
-is one no suite can hold to anything.
+is one no suite can hold to anything. The source walk below is the narrower
+form of the second, and refuses a module-level call to `main`.
 """
 
 from __future__ import annotations
 
 import ast
 import importlib
+import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -87,10 +85,34 @@ def _main_runs_only_behind_its_guard(source: str) -> bool:
     return True
 
 
+def _no_clock() -> float:
+    msg = "a script read the clock while it was being imported"
+    raise AssertionError(msg)
+
+
+@pytest.fixture
+def no_clock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make `time.perf_counter`, which every script reads, raise."""
+    monkeypatch.setattr(time, "perf_counter", _no_clock)
+
+
+@pytest.mark.usefixtures("no_clock")
 @pytest.mark.parametrize("name", BENCHMARKS)
-def test_the_benchmark_imports_and_its_comparands_agree(name: str) -> None:
-    """Import it, which is what runs its cross-comparand assertions."""
+def test_the_benchmark_imports_and_reads_no_clock(
+    name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Import it afresh with the clock made to raise."""
+    # a module another test has imported already would pass without running,
+    # and is put back afterwards
+    monkeypatch.delitem(sys.modules, name, raising=False)
     assert importlib.import_module(name) is not None
+
+
+@pytest.mark.usefixtures("no_clock")
+def test_the_clock_raises_for_whoever_reads_it() -> None:
+    """The detector itself: none of the six is the regression it looks for."""
+    with pytest.raises(AssertionError, match="read the clock"):
+        time.perf_counter()
 
 
 @pytest.mark.parametrize("name", BENCHMARKS)
