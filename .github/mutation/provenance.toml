@@ -11,7 +11,7 @@ module-path = [
     "scripts/artifacts.py",
 ]
 
-test-command = "python -m pytest -x -q -p no:randomly --no-cov tests/provenance_test.py tests/artifacts_test.py"
+test-command = "python -m pytest -x -q -n0 -p no:randomly --no-cov tests/provenance_test.py tests/artifacts_test.py"
 
 timeout = 60
 

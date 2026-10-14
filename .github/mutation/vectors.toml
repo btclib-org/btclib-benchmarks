@@ -15,7 +15,7 @@
 [cosmic-ray]
 module-path = ["src/btclib_benchmarks/_vectors.py"]
 
-test-command = "python -m pytest -x -q -p no:randomly --no-cov -k 'not test_the_pure_python_configuration_answers_the_same_vectors' tests/vectors_test.py tests/round_trip_test.py tests/wrappers_test.py"
+test-command = "python -m pytest -x -q -n0 -p no:randomly --no-cov -k 'not test_the_pure_python_configuration_answers_the_same_vectors' tests/vectors_test.py tests/round_trip_test.py tests/wrappers_test.py"
 
 timeout = 120
 
