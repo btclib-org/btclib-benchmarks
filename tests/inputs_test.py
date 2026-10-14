@@ -20,15 +20,12 @@ perfectly well and reports a number about the wrong thing.
 from __future__ import annotations
 
 from hashlib import sha256
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import btclib_secp256k1.keys
 import pytest
 
 from btclib_benchmarks import _inputs
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 @pytest.fixture
@@ -73,6 +70,29 @@ def test_a_file_written_whole_leaves_no_partial_behind(cache: Path) -> None:
     _inputs.cached("probe", 32, lambda: _inputs._stream(_inputs.POOL_SIZE, 0))
     assert not list(cache.glob("*.partial"))
     assert len(list(cache.glob("*.bin"))) == 1
+
+
+def test_two_writers_never_share_a_temporary_file(
+    cache: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Workers finding the cache empty at once must not move one file.
+
+    Run for real, the race is a `FileNotFoundError` on a timing, so this
+    judges the cause: the name each writer moves into place.
+    """
+    moved: list[Path] = []
+    real = Path.replace
+
+    def spy(self: Path, target: Path) -> Path:
+        moved.append(self)
+        return real(self, target)
+
+    monkeypatch.setattr(Path, "replace", spy)
+    name = f"{_inputs.GENERATION}-{_inputs.POOL_SIZE}-probe.bin"
+    for _ in range(2):
+        _inputs.cached("probe", 32, lambda: _inputs._stream(_inputs.POOL_SIZE, 0))
+        (cache / name).unlink()
+    assert len(set(moved)) == len(moved) == 2
 
 
 def test_a_short_file_is_absent_rather_than_half_a_pool(cache: Path) -> None:

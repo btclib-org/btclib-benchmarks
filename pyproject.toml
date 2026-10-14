@@ -187,6 +187,7 @@ test = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "pytest-randomly>=5.0.0",
+    "pytest-xdist>=3.8.0",
 ]
 lint = ["mypy>=2.3.1", "pre-commit>=4.6.2", "ruff>=0.16"]
 # what inspects the distribution before it would be published -- and here
@@ -376,7 +377,21 @@ git-only = [
 # probes, the table formatting -- and never a timing, a measurement being
 # the one thing a test cannot assert. tests/README.md says which
 testpaths = ["tests"]
-addopts = "-ra --cov --durations=8 --strict-config --strict-markers"
+# `-n auto --dist worksteal` because a pool pays on this suite on CI:
+# the `test` workflow's `ubuntu-latest` job runs the suite faster with it
+# than with `-n 0`, coverage on and off, on a filled `.inputs/`, with the
+# coverage floor reached under xdist. A cold `.inputs/` is the case that
+# decides whether workers may share it: they build it at collection, all
+# at once, and `_inputs.cached` gives each its own temporary file for
+# that reason. `worksteal` because the cost per test is lopsided:
+# `--durations` lists a few tests, mostly script imports, far above the
+# rest. To re-derive, dispatch `test.yml` on a branch whose pytest step
+# times `pytest -n 0` against a bare `pytest`, interleaved, after a
+# first run that fills `.inputs/`, and read the totals pytest prints; to
+# check the cold case, empty `.inputs/` and run `pytest -n 4`. The
+# mutation configurations pass `-n0` so each mutant's run stays in one
+# process
+addopts = "-ra --cov --durations=8 -n auto --dist worksteal --strict-config --strict-markers"
 xfail_strict = true
 filterwarnings = ["error"]
 

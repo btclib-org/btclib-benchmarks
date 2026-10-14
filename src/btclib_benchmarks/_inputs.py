@@ -50,6 +50,7 @@ the same bytes.
 
 from __future__ import annotations
 
+import tempfile
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -120,10 +121,13 @@ def cached(name: str, width: int, produce: Callable[[], list[bytes]]) -> list[by
     CACHE.mkdir(parents=True, exist_ok=True)
     # written whole and then moved into place: a run interrupted while
     # writing would otherwise leave a short file that the next one reads
-    # as a pool
-    tmp = path.with_suffix(".partial")
-    tmp.write_bytes(b"".join(records))
-    tmp.replace(path)
+    # as a pool. The temporary file is this writer's own, in the same
+    # directory so that the move is atomic: processes that find the cache
+    # empty at once, as pytest-xdist workers do, would otherwise write one
+    # shared name and move it out from under each other
+    with tempfile.NamedTemporaryFile(dir=CACHE, suffix=".partial", delete=False) as tmp:
+        tmp.write(b"".join(records))
+    Path(tmp.name).replace(path)
     return records
 
 
