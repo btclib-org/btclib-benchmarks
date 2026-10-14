@@ -18,8 +18,9 @@ ci:
   autoupdate_commit_msg: "Update the pinned pre-commit hook revisions"
   autoupdate_schedule: weekly
   # the hooks pre-commit.ci cannot run: they shell out to uv, which is not
-  # installed there, and the lint workflow covers them
-  skip: [mypy, pyroma, twine-check]
+  # installed there, and the lint workflow covers them.
+  # actionlint-shellcheck runs past pre-commit.ci's time limit
+  skip: [mypy, pyroma, twine-check, actionlint-shellcheck]
 
 repos:
   # this file checking itself. A `files` or `exclude` pattern that stops
@@ -483,33 +484,32 @@ repos:
   # context reference, an action input that does not exist, a job
   # depending on a job that is not there are all things a run discovers
   # by failing.
-  # The Python packaging of actionlint rather than the upstream hook, whose
-  # only non-docker id is language: golang, i.e. a go toolchain on every
-  # machine that commits and on pre-commit.ci
-  - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    # not below actionlint 1.7.7: its list of runner labels is compiled
-    # in, and versions before it do not know ubuntu-24.04-arm, which
-    # os-ubuntu.yml runs on
-    rev: v1.7.12.25
+  # kjanat/actionlint rather than rhysd/actionlint: upstream does not parse
+  # `uses: $/...` (rhysd/actionlint#711; rhysd/actionlint#732, unmerged,
+  # implements it), and the fork does (btclib-org/.github#1698). The rev
+  # is the sha `pre-commit autoupdate --freeze` writes for the tag its
+  # comment names, the annotated tag's own object, so a moved tag cannot
+  # change what runs here.
+  # The cost: pre-commit.ci's weekly bump keeps this line frozen, writing
+  # the new sha with `  # frozen: <tag>`, two spaces before the `#`,
+  # which prettier below rewrites to one. The bot's pull request then
+  # fails prettier until a commit restores the one-space form. A local
+  # `pre-commit autoupdate` without `--freeze` writes the tag name instead
+  # and drops the comment.
+  # The sha is what detect-secrets' hex-entropy plugin reports, hence the
+  # pragma, as on the rev of btclib-org/.github above.
+  # The hook is `language: golang`, so pre-commit builds it with a go
+  # toolchain. `actionlint-shellcheck` installs a Go build of shellcheck
+  # beside actionlint in the hook's environment: actionlint hands the body
+  # of a `run:` step to shellcheck, and without one it validates the yaml
+  # around a script and not the script. No workflow has a
+  # `shell: python` step, so the pyflakes it also delegates to is not
+  # declared.
+  - repo: https://github.com/kjanat/actionlint
+    rev: 2da2ceb4af2c7ecc48f5b9311d85080c3971b5f0 # frozen: v1.17.0 # pragma: allowlist secret
     hooks:
-      - id: actionlint
+      - id: actionlint-shellcheck
         name: actionlint (github workflows)
-        # actionlint delegates the body of a run: step to shellcheck, and
-        # of a "shell: python" step to pyflakes, if it finds them on the
-        # PATH: without them it validates the yaml around a shell script
-        # and not the script. Declared here rather than installed by hand,
-        # so that every machine and pre-commit.ci check what CI checks --
-        # the runner image happens to carry shellcheck, so leaving it to
-        # chance meant CI checking more than a commit did.
-        # Pinned, because nothing bumps an additional dependency here:
-        # pre-commit.ci moves rev, and dependabot's pre-commit ecosystem
-        # exists but is not configured.
-        # That is the point rather than the cost -- a shellcheck release
-        # adding a check would otherwise turn a pull request red for having
-        # changed nothing
-        additional_dependencies:
-          - shellcheck-py==0.11.0.1
-          - pyflakes==3.4.0
   # actionlint asks whether a workflow is correct, zizmor whether it is
   # safe: a token persisted where a later step can read it, a cache
   # restored into the job that builds what gets published, an expression
