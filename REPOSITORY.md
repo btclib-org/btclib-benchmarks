@@ -395,10 +395,8 @@ gh api repos/btclib-org/btclib-benchmarks --jq '.security_and_analysis'
 Three settings, all free on a public repository, off by default, and
 now on: secret scanning, its push protection, and Dependabot security
 updates. Push protection is the one that matters most — it refuses the
-push rather than reporting a secret that already reached the remote —
-and this repository has no `detect-secrets` hook standing in the way it
-does on `btclib`, `btclib-secp256k1` and `bitcoin-core-rpc`, so nothing
-local caught a leaked fixture before this did.
+push rather than reporting a secret that already reached the remote.
+The `detect-secrets` hook is the local check, before a commit.
 
 `secret_scanning_non_provider_patterns` and
 `secret_scanning_validity_checks` are a different pair: a `PATCH`
