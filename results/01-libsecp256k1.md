@@ -39,10 +39,8 @@ coincurve         21.0.0   2025-03-08  v0.6.0            cffi
 
 ## This run
 
-3.13 rather than 3.14 is not this page's choice: coincurve and secp256k1
-publish no cp314 wheel, and neither builds from source without
-`pkg-config`, so the interpreter below is the newest that runs all four
-wrappers.
+3.13 rather than 3.14 is not this page's choice: README.md's *The
+interpreter is 3.13, not the newest* gives the reason.
 
 <!-- run: begin -->
 ```text

@@ -87,14 +87,13 @@ Do not use Fable unless instructed.
   library that never imports them, so an advisory against a comparand
   was an advisory against btclib. Do not "tidy" them into a group.
 - **Both ends of the interpreter range are set by a comparand**, not
-  chosen. 3.13 is the ceiling: `coincurve` and `secp256k1` publish no
-  cp314 wheel, `secp256k1`'s sdist wants `pkg-config`, and `coincurve`'s
-  does not build at all, `.python-version`'s comment saying why. 3.11 is the
-  floor: `secp256k1lab` declares it and `scripts/04-pure-python.py` imports
-  it unguarded. Raising either means checking a package index first.
-  `coincurve` and `secp256k1` and no others hold the ceiling: `electrum-ecc`
-  is built from an sdist rather than resolved to a wheel, and what it
-  builds is `py3-none`, so it installs on any interpreter.
+  chosen. 3.13 is the ceiling: `coincurve` holds it, and on macOS
+  `secp256k1` too; `.python-version`'s comment says why. 3.11 is the
+  floor: `secp256k1lab` declares it and `scripts/04-pure-python.py`
+  imports it unguarded. Raising either means checking a package index
+  first. `electrum-ecc` holds neither end: it is built from an sdist
+  rather than resolved to a wheel, and what it builds is `py3-none`, so
+  it installs on any interpreter.
 - **`os-macos.yml`'s matrix carries one macOS image, not two.** An Intel
   cell is a comparand's build limit, not a choice — that workflow's own
   header is the full explanation.

@@ -50,10 +50,10 @@ Timings of [btclib](https://github.com/btclib-org/btclib) and
 against the packages they are usefully compared with.
 
 What a benchmark here can compare is bounded by what its comparands
-publish: `coincurve` and `secp256k1` build no `cp314` wheel yet, and, on
-macOS, `secp256k1`'s sdist does not build on an Intel runner. "The
-interpreter is 3.13, not the newest" below is the first's reason, and
-`os-macos.yml`'s own header is the second's.
+publish: `coincurve` builds no `cp314` wheel yet, `secp256k1` has none
+for macOS arm64 past `cp313`, and on macOS its sdist does not build on an
+Intel runner. "The interpreter is 3.13, not the newest" below is the
+reason for the first two, and `os-macos.yml`'s own header the third's.
 
 The benchmarks, each answering a different question:
 
@@ -114,19 +114,9 @@ published" below.
 
 ### The interpreter is 3.13, not the newest
 
-`coincurve` and `secp256k1` publish wheels up to `cp313` and no further.
-`secp256k1`'s sdist builds only where `pkg-config` is installed, and
-`coincurve`'s does not build at all: its build hook looks for `cffi`'s
-`LICENSE` at the root of `cffi`'s `.dist-info`, and the `cffi` its build
-resolves keeps it under `licenses/`. A benchmark that cannot install its
-comparands measures nothing, so `.python-version` pins 3.13 rather than
-the newest CPython.
-
-Raise the pin when both publish a `cp314` wheel. No other wrapper
-holds any part of it: `btclib-secp256k1` publishes past `cp313`
-already, and `electrum-ecc` has no wheel on PyPI at all — it is built at
-install time, and what it builds is tagged `py3-none`, the C being
-reached through ctypes rather than linked into an extension.
+`.python-version` pins 3.13 because `coincurve` installs on nothing newer,
+and on macOS `secp256k1` does not reliably ([ISS 381][i381]). That file's
+comment gives the reasons and says when to raise the pin.
 
 The `requires-python` floor is 3.11, and that end is set by a comparand
 too: `secp256k1lab` declares it, and `scripts/04-pure-python.py` imports it
@@ -140,7 +130,8 @@ its sdist, which carries libsecp256k1 as a submodule and runs its
 be there for. The other wrappers resolve to a wheel where the index
 serves one for the pinned interpreter *and* the platform in hand, and
 are built from source where it does not, which is when a build of
-`secp256k1` wants `pkg-config`. `CONTRIBUTING.md` points at the
+`secp256k1` runs, with the `pkg-config` that `pyproject.toml`'s
+`[tool.uv]` supplies. `CONTRIBUTING.md` points at the
 workflows that name where each of those happens.
 
 Either way the wrapper rows are honest: each times the libsecp256k1 that
@@ -255,6 +246,7 @@ would carry one in.
 
 [btclib-security]: https://github.com/btclib-org/btclib/blob/main/SECURITY.md
 [secp256k1-security]: https://github.com/btclib-org/btclib-secp256k1/blob/main/SECURITY.md
+[i381]: https://github.com/btclib-org/btclib-benchmarks/issues/381
 
 ## Licence
 

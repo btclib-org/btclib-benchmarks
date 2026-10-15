@@ -227,6 +227,12 @@ dev = [
 # the oldest uv that may read uv.lock -- section 1 has the argument and
 # section 15 the command that measures the ceiling
 required-version = ">=0.12.18"
+# secp256k1's sdist refuses to build without `pkg-config` on PATH, and
+# the `pkgconf` package on PyPI is one. Naming it here puts it in the
+# build environment of that one sdist, on every runner, so a build from
+# source (an interpreter or a platform the index has no wheel for) needs
+# no system `pkg-config` (issue #427)
+extra-build-dependencies = { secp256k1 = ["pkgconf"] }
 
 [tool.uv.sources]
 # the one comparand with no release on any index, pinned to the tag its
