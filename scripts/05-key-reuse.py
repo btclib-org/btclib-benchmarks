@@ -4,7 +4,7 @@
 
 """What the second signature under the same key costs, and the hundredth.
 
-Nearly every row of the other four benchmarks times one operation once: a
+Nearly every row of the other benchmarks times one operation once: a
 key, a message, a signature, and a row. That is the right shape for asking
 what an operation costs, and the wrong shape for asking what a verifier
 pays, because a verifier does not verify one signature. A node checks every
