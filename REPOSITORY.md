@@ -154,7 +154,7 @@ gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
            bypass: [.bypass_actors[].bypass_mode]}'
 ```
 
-- `main-integrity` — required signatures, required linear history, no
+- `main-integrity` — required linear history, no
   force pushes, no deletions — with **no bypass actor at all**, which is
   what makes every one of those true of an administrator too.
 - `main-self-merge` — require a pull request, an approving review,
@@ -178,8 +178,10 @@ bypass.
 
 What lands, therefore, is a squash GitHub composes at the button and
 signs with its own web-flow key. That the signer is GitHub rather than
-the maintainer costs nothing: `main-integrity` asks for a signature and
-not for a particular signer, and asks it of everyone.
+the maintainer costs nothing: [the standard asks for a verified signature
+and not for a particular
+signer](https://github.com/btclib-org/.github/blob/main/README.md#signatures),
+and `verified-signatures.yml` checks it.
 
 A third ruleset, `tag-integrity`, targets tags rather than `main` and so
 sits outside the aggregation above: `target: tag`, `refs/tags/v*`,
@@ -202,14 +204,15 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection\
 # false
 ```
 
-Classic protection's own copy of the rule is off, and `main-integrity`
-above is what requires a signature: [the standard states that value for
-every
+Classic protection's own copy of the rule is off. No ruleset over `main`
+carries `required_signatures` either: [the standard states that value for every
 repository](https://github.com/btclib-org/.github/blob/main/README.md#branch-protection-and-rulesets).
-That ruleset has no bypass actor, so an unsigned commit is refused by the
-push rather than noticed later, the maintainer's included. Reading a
-commit before pushing it, `git log -1 --format='%G? %GS'`, is what
-catches it first, an `N` being a defect to fix rather than to explain.
+So nothing refuses an unsigned commit at the push. `verified-signatures.yml`
+checks after the push: for each commit pushed it reads
+`.commit.verification.verified` and fails naming any that is not `true`. A
+red run is read in the Actions tab; the check is not a required one.
+Reading a commit before pushing it, `git log -1 --format='%G? %GS'`, is
+what catches it first, an `N` being a defect to fix rather than to explain.
 
 ## Merge methods
 
