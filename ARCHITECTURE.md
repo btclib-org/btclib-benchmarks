@@ -38,7 +38,7 @@ by `tests/artifacts_test.py`, and `scripts/render.py` by nothing, below.
 
 ## The shared modules, and why two of them import no benchmark
 
-`src/btclib_benchmarks/` holds four modules, none of them public
+`src/btclib_benchmarks/` holds these modules, none of them public
 (`__all__` is empty in `__init__.py`, and every module name starts with
 an underscore):
 
@@ -56,6 +56,12 @@ an underscore):
 - **`_results.py`** — the shape of a saved run (`Measurement`, `Ratios`,
   `Timing`) and what a page's own three marked regions hold, shared by
   every benchmark's writer and by `scripts/render.py`'s reader.
+- **`_timing.py`** — the rounds-and-halves estimator, `benchmark`, which
+  each script that saves `halves_apart` calls with its own `calls` and
+  `rounds`.
+- **`_releases.py`** — what is recorded by hand about each comparand
+  build: the day it was published and the libsecp256k1 revision it
+  vendors, once, keyed by the build they were read for.
 
 `_results.py` and `scripts/render.py` import no benchmark, and that is a
 rule three ways rather than one, stated here and enforced by nothing but

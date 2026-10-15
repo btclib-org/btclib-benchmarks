@@ -6,11 +6,10 @@
 
 Section 7 of the organization standard asks every module and package to
 declare `__all__`, a module under a private name excepted as no part of
-the surface it describes. Every submodule this package holds -- the
-shared inputs, the provenance report, the saved-run schema and the
-vendored vectors -- is named with a leading underscore, so none of them
-is a surface the root would have to re-export, and the root's own
-`__all__` is legitimately empty rather than merely absent.
+the surface it describes. Every submodule this package holds is named
+with a leading underscore, so none of them is a surface the root would
+have to re-export, and the root's own `__all__` is legitimately empty
+rather than merely absent.
 """
 
 from __future__ import annotations

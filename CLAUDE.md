@@ -109,8 +109,8 @@ Do not use Fable unless instructed.
   `01-libsecp256k1.py` imports no btclib: a table of wrappers has no
   pure-Python row to switch.
 - **The wrapper rows carry the libsecp256k1 revision each package
-  vendors**, `LIBSECP256K1_PINS` in `01-libsecp256k1.py` holding
-  it: most of the wrapper rows link the library into a cffi extension
+  vendors**, `LIBSECP256K1_PINS` in `_releases.py` holding it:
+  most of the wrapper rows link the library into a cffi extension
   (`electrum-ecc` reaches it through ctypes instead), where
   nothing at run time can say which revision that was. Each pin is keyed
   by the build it was read from, so an upgraded comparand prints

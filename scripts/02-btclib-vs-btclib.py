@@ -164,8 +164,8 @@ def provenance() -> Provenance:
 
     The wrapper's version is btclib-secp256k1's, that being what a caller
     installs; which revision of libsecp256k1 it bundled is recorded in
-    `scripts/01-libsecp256k1.py`, against the release it was read
-    from, and one script naming a pin is enough.
+    `LIBSECP256K1_PINS` of `src/btclib_benchmarks/_releases.py`, against the
+    release it was read from, and `scripts/01-libsecp256k1.py` prints it.
     """
     stated = (
         f"btclib {version('btclib')} (wrapper {version('btclib-secp256k1')}), "
@@ -691,7 +691,7 @@ def benchmark(func: Callable[[], None], mult_: int) -> float:
 
 # one operation per entry, with the thousands of calls to give it through
 # libsecp256k1 and through Python. Each count was picked from a first timed
-# call to put its column near half a second -- long enough that the loop's
+# call to put its column near one common duration -- long enough that the loop's
 # own overhead is a rounding error, short enough that every operation
 # through both arithmetics is a run somebody will wait for
 OPERATIONS = (

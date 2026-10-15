@@ -354,6 +354,7 @@ from btclib_benchmarks._provenance import (
     origin_of,
     wheel_tags,
 )
+from btclib_benchmarks._releases import LIBSECP256K1_PINS, RELEASE_DATES
 from btclib_benchmarks._results import (
     Measurement,
     Provenance,
@@ -369,6 +370,7 @@ from btclib_benchmarks._results import (
     taken_now,
     width_for,
 )
+from btclib_benchmarks._timing import benchmark
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -377,13 +379,13 @@ if TYPE_CHECKING:
 def _build_of(dist_name: str) -> str:
     """Return what identifies the build installed here.
 
-    This is the key both recorded tables below are read by, and there are
-    three answers, because what identifies a build is not one thing. A
-    wrapper resolved from a branch is its commit, the version there
-    standing still while the branch moves. A released wrapper is its
-    version -- unless the index serves two artifacts of that version
-    carrying different libraries, which `secp256k1` 0.14.0 does: its sdist
-    is the original and its wheels were re-published under the same
+    This is the key `_releases.RELEASE_DATES` and `LIBSECP256K1_PINS` are
+    read by here, and there are three answers, because what identifies a
+    build is not one thing. A wrapper resolved from a branch is its commit,
+    the version there standing still while the branch moves. A released
+    wrapper is its version -- unless the index serves two artifacts of that
+    version carrying different libraries, which `secp256k1` 0.14.0 does: its
+    sdist is the original and its wheels were re-published under the same
     version years later from a source that had moved on. For that row the
     artifact is part of the identity, and the wheel's tag is what says
     which, an sdist reaching site-packages as a wheel built where it is
@@ -392,8 +394,8 @@ def _build_of(dist_name: str) -> str:
     A tag that is neither one the index is recorded as serving nor one no
     index would serve says nothing: it is a wheel published since those
     were read, or a local build on a platform that spells the two alike.
-    The answer then is a string no line below is keyed by, so both columns
-    say `unrecorded` rather than pick between two libraries.
+    The answer then is a string no record in `_releases.py` is keyed by, so
+    both columns say `unrecorded` rather than pick between two libraries.
     """
     if dist_name not in RELEASE_DATES:
         # the branch and the commit, without the repository the package
@@ -410,12 +412,8 @@ def _build_of(dist_name: str) -> str:
 def _built_from(dist_name: str) -> str:
     """Say when this build was published, or where it came from instead.
 
-    A build resolved from a branch has no publish date to report -- a
-    release that has not happened cannot be dated -- so the column names
-    the branch and the commit instead, which is what a reader has to look
-    up to get that build again. Every wrapper this script times now
-    resolves from a release, so this path exists for `_build_of`'s
-    general case rather than for a row currently on it.
+    `_releases.released` has the rule. This reads the record by `_build_of`
+    and not by version; a distribution with no record is named by its build.
     """
     build = _build_of(dist_name)
     if dist_name not in RELEASE_DATES:
@@ -432,7 +430,7 @@ def _vendored_pin(dist_name: str) -> str:
     on the version alone it was not: a maintainer who re-publishes wheels
     without moving the version moves the library under a pin that goes on
     printing, and one of these four did exactly that. `_build_of` is what
-    the key is now.
+    the key is.
     """
     return LIBSECP256K1_PINS[dist_name].get(_build_of(dist_name), "unrecorded")
 
@@ -749,66 +747,6 @@ TWEAK_ADD_CHECK = cycle(XONLY_TWEAKS)
 RESERIALIZE = cycle(_slice(5, PUBKEYS))
 PARSE_SERIALIZE = cycle(_slice(5, PUBKEYS))
 
-
-# When each of these builds was published, read from the index -- where
-# `uv.lock` keeps it too, an `upload-time` per artifact -- and recorded
-# against the build it was read for. Not available at run time: a wheel's
-# METADATA carries a Version and no date, and the dist-info directory's
-# mtime is when the package was installed on this machine. A comparand's
-# age is worth a column here, the revision a build vendors following from
-# when the build was made.
-#
-# Keyed by build rather than by version, which for secp256k1 are not the
-# same thing: its sdist and the wheels re-published under that version
-# years afterwards are two builds, and keyed by version this column stated
-# the sdist's date on a machine that had installed a wheel. It is the
-# column that made that mistake first, one column ahead of the pin.
-RELEASE_DATES = {
-    "btclib-secp256k1": {"0.8.0.4": "2026-08-21"},
-    "coincurve": {"21.0.0": "2025-03-08"},
-    "secp256k1": {"0.14.0 wheel": "2026-01-29", "0.14.0 sdist": "2021-11-06"},
-    "electrum-ecc": {"0.0.7": "2026-02-25"},
-}
-
-
-# Where each row's libsecp256k1 came from, read from the build named
-# beside it:
-#
-# - btclib-secp256k1: the `secp256k1` submodule pin at v0.8.0.4, 6e2c8bc,
-#   which is upstream's v0.8.0 tag exactly -- the same commit v0.8.0,
-#   v0.8.0.1, v0.8.0.2 and v0.8.0.3 tags all pinned, so this release
-#   moved too and the library still did not
-# - coincurve: `VENDORED_UPSTREAM_REF` in its pyproject.toml, 0cdc758a,
-#   which is upstream's v0.6.0
-# - secp256k1: two, one per artifact, which is the whole reason these are
-#   keyed the way they are. Its sdist ships a libsecp256k1 tree among its
-#   own files rather than fetching one, and that tree's configure.ac still
-#   calls itself 0.1: it is 9526874d, a master commit older than upstream's
-#   first tagged release. The wheels come from a source that had moved
-#   `LIB_TARBALL_URL` on to the v0.6.0 tag, and the installed extension is
-#   what confirms it rather than the claim -- it exports the `musig` entry
-#   points that release added, where the tree in the sdist has four modules
-#   and neither that one nor `ellswift`
-# - electrum-ecc: the libsecp256k1 tree carried in its sdist and compiled
-#   at install time, whose configure.ac names 0.7.1 as a release
-#
-# Keyed by what identifies a build, which `_build_of` decides and is not
-# one thing for all four: a branch install is its commit, a release is its
-# version, and a release whose index serves two artifacts of one version
-# is neither until the artifact is named. The floors in pyproject.toml are
-# floors -- a comparand upgrades without a word, and a pin has to stop
-# being claimed when the build it was read from is no longer the one
-# installed. What made that guard miss was the key, not the pin: a version
-# that stands still while its artifacts change is a key that cannot fire.
-LIBSECP256K1_PINS = {
-    "btclib-secp256k1": {"0.8.0.4": "v0.8.0"},
-    "coincurve": {"21.0.0": "v0.6.0"},
-    "secp256k1": {
-        "0.14.0 wheel": "v0.6.0",
-        "0.14.0 sdist": "9526874d, pre-v0.1.0",
-    },
-    "electrum-ecc": {"0.0.7": "v0.7.1"},
-}
 
 # The wheels the index serves for the one release whose two artifacts
 # disagree, as the tags they carry: three interpreters over three
@@ -1976,35 +1914,23 @@ for _row in (
 # `CALLS` sets how long one round lasts, and that is what a round's
 # minimum is worth: a round short enough to catch one scheduling slice
 # carries it whole, where a long one leaves the interruption a smaller
-# share of what it is dividing. The counts below were chosen by measuring
-# that against the column as it was then -- a maximum minus a minimum,
-# where a round under twenty-five milliseconds scattered by tens of
-# percent on an operation whose minimum was steady to one -- and that
-# measurement no longer describes the column, which is now a difference of
-# two minima. The direction it argued for is unchanged and the reasoning
-# under `ROUNDS` below is now the reasoning for both: more calls make each
-# half's minimum better, so the counts stand and the number that chose
-# them does not.
+# share of what it is dividing.
 #
-# What is certainly still true is why the count is per table rather than
-# shared: the operations on this page are two orders of magnitude apart in
-# cost, and one count for all of them would leave the parse tables
-# measuring the clock.
+# The count is per table rather than shared: the operations on this page
+# are far apart in cost, and one count for all of them would leave the
+# parse tables measuring the clock.
 #
 # `ROUNDS` buys chances at a quiet round, and the minimum converges almost
-# at once: three rounds and a hundred agree to within a percent. More of
-# them cost minutes and buy little, and they no longer cost the column
-# anything either -- each half's minimum is the better for having more
-# rounds behind it, so the two halves sit closer, where a maximum minus a
-# minimum grew with every sample taken. Ten is where the minimum has
-# settled, and it is even, which the halves want.
+# at once: three rounds and a hundred agree closely. More of them cost
+# minutes and buy little, and cost the column nothing: each half's minimum
+# is the better for having more rounds behind it. Ten is where the minimum
+# has settled, and it is even, which the halves want.
 DEFAULT_CALLS = 10_000
 
 # the two parse tables, whose operations are the cheapest on the page: a
-# 65-byte parse reads two coordinates and costs a fraction of a
-# microsecond, so ten thousand of them is a round of under three
-# milliseconds. These counts put both rounds where the rest of the page
-# already is.
+# 65-byte parse reads two coordinates and costs very little, so the default
+# count would make a round far shorter than the rest of the page's. These
+# counts put both rounds where the rest of the page already is.
 #
 # Keyed by the rows the count belongs to and not by the table's number,
 # which is an index into a page and moves whenever the page is reordered: a
@@ -2017,7 +1943,7 @@ CALLS_PER_ROWS: dict[tuple[Callable[[], None], ...], int] = {
     PARSE_COMPRESSED_ROWS: 100_000,
     # the re-encoding pair, for the same reason as the parse tables above and
     # more so: neither row leaves the octets long enough to build a table, so
-    # ten thousand of them is a round of a few milliseconds
+    # the default count would make a round shorter still
     RESERIALIZE_ROWS: 200_000,
 }
 
@@ -2036,13 +1962,8 @@ ROUNDS = 10
 # So the whole page is timed twice in one invocation, the first pass is
 # published, and what the second buys is one line saying how far the two
 # disagreed. Which pass is published is a rule rather than a judgement made
-# after the fact, and it was tested rather than assumed: the first run taken
-# this way came out quicker on the second pass for 78 of its 85 rows, which
-# would have been an argument for publishing the second -- and the two runs
-# after it split 45 of 85 and 45 of 86, medians of three hundredths of a per
-# cent. There is no systematic difference between the passes to correct for,
-# so the fixed rule stands: what a criterion applied per run would buy is a
-# page publishing whichever pass flattered it.
+# after the fact: a criterion applied per run would buy a page publishing
+# whichever pass flattered it.
 #
 # The second pass is saved per row, because the line is what it buys: a
 # comparison nobody can re-derive from the file is not a measurement this
@@ -2097,76 +2018,6 @@ def with_second_pass(published: Ratios, again: Ratios) -> Ratios:
     return replace(published, rows=rows)
 
 
-def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
-    """Return the quickest round's microseconds per call, and the halves' gap.
-
-    `ROUNDS` rounds of `calls` calls each. The minimum is the estimate: noise
-    is one-sided -- nothing on this machine makes a call quicker than it is --
-    so the quickest round is the one that ran with least taken from it, and a
-    mean would carry every interruption into the number.
-
-    The second number is how far that estimate moved when the row was
-    measured twice, which is what the rounds are halved for: the column is
-    the distance between the two halves' minima. That is the one question the
-    column is read for -- whether a gap between two adjacent rows is a gap
-    this run settled -- and it answers it in the same microseconds as the
-    value beside it, so the two are read against each other without
-    arithmetic. Contiguous halves rather than alternate rounds, because the
-    rows of a table are measured minutes apart and a machine that drifts
-    over a row's rounds will drift over a table's rows.
-
-    It is saved as `halves_apart` and not as `spread`, which is the key this
-    project wrote for the statistic this one is deliberately not: a
-    definition living in this docstring is not carried by the file, so the
-    two statistics are two keys and a saved number means what its key says.
-    `_results.py`'s `SCHEMA` has the reasoning, that being where a format
-    decision belongs. `03-libraries.py` measures this statistic too now and
-    writes the same key; the runs saved under the other one keep it, which
-    is what the two keys are for.
-
-    The column is quantized and lands on a lattice, which is worth knowing
-    before reading a small value on it: a round is measured to one tick of
-    `perf_counter` -- about 42 nanoseconds here -- and divided by the call
-    count, so every value this column carries is a whole number of ticks
-    divided by that count. Zero is one of the lattice's points and means
-    the two halves' minima fell inside one tick. It is not an unmeasured
-    row: `_results.py` leaves an absent one out of the saved run rather
-    than writing it as zero.
-
-    Two halves seconds apart say nothing about two runs a day apart, and the
-    page says so where the column is explained: a row can move by more than
-    any distance printed beside it between one run and the next, which is
-    why these tables are read as an order of magnitude and by ratio.
-
-    What the column must not be is the slowest round less the quickest. That
-    is an extreme-value statistic over ten samples, so it has enormous
-    variance by construction and reports the worst interruption a row
-    happened to catch rather than anything about the package: measured on
-    this machine, the same four signing rows timed twice in one process
-    printed minima agreeing to a hundredth of a microsecond and maxima
-    disagreeing by a factor of forty. Nor is the garbage collector the
-    mechanism, which was checked rather than assumed -- `gc.get_stats()`
-    reported zero collections in every generation across those rounds, and
-    the wilder of the two runs was the one taken under `gc.disable()`. More
-    rounds make a maximum worse and both halves' minima better, which is the
-    other reason this column is not that one.
-    """
-    # perf_counter and not time(): the wall clock can step backwards under an
-    # NTP correction, and a benchmark is the one place that shows up as a
-    # negative duration
-    rounds = []
-    for _ in range(ROUNDS):
-        start = time.perf_counter()
-        for _ in range(calls):
-            func()
-        rounds.append((time.perf_counter() - start) / calls * 1e6)
-    # halved on what the loop above actually produced rather than on
-    # `ROUNDS`, the two being the same number until somebody changes one
-    half = len(rounds) // 2
-    first, second = min(rounds[:half]), min(rounds[half:])
-    return min(first, second), abs(first - second)
-
-
 def measured(
     title: str,
     rows: tuple[Callable[[], None], ...],
@@ -2213,7 +2064,7 @@ def measured(
             file=sys.stderr,
         )
         calls = CALLS_PER_ROWS.get(rows, DEFAULT_CALLS)
-        value, apart = benchmark(func, calls)
+        value, apart = benchmark(func, calls, ROUNDS)
         timings.append(
             Timing(
                 label=label,
@@ -2364,7 +2215,7 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...], tuple[str, ...], str], 
 )
 
 # what the run block claims about how these numbers were taken, said by
-# the script that takes them: `benchmark` above is where the rounds and the
+# the script that takes them: `_timing.benchmark` is where the rounds and the
 # minimum are, and the `halves` column is what a reader checks it by
 # kept inside 80 columns once the label it prints under is counted, which
 # `labelled` in `_results.py` now refuses to publish rather than leaving

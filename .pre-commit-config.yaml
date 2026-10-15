@@ -558,7 +558,7 @@ repos:
   #
   # Scoped to `scripts/` and `src/`, which between them are where every
   # function this repository writes lives: the six benchmarks and the
-  # four shared modules under `src/btclib_benchmarks/` included, a
+  # shared modules under `src/btclib_benchmarks/` included, a
   # fixture builder whose docstring no longer matches its parameters
   # being how a row starts measuring something other than what the page
   # says it does. Not `tests/`, where mypy does run: a test takes

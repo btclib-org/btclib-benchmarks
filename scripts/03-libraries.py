@@ -148,12 +148,9 @@ from __future__ import annotations
 
 import hashlib
 import sys
-import time
 from collections.abc import Callable
 from importlib.metadata import version
-from importlib.util import find_spec
 from itertools import cycle
-from pathlib import Path
 
 import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
@@ -186,7 +183,8 @@ from btclib_ecc.ecc import dsa, ssa
 from btclib_wallet import bip32 as btclib_bip32
 
 from btclib_benchmarks import _inputs
-from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS, origin_of
+from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS
+from btclib_benchmarks._releases import released
 from btclib_benchmarks._results import (
     Measurement,
     Provenance,
@@ -201,38 +199,8 @@ from btclib_benchmarks._results import (
     taken_now,
     width_for,
 )
+from btclib_benchmarks._timing import benchmark
 from btclib_benchmarks._vectors import bip32
-
-# the release each version was published on, recorded because no installed
-# metadata carries it: a wheel's METADATA has a Version and no date, and the
-# dist-info directory's mtime is when the package was installed here. Keyed
-# by the release it was read for, so an upgraded comparand prints
-# `unrecorded` rather than a date that has stopped being true
-RELEASE_DATES = {
-    "btclib": ("2026.10.3", "2026-10-03"),
-    "ecdsa": ("0.19.2", "2026-03-26"),
-    "pycoin": ("0.92718.20260405", "2026-04-05"),
-    "buidl": ("0.2.36", "2022-02-28"),
-    "embit": ("0.8.0", "2024-05-30"),
-    "python-bitcoinlib": ("0.12.2", "2023-06-03"),
-}
-
-
-def _released(dist_name: str) -> str:
-    """Say when this build was published, or where it came from instead.
-
-    A build resolved from a branch has no publish date to report -- a
-    release that has not happened cannot be dated -- so the column names
-    the branch and the commit instead, which is what a reader has to look
-    up to get that build again. Every package this script prices now
-    resolves from a release, so this path exists for a future comparand
-    rather than for a row currently on it.
-    """
-    if not (recorded := RELEASE_DATES.get(dist_name)):
-        # the branch and the commit, without the repository the package
-        # column has already named
-        return origin_of(dist_name).split()[-1]
-    return recorded[1] if version(dist_name) == recorded[0] else "unrecorded"
 
 
 def provenance() -> Provenance:
@@ -256,9 +224,9 @@ def provenance() -> Provenance:
     return Provenance(
         columns=["package", "version", "released", "arithmetic"],
         rows=[
-            [dist_name, version(dist_name), _released(dist_name), arithmetic]
+            [dist_name, version(dist_name), released(dist_name), arithmetic]
             for dist_name, arithmetic in sorted(
-                rows, key=lambda row: _released(row[0]), reverse=True
+                rows, key=lambda row: released(row[0]), reverse=True
             )
         ],
     )
@@ -279,7 +247,7 @@ def provenance() -> Provenance:
 #
 # How deep the curve fixtures go. Not the longest row's fifty thousand: an
 # entry is a key object and a signature in each of six packages, two of
-# which sign in pure Python at tens of milliseconds apiece, so fifty
+# which sign in pure Python slowly, so fifty
 # thousand of each would be minutes of setup before a number is printed.
 #
 # Ten thousand instead, which the longest rows read five times per round.
@@ -308,44 +276,6 @@ ORDER = curve.secp256k1.n
 DIGESTS = [int.from_bytes(msg, "big") % ORDER for msg in MESSAGES]
 
 
-# the two modules a native mixin can come from, and what each one means.
-# Keyed by module rather than by class name because the name cannot tell
-# them apart: both call their real mixin `Optimizations` and both call
-# their fallback `noop`. `LibSECP256K1Optimizations` is an alias pycoin
-# binds to that same `Optimizations` class, so a probe looking for that
-# spelling among the base names could not fire at all -- which is how
-# this table came to print "pure Python" beside timings that were C.
-# The strings are a cell of `provenance`'s table, so they name the code
-# and then the mechanism, as every other line there does. Which copy of
-# libsecp256k1 is a property of the process rather than of pycoin, and the
-# module docstring is where that is spelled out.
-# Which library each row's wrapper reaches, keyed to the release the pin was
-# read from. Neither revision can be recovered at run time: btclib's is
-# compiled into a cffi extension, and embit's is a prebuilt binary carrying
-# no version string. Both are printed as unrecorded for any other release,
-# because a floor is a floor and a comparand upgrades without a word.
-#
-# - btclib_secp256k1 0.8.0.2: its `secp256k1` submodule pin, 6e2c8bc, which
-#   is upstream's v0.8.0 tag exactly, and the same commit 0.8.0.1 pinned
-# - embit 0.8.0: its `secp256k1/secp256k1-zkp` submodule pin, d9560e0a --
-#   ElementsProject's fork and not bitcoin-core/secp256k1, which is worth
-#   saying in a table that calls four other rows the same library
-PINS = {"btclib-secp256k1": ("0.8.0.2", "v0.8.0"), "embit": ("0.8.0", "d9560e0a")}
-
-
-def _pinned(dist_name: str) -> str:
-    """Return the pinned revision, or say the installed release has no pin."""
-    recorded, pin = PINS[dist_name]
-    installed = version(dist_name)
-    return pin if installed == recorded else f"unrecorded for {installed}"
-
-
-def _artifact(module_name: str) -> str:
-    """Return the file name of the compiled extension a wrapper calls into."""
-    spec = find_spec(module_name)
-    return Path(spec.origin).name if spec and spec.origin else "not found"
-
-
 # pycoin bundles no library and builds no extension: `native/secp256k1.py`
 # and `native/openssl.py` are ctypes loaders, and what they find is a
 # property of the machine. So a PyPI install gets pure Python unless a
@@ -362,6 +292,16 @@ PURE_PYTHON = "pure Python"
 OPENSSL = "OpenSSL's libcrypto"
 
 
+# the two modules a native mixin can come from, and what each one means.
+# Keyed by module rather than by class name because the name cannot tell
+# them apart: both call their real mixin `Optimizations` and both call
+# their fallback `noop`. `LibSECP256K1Optimizations` is an alias pycoin
+# binds to that same `Optimizations` class, so a probe looking for that
+# spelling among the base names could not fire at all.
+# The strings are a cell of `provenance`'s table, so they name the code
+# and then the mechanism, as every other line there does. Which copy of
+# libsecp256k1 is a property of the process rather than of pycoin, and the
+# module docstring is where that is spelled out.
 PYCOIN_NATIVE_MIXINS = {
     "pycoin.ecdsa.native.secp256k1": LIBSECP256K1,
     "pycoin.ecdsa.native.openssl": OPENSSL,
@@ -423,8 +363,7 @@ def pycoin_calls(c: int, python: int) -> int:
     """Pick a pycoin row's loop count from the backend it resolved to.
 
     A count written once is wrong on one machine or the other. The same
-    call is a few microseconds through libsecp256k1 and several
-    milliseconds in Python -- three orders of magnitude -- and which one
+    call is far quicker through libsecp256k1 than in Python, and which one
     runs is decided by the imports above rather than by anything here, so
     a count sized for Python measures almost nothing when the row turns
     out to be C, and a count sized for C sits for minutes when it does
@@ -447,7 +386,7 @@ def _arithmetic_bitcoinlib() -> str:
 # --- ECDSA sign and verify ---------------------------------------------
 
 # how deep each package's fixtures go: its own longest row and no further.
-# The rows of this page are three orders of magnitude apart -- buidl's pure
+# The rows of this page are far apart in cost -- buidl's pure
 # Python answers fifty calls where btclib answers fifty thousand -- so one
 # depth for all of them would spend minutes building keys nothing reads
 BITCOINLIB_CALLS = 8_000
@@ -455,7 +394,7 @@ PYECDSA_CALLS = 5_000
 PYECDSA_VERIFY_CALLS = 3_000
 BUIDL_CALLS = 50
 # and buidl's signatures separately from its keys: signing in pure Python
-# costs tens of milliseconds each here, and only the verify rows read a
+# is slow, and only the verify rows read a
 # signature -- twenty-five calls, against the fifty its sign row makes
 BUIDL_SIG_CALLS = 25
 
@@ -1144,91 +1083,28 @@ for _encoding_row in (
     _encoding_row()
 
 
-# four, and even, which is what the estimator below wants: the rounds are
-# halved and what is printed is the distance between the two halves' minima,
-# as `scripts/01-libsecp256k1.py` prints it. Three did not halve -- half a
-# round is the minimum of nothing -- so the change from that page's statistic
-# to this one is this constant and the arithmetic under it, two and two, and
-# it costs a third of a run.
+# four, and even, which is what `_timing.benchmark` wants: the rounds are
+# halved, two and two, and what is printed is the distance between the two
+# halves' minima, as `scripts/01-libsecp256k1.py` prints it.
 #
 # More would be better here as they are there, each half's minimum being the
 # better for having more rounds behind it. Four is what this page can afford:
-# its pure-Python rows are orders of magnitude slower than the wrappers
+# its pure-Python rows are far slower than the wrappers
 # page's, which is why `calls` is per row here and per table there, and a
 # fifth and sixth round would be paid on those rows too.
 ROUNDS = 4
 
 
-def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
-    """Return the quickest round's microseconds per call, and the halves' gap.
-
-    `ROUNDS` rounds of `calls` calls each. The minimum is the estimate:
-    noise is one-sided -- nothing on this machine makes a call quicker than
-    it is -- so the quickest round is the one that ran with least taken from
-    it, where a mean would carry every interruption into the number.
-
-    The second number is how far that estimate moved when the row was
-    measured twice, which is what the rounds are halved for: the column is
-    the distance between the two halves' minima, in the same microseconds as
-    the value beside it. That is the question the column is read for --
-    whether a gap between two adjacent rows is a gap this run settled -- and
-    a maximum less a minimum cannot answer it. An extreme-value statistic
-    over a handful of samples has enormous variance by construction and
-    reports the worst interruption a row happened to catch rather than
-    anything about the package, which is what ISS 19 concluded and what
-    this page told its reader to use for two releases after it.
-
-    It is saved as `halves_apart` and not as `spread`, which is the key this
-    page wrote for the statistic it is deliberately no longer: a definition
-    living in this docstring is not carried by the file, so the two
-    statistics are two keys and a saved number means what its key says.
-    `_results.py`'s `SCHEMA` has the reasoning, that being where a format
-    decision belongs -- and it is why this change writes a different key
-    rather than redefining the one that is there.
-
-    Contiguous halves rather than alternate rounds, as on the wrappers page
-    and for its reason: the rows of a table are measured minutes apart, and
-    a machine that drifts over a row's rounds will drift over a table's
-    rows.
-
-    Two halves seconds apart say nothing about two runs a day apart, and
-    nothing here can see the second. That page pays for a second pass and
-    states the size; this one does not, and an absent line there is a page
-    that did not pay for one rather than a page whose two passes agreed.
-
-    Returned and not printed: the tables below are sorted fastest to
-    slowest and each row divides by the quickest, neither of which can be
-    done a line at a time -- every number has to be in hand before the
-    first line is.
-
-    `calls` is chosen per function rather than shared: buidl's
-    pure-Python rows are three to four orders of magnitude slower than
-    the C-backed ones, so one loop count for all of them would either sit
-    for minutes on the slowest or measure the fastest against the
-    resolution of the clock. Each count below was picked from a first
-    timed call to land near half a second -- long enough that Python's own
-    call overhead is a rounding error next to it, short enough that every
-    row three times over is a run to wait for, not start and leave.
-    pycoin's rows are the exception and carry two counts each, being the
-    only rows whose backend this script does not decide: `pycoin_calls`
-    above.
-    """
-    # perf_counter and not time(): the wall clock can step backwards
-    # under an NTP correction, and a benchmark is the one place that
-    # shows up as a negative duration
-    rounds = []
-    for _ in range(ROUNDS):
-        start = time.perf_counter()
-        for _ in range(calls):
-            func()
-        rounds.append((time.perf_counter() - start) / calls * 1e6)
-    # halved on what the loop above actually produced rather than on
-    # `ROUNDS`, the two being the same number until somebody changes one
-    half = len(rounds) // 2
-    first, second = min(rounds[:half]), min(rounds[half:])
-    return min(first, second), abs(first - second)
-
-
+# `calls` is chosen per function rather than shared: buidl's pure-Python
+# rows are far slower than the C-backed ones, so one loop count for all of
+# them would either sit for minutes on the slowest or measure the fastest
+# against the resolution of the clock. Each count below was picked from a
+# first timed call to land every row near one common duration -- long
+# enough that Python's own call overhead is a rounding error next to it,
+# short enough that every row several times over is a run to wait for, not
+# start and leave. pycoin's rows are the exception and carry two counts
+# each, being the only rows whose backend this script does not decide:
+# `pycoin_calls` above.
 Rows = tuple[tuple[Callable[[], None], int], ...]
 
 
@@ -1254,7 +1130,7 @@ def measured(title: str, rows: Rows) -> Ratios:
     """
     timings: list[Timing | Unavailable] = []
     for label, (func, calls) in zip(labels_of(rows), rows, strict=True):
-        value, apart = benchmark(func, calls)
+        value, apart = benchmark(func, calls, ROUNDS)
         timings.append(
             Timing(
                 label=label,
@@ -1389,8 +1265,8 @@ TABLES: tuple[tuple[str, Rows], ...] = (
 )
 
 # what the run block claims about how these numbers were taken, said by
-# the script that takes them: `benchmark` above is where the rounds and
-# the minimum are, and the halves column is what a reader checks it by
+# the script that takes them: `_timing.benchmark` is where the rounds
+# and the minimum are, and the halves column is what a reader checks it by
 METHOD = f"{ROUNDS} rounds per row in two halves, minimum kept; calls per row"
 
 

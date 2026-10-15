@@ -80,7 +80,6 @@ publishing are two commands.
 from __future__ import annotations
 
 import sys
-import time
 from itertools import cycle
 from typing import TYPE_CHECKING
 
@@ -103,6 +102,7 @@ from btclib_benchmarks._results import (
     taken_now,
     width_for,
 )
+from btclib_benchmarks._timing import benchmark
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -259,32 +259,11 @@ for _row in PAYMENT_ROWS + SETUP_ROWS:
 # in the same fraction of a second theirs are. `prevouts_summary`, `label`
 # and `labeled_spend_pubkey` are cheaper -- a sum of one point, a tagged
 # hash, and a point addition -- and share the count rather than ask for
-# their own: unlike the wrappers page's parse tables, none of the three is
-# two orders of magnitude from the rest of this page
+# their own: unlike the wrappers page's parse tables, none of the three
+# costs far more or less than the rest of this page
 DEFAULT_CALLS = 10_000
 
 ROUNDS = 10
-
-
-def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
-    """Return the quickest round's microseconds per call, and the halves' gap.
-
-    `ROUNDS` rounds of `calls` calls each, the minimum of the quickest half
-    against the quickest of the other half -- `01-libsecp256k1.py`'s own
-    `benchmark`, copied rather than imported: `_results.py` holds the shape
-    of a run and never the arithmetic that produces one, so each script
-    that wants this statistic carries its own copy of the formula, and that
-    function's docstring carries the reasoning for it.
-    """
-    rounds = []
-    for _ in range(ROUNDS):
-        start = time.perf_counter()
-        for _ in range(calls):
-            func()
-        rounds.append((time.perf_counter() - start) / calls * 1e6)
-    half = len(rounds) // 2
-    first, second = min(rounds[:half]), min(rounds[half:])
-    return min(first, second), abs(first - second)
 
 
 def measured(title: str, rows: tuple[Callable[[], None], ...]) -> Ratios:
@@ -297,7 +276,7 @@ def measured(title: str, rows: tuple[Callable[[], None], ...]) -> Ratios:
     timings: list[Timing | Unavailable] = []
     for label, func in zip(labels([f.__name__ for f in rows]), rows, strict=True):
         print(f"\r{label:<24}", end="", file=sys.stderr)
-        value, apart = benchmark(func, DEFAULT_CALLS)
+        value, apart = benchmark(func, DEFAULT_CALLS, ROUNDS)
         timings.append(
             Timing(
                 label=label,
@@ -317,7 +296,7 @@ TABLES: tuple[tuple[str, tuple[Callable[[], None], ...]], ...] = (
 )
 
 # what the run block claims about how these numbers were taken
-METHOD = "the quickest of ten rounds; the halves' gap is beside it"
+METHOD = f"the quickest of {ROUNDS} rounds; the halves' gap is beside it"
 
 
 def main() -> None:

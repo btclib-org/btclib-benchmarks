@@ -3,8 +3,8 @@ name: mutation
 
 # Coverage answers "was this line executed"; this answers "would the suite
 # notice if it were wrong". `fail_under = 100.0` in pyproject.toml already
-# says every line and branch of src/btclib_benchmarks/ (this scope's own
-# four modules) and scripts/artifacts.py runs -- it says nothing about
+# says every line and branch of src/btclib_benchmarks/ (_results.py
+# excepted) and scripts/artifacts.py runs -- it says nothing about
 # whether anything asserts on what they compute, which is what a surviving
 # mutant names one line of at a time.
 #
