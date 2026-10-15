@@ -50,10 +50,15 @@ already has a saving available, and where btclib has none to offer.
 
 - **btclib**, on either path, accepts the public key as a parsed point
   wherever it accepts sec octets, so a caller who parses once and keeps
-  the point has that saving today. It has no prepared key beyond that:
-  the multiplication tables built from the point are dropped when the
-  call returns and rebuilt on the next one, which is
-  btclib-org/btclib#893.
+  the point saves the decompression that every verification from octets
+  repeats. On the Python path it also has `curve.PreparedPoint`, which a
+  caller builds from a point to say that the key will come back: a
+  verification handed one reads the key's multiplication tables from
+  btclib's cache, where a bare point's are built again on every call. The
+  cache is bounded, so the rows below keep few prepared keys. On the
+  libsecp256k1 path a prepared point is accepted too, and its tables go
+  unused, the bindings holding tables of their own; its row is there to
+  show what is left of the saving.
 - **python-ecdsa** has `VerifyingKey.precompute()`, which builds the
   table once and reuses it. On version 0.19.2 it raises `AssertionError`
   on a key built by `from_string` -- `precompute` hands the point to
@@ -83,7 +88,7 @@ import sys
 import time
 from hashlib import sha256
 from itertools import cycle
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 import btclib
 import btclib_secp256k1
@@ -106,9 +111,14 @@ from btclib_benchmarks._results import (
     save,
     taken_now,
 )
+from btclib_benchmarks._timing import benchmark, estimate, interleaved, saving_apart
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from btclib_ecc.alias import Point
+
+T = TypeVar("T")
 
 
 def provenance() -> Provenance:
@@ -143,6 +153,17 @@ def provenance() -> Provenance:
 # `SLOW_CALLS` of them.
 BINDINGS_CALLS = 20_000
 SLOW_CALLS = 500
+
+# how many prepared keys the Python rows cycle through. A prepared key's
+# tables live in btclib's cache, which holds a bounded number of them
+# (`_cached_odd_multiples_aff`'s docstring has the bound): a row cycling
+# through more keys than it holds finds none of them and times the build on
+# every call. Few enough to stay inside it, and the rows are warmed through
+# all of them before they are timed
+PREPARED_KEYS = 32
+
+# rounds per row, in two halves; a pair of rows takes its rounds in turn
+ROUNDS = 10
 
 MESSAGES = _inputs.messages()[:BINDINGS_CALLS]
 PRVKEYS = _inputs.keys()[:BINDINGS_CALLS]
@@ -199,14 +220,41 @@ def _prepared_keys() -> list[ecdsa.VerifyingKey]:
 
 ECDSA_KEYS_PREPARED = _prepared_keys()
 
+# btclib's prepared points, which build nothing until the first verification
+# under them asks. `curve.PreparedPoint` is the constructor, and the tables
+# fill the cache as `warm_python_rows` walks the keys
+PREPARED_POINTS = [curve.PreparedPoint(point) for point in POINTS[:PREPARED_KEYS]]
+
 VERIFY_OCTETS = cycle(list(zip(MESSAGES, SEC_OCTETS, DSA_SIGS, strict=True)))
 VERIFY_POINT = cycle(list(zip(MESSAGES, POINTS, DSA_SIGS, strict=True)))
+VERIFY_PREPARED = cycle(list(zip(MESSAGES, PREPARED_POINTS, DSA_SIGS, strict=False)))
+# the parsed point over the same few keys, the baseline of the prepared rows:
+# a row cycling through few keys is not a row cycling through many, and the
+# difference between the two is not what a prepared point saves
+VERIFY_POINT_FEW = cycle(
+    list(
+        zip(
+            MESSAGES,
+            POINTS[:PREPARED_KEYS],
+            DSA_SIGS,
+            strict=False,
+        )
+    )
+)
 VERIFY_ECDSA = cycle(list(zip(MESSAGES, ECDSA_KEYS, ECDSA_SIGS, strict=False)))
 VERIFY_ECDSA_PREPARED = cycle(
     list(zip(MESSAGES, ECDSA_KEYS_PREPARED, ECDSA_SIGS, strict=False))
 )
 PARSE = cycle(SEC_OCTETS)
+PARSED = cycle(POINTS)
 PREPARE = cycle(PRVKEYS[:SLOW_CALLS])
+
+# triples no prepared point above was built from, so that preparing one of
+# them finds no table in the cache. Walked once per preparation timed, and
+# far more of them than a run times
+FRESH = cycle(
+    list(zip(MESSAGES, POINTS, DSA_SIGS, strict=True))[PREPARED_KEYS:BINDINGS_CALLS]
+)
 
 
 def python_arithmetic_only() -> None:
@@ -231,6 +279,44 @@ def verify_point() -> None:
     dsa.assert_as_valid_(msg, point, sig)
 
 
+def verify_point_few() -> None:
+    """Time a verification handed a parsed point, over the prepared keys."""
+    msg, point, sig = next(VERIFY_POINT_FEW)
+    dsa.assert_as_valid_(msg, point, sig)
+
+
+def verify_prepared() -> None:
+    """Time a verification handed the key as a `curve.PreparedPoint`."""
+    msg, prepared, sig = next(VERIFY_PREPARED)
+    dsa.assert_as_valid_(msg, prepared, sig)
+
+
+def prepare_point() -> None:
+    """Time building a `curve.PreparedPoint`, which builds no table.
+
+    The cost of the preparation on the libsecp256k1 path, where no table is
+    built later either. On the Python path the tables are built by the first
+    verification, which `prepare_point_once` includes.
+    """
+    curve.PreparedPoint(next(PARSED))
+
+
+def warm_python_rows() -> None:
+    """Call every Python row once, and the prepared row once per key.
+
+    btclib builds its generator tables lazily, inside the first call that
+    needs them, and builds a prepared key's on the first verification under
+    it. Called after the switch and before the first Python round, so that
+    neither lands in a timed loop: the rows are timed in rounds and keep
+    the quickest, which discards a one-time cost only when it is not every
+    round's.
+    """
+    for row in (verify_octets, verify_point, verify_point_few, parse_point):
+        row()
+    for _ in range(PREPARED_KEYS):
+        verify_prepared()
+
+
 def verify_ecdsa() -> None:
     """Time a python-ecdsa verification, no table prepared."""
     msg, key, sig = next(VERIFY_ECDSA)
@@ -244,66 +330,105 @@ def verify_ecdsa_prepared() -> None:
 
 
 def parse_point() -> None:
-    """Time the preparation btclib offers: decompressing the key once."""
+    """Time decompressing the key once, which parsing a point once saves."""
     octets = next(PARSE)
     sec_point.point_from_octets(octets)
 
 
-def benchmark(func: Callable[[], None], calls: int) -> float:
-    """Return microseconds per call, `calls` calls of `func`.
+def _mean_of_fresh(
+    make: Callable[[], T], use: Callable[[T], object], calls: int
+) -> float:
+    """Return microseconds per `use`, each on a state built off the clock.
 
-    Returned and not printed, as the other four scripts do it: every row
-    divides by the fastest of its table, so no line can be written until
-    the whole table is in hand.
-    """
-    # perf_counter and not time(): the wall clock can step backwards
-    start = time.perf_counter()
-    for _ in range(calls):
-        func()
-    return (time.perf_counter() - start) / calls * 1e6
-
-
-def prepare_once(func: Callable[[], object], calls: int) -> float:
-    """Return microseconds for one preparation, `calls` of them timed.
-
-    Separate from `benchmark` because a preparation is not a row of the
-    table above: it happens once per key and is paid before the first
-    verification, so what it belongs in is the break-even below.
-    """
-    start = time.perf_counter()
-    for _ in range(calls):
-        func()
-    return (time.perf_counter() - start) / calls * 1e6
-
-
-def precompute_once(calls: int) -> float:
-    """Return microseconds for one `precompute()`, keys built off the clock.
-
-    Not `prepare_once(...)` of a function that builds a key and prepares
-    it, which is what this was: building the verifying key is work the
-    caller who does *not* prepare pays too, so a break-even -- a
-    difference between the two -- must not carry it.
-
-    `precompute` builds the table once and has nothing to do on a second
-    call, so a timed call needs a key of its own. One at a time and not a
-    list of them built up front: a caller holds one prepared key, not
-    twenty, and the clock is started after each is built and stopped
-    before the next -- which is what leaves the construction out.
+    A preparation happens once per key, so a timed call needs a key of its
+    own, and building it is work the caller who does *not* prepare pays too:
+    a break-even is a difference between the two and must not carry it. One
+    state at a time and not a list of them built up front, the clock being
+    started after each is built and stopped before the next.
     """
     elapsed = 0.0
     for _ in range(calls):
-        key = _unprepared_key(next(PREPARE))
+        state = make()
         start = time.perf_counter()
-        key.precompute()
+        use(state)
         elapsed += time.perf_counter() - start
     return elapsed / calls * 1e6
 
 
-# what the run block claims about how these numbers were taken. Every row
-# here is timed once: the two paths and the two libraries are orders of
-# magnitude apart, and what this table asks -- whether preparing a key is
-# worth it -- is not a question rounds would sharpen
-METHOD = "one run, kept whole \N{EM DASH} nothing repeated, no outlier discarded"
+def precompute_once(calls: int, rounds: int) -> float:
+    """Return microseconds for one `precompute()`, the quickest of `rounds`.
+
+    `precompute` builds the table once and has nothing to do on a second
+    call, so every timed call is on a key of its own.
+    """
+    return estimate(
+        [
+            _mean_of_fresh(
+                lambda: _unprepared_key(next(PREPARE)),
+                lambda key: key.precompute(),
+                calls,
+            )
+            for _ in range(rounds)
+        ]
+    )[0]
+
+
+def _prepare_and_verify(triple: tuple[bytes, Point, dsa.Sig]) -> None:
+    """Prepare the point and verify once under it, which builds its tables."""
+    msg, point, sig = triple
+    dsa.assert_as_valid_(msg, curve.PreparedPoint(point), sig)
+
+
+def prepare_point_and_verify() -> None:
+    """Prepare a fresh point and verify once under it, one call of the row."""
+    _prepare_and_verify(next(FRESH))
+
+
+def prepare_point_once(calls: int, rounds: int) -> float:
+    """Return microseconds to prepare a point and verify once, the quickest.
+
+    The first verification under a prepared point builds its tables, so
+    this is the preparation and one verification. The caller subtracts what
+    a verification costs once the tables are there, which leaves the cost
+    of getting there.
+    """
+    return estimate(
+        [
+            _mean_of_fresh(lambda: next(FRESH), _prepare_and_verify, calls)
+            for _ in range(rounds)
+        ]
+    )[0]
+
+
+def timing(label: str, rounds: list[float], calls: int) -> Timing:
+    """Return a row from its rounds: the quickest, and the halves' gap."""
+    value, apart = estimate(rounds)
+    return Timing(
+        label=label,
+        us_per_call=value,
+        halves_apart=apart,
+        calls=calls,
+        rounds=ROUNDS,
+    )
+
+
+def preparation(
+    label: str, prepare: float, plain: list[float], prepared: list[float]
+) -> Preparation:
+    """Return a break-even row from the preparation and the two rows' rounds."""
+    return Preparation(
+        label=label,
+        prepare=prepare,
+        plain=estimate(plain)[0],
+        prepared=estimate(prepared)[0],
+        saving_halves_apart=saving_apart(plain, prepared),
+    )
+
+
+# what the run block claims about how these numbers were taken. A pair of
+# rows whose difference is printed takes its rounds in turn, so that a
+# machine drifting over the measurement drifts under both
+METHOD = f"{ROUNDS} rounds per row, pairs in turn, minimum kept; calls per row"
 
 
 def main() -> None:
@@ -312,42 +437,73 @@ def main() -> None:
     The order is `python_arithmetic_only`'s requirement: it cannot be
     undone within a process, so every row that is meant to reach the
     libsecp256k1 runs before it and every row that is meant to measure Python
-    runs after.
+    runs after. The cost of preparing a point is timed last, after the rows
+    that read the cache: a cold preparation puts new tables in it.
 
     Nothing is printed until it is all measured, both tables being sorted
     and ratioed across their own rows. What reaches the terminal is what
     `render.py` puts in the page, the two coming from one rendering of one
-    saved run.
+    saved run, which is saved first: a rendering that failed would otherwise
+    lose the run.
     """
-    bindings_octets = benchmark(verify_octets, BINDINGS_CALLS)
-    bindings_point = benchmark(verify_point, BINDINGS_CALLS)
-    bindings_parse = prepare_once(parse_point, BINDINGS_CALLS)
+    bindings_octets, bindings_point, bindings_few, bindings_prepared = interleaved(
+        [verify_octets, verify_point, verify_point_few, verify_prepared],
+        BINDINGS_CALLS,
+        ROUNDS,
+    )
+    bindings_parse, _ = benchmark(parse_point, BINDINGS_CALLS, ROUNDS)
+    bindings_prepare, _ = benchmark(prepare_point, BINDINGS_CALLS, ROUNDS)
 
-    ecdsa_plain = benchmark(verify_ecdsa, SLOW_CALLS)
-    ecdsa_prepared = benchmark(verify_ecdsa_prepared, SLOW_CALLS)
-    ecdsa_prepare = precompute_once(20)
+    ecdsa_plain, ecdsa_prepared = interleaved(
+        [verify_ecdsa, verify_ecdsa_prepared], SLOW_CALLS, ROUNDS
+    )
+    ecdsa_prepare = precompute_once(20, ROUNDS)
 
     python_arithmetic_only()
+    warm_python_rows()
 
-    python_octets = benchmark(verify_octets, SLOW_CALLS)
-    python_point = benchmark(verify_point, SLOW_CALLS)
-    python_parse = prepare_once(parse_point, 2_000)
+    python_octets, python_point, python_few, python_prepared = interleaved(
+        [verify_octets, verify_point, verify_point_few, verify_prepared],
+        SLOW_CALLS,
+        ROUNDS,
+    )
+    python_parse, _ = benchmark(parse_point, 2_000, ROUNDS)
+    # what a prepared point costs to get is the preparation and the
+    # verification that builds its tables, less a verification once they are
+    # built: that verification is paid by the prepared row as well
+    python_prepare = prepare_point_once(20, ROUNDS) - estimate(python_prepared)[0]
 
     verify = Ratios(
         title="ECDSA verify, one key, every signature under it",
         rows=[
-            Timing(label=label, us_per_call=value)
-            for label, value in (
-                ("btclib, libsecp256k1, octets", bindings_octets),
-                ("btclib, libsecp256k1, parsed point", bindings_point),
-                ("btclib, Python, octets", python_octets),
-                ("btclib, Python, parsed point", python_point),
-                ("python-ecdsa", ecdsa_plain),
-                ("python-ecdsa, precomputed", ecdsa_prepared),
-            )
+            timing("btclib, libsecp256k1, octets", bindings_octets, BINDINGS_CALLS),
+            timing(
+                "btclib, libsecp256k1, parsed point", bindings_point, BINDINGS_CALLS
+            ),
+            timing(
+                "btclib, libsecp256k1, parsed point, few keys",
+                bindings_few,
+                BINDINGS_CALLS,
+            ),
+            timing(
+                "btclib, libsecp256k1, PreparedPoint",
+                bindings_prepared,
+                BINDINGS_CALLS,
+            ),
+            timing("btclib, Python, octets", python_octets, SLOW_CALLS),
+            timing("btclib, Python, parsed point", python_point, SLOW_CALLS),
+            timing("btclib, Python, parsed point, few keys", python_few, SLOW_CALLS),
+            timing("btclib, Python, PreparedPoint", python_prepared, SLOW_CALLS),
+            timing("python-ecdsa", ecdsa_plain, SLOW_CALLS),
+            timing("python-ecdsa, precomputed", ecdsa_prepared, SLOW_CALLS),
         ],
     )
 
+    # a PreparedPoint is answered against the parsed point over the same
+    # keys, not against the octets: the caller who prepares has parsed the
+    # key already, and `prepare` does not pay the parse. The parse is the
+    # "parse once" rows' saving
+    #
     # what a preparation saves, and after how many calls it has paid, are
     # the renderer's to divide out: what is measured is the preparation and
     # the two verifications it sits between. Those two are the same
@@ -357,23 +513,32 @@ def main() -> None:
     costs = BreakEven(
         title="what preparing the key costs, and after how many verifications it pays",
         rows=[
-            Preparation(
-                label="btclib, libsecp256k1, parse once",
-                prepare=bindings_parse,
-                plain=bindings_octets,
-                prepared=bindings_point,
+            preparation(
+                "btclib, libsecp256k1, parse once",
+                bindings_parse,
+                bindings_octets,
+                bindings_point,
             ),
-            Preparation(
-                label="btclib, Python, parse once",
-                prepare=python_parse,
-                plain=python_octets,
-                prepared=python_point,
+            preparation(
+                "btclib, libsecp256k1, PreparedPoint",
+                bindings_prepare,
+                bindings_few,
+                bindings_prepared,
             ),
-            Preparation(
-                label="python-ecdsa, precompute()",
-                prepare=ecdsa_prepare,
-                plain=ecdsa_plain,
-                prepared=ecdsa_prepared,
+            preparation(
+                "btclib, Python, parse once", python_parse, python_octets, python_point
+            ),
+            preparation(
+                "btclib, Python, PreparedPoint",
+                python_prepare,
+                python_few,
+                python_prepared,
+            ),
+            preparation(
+                "python-ecdsa, precompute()",
+                ecdsa_prepare,
+                ecdsa_plain,
+                ecdsa_prepared,
             ),
         ],
     )
@@ -384,10 +549,11 @@ def main() -> None:
         provenance=provenance(),
         tables=[verify, costs],
     )
+    saved = save(measurement)
     print(rendered_provenance(measurement.provenance))
     print()
     print(rendered_output(measurement))
-    print(f"\nsaved to {save(measurement)}", file=sys.stderr)
+    print(f"\nsaved to {saved}", file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

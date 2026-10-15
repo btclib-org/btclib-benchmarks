@@ -58,7 +58,9 @@ an underscore):
   every benchmark's writer and by `scripts/render.py`'s reader.
 - **`_timing.py`** — the rounds-and-halves estimator, `benchmark`, which
   each script that saves `halves_apart` calls with its own `calls` and
-  `rounds`.
+  `rounds`. `interleaved` takes the rounds of several rows in turn, for a
+  page that prints a difference of two of them, and `saving_apart` is that
+  difference's own halves' gap.
 - **`_releases.py`** — what is recorded by hand about each comparand
   build: the day it was published and the libsecp256k1 revision it
   vendors, once, keyed by the build they were read for.

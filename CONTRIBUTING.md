@@ -484,13 +484,19 @@ the pure-Python columns of `02-btclib-vs-btclib.py` came out up to three
 times their real cost, and a verification through the C library came out
 at twice. The dispersion column beside a row is what shows it, and which
 statistic it is belongs to the page. `01-libsecp256k1.py`,
-`03-libraries.py`, `04-pure-python.py` and `06-silentpayments.py` save
-`halves_apart`, how far the minima of the halves of a row's rounds sat
-apart, so a wide one is a row whose own estimate moved while it was being
-measured; `spread`, the slowest round less the quickest, is the key a run
-saved before that carries, and it answers a different question. The
-scripts that save neither, `02-btclib-vs-btclib.py` and
-`05-key-reuse.py`, time each row once and print no such column at
+`03-libraries.py`, `04-pure-python.py`, `05-key-reuse.py` and
+`06-silentpayments.py` save `halves_apart`, how far the minima of the
+halves of a row's rounds sat apart, so a wide one is a row whose own
+estimate moved while it was being measured; `spread`, the slowest round
+less the quickest, is the key a run saved before that carries, and it
+answers a different question. `05-key-reuse.py` also saves
+`saving_halves_apart` beside each break-even, the same distance for the
+saving the break-even divides by. A break-even whose saving is no larger
+than that distance is not settled by the run; one larger can still move
+on the next run. `never` beside a distance as wide as the
+saving says the run could not tell the saving from nothing, not that
+preparing loses. The script that saves none,
+`02-btclib-vs-btclib.py`, times each row once and prints no such column at
 all — an absent one is a page that did not measure it rather than a
 row that did not move. Each page
 defines the column it prints, in the prose beside its tables. Read it

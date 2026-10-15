@@ -308,12 +308,21 @@ class Preparation:
     table's fastest: what a caller decides is whether to prepare *this*
     key, and the row they would otherwise have run is the one to answer
     against.
+
+    `saving_halves_apart` is how far the saving, `plain` less `prepared`,
+    moved between the two halves of the rounds that measured it, in the same
+    microseconds as the saving. A break-even divides by that saving, so it is
+    the number that says whether the division was settled. It is optional,
+    as the dispersions of a `Timing` are, and for the same reason: a row
+    that was timed once has none to state, and an absent one is left out of
+    the saved run rather than written as zero.
     """
 
     label: str
     prepare: float
     plain: float
     prepared: float
+    saving_halves_apart: float | None = None
 
 
 @dataclass(frozen=True)
@@ -856,17 +865,25 @@ def rendered_pairs(table: Pairs, width: int) -> str:
 
 
 def rendered_break_even(table: BreakEven, width: int) -> str:
-    """Return what each preparation costs and when it has paid for itself."""
-    lines = [
-        table.title,
-        f"  {'':<{width}}{'prepare':>10}{'saves/call':>13}{'break-even':>13}",
-    ]
+    """Return what each preparation costs and when it has paid for itself.
+
+    A preparation that saves nothing, or less than nothing, never pays for
+    itself, and the column says `never` where a quotient would be a
+    negative count of calls or no number at all.
+    """
+    apart = any(row.saving_halves_apart is not None for row in table.rows)
+    heading = f"  {'':<{width}}{'prepare':>10}{'saves/call':>13}"
+    if apart:
+        heading += f"{DISPERSION_HEADINGS['halves_apart']:>{DISPERSION}}"
+    lines = [table.title, heading + f"{'break-even':>13}"]
     for row in table.rows:
         saved = row.plain - row.prepared
-        lines.append(
-            f"  {row.label:<{width}}{row.prepare:10.2f}"
-            f"{saved:13.2f}{row.prepare / saved:13.1f}"
-        )
+        line = f"  {row.label:<{width}}{row.prepare:10.2f}{saved:13.2f}"
+        if apart:
+            gap = row.saving_halves_apart
+            line += " " * DISPERSION if gap is None else f"{gap:{DISPERSION}.2f}"
+        line += f"{row.prepare / saved:13.1f}" if saved > 0 else f"{'never':>13}"
+        lines.append(line)
     return "\n".join(lines)
 
 
@@ -999,6 +1016,11 @@ def _table_as_json(table: Table) -> dict[str, object]:
                 "prepare": row.prepare,
                 "plain": row.plain,
                 "prepared": row.prepared,
+                **(
+                    {}
+                    if row.saving_halves_apart is None
+                    else {"saving_halves_apart": row.saving_halves_apart}
+                ),
             }
             for row in table.rows
         ],
@@ -1070,6 +1092,11 @@ def _table_from_json(saved: dict[str, object]) -> Table:
                 prepare=float(row["prepare"]),
                 plain=float(row["plain"]),
                 prepared=float(row["prepared"]),
+                saving_halves_apart=(
+                    None
+                    if row.get("saving_halves_apart") is None
+                    else float(row["saving_halves_apart"])
+                ),
             )
             for row in rows
         ],
