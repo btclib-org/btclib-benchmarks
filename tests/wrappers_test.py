@@ -169,10 +169,11 @@ DSA_SIGNERS_DER: dict[str, Callable[[bytes, bytes], bytes]] = {
 # the only one of the six installing a comparand it compiled rather than one
 # somebody shipped -- and what it compiles is the libsecp256k1 the sdist
 # ships among its own files, years older than the one every wheel of that
-# same version carries. `LIBSECP256K1_PINS` is keyed on the artifact for
-# this row and records both, so the difference below is a different library
-# rather than a different compiler. What the benchmark publishes is the
-# wheel's behaviour, that being what a published run is measured on.
+# same version carries. `_releases.LIBSECP256K1_PINS` is keyed on the
+# artifact for this row and records both, so the difference below is a
+# different library rather than a different compiler. What the benchmark
+# publishes is the wheel's behaviour, that being what a published run is
+# measured on.
 UNREDUCED_ON = {"secp256k1-py": ("Linux", "aarch64")}
 
 # said once, because three cases below are expected to fail for it

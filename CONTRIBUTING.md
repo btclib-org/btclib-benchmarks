@@ -383,10 +383,10 @@ check*, below, is where that rule and its reason live.
 ### Running a mutation session
 
 The `mutation` workflow, weekly and on demand, gates nothing: it asks
-whether the suite would *notice* a wrong line in the four modules and the
-one script `fail_under = 100.0` already says run in full,
+whether the suite would *notice* a wrong line in
 `src/btclib_benchmarks/_inputs.py`, `_provenance.py`, `_vectors.py` and
-`scripts/artifacts.py` — where coverage says a line ran, a surviving
+`scripts/artifacts.py`, which `fail_under = 100.0` already says run in
+full — where coverage says a line ran, a surviving
 mutant says nothing asserted about it. `.github/mutation/` is the list,
 and each file in it states what it mutates, what judges it, and what the
 last session over it found; those configurations are also what a local

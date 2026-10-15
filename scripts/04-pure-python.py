@@ -139,7 +139,6 @@ import os
 os.environ["PYCOIN_NATIVE"] = "none"
 
 import sys
-import time
 from collections.abc import Callable
 from hashlib import sha256
 from importlib.metadata import version
@@ -157,7 +156,8 @@ from ellipticcurve.privateKey import PrivateKey as StarkbankPrivateKey
 from secp256k1lab.secp256k1 import G as LAB_G
 
 from btclib_benchmarks import _inputs
-from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS, origin_of
+from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS
+from btclib_benchmarks._releases import released
 from btclib_benchmarks._results import (
     Measurement,
     Provenance,
@@ -171,41 +171,7 @@ from btclib_benchmarks._results import (
     taken_now,
     width_for,
 )
-
-# the release each version was published on, recorded because no installed
-# metadata carries it: a wheel's METADATA has a Version and no date, and the
-# dist-info directory's mtime is when the package was installed here. Keyed
-# by the release it was read for, so an upgraded comparand prints
-# `unrecorded` rather than a date that has stopped being true.
-# secp256k1lab is on no index and is taken from a git tag, which is still a
-# release someone cut on a day, so it is recorded like the other four
-RELEASE_DATES = {
-    "btclib": ("2026.10.3", "2026-10-03"),
-    "secp256k1lab": ("1.0.0", "2025-03-26"),
-    "ecdsa": ("0.19.2", "2026-03-26"),
-    "pycoin": ("0.92718.20260405", "2026-04-05"),
-    "buidl": ("0.2.36", "2022-02-28"),
-    "starkbank-ecdsa": ("2.3.1", "2026-04-23"),
-}
-
-
-def _released(dist_name: str) -> str:
-    """Say when this build was published, or where it came from instead.
-
-    A build resolved from a branch has no publish date to report -- a
-    release that has not happened cannot be dated -- so the column names
-    the branch and the commit instead, which is what a reader has to look
-    up to get that build again. Every package this script prices now
-    resolves from a release, so this path exists for a future comparand
-    rather than for a row currently on it. `scripts/03-libraries.py`
-    prints the same column by the same rule, over an overlapping set of
-    packages.
-    """
-    if not (recorded := RELEASE_DATES.get(dist_name)):
-        # the branch and the commit, without the repository the package
-        # column has already named
-        return origin_of(dist_name).split()[-1]
-    return recorded[1] if version(dist_name) == recorded[0] else "unrecorded"
+from btclib_benchmarks._timing import benchmark
 
 
 def provenance() -> Provenance:
@@ -233,9 +199,9 @@ def provenance() -> Provenance:
     return Provenance(
         columns=["package", "version", "released", "held to Python by"],
         rows=[
-            [dist_name, version(dist_name), _released(dist_name), mechanism]
+            [dist_name, version(dist_name), released(dist_name), mechanism]
             for dist_name, mechanism in sorted(
-                rows, key=lambda row: _released(row[0]), reverse=True
+                rows, key=lambda row: released(row[0]), reverse=True
             )
         ],
     )
@@ -578,71 +544,23 @@ def ssa_verify_buidl() -> None:
 # ------------------------------------------------------------- the timing
 
 
-# four, and even, which is what the estimator below halves. Three did not
-# halve -- half a round is the minimum of nothing -- so this page adopts
-# `scripts/03-libraries.py`'s constant along with its statistic.
+# four, and even, so that `_timing.benchmark` halves them into two equal
+# halves; `scripts/03-libraries.py` has the same constant.
 #
-# What this page said against rounds was that "three rounds of the slowest
-# would be a run nobody waits for", and it was measured rather than
-# reasoned: every row of the published one-round run together came to under
-# four seconds of clock. The counts below are what made that true, and they
-# are the defect ISS 111 found -- picked so that the *slowest* rows were
-# bearable, they left the quickest running for milliseconds, where a
-# scheduler taking one is a large fraction of the number. Chosen per row to
-# a target instead, four rounds of this page cost under a minute.
+# `calls` is per row rather than shared: the slowest row here is far off
+# the reference, and one count for all of them would either sit for minutes
+# on the slowest or measure the fastest against the resolution of the
+# clock. Each is picked so a round lands near one common duration -- long
+# enough that a scheduler's slice is a rounding error next to it, which a
+# count picked to make only the slowest rows bearable does not give the
+# quickest. With the counts chosen per row, four rounds are a run to wait
+# for.
 ROUNDS = 4
 
-
-def benchmark(func: Callable[[], None], calls: int) -> tuple[float, float]:
-    """Return the quickest round's microseconds per call, and the halves' gap.
-
-    `ROUNDS` rounds of `calls` calls each. The minimum is the estimate:
-    noise is one-sided -- nothing on this machine makes a call quicker than
-    it is -- so the quickest round is the one that ran with least taken from
-    it, where a mean would carry every interruption into the number.
-
-    The second number is how far that estimate moved when the row was
-    measured twice, which is what the rounds are halved for, and it is the
-    column this page had none of. Its rows are the slowest this project
-    prints and its tables are read by subtracting one row from another --
-    a checked signing row less its unchecked one is what the check costs --
-    so an error that a ratio would divide away is an error a difference
-    keeps, and there was nothing beside a row to say how large it was.
-
-    Saved as `halves_apart`, which is the key `_results.py` already carries
-    for this statistic; the page has never printed the `spread` that key
-    stands against, so nothing here is a redefinition.
-
-    Contiguous halves rather than alternate rounds, as on the pages that
-    print it already: the rows of a table are measured minutes apart, and a
-    machine that drifts over a row's rounds will drift over a table's rows.
-    Two halves seconds apart say nothing about two runs a day apart, and
-    nothing here can see the second.
-
-    A returned number and not a printed one: every row is a ratio against
-    the quickest of its table, so the reference has to be in hand before
-    anything is printed.
-
-    `calls` is per function rather than shared: the slowest row here is
-    four orders of magnitude off the reference, and one count for all of
-    them would either sit for minutes on the slowest or measure the
-    fastest against the resolution of the clock. Each is picked so a round
-    lands near half a second -- long enough that a scheduler's slice is a
-    rounding error next to it, which is what the counts it replaces were
-    not.
-    """
-    # perf_counter and not time(): the wall clock can step backwards
-    rounds = []
-    for _ in range(ROUNDS):
-        start = time.perf_counter()
-        for _ in range(calls):
-            func()
-        rounds.append((time.perf_counter() - start) / calls * 1e6)
-    # halved on what the loop above produced rather than on `ROUNDS`, the
-    # two being the same number until somebody changes one
-    half = len(rounds) // 2
-    first, second = min(rounds[:half]), min(rounds[half:])
-    return min(first, second), abs(first - second)
+# The tables here are read by subtracting one row from another -- a checked
+# signing row less its unchecked one is what the check costs -- so an error
+# that a ratio would divide away is an error a difference keeps, and
+# `halves_apart` is what says beside a row how large it may be.
 
 
 Rows = tuple[tuple[str, Callable[[], None], int], ...]
@@ -665,7 +583,7 @@ def measured(title: str, rows: Rows) -> Ratios:
     # page -- so this is the annotation and not a case to handle
     timings: list[Timing | Unavailable] = []
     for label, func, calls in rows:
-        value, apart = benchmark(func, calls)
+        value, apart = benchmark(func, calls, ROUNDS)
         timings.append(
             Timing(
                 label=label,

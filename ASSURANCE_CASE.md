@@ -151,7 +151,7 @@ measuring rather than serving.
   never assuming a package that passed once still does after its own
   release.
 - **Open design.** `vectors/README.md` states where every vendored file
-  came from; `01-libsecp256k1.py`'s `LIBSECP256K1_PINS` and
+  came from; `_releases.py`'s `LIBSECP256K1_PINS` and
   `_provenance.artifact_of`'s docstring both say what is recorded by hand
   because nothing at run time can read it back, and a pin an upgraded
   comparand outgrows prints `unrecorded` rather than a stale number.

@@ -34,8 +34,7 @@ paragraph each, and none of the six is the same story:
 - **embit** ships its own shared library in the wheel and reaches it
   through ctypes, and what it ships is secp256k1-zkp — ElementsProject's
   fork — rather than bitcoin-core/secp256k1. It is not a package anyone can
-  install on its own, and the revision it carries is recorded here against
-  the release it was read from.
+  install on its own.
 - **buidl** has cffi bindings in `buidl.cecc`, and `pip install buidl` does
   not build them: `libsec_build.py` compiles them against a system library
   and has to be run by hand. So its rows are `buidl.pecc`, pure Python,

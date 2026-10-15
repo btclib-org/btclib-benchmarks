@@ -143,7 +143,7 @@ def artifact_of(dist_name: str) -> str:
     the tag and stops -- which is why a caller gets a tag and a remark
     rather than a verdict, and why the revision itself is still not here.
     Nothing in an installed tree records what a build downloaded, and the
-    pins in `01-libsecp256k1.py` are where that is written down by hand.
+    pins in `_releases.py` are where that is written down by hand.
     """
     tags = wheel_tags(dist_name)
     if tags is None:

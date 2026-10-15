@@ -135,12 +135,12 @@ def provenance() -> Provenance:
 # than a measurement of one input. Nothing here asserts: what these
 # implementations answer is `tests/`' subject.
 #
-# Two sizes, because the two halves of this page are three orders of
-# magnitude apart. The bindings rows make twenty thousand calls and the
-# Python and python-ecdsa rows five hundred, and a fixture is only worth
-# building for as many calls as will read it: `precompute()` alone costs
-# milliseconds per key, so twenty thousand prepared python-ecdsa keys would
-# be a minute of setup for rows that read five hundred of them.
+# Two sizes, because the two halves of this page are far apart in cost. The
+# bindings rows make `BINDINGS_CALLS` calls and the Python and python-ecdsa
+# rows `SLOW_CALLS`, and a fixture is only worth building for as many calls
+# as will read it: `precompute()` alone is slow per key, so `BINDINGS_CALLS`
+# prepared python-ecdsa keys would be a long setup for rows that read
+# `SLOW_CALLS` of them.
 BINDINGS_CALLS = 20_000
 SLOW_CALLS = 500
 
@@ -282,9 +282,7 @@ def precompute_once(calls: int) -> float:
     Not `prepare_once(...)` of a function that builds a key and prepares
     it, which is what this was: building the verifying key is work the
     caller who does *not* prepare pays too, so a break-even -- a
-    difference between the two -- must not carry it. It is a tenth of what
-    the preparation itself costs and it moved the break-even by a whole
-    verification.
+    difference between the two -- must not carry it.
 
     `precompute` builds the table once and has nothing to do on a second
     call, so a timed call needs a key of its own. One at a time and not a
@@ -321,18 +319,18 @@ def main() -> None:
     `render.py` puts in the page, the two coming from one rendering of one
     saved run.
     """
-    bindings_octets = benchmark(verify_octets, 20_000)
-    bindings_point = benchmark(verify_point, 20_000)
-    bindings_parse = prepare_once(parse_point, 20_000)
+    bindings_octets = benchmark(verify_octets, BINDINGS_CALLS)
+    bindings_point = benchmark(verify_point, BINDINGS_CALLS)
+    bindings_parse = prepare_once(parse_point, BINDINGS_CALLS)
 
-    ecdsa_plain = benchmark(verify_ecdsa, 500)
-    ecdsa_prepared = benchmark(verify_ecdsa_prepared, 500)
+    ecdsa_plain = benchmark(verify_ecdsa, SLOW_CALLS)
+    ecdsa_prepared = benchmark(verify_ecdsa_prepared, SLOW_CALLS)
     ecdsa_prepare = precompute_once(20)
 
     python_arithmetic_only()
 
-    python_octets = benchmark(verify_octets, 500)
-    python_point = benchmark(verify_point, 500)
+    python_octets = benchmark(verify_octets, SLOW_CALLS)
+    python_point = benchmark(verify_point, SLOW_CALLS)
     python_parse = prepare_once(parse_point, 2_000)
 
     verify = Ratios(
