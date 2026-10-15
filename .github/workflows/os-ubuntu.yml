@@ -81,10 +81,11 @@ jobs:
     #
     # both ends of the interpreter range below are set by a comparand
     # rather than chosen -- os-macos.yml's own matrix cites this rather
-    # than restating it. 3.13 is the ceiling: coincurve and secp256k1
-    # publish no cp314 wheel, and this project installs its comparands
-    # rather than mocking them. 3.11 is the floor: secp256k1lab declares
-    # it, and scripts/04-pure-python.py imports that unguarded
+    # than restating it. 3.13 is the ceiling: coincurve
+    # installs nothing past cp313, and on macOS secp256k1 not reliably
+    # (.python-version says why). This project installs its comparands
+    # rather than mocking them. 3.11 is the floor: secp256k1lab
+    # declares it, and scripts/04-pure-python.py imports that unguarded
     #
     # which of an index's two artifacts each comparand's install
     # resolved to is scripts/artifacts.py's own subject, passed below as

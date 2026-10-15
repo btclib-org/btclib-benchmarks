@@ -99,9 +99,9 @@ jobs:
 
       # where the ubuntu images hand this project its C toolchain for
       # free -- the toolchain comment on the coverage job of test.yml is
-      # that argument -- the macOS ones hand it half. `pkgconf` is in
-      # actions/runner-images' macOS toolset, which is what `secp256k1`
-      # demands before it will build at all; autoconf, automake and
+      # that argument -- not so on macOS.
+      # `secp256k1` demands a `pkg-config` before it will build at all, and
+      # pyproject.toml's [tool.uv] supplies it; autoconf, automake and
       # libtool are in no macOS toolset or image manifest, and
       # `electrum-ecc` needs all three, its sdist carrying libsecp256k1
       # with a configure.ac and no generated `configure`, so its build

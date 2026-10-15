@@ -524,23 +524,21 @@ scanning's non-provider patterns and validity checks, is read back under
   comparands cannot be installed on a Windows runner at all, so every
   cell of that matrix would be red on `uv sync` and the workflow could
   never go green. `secp256k1` publishes no Windows wheel, and its sdist
-  refuses outright without `pkg-config` before running libsecp256k1's
-  `configure`, an autotools shell script; `electrum-ecc` publishes no
+  builds libsecp256k1 through `configure`, an autotools shell script;
+  `electrum-ecc` publishes no
   wheel anywhere and skips compiling libsecp256k1 on `win32`, so it
   installs and then fails to import for want of the library it wraps.
-  The two halves of the first, re-derived:
+  The wheel half of the first, re-derived:
 
 ```shell
 curl -s https://pypi.org/pypi/secp256k1/json |
   jq '[.urls[].filename | select(test("win"))] | length'
 # 0
-gh api -X GET search/code --jq .total_count \
-  -f q='pkgconf repo:actions/runner-images path:images/windows'
-# 0
 ```
 
-The day both answers stop being zero, `windows.yml` is `os-macos.yml`
-with the images and the schedule swapped.
+The day `secp256k1` installs on Windows, from a wheel or its sdist, and
+`electrum-ecc` imports there, `windows.yml` is `os-macos.yml` with the
+images and the schedule swapped.
 
 ## What this file passes over
 

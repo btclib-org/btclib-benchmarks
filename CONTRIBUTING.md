@@ -260,7 +260,8 @@ what `autoconf`, `automake` and `libtool` have to be there for. The
 other wrappers resolve to a wheel where the index serves one for the
 interpreter `.python-version` pins *and* the platform in hand, and are
 built from source where it does not, which is when a build of
-`secp256k1` wants `pkg-config`; `scripts/artifacts.py`'s own docstring
+`secp256k1` runs, with the `pkg-config` that `pyproject.toml`'s
+`[tool.uv]` supplies; `scripts/artifacts.py`'s own docstring
 and `os-macos.yml` each name a cell where that happens, `os-ubuntu.yml`
 naming its own, `ubuntu-24.04-arm`, beside the `pre-suite-script` it
 passes rather than in a step of its own (btclib-org/.github#35). The

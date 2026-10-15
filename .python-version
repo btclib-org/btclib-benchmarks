@@ -1,20 +1,25 @@
 # 3.13 and not the newest CPython, and the reason is a comparand rather
-# than a preference: coincurve and secp256k1, two of the wrappers
-# scripts/01-libsecp256k1.py exists to compare, publish wheels up to
-# cp313 and no further. secp256k1's sdist builds only where pkg-config
-# is installed, and coincurve's does not build at all: its build hook
-# looks for cffi's LICENSE at the root of cffi's .dist-info, and the
+# than a preference: coincurve, one of the wrappers
+# scripts/01-libsecp256k1.py exists to compare, publishes wheels up to
+# cp313 and no further, and its sdist does not build at all: its build
+# hook looks for cffi's LICENSE at the root of cffi's .dist-info, and the
 # cffi its build resolves keeps it under licenses/. A benchmark that
 # cannot install its comparands measures nothing -- and the
-# documentation build now
-# holds the same floor for a different reason: .readthedocs.yaml and
-# docs.yml both install these two wrappers through the uniform install
+# documentation build
+# holds the same pin for a different reason: .readthedocs.yaml and
+# docs.yml both install that wrapper through the uniform install
 # command btclib-org/.github's reusable-docs.yml runs for every
-# repository, though no page imports either (btclib-org/.github#35).
+# repository, though no page imports it (btclib-org/.github#35).
+# secp256k1 publishes wheels up to cp313 too, but its sdist needs no
+# system pkg-config, pkgconf being a build dependency in pyproject.toml's
+# [tool.uv] (issue #427). On macOS it also holds the pin, having no
+# arm64 wheel past cp313 and a build that can fail in an automake rebuild
+# (issue #244).
 # The other two wrappers hold no part of this: btclib_secp256k1 publishes
 # past cp313, and electrum-ecc builds a py3-none wheel, reaching the C
 # through ctypes rather than linking it into an extension.
-# Raise this the moment coincurve and secp256k1 publish a cp314 wheel;
+# Raise this the moment coincurve installs on the newer CPython, and
+# on macOS secp256k1 does too (issue #381);
 # requires-python in pyproject.toml stays at its own floor either way,
 # which secp256k1lab sets at 3.11. .readthedocs.yaml's own copy of this
 # pin moves with it: Read the Docs cannot read this file directly.

@@ -63,8 +63,7 @@ build:
   # the build pass" on terms of its own. That installs the project and
   # its own dependencies -- coincurve and secp256k1 included -- though
   # no page under docs/source imports anything; `.python-version`'s pin
-  # at 3.13 is what makes the install succeed at all, both wrappers
-  # publishing a wheel for it and neither for 3.14
+  # at 3.13 is what lets the install succeed, and that file says why
   # (issue btclib-org/.github#35)
   # -n turns an unresolved sphinx-domain cross-reference into a warning
   # and -W turns that warning, like every other, into an error; the
