@@ -859,9 +859,19 @@ def ssa_verify_embit() -> None:
 DERIVATIONS = [chain for chain in CHAINS if chain.path != "m"]
 
 
+# btclib's `BIP32KeyData` spellings, the ones ending in an underscore, and
+# not the text ones: pycoin, embit and buidl take a seed and hand back a key
+# object, and encode no Base58Check. The text spellings would encode the
+# root, decode it in `derive`, encode the result, and decode that to read
+# the key: two encodes and two decodes per call. The decodes are memoized
+# on the string (`_cached_base58_decode`), so over the few published seeds
+# this cycles they would be cache hits, where the others do neither.
+# `tests/bip32_row_test.py` holds the choice
 def _btclib_child_pubkey(seed: bytes, path: str) -> bytes:
-    root = btclib_bip32.rootxprv_from_seed(seed)
-    return bytes(btclib_bip32.pub_keyinfo_from_xkey(btclib_bip32.derive(root, path))[0])
+    root = btclib_bip32.rootxprv_from_seed_(seed)
+    return bytes(
+        btclib_bip32.pub_keyinfo_from_xkey(btclib_bip32.derive_(root, path))[0]
+    )
 
 
 def _pycoin_child_pubkey(seed: bytes, path: str) -> bytes:
@@ -884,7 +894,10 @@ BIP32 = cycle(DERIVATIONS)
 
 
 def bip32_derive_btclib() -> None:
-    """Time seed-to-child BIP32 derivation through btclib, libsecp256k1 on."""
+    """Time seed-to-child BIP32 derivation through btclib, libsecp256k1 on.
+
+    Through its key objects: see `_btclib_child_pubkey`.
+    """
     chain = next(BIP32)
     _btclib_child_pubkey(chain.seed, chain.path)
 
