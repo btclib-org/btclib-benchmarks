@@ -634,9 +634,9 @@ repos:
   - repo: local
     hooks:
       # `render.py --check` says a published page still matches the run it
-      # claims to publish, and it is the whole of what holds `_results.py`
-      # and `render.py` honest -- the stated reason both sit outside the
-      # coverage gate. It was in CONTRIBUTING.md and in no gate, so the one
+      # claims to publish, and it is the whole of what holds `render.py`
+      # honest -- the stated reason it sits outside the coverage gate. It
+      # was in CONTRIBUTING.md and in no gate, so the one
       # thing standing between a page and the numbers it claims was whoever
       # remembered to type it.
       #

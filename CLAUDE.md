@@ -24,8 +24,8 @@ pull request will be answered against.
 
 [ARCHITECTURE.md](./ARCHITECTURE.md) is the design: what each script
 measures, the shared modules under `src/btclib_benchmarks/`, and why
-`render.py` and `_results.py` import no benchmark and are outside the
-suite's 100% floor on purpose. Read it before adding a script or touching
+`render.py` and `_results.py` import no benchmark, and `render.py` is outside
+the suite's 100% floor on purpose. Read it before adding a script or touching
 the split between measuring and publishing, where breaking any of the
 rules it states puts the coupling back.
 
@@ -130,8 +130,8 @@ Do not use Fable unless instructed.
   hook runs `scripts/render.py --check` on every `pre-commit` run, so
   "only a manual run exercises what is under `scripts/`" is false of
   both.
-- **Coverage measures `src/btclib_benchmarks/` — `_results.py`
-  excepted — and the suite, and omits the benchmark scripts** —
+- **Coverage measures `src/btclib_benchmarks/` and the suite, and omits
+  the benchmark scripts and `render.py`** —
   covering a timing function means running it, and a measurement inside
   CI is a number that means nothing.
 - **pytest is strict**: a warning is an error, an unregistered marker is

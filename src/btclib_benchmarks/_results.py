@@ -843,7 +843,7 @@ def _significant(value: float, digits: int = 3) -> str:
     Three digits: two fewer than the machine can be held to, and enough
     that two rows a percent apart are still two numbers.
     """
-    if not value:  # pragma: no cover -- no operation measures as free
+    if not value:
         return "0"
     exponent = math.floor(math.log10(abs(value)))
     decimals = max(0, digits - 1 - exponent)

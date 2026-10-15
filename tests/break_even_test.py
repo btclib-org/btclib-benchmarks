@@ -9,9 +9,6 @@ A preparation that saves nothing never pays for itself, so the table says
 `ZeroDivisionError` raised before the run is saved. The saving's own
 halves' gap is saved with the row when the script measured it, and left out
 of the file when it did not.
-
-`src/btclib_benchmarks/_results.py` is outside the coverage gate on purpose
-(`results_test.py` has why), so what earns a case here is a limit.
 """
 
 from __future__ import annotations
