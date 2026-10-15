@@ -17,7 +17,8 @@ request, and runs no code chosen by anyone other than whoever checks it
 out and types `uv run`. What follows is proportionate to that: the claim
 worth arguing is not that an attacker is kept out, but that the numbers a
 table prints are the numbers the labeled build actually produced, and
-that a comparand's own answers are checked before any of them is timed.
+that a comparand's own answers are checked by the suite, apart from any
+timing.
 
 **The pool of keys `src/btclib_benchmarks/_inputs.py` derives is not a
 secret in the sense any other claim on this page means.** Every key comes
@@ -43,10 +44,9 @@ derives is used to protect anything after the run ends.
   trusted.** `tests/vectors_test.py`'s module docstring states the
   negative cases this checks and why "it agreed with btclib" is not the
   same question.
-- **A timed loop asserts nothing, and an assertion that ran is not part
-  of what a row measures.** `CONTRIBUTING.md`'s *Writing a row* states
-  the rule; every script's fixtures are built and checked at module
-  level, ahead of `main()`.
+- **A timed loop asserts nothing, and a check is not part of what a row
+  measures.** `CONTRIBUTING.md`'s *Writing a row* states the rule and
+  where the checks live instead.
 - **A page's numbers are what its own saved run holds.** `render-check`
   (`.pre-commit-config.yaml`) fails where `results/<name>.md` and
   `results/<name>.json` disagree, on every commit.
@@ -80,11 +80,11 @@ declares — `btclib`, `bitcoin` (`python-bitcoinlib`'s import name),
 operation it times.
 
 **What is defended.** That a published table is checkable: which
-artifact of which package produced each row, and that the row's own
-answer was verified before it was timed. Beyond that, the correctness of
-`tests/vectors_test.py`'s own verdicts, which is btclib's assurance case
-one layer up for the one comparand this project also depends on for its
-production code.
+artifact of which package produced each row, and that the answers of
+what it times are checked in the suite, apart from the timing. Beyond
+that, the correctness of `tests/vectors_test.py`'s own verdicts, which is
+btclib's assurance case one layer up for the one comparand this project
+also depends on for its production code.
 
 **The adversaries.** Two, and neither is a remote party. A comparand's
 own release, which can regress a case this project has already recorded
@@ -100,7 +100,7 @@ depends on and out of its own control: a comparand's supply chain past
 what Dependabot and `uv.lock` cover below; the side channels the keys and
 signatures in this repository were never meant to resist, being made up
 rather than secret; and the correctness of a comparand this project has
-no vendored vector to check — the cross-comparand agreement
+no vendored vector to check — the round trip
 `CONTRIBUTING.md`'s *Writing a row* names as what there is instead,
 weaker than a published vector and said to be.
 
@@ -139,7 +139,7 @@ measuring rather than serving.
   answers where an artifact came from for every script that prints a
   header, rather than each script reading `direct_url.json` its own way.
 - **Fail-safe defaults.** Every script's timing lives behind a `main()`
-  guard; importing one runs its fixtures and its assertions and times
+  guard; importing one runs its fixtures and times
   nothing, which is the same property `tests/scripts_import_test.py`
   relies on to import all six under the suite. `_read`'s cache reader
   in `_inputs.py` treats a short or ragged file as absent rather than as

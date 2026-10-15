@@ -225,9 +225,10 @@ what it intends to do, and what it deliberately does not, is its
 The failure this repository is built to avoid is **measuring something
 other than what the table says**. Every script prints the version and
 the provenance of each package before any number — released, git ref,
-editable, or shadowed on `sys.path` — and asserts that every comparand
-agrees with btclib before timing any of them. A number produced without
-that header is not a result from this project; treat it as unverified.
+editable, or shadowed on `sys.path` — and the suite checks the
+comparands' answers (`CONTRIBUTING.md`'s *Writing a row*). A number
+produced without that header is not a result from this project; treat it
+as unverified.
 [ASSURANCE_CASE.md](./ASSURANCE_CASE.md) argues why that check holds,
 what this project defends and what it does not.
 

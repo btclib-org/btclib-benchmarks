@@ -36,7 +36,7 @@ with the others, and nothing anywhere says so.
 
 ## Nothing here imports a benchmark
 
-Importing one builds its fixtures and runs its cross-comparand assertions,
+Importing one builds its fixtures,
 which is the right price for a measurement and the wrong price for a
 rewording. This module and `render.py` between them read a JSON file and
 write text, and that is the whole of what publishing costs.
