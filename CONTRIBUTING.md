@@ -380,6 +380,10 @@ What a cron runs is the suite, the lint gate, the link check and the
 code analysis, and never a benchmark — *What the suite can and cannot
 check*, below, is where that rule and its reason live.
 
+`verified-signatures.yml` reports after each push to `main` whether every
+commit pushed is `verified`; [the standard's *Signatures*][s-sigs] has the
+rule.
+
 ### Running a mutation session
 
 The `mutation` workflow, weekly and on demand, gates nothing: it asks
