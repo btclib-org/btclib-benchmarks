@@ -1,0 +1,14 @@
+# What this tree has judged not to affect it. The lint job's audit
+# ignores each id (btclib-org/.github's README, section 12).
+
+[[not_affected]]
+id = "GHSA-wj6h-64fc-37mp"
+source = "GitHub"
+component = "ecdsa"
+justification = "requires_environment"
+detail = """\
+python-ecdsa's Minerva timing side channel lets an attacker who times \
+its signing or key generation with a secret key recover that key. This \
+project calls ecdsa only to time it, on keys drawn from a seeded public \
+stream, so no secret is there to recover. The advisory has no patched \
+release."""
