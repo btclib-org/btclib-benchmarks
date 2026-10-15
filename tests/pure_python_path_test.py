@@ -67,9 +67,11 @@ SCRIPTS = Path(__file__).parents[1] / "scripts"
 
 # blocks the bindings, throws the switch, and reports one line per row,
 # taking the script's name. 02's operations are all btclib's and 04
-# labels its btclib rows so. 05 times `verify_octets` and `verify_point` in C
-# before its switch and in Python after it, so the probe throws the switch
-# and calls them as the second, with `parse_point`.
+# labels its btclib rows so. 05 times `verify_octets`, `verify_point`,
+# `verify_point_few` and `verify_prepared` in C before its switch and in Python
+# after it, so the probe throws the switch and calls them as the second, with
+# `parse_point` and `prepare_point_and_verify`, the call the preparation's cost
+# is timed over.
 # Written as a program rather than as a helper module because it has to run
 # somewhere this suite is not: see the docstring
 PROBE = """
@@ -149,7 +151,14 @@ elif B.__name__ == "04-pure-python":
         if "btclib" in label
     ]
 else:
-    names = ["verify_octets", "verify_point", "parse_point"]
+    names = [
+        "verify_octets",
+        "verify_point",
+        "verify_point_few",
+        "verify_prepared",
+        "parse_point",
+        "prepare_point_and_verify",
+    ]
 
 for name in names:
     print("SELECTED " + name)

@@ -30,6 +30,8 @@ from pathlib import Path
 
 import pytest
 
+from btclib_benchmarks import _results
+
 BENCHMARKS = [
     "01-libsecp256k1",
     "02-btclib-vs-btclib",
@@ -126,6 +128,12 @@ def test_a_bare_module_level_call_to_main_is_detected() -> None:
     """The detector itself: none of the six is the regression it looks for."""
     source = "def main():\n    pass\n\n\nmain()\n"
     assert not _main_runs_only_behind_its_guard(source)
+
+
+@pytest.mark.parametrize("name", BENCHMARKS)
+def test_the_method_line_fits_the_page(name: str) -> None:
+    """`labelled` refuses a `method` line wider than the page."""
+    assert _results.labelled("method", importlib.import_module(name).METHOD)
 
 
 @pytest.mark.parametrize("name", BENCHMARKS)

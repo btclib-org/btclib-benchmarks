@@ -84,18 +84,14 @@ On the libsecp256k1 path it is a smaller saving on a smaller number and pays
 back inside two. Neither is a new API and neither is documented anywhere
 a caller looks, which is the only reason this table is interesting.
 
-### Past that, btclib has nothing to prepare and `python-ecdsa` does
+### Past that, `python-ecdsa` has a prepared key this table times
 
 Its precomputed row is the fastest pure-Python verification in any of
 these files, and it beats the best btclib Python row here. What it buys
-is what btclib drops on every call: the multiplication tables built from
-the key, rebuilt per verification because the set of points btclib
-memoizes is the generator's and nothing else. That is
-[ISS 893 (btclib-org/btclib)][issue], where the same measurement is made
-from the other side — with the key memoized through btclib's own existing
-cache, the Python row lands level with `python-ecdsa`'s precomputed one.
-There is no row for it here, because a benchmark row should be something
-a caller can have.
+is the multiplication tables built from the key. btclib also has a
+prepared key, `curve.PreparedPoint`, which keeps those tables in a cache
+under the point a caller wraps in it. This run did not time it: the table
+has no row for it, so nothing here says how it compares.
 
 ### The caller who most needs `precompute()` cannot call it
 
@@ -127,8 +123,6 @@ the generator's, which every key shares and which btclib already
 memoizes; none of these implementations builds per-private-key state. So
 there is no signing half of this benchmark, and that absence is a result
 rather than an omission.
-
-[issue]: https://github.com/btclib-org/btclib/issues/893
 
 ## More benchmarks
 

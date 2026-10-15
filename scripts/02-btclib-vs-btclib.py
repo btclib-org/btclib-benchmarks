@@ -742,6 +742,13 @@ def main() -> None:
     # assignment cannot reach: see `SSA_HELD`
     python_arithmetic_only()
 
+    # the warm-up above ran on libsecp256k1, so the Python path has not been
+    # called yet, and btclib builds its generator tables lazily inside the
+    # first call that needs them. Every row is called once more here, so that
+    # the build lands in none of the timed loops
+    for _, op, _, _ in OPERATIONS:
+        op()
+
     seconds |= {
         f"{name}_pure_python": benchmark(op, calls) for name, op, _, calls in OPERATIONS
     }
