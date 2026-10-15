@@ -1073,8 +1073,9 @@ def bech32m_decode_buidl() -> None:
 # to record as wrong, and `tests/round_trip_test.py` holds it to both
 # directions
 
-# every encoding row is called once before any of them is timed, its own
-# assert holding it to the published address
+# every encoding row is called once before any of them is timed, so that a
+# row that raises fails here and not in the middle of a table. What each
+# bech32 and bech32m row answers is `tests/address_rows_test.py`'s to check
 for _encoding_row in (
     base58_encode_btclib,
     base58_encode_pycoin,

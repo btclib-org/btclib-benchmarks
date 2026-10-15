@@ -44,6 +44,7 @@ answer to the question BIP340 is asking, differently spelled.
 from __future__ import annotations
 
 import csv
+import ctypes
 import hashlib
 import os
 import re
@@ -53,6 +54,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import bitcoin.base58
+import bitcoin.core.key
 import btclib.base58
 import btclib_secp256k1.dsa
 import btclib_secp256k1.ssa
@@ -412,6 +414,9 @@ DSA_VERIFIERS: dict[str, Callable[[bytes, bytes, bytes], bool]] = {
     "embit": lambda pubkey, digest, sig: embit.ec.PublicKey.parse(pubkey).verify(
         embit.ec.Signature.parse(sig), digest
     ),
+    "python-bitcoinlib": lambda pubkey, digest, sig: bitcoin.core.key.CPubKey(
+        pubkey
+    ).verify(digest, sig),
     "python-ecdsa": lambda pubkey, digest, sig: ecdsa.VerifyingKey.from_string(
         pubkey, curve=ecdsa.SECP256k1
     ).verify_digest(sig, digest, sigdecode=ecdsa.util.sigdecode_der),
@@ -432,9 +437,11 @@ DSA_VERIFIERS: dict[str, Callable[[bytes, bytes, bytes], bool]] = {
 # inside `secp256k1_ecdsa_verify`, and this file -- `EcdsaBitcoinVerify` --
 # asks for it. So the packages that reach that C inherit the rule, and the
 # ones that implement ECDSA themselves leave the policy to their caller and
-# answer true. Both answers are right to a different question, which is why
-# these two are expected the other way round below rather than excused: the
-# assertion is still that the signature verifies, which it does.
+# answer true; python-bitcoinlib hands the signature to OpenSSL, which has no
+# low-s rule, and is one of the second kind. Both answers are right to a
+# different question, which is why these two are expected the other way round
+# below rather than excused: the assertion is still that the signature
+# verifies, which it does.
 #
 # tc388 is flagged `ArithmeticError` and its comment says what it is, "edge
 # case for signature malleability" -- so the pair is named by number rather
@@ -444,6 +451,7 @@ MALLEABILITY = (1, 388)
 LOW_S_IS_THE_CALLER_S = (
     "btclib",
     "electrum-ecc",
+    "python-bitcoinlib",
     "python-ecdsa",
     "buidl.pecc",
     "pycoin",
@@ -484,6 +492,46 @@ LAX_DER_OR_WORSE = {
     ),
 }
 
+# python-bitcoinlib is not in the table above: its list depends on the libssl
+# that `ctypes` finds, which parses the signature before it is verified.
+# Two lists therefore. The first held on every library measured, OpenSSL 3 on
+# the suite's Linux CI runner and LibreSSL on macOS: a length in a form DER
+# does not have, and bytes after the signature. The second is LibreSSL's
+# alone, which also reads the tags, compositions and padding that OpenSSL 3
+# refuses. It is expected to fail, strictly, when the library the package
+# loaded reports itself as LibreSSL, and is not marked otherwise.
+LIBRESSL_ONLY = dict.fromkeys(
+    (26, 27, 43, 47, 83, 87, 88, 96, 126, 130, 131, 139),
+    "a tag, a composition or an indefinite length where DER has one form",
+) | dict.fromkeys(
+    (79, 100, 123), "a zero prepended to r or s, or an r cut short, that still parses"
+)
+
+
+def _libssl_version() -> str:
+    """Return what the libssl python-bitcoinlib itself loaded calls itself.
+
+    Read from the package's own handle and not from `ssl`, which can be
+    linked to another library: on macOS `ssl` reports OpenSSL while the
+    package loads the system's LibreSSL. OpenSSL 1.1 and later export
+    `OpenSSL_version`, and LibreSSL 2.2.9 only `SSLeay_version`.
+    """
+    handle = bitcoin.core.key._ssl
+    version = getattr(handle, "OpenSSL_version", None) or handle.SSLeay_version
+    version.restype = ctypes.c_char_p
+    return str(version(0).decode())
+
+
+LIBSSL_IS_LIBRESSL = _libssl_version().startswith("LibreSSL")
+
+LAX_DER_OR_WORSE["python-bitcoinlib"] = (
+    dict.fromkeys(
+        (3, 4, 62, 63, 109, 110), "a BER long-form length where DER has one form"
+    )
+    | {20: "bytes appended to a signature that then still parses"}
+    | (LIBRESSL_ONLY if LIBSSL_IS_LIBRESSL else {})
+)
+
 WYCHEPROOF = _vectors.wycheproof()
 
 
@@ -498,17 +546,21 @@ def _wycheproof_cases() -> list[pytest.param]:  # type: ignore[valid-type]
         pytest.param(
             package,
             case,
-            marks=(
-                pytest.mark.xfail(strict=True, reason=known[case.number])
-                if (known := LAX_DER_OR_WORSE.get(package, {})).get(case.number)
-                and case.number not in MALLEABILITY
-                else ()
-            ),
+            marks=_known(package, case.number),
             id=f"{package}-tc{case.number}",
         )
         for package in sorted(DSA_VERIFIERS)
         for case in WYCHEPROOF
     ]
+
+
+def _known(package: str, number: int) -> pytest.MarkDecorator | tuple[()]:
+    """Return the expected failure a pair carries, if the file's case is one."""
+    if number in MALLEABILITY:
+        return ()
+    if reason := LAX_DER_OR_WORSE.get(package, {}).get(number):
+        return pytest.mark.xfail(strict=True, reason=reason)
+    return ()
 
 
 @pytest.mark.parametrize("package, case", _wycheproof_cases())
