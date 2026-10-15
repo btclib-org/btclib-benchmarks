@@ -90,7 +90,7 @@ from hashlib import sha256
 from itertools import cycle
 from typing import TYPE_CHECKING, TypeVar
 
-import btclib
+import btclib_ecc
 import btclib_secp256k1
 import ecdsa
 from btclib_ecc.curves import curve, sec_point
@@ -132,7 +132,7 @@ def provenance() -> Provenance:
         columns=[],
         rows=[],
         notes=described(
-            ("btclib", btclib.__file__),
+            ("btclib-ecc", btclib_ecc.__file__),
             ("btclib-secp256k1", btclib_secp256k1.__file__),
             ("ecdsa", ecdsa.__file__),
         ),

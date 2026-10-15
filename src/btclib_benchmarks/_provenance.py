@@ -183,6 +183,21 @@ def from_a_declared_source(dist_name: str) -> bool:
     return raw is None or "vcs_info" in json.loads(raw)
 
 
+def undeclared(*dist_names: str) -> list[str]:
+    """Return a line for each distribution not from a declared source.
+
+    A path installed over the top is what a reader has to act on, and the
+    distribution whose code a row times is the one to ask about: btclib's
+    arithmetic is `btclib-ecc`'s and its BIP32 is `btclib-wallet`'s, so an
+    editable `btclib` beside released ones measures none of them.
+    """
+    return [
+        f"  {dist_name}: {origin_of(dist_name)}"
+        for dist_name in dist_names
+        if not from_a_declared_source(dist_name)
+    ]
+
+
 def describe(dist_name: str, module_file: str) -> str:
     """Return a line naming a package's version, and its origin if it is odd.
 
@@ -199,16 +214,20 @@ def describe(dist_name: str, module_file: str) -> str:
     over the top, `sys.path:` says the import never reached the install,
     and a run showing any of the three is measuring something other than
     what a `uv sync` produces.
+
+    The origin is asked before the import path: an editable install's code
+    sits outside every install directory by construction, so the other
+    order would call each one `sys.path:` and never say `editable:`.
     """
     try:
         released = version(dist_name)
     except PackageNotFoundError:
         return f"{dist_name:<20}: not installed"
+    if not from_a_declared_source(dist_name):
+        return f"{dist_name:<20}: {released:<24} ({origin_of(dist_name)})"
     if not _under_install_root(module_file):
         return f"{dist_name:<20}: {released:<24} (sys.path: {module_file})"
-    if from_a_declared_source(dist_name):
-        return f"{dist_name:<20}: {released}"
-    return f"{dist_name:<20}: {released:<24} ({origin_of(dist_name)})"
+    return f"{dist_name:<20}: {released}"
 
 
 # what a timing contains, said in the output rather than only in the prose

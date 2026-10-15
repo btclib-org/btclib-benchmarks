@@ -527,11 +527,13 @@ flattered it.
 To measure a working tree instead of the published release:
 
 ```shell
-uv run --with-editable /path/to/btclib python scripts/03-libraries.py
+uv run --with-editable /path/to/btclib-ecc python scripts/03-libraries.py
 ```
 
-The header then says `editable: /path/to/btclib` where it otherwise says
-`released`, which is the point of printing it.
+Install the package whose code the rows time: `btclib-ecc` for the curve
+and the signature schemes, `btclib-wallet` for BIP32, `btclib` for the
+rest. The packages block then says `editable: /path/to/btclib-ecc`, which
+is the point of printing it.
 
 ### Publishing a run, which is a second command
 
