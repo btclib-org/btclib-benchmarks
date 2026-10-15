@@ -183,7 +183,7 @@ from btclib_ecc.ecc import dsa, ssa
 from btclib_wallet import bip32 as btclib_bip32
 
 from btclib_benchmarks import _inputs
-from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS
+from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS, undeclared
 from btclib_benchmarks._releases import released
 from btclib_benchmarks._results import (
     Measurement,
@@ -212,9 +212,16 @@ def provenance() -> Provenance:
     which build this is, and the arithmetic says what the row measures --
     three of these packages reach for a C library at import and fall back to
     Python without saying so. Sorted newest release first.
+
+    btclib is three distributions: `btclib-ecc` holds the curve and the
+    signature schemes, `btclib-wallet` BIP32, and `btclib` the address
+    encodings. Each has its row, and an install that is not the declared one
+    goes under the table.
     """
     rows = (
         ("btclib", LIBSECP256K1),
+        ("btclib-ecc", LIBSECP256K1),
+        ("btclib-wallet", LIBSECP256K1),
         ("ecdsa", PURE_PYTHON),
         ("pycoin", _pycoin_backend()),
         ("buidl", _buidl_backend()),
@@ -229,6 +236,7 @@ def provenance() -> Provenance:
                 rows, key=lambda row: released(row[0]), reverse=True
             )
         ],
+        notes=undeclared(*(dist_name for dist_name, _ in rows)),
     )
 
 

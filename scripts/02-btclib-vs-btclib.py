@@ -131,7 +131,7 @@ from btclib_ecc.ecc import dh, dsa, ssa
 from btclib_ecc.ecc import ellswift as ecc_ellswift
 
 from btclib_benchmarks import _inputs
-from btclib_benchmarks._provenance import from_a_declared_source, origin_of
+from btclib_benchmarks._provenance import undeclared
 from btclib_benchmarks._results import (
     Measurement,
     Pair,
@@ -150,33 +150,32 @@ if TYPE_CHECKING:
 
 
 def provenance() -> Provenance:
-    """Say which build of each package these rows are about, in one line.
+    """Say which build of each package these rows are about.
 
     A released wheel and a working tree satisfy the same requirement and
     resolve in silence, so which one ran is something the output has to
     state rather than something the reader assumes. Where an install is not
     the declared one, that is what a reader has to act on, and it goes
-    under the line rather than inside it.
+    under the lines rather than inside them.
 
-    Two packages and no columns: a table of two rows is a table only in the
-    sense that it has edges, and the unit and the sort have to be said
-    somewhere above the numbers, which is here.
+    No columns: a table of so few rows is a table only in the sense that it
+    has edges, and the unit and the sort have to be said somewhere above the
+    numbers, which is here.
 
-    The wrapper's version is btclib-secp256k1's, that being what a caller
-    installs; which revision of libsecp256k1 it bundled is recorded in
+    The curve, ECDSA, BIP340, ECDH and ElligatorSwift encoding rows run
+    `btclib-ecc`; the others run `btclib`. The wrapper's
+    version is btclib-secp256k1's, that being what a caller installs; which
+    revision of libsecp256k1 it bundled is recorded in
     `LIBSECP256K1_PINS` of `src/btclib_benchmarks/_releases.py`, against the
     release it was read from, and `scripts/01-libsecp256k1.py` prints it.
     """
-    stated = (
-        f"btclib {version('btclib')} (wrapper {version('btclib-secp256k1')}), "
-        f"measured as \N{GREEK SMALL LETTER MU}s/call, sorted on the ratio"
+    packages = (
+        f"btclib-ecc {version('btclib-ecc')}, btclib {version('btclib')} "
+        f"(wrapper {version('btclib-secp256k1')})"
     )
-    odd = [
-        f"  {dist_name}: {origin_of(dist_name)}"
-        for dist_name in ("btclib", "btclib-secp256k1")
-        if not from_a_declared_source(dist_name)
-    ]
-    return Provenance(columns=[], rows=[], notes=[stated, *odd])
+    stated = "measured as \N{GREEK SMALL LETTER MU}s/call, sorted on the ratio"
+    odd = undeclared("btclib-ecc", "btclib", "btclib-secp256k1")
+    return Provenance(columns=[], rows=[], notes=[packages, stated, *odd])
 
 
 # The inputs are `_inputs`': one pool, shared by every benchmark here, built

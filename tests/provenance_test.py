@@ -11,14 +11,16 @@ was measured. Each test below names the way that can happen.
 
 from __future__ import annotations
 
+import importlib
 import json
+import sys
 from collections.abc import Callable
 from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 
 import pytest
 
-from btclib_benchmarks import _provenance
+from btclib_benchmarks import _provenance, _results
 
 # what the `fake_dist` fixture hands a test: a function taking the
 # payload a `direct_url.json` would hold, or None for "no such file"
@@ -179,6 +181,21 @@ def test_a_path_install_is_named_in_the_line(
     monkeypatch.setattr(_provenance, "version", lambda _: "2026.9")
     line = _provenance.describe("btclib", INSTALLED)
     assert line.endswith("(editable: /home/dev/btclib)")
+
+
+def test_an_editable_install_is_named_though_its_module_is_outside_site_packages(
+    monkeypatch: pytest.MonkeyPatch, fake_dist: InstallFake
+) -> None:
+    """The real shape of one: the module is in the working tree.
+
+    Asked the other way round, the line would say `sys.path:` for every
+    editable install and never `editable:`.
+    """
+    fake_dist({"url": "file:///home/dev/btclib", "dir_info": {"editable": True}})
+    monkeypatch.setattr(_provenance, "version", lambda _: "2026.9")
+    line = _provenance.describe("btclib", "/home/dev/btclib/btclib/__init__.py")
+    assert line.endswith("(editable: /home/dev/btclib)")
+    assert "sys.path" not in line
 
 
 def test_a_distribution_with_no_metadata_at_all_is_named_not_installed(
@@ -396,3 +413,72 @@ def test_built_here_answers_yes_positively_and_no_only_by_default(
     fake_wheel("Tag: cp313-cp313-macosx_11_0_arm64\n")
     assert _provenance.built_here("anything") is False
     assert _provenance.built_here("no-such-distribution-anywhere") is False
+
+
+def test_undeclared_lists_only_the_installs_that_are_not_declared(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A released install is silent and a path installed over it is named."""
+    monkeypatch.setattr(
+        _provenance,
+        "_distribution",
+        lambda name: _FakeDistribution(
+            {"url": f"file:///dev/{name}", "dir_info": {"editable": True}}
+            if name == "btclib-ecc"
+            else None
+        ),
+    )
+    assert _provenance.undeclared("btclib", "btclib-ecc", "btclib-wallet") == [
+        "  btclib-ecc: editable: /dev/btclib-ecc"
+    ]
+
+
+# the distributions whose code a page's rows run, by page: btclib's curve and
+# schemes are `btclib-ecc`'s, its BIP32 `btclib-wallet`'s, and the rest
+# `btclib`'s
+RUN_BY = [
+    ("02-btclib-vs-btclib", "btclib"),
+    ("02-btclib-vs-btclib", "btclib-ecc"),
+    ("03-libraries", "btclib"),
+    ("03-libraries", "btclib-ecc"),
+    ("03-libraries", "btclib-wallet"),
+    ("04-pure-python", "btclib"),
+    ("04-pure-python", "btclib-ecc"),
+    ("05-key-reuse", "btclib-ecc"),
+]
+
+
+def _block_with_editable(page: str, dist_name: str | None) -> str:
+    """Return a page's packages block, one distribution installed editable."""
+
+    def pick(name: str) -> object:
+        # every other distribution is a released one, whatever the
+        # environment the suite runs in has installed over the top
+        if name != dist_name:
+            return _FakeDistribution(None)
+        return _FakeDistribution(
+            {"url": f"file:///dev/{name}", "dir_info": {"editable": True}}
+        )
+
+    benchmark = importlib.import_module(page)
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(_provenance, "_distribution", pick)
+        # the module of an editable install is in the working tree, outside
+        # site-packages, and a page that reads `__file__` must still say so
+        module = sys.modules.get((dist_name or "").replace("-", "_"))
+        if module is not None:
+            patch.setattr(module, "__file__", f"/dev/{dist_name}/__init__.py")
+        return _results.rendered_provenance(benchmark.provenance())
+
+
+@pytest.mark.parametrize("page, dist_name", RUN_BY)
+def test_an_editable_install_of_a_package_a_page_runs_is_named_on_it(
+    page: str, dist_name: str
+) -> None:
+    """The block says `editable:` for the package whose code was swapped.
+
+    The control is the same block with nothing swapped, which must not say
+    it: a check that printed the word for every run would pass the rest.
+    """
+    assert "editable:" not in _block_with_editable(page, None)
+    assert f"editable: /dev/{dist_name}" in _block_with_editable(page, dist_name)

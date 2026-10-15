@@ -156,7 +156,7 @@ from ellipticcurve.privateKey import PrivateKey as StarkbankPrivateKey
 from secp256k1lab.secp256k1 import G as LAB_G
 
 from btclib_benchmarks import _inputs
-from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS
+from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS, undeclared
 from btclib_benchmarks._releases import released
 from btclib_benchmarks._results import (
     Measurement,
@@ -184,9 +184,15 @@ def provenance() -> Provenance:
     pycoin's cell is read back rather than written down, a benchmark that
     says Python on a row that loaded a shared object being worse than no
     benchmark. Sorted newest release first.
+
+    btclib's rows run `btclib-ecc` for the signatures and `btclib` for the
+    public key, so both have their row, and an install that is not the
+    declared one goes under the table.
     """
+    held = "its delegation to btclib-secp256k1's cffi bindings switched off"
     rows = (
-        ("btclib", "its delegation to btclib-secp256k1's cffi bindings switched off"),
+        ("btclib", held),
+        ("btclib-ecc", held),
         (
             "pycoin",
             f"PYCOIN_NATIVE=none before its import, resolving to {_pycoin_backend()}",
@@ -204,6 +210,7 @@ def provenance() -> Provenance:
                 rows, key=lambda row: released(row[0]), reverse=True
             )
         ],
+        notes=undeclared(*(dist_name for dist_name, _ in rows)),
     )
 
 
