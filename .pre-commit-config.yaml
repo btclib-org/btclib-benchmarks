@@ -623,8 +623,8 @@ repos:
   # ignore_missing_imports override: nothing else in this repository ever
   # calls one of their main() -- pytest's testpaths is tests/ alone, so
   # they are never collected, and tests/scripts_import_test.py's own
-  # docstring says a test can hold one to no more than its fixtures and
-  # its cross-comparand assertions, main() checked callable, never called.
+  # docstring says what a test holds one to: loading it with the clock made
+  # to raise, main() checked callable, never called.
   # A manual run is the only thing that executes one, so mypy is the only
   # check that reaches what runs inside. Several of the comparands they
   # import ship no py.typed and no stub, which is what pyproject.toml's

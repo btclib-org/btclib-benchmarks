@@ -101,14 +101,14 @@ that draw moves the row is not a claim this page makes.
 
 ## The inputs
 
-Every BIP340 signing vector, cycled, `_vectors` reading the file and checking
-its digest. With each vector's aux_rand, BIP340 signing is deterministic, so
-both implementations that do it are held to the signatures the specification
-publishes. ECDSA has no such line -- RFC6979's nonce is btclib's own -- and
-stays cross-checked between implementations.
+The inputs are `_inputs`' seeded pool, cycled, with a fixed aux_rand for
+BIP340 signing, which makes it deterministic. The signatures the
+specification publishes belong to the vectors' own keys, and
+`tests/vectors_test.py` holds the BIP340 signers to them. ECDSA has no such
+line -- RFC6979's nonce is btclib's own.
 
-A published key is worth insisting on even where the timings do not turn on
-it: python-ecdsa returns the generator *object* as the public key of the
+A key nobody chose is worth insisting on even where the timings do not turn
+on it: python-ecdsa returns the generator *object* as the public key of the
 private key 1, precomputed table and all, so a row verifying against that key
 verifies with a table no real key gets.
 
@@ -510,7 +510,7 @@ def dsa_verify_starkbank() -> None:
 
 
 def ssa_sign_btclib_noverify() -> None:
-    """Time an unchecked BIP340 signature, over the vector's aux_rand.
+    """Time an unchecked BIP340 signature, over a fixed aux_rand.
 
     `verify=False`. Neither comparand in this table checks what it signed,
     so this is the row they are read against; the row below is BIP340's own

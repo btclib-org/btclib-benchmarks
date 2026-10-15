@@ -46,11 +46,13 @@ wallet layer, not arithmetic.
 
 ## What is measured
 
-Every input is a published vector, cycled: `_vectors` reads BIP340's file
-and BIP32's, and each row takes the next per call. The address rows are the
-exception and say so where they are defined.
+The curve inputs are `_inputs`' seeded pool, cycled: each row takes the next
+per call. BIP32 derivation takes the chains of `_vectors`' BIP32 file instead,
+and the address rows take the witness programs and addresses that BIP173 and
+BIP350 publish, with the base58check address of the same 20 bytes; both say
+so where they are defined.
 
-- ECDSA sign and verify, over each vector's 32 bytes read as a digest. Every
+- ECDSA sign and verify, over each message's 32 bytes read as a digest. Every
   comparand takes a digest directly, so none of them hashes it again.
 
   Every signing row states both of its flags in its name, in the order the
@@ -86,12 +88,11 @@ exception and say so where they are defined.
   verifies under the point its key holds and raises on a failure, which is
   BIP340's own last step -- so in that table it is btclib's checked row
   that has a comparand and its unchecked row that stands alone.
-- BIP340 sign and verify, over each vector's message and aux_rand. BIP340
+- BIP340 sign and verify, over each message and a fixed aux_rand. BIP340
   does not hash its message, so this is the value every implementation signs
   byte for byte, and it is libsecp256k1's fixed-size entry point, which is
-  what keeps btclib's row on the libsecp256k1 path. The vector's aux_rand
-  makes
-  both signing rows reproducible, and therefore checkable against BIP340.
+  what keeps btclib's row on the libsecp256k1 path. The fixed aux_rand makes
+  both signing rows reproducible.
 
   Signing has two tables, a fresh key and a key held already, because a
   signer does not sign one message any more than a verifier verifies one
@@ -279,9 +280,7 @@ def provenance() -> Provenance:
 # How deep the curve fixtures go. Not the longest row's fifty thousand: an
 # entry is a key object and a signature in each of six packages, two of
 # which sign in pure Python at tens of milliseconds apiece, so fifty
-# thousand of each would be minutes of setup before a number is printed --
-# and `tests/scripts_import_test.py` budgets an import, an unguarded
-# benchmark being what that budget is watching for.
+# thousand of each would be minutes of setup before a number is printed.
 #
 # Ten thousand instead, which the longest rows read five times per round.
 # Repeating a key is what the pool is sized to allow -- a second pass over

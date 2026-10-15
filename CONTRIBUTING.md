@@ -627,17 +627,20 @@ What it does check is what survives being automated:
   expected failure with the reason beside it, never excluded. `xfail_strict`
   is on, so a release that fixes one fails the suite instead of passing
   quietly — which is the only way a recorded defect stays current.
-- that each row of `02-btclib-vs-btclib.py` has a second path at all.
-  `tests/pure_python_path_test.py` blocks every libsecp256k1 entry point and
-  calls every operation: a row that has kept a foot in C raises instead of
-  answering. BIP32 derivation was such a row.
+- that each row of `02-btclib-vs-btclib.py` has a second path at all, and
+  that the btclib Python rows of `04-pure-python.py` and `05-key-reuse.py`
+  stay off libsecp256k1. `tests/pure_python_path_test.py` blocks every
+  libsecp256k1 entry point and calls every such row: a row that has kept a
+  foot in C raises instead of answering. BIP32 derivation was such a row.
 - that every script *loads*, which runs the fixtures at its top and the
   assertions comparing each comparand's answer against btclib's. A table
   whose rows compute different things is worth nothing, and importing the
   module is what catches it.
 - that loading one times nothing. Every script keeps its timing behind
-  `main()`; before that guard existed, importing any of them ran every
-  loop in it, which is why none could be tested at all.
+  `main()`, and `tests/scripts_import_test.py` makes `time.perf_counter`
+  raise while each is imported, so a timing at module level fails whether or
+  not it goes through `main()`. Before that guard existed, importing any of
+  them ran every loop in it, which is why none could be tested at all.
 
 ### Writing a row
 
@@ -654,16 +657,15 @@ What it does check is what survives being automated:
   `tests/vectors_test.py` runs the vendored vectors against every
   implementation these scripts time, in the configuration each is timed
   in, including the negative cases no benchmark row can express.
-- **take the input from a published test vector.** The fixtures are
-  BIP340's first vector and BIP32's first, transcribed from btclib's
-  vendored copies — the values, not the files, each row timing one input.
-  The timings do not turn on it: a valid key measures like any other valid
-  key, which was checked. The assertions do. Checked against btclib, a
-  comparand can only disagree with btclib; checked against what the
-  specification publishes, both can be wrong and still fail, which is the
-  failure worth being able to have. Where no vector fixes the answer —
-  ECDSA's nonce is btclib's own RFC6979 — the cross-comparand check is
-  what there is, and that is worth writing down beside the row.
+- **take the input from the seeded pool**, `_inputs`, which every script
+  draws its keys and messages from. `03-libraries.py`'s BIP32 derivation
+  and address rows take published values instead, and say why where they
+  are defined. The timings do not turn on the choice: a valid key measures
+  like any other valid key, which was checked. What a vector adds is a
+  published answer the suite can hold an implementation to. Where none
+  fixes the answer -- ECDSA's nonce is btclib's own RFC6979 -- the
+  cross-comparand check is what there is, and that is worth writing down
+  beside the row.
 
   A made-up key is not merely weaker, it can be actively wrong, and the
   key this project signed with for a while — 1 — was wrong in two ways.

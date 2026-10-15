@@ -86,10 +86,11 @@ Neither can see the machine drifting between one run and the next; the
 wrappers page pays for a second pass and states that size, and this page does
 not, so nothing here says it.
 
-The inputs are every BIP340 signing vector and every BIP32 chain the
-vendored files publish, cycled one per call; the address rows are the
-exception, one witness-v0 and one witness-v1 address being what is
-vendored, so they call one input.
+The curve inputs are the seeded pool of `_inputs`, cycled one per call.
+BIP32 derivation takes every chain the vendored BIP32 file publishes
+instead; the address rows are the other exception, calling the witness
+programs and addresses that BIP173 and BIP350 publish, and the base58check
+address of the same 20 bytes.
 
 **BIP340 signing is two tables now, a fresh key and a key held already**, and
 the split corrects a comparison as much as it adds one. A signer does not

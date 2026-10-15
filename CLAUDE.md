@@ -100,13 +100,15 @@ Do not use Fable unless instructed.
   header is the full explanation.
 - **Every timing lives behind `main()`.** Importing a script must run
   its fixtures and its cross-comparand assertions and time nothing —
-  that is what makes the suite possible. `02-btclib-vs-btclib.py` and
-  `04-pure-python.py` also call `python_arithmetic_only()`, which turns
-  btclib's dispatch off process-wide and cannot be undone: it belongs
-  inside `main()`, after every row that is meant to reach libsecp256k1.
-  At module level it would leave every later test in the process
-  measuring Python. `01-libsecp256k1.py` imports no btclib: a table of
-  wrappers has no pure-Python row to switch.
+  that is what makes the suite possible, and
+  `tests/scripts_import_test.py` makes the clock raise to prove the last.
+  `02-btclib-vs-btclib.py`, `04-pure-python.py` and `05-key-reuse.py`
+  also call `python_arithmetic_only()`, which turns btclib's dispatch off
+  process-wide and cannot be undone: it belongs inside `main()`, after
+  every row that is meant to reach libsecp256k1. At module level it would
+  leave every later test in the process measuring Python.
+  `01-libsecp256k1.py` imports no btclib: a table of wrappers has no
+  pure-Python row to switch.
 - **The wrapper rows carry the libsecp256k1 revision each package
   vendors**, `LIBSECP256K1_PINS` in `01-libsecp256k1.py` holding
   it: most of the wrapper rows link the library into a cffi extension

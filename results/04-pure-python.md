@@ -61,8 +61,8 @@ halves seconds apart say nothing about two runs a day apart; [the wrappers
 page][wrappers] pays for a second pass and states that size, and this page
 does not.
 
-The inputs are every BIP340 vector the file publishes, cycled: each call takes
-the next, so a row is an average over inputs nobody here chose. btclib signs
+The inputs are the seeded pool of `_inputs`, cycled: each call takes the
+next, so a row is an average over inputs nobody here chose. btclib signs
 ECDSA twice, once per row: one signature, which is what the other
 implementations produce, and its own default beside it, which grinds until r
 fits in 32 bytes.
