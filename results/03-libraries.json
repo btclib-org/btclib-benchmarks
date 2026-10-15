@@ -2,7 +2,7 @@
   "schema": 1,
   "benchmark": "03-libraries",
   "run": {
-    "when": "2026-08-21T02:34:56+02:00",
+    "when": "2026-10-15T20:33:12+02:00",
     "timezone": "CEST",
     "python": "3.13.14",
     "method": "4 rounds per row in two halves, minimum kept; calls per row",
@@ -19,8 +19,20 @@
     "rows": [
       [
         "btclib",
-        "2026.9",
-        "main@5f7ad5422544",
+        "2026.10.9",
+        "2026-10-10",
+        "libsecp256k1 enhanced"
+      ],
+      [
+        "btclib-ecc",
+        "2026.10.10",
+        "2026-10-10",
+        "libsecp256k1 enhanced"
+      ],
+      [
+        "btclib-wallet",
+        "2026.10.9",
+        "2026-10-08",
         "libsecp256k1 enhanced"
       ],
       [
@@ -72,71 +84,71 @@
       "rows": [
         {
           "label": "btclib_nogrind_noverify",
-          "us_per_call": 15.318324160180053,
-          "halves_apart": 0.07012752001173972,
+          "us_per_call": 13.406410819734447,
+          "halves_apart": 0.022721679997630417,
           "rounds": 4,
           "calls": 50000
         },
         {
           "label": "btclib_nogrind_verify",
-          "us_per_call": 36.40703544951975,
-          "halves_apart": 0.07231875060824677,
+          "us_per_call": 33.733777049928904,
+          "halves_apart": 0.04015835002064705,
           "rounds": 4,
           "calls": 20000
         },
         {
           "label": "btclib_grind_noverify",
-          "us_per_call": 27.84066664899001,
-          "halves_apart": 0.0022146006813272834,
+          "us_per_call": 25.486368749989197,
+          "halves_apart": 0.030806250288151205,
           "rounds": 4,
           "calls": 20000
         },
         {
           "label": "btclib_grind_verify",
-          "us_per_call": 48.480763934397444,
-          "halves_apart": 11.776574931961179,
+          "us_per_call": 45.71193886610369,
+          "halves_apart": 0.1717805998244657,
           "rounds": 4,
           "calls": 15000
         },
         {
           "label": "ecdsa_nogrind_noverify",
-          "us_per_call": 286.30295840557665,
-          "halves_apart": 2.2388499986846,
+          "us_per_call": 290.4682917986065,
+          "halves_apart": 0.3474665980320424,
           "rounds": 4,
           "calls": 5000
         },
         {
           "label": "pycoin_nogrind_noverify",
-          "us_per_call": 12.364968339679763,
-          "halves_apart": 2.313838340342045,
+          "us_per_call": 12.3805916600395,
+          "halves_apart": 0.00024084001779556274,
           "rounds": 4,
           "calls": 50000
         },
         {
           "label": "buidl_nogrind_noverify",
-          "us_per_call": 34538.89916010667,
-          "halves_apart": 11404.091679723933,
+          "us_per_call": 29903.134159976617,
+          "halves_apart": 66.41918036621064,
           "rounds": 4,
           "calls": 50
         },
         {
           "label": "bitcoinlib_nogrind_noverify",
-          "us_per_call": 206.9251875000191,
-          "halves_apart": 14.608609373681247,
+          "us_per_call": 197.95704687567195,
+          "halves_apart": 0.06782812488381751,
           "rounds": 4,
           "calls": 8000
         },
         {
           "label": "embit_nogrind_noverify",
-          "us_per_call": 14.671364160021767,
-          "halves_apart": 0.19884250010363758,
+          "us_per_call": 14.153008320135996,
+          "halves_apart": 0.012946680071763694,
           "rounds": 4,
           "calls": 50000
         },
         {
           "label": "embit_grind_noverify",
-          "us_per_call": 30.862995849747673,
-          "halves_apart": 0.34233329934068735,
+          "us_per_call": 29.639368748757988,
+          "halves_apart": 0.03294580092187971,
           "rounds": 4,
           "calls": 20000
         }
@@ -150,43 +162,43 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 20.683083339827135,
-          "halves_apart": 5.5330725002568215,
+          "us_per_call": 24.547788319760002,
+          "halves_apart": 0.01866917998995632,
           "rounds": 4,
           "calls": 50000
         },
         {
           "label": "ecdsa",
-          "us_per_call": 1084.9967640048512,
-          "halves_apart": 2.873416330354985,
+          "us_per_call": 1092.5031946680974,
+          "halves_apart": 1.026235996202331,
           "rounds": 4,
           "calls": 3000
         },
         {
           "label": "pycoin",
-          "us_per_call": 14.351441679755226,
-          "halves_apart": 0.06727332016453147,
+          "us_per_call": 13.888955839793198,
+          "halves_apart": 0.034954160219058394,
           "rounds": 4,
           "calls": 50000
         },
         {
           "label": "buidl",
-          "us_per_call": 59736.25167971477,
-          "halves_apart": 2004.1533198673278,
+          "us_per_call": 59485.961680766195,
+          "halves_apart": 58.56331903487444,
           "rounds": 4,
           "calls": 25
         },
         {
           "label": "bitcoinlib",
-          "us_per_call": 223.17860714143276,
-          "halves_apart": 194.6704107145446,
+          "us_per_call": 222.5617321465896,
+          "halves_apart": 1.977660709859009,
           "rounds": 4,
           "calls": 7000
         },
         {
           "label": "embit",
-          "us_per_call": 55.051126679754816,
-          "halves_apart": 0.8957591600483283,
+          "us_per_call": 24.21682332002092,
+          "halves_apart": 0.02882000000681728,
           "rounds": 4,
           "calls": 50000
         }
@@ -200,29 +212,29 @@
       "rows": [
         {
           "label": "btclib_noverify",
-          "us_per_call": 24.20880583988037,
-          "halves_apart": 0.6313341605709866,
+          "us_per_call": 20.419576659915037,
+          "halves_apart": 0.01608418009709567,
           "rounds": 4,
           "calls": 50000
         },
         {
           "label": "btclib_verify",
-          "us_per_call": 35.40339446723616,
-          "halves_apart": 0.03450829923774279,
+          "us_per_call": 33.81789443374146,
+          "halves_apart": 0.06975696693795186,
           "rounds": 4,
           "calls": 30000
         },
         {
           "label": "buidl_verify",
-          "us_per_call": 140976.912502083,
-          "halves_apart": 3438.2374957203865,
+          "us_per_call": 140410.2458007401,
+          "halves_apart": 3795.645898208022,
           "rounds": 4,
           "calls": 10
         },
         {
           "label": "embit_noverify",
-          "us_per_call": 21.48792333959136,
-          "halves_apart": 0.006599160842597485,
+          "us_per_call": 21.659173339721747,
+          "halves_apart": 0.06663415988441557,
           "rounds": 4,
           "calls": 50000
         }
@@ -236,29 +248,29 @@
       "rows": [
         {
           "label": "btclib_noverify",
-          "us_per_call": 8.564202500274405,
-          "halves_apart": 0.04434834001585841,
+          "us_per_call": 8.708375840215012,
+          "halves_apart": 0.06135915988124907,
           "rounds": 4,
           "calls": 50000
         },
         {
           "label": "btclib_verify",
-          "us_per_call": 21.789495833218098,
-          "halves_apart": 0.013525000152487365,
+          "us_per_call": 21.972081933442194,
+          "halves_apart": 0.00807640026323142,
           "rounds": 4,
           "calls": 30000
         },
         {
           "label": "buidl_verify",
-          "us_per_call": 110532.84999943571,
-          "halves_apart": 1775.0708502717316,
+          "us_per_call": 110284.16250046575,
+          "halves_apart": 2080.0228987354785,
           "rounds": 4,
           "calls": 20
         },
         {
           "label": "embit_noverify",
-          "us_per_call": 21.137642500107177,
-          "halves_apart": 0.007456659805029631,
+          "us_per_call": 21.26857167982962,
+          "halves_apart": 0.26943331991788,
           "rounds": 4,
           "calls": 50000
         }
@@ -272,22 +284,22 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 21.133559999871068,
-          "halves_apart": 0.01211834023706615,
+          "us_per_call": 20.275957499979995,
+          "halves_apart": 0.18613584048580378,
           "rounds": 4,
           "calls": 50000
         },
         {
           "label": "buidl",
-          "us_per_call": 68453.73832038604,
-          "halves_apart": 74.73003934137523,
+          "us_per_call": 68267.80500006862,
+          "halves_apart": 171.12332046963274,
           "rounds": 4,
           "calls": 25
         },
         {
           "label": "embit",
-          "us_per_call": 25.02080250007566,
-          "halves_apart": 0.006161659839563072,
+          "us_per_call": 25.07584332022816,
+          "halves_apart": 0.49993001972325146,
           "rounds": 4,
           "calls": 50000
         }
@@ -301,29 +313,29 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 61.47207359996779,
-          "halves_apart": 0.03234723311229004,
+          "us_per_call": 37.90394863268982,
+          "halves_apart": 0.022195800556794154,
           "rounds": 4,
           "calls": 30000
         },
         {
           "label": "pycoin",
-          "us_per_call": 47.474454166755706,
-          "halves_apart": 0.008222199782409234,
+          "us_per_call": 47.7321680674019,
+          "halves_apart": 0.012983299287341765,
           "rounds": 4,
           "calls": 30000
         },
         {
           "label": "embit",
-          "us_per_call": 85.28230833277726,
-          "halves_apart": 0.1586583345973338,
+          "us_per_call": 85.88537499890663,
+          "halves_apart": 0.6378583338422033,
           "rounds": 4,
           "calls": 15000
         },
         {
           "label": "buidl",
-          "us_per_call": 101146.7916687252,
-          "halves_apart": 9839.628415647894,
+          "us_per_call": 101102.7778343608,
+          "halves_apart": 10026.933998839624,
           "rounds": 4,
           "calls": 12
         }
@@ -337,36 +349,36 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 2.357180624967441,
-          "halves_apart": 0.0036783350515179336,
+          "us_per_call": 2.63371395500144,
+          "halves_apart": 0.006137919990578666,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "pycoin",
-          "us_per_call": 3.6811914600548334,
-          "halves_apart": 2.9647352050233167,
+          "us_per_call": 3.6340495849435683,
+          "halves_apart": 0.02608354014228098,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 3.08662874987931,
-          "halves_apart": 0.8018639600777533,
+          "us_per_call": 2.0747979151201434,
+          "halves_apart": 0.028569584974320605,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 2.6044906249444466,
-          "halves_apart": 0.29717625002376735,
+          "us_per_call": 2.2067358349158894,
+          "halves_apart": 0.01558771007694304,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "bitcoinlib",
-          "us_per_call": 2.8607320800074376,
-          "halves_apart": 0.011885830026585609,
+          "us_per_call": 2.485300420084968,
+          "halves_apart": 0.002532909857109189,
           "rounds": 4,
           "calls": 100000
         }
@@ -380,36 +392,36 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 2.84589374990901,
-          "halves_apart": 0.006378750113071874,
+          "us_per_call": 2.651865420048125,
+          "halves_apart": 0.06394270501914434,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "pycoin",
-          "us_per_call": 4.025821040122537,
-          "halves_apart": 0.2627933349867817,
+          "us_per_call": 3.693219999986468,
+          "halves_apart": 0.03525812498992309,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 2.5596979149850085,
-          "halves_apart": 0.014231250097509474,
+          "us_per_call": 2.35450457999832,
+          "halves_apart": 0.03479625011095777,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 3.1193672900553793,
-          "halves_apart": 0.017039169906638563,
+          "us_per_call": 2.922069170017494,
+          "halves_apart": 0.026095829962287098,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "bitcoinlib",
-          "us_per_call": 4.436270830046851,
-          "halves_apart": 0.002962500147987157,
+          "us_per_call": 4.138667920196895,
+          "halves_apart": 0.014071249752305448,
           "rounds": 4,
           "calls": 100000
         }
@@ -423,29 +435,29 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 8.579911460110452,
-          "halves_apart": 0.14998624479630962,
+          "us_per_call": 7.94638812498306,
+          "halves_apart": 0.06522750001749866,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 28.595667499903357,
-          "halves_apart": 18.21618750007474,
+          "us_per_call": 26.694531664979877,
+          "halves_apart": 0.09411604507477023,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 11.900430830137338,
-          "halves_apart": 0.15214416984235868,
+          "us_per_call": 11.672759169887286,
+          "halves_apart": 0.1951087499037385,
           "rounds": 4,
           "calls": 100000
         },
         {
           "label": "bitcoinlib",
-          "us_per_call": 26.377205830067396,
-          "halves_apart": 0.2783799997996539,
+          "us_per_call": 26.60945499999798,
+          "halves_apart": 0.05195728997932747,
           "rounds": 4,
           "calls": 200000
         }
@@ -459,29 +471,29 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 6.9577806249435525,
-          "halves_apart": 0.001370624959236011,
+          "us_per_call": 7.784467290039175,
+          "halves_apart": 0.03617228998336852,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 14.512496249953983,
-          "halves_apart": 0.009917920106090605,
+          "us_per_call": 14.574841875000857,
+          "halves_apart": 0.13331750000361353,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 10.575766249967273,
-          "halves_apart": 0.00046832981752231717,
+          "us_per_call": 10.532425840210635,
+          "halves_apart": 0.21386290987720713,
           "rounds": 4,
           "calls": 100000
         },
         {
           "label": "bitcoinlib",
-          "us_per_call": 14.44941812500474,
-          "halves_apart": 0.1336258350056596,
+          "us_per_call": 14.78217791998759,
+          "halves_apart": 0.1537502050632611,
           "rounds": 4,
           "calls": 200000
         }
@@ -495,22 +507,22 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 13.105619164998643,
-          "halves_apart": 0.0038987549487501383,
+          "us_per_call": 12.787840624951059,
+          "halves_apart": 0.036781664966838434,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 39.6662095800275,
-          "halves_apart": 0.0606939650606364,
+          "us_per_call": 39.61106854505488,
+          "halves_apart": 1.4473041649034712,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 17.134895419876557,
-          "halves_apart": 0.1270041603129357,
+          "us_per_call": 18.53153875010321,
+          "halves_apart": 0.10418457997730002,
           "rounds": 4,
           "calls": 100000
         }
@@ -524,22 +536,22 @@
       "rows": [
         {
           "label": "btclib",
-          "us_per_call": 11.355412289995002,
-          "halves_apart": 0.02218208508566022,
+          "us_per_call": 13.113810420036316,
+          "halves_apart": 0.06705624487949535,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "embit",
-          "us_per_call": 21.393953545048134,
-          "halves_apart": 0.05087875004392117,
+          "us_per_call": 23.086009999969974,
+          "halves_apart": 0.21710083005018532,
           "rounds": 4,
           "calls": 200000
         },
         {
           "label": "buidl",
-          "us_per_call": 14.884066249942407,
-          "halves_apart": 0.040973750001285225,
+          "us_per_call": 16.288505409902427,
+          "halves_apart": 0.1801762598915957,
           "rounds": 4,
           "calls": 100000
         }
