@@ -73,12 +73,13 @@ cost for a measurement and the wrong one for rewording a heading. Nothing
 derived — a ratio, a savings figure, a sort order — is stored in
 `results/<name>.json`; each is computed at render time from the
 microseconds beside it, so a number in the JSON is a number a clock
-produced. And neither module is covered by the suite's 100% floor: a page
+produced. And `render.py` is not covered by the suite's 100% floor: a page
 is written by a command a person runs, and putting that behind the suite
-is the coupling this split exists to remove — `render-check`
-(`.pre-commit-config.yaml`) is what instead asks whether a page still
-matches the run it publishes, on every commit, without importing a
-benchmark to answer.
+is the coupling this split exists to remove. `_results.py` is covered, by
+cases that assert a run is read, written and rendered and not what the
+page says. `render-check`
+(`.pre-commit-config.yaml`) asks whether a page still matches the run it
+publishes, on every commit, without importing a benchmark to answer.
 
 ## Provenance: which artifact actually ran
 

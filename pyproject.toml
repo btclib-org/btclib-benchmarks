@@ -460,7 +460,6 @@ extend-ignore-re = ['`[^`]*`']
 # `src/btclib_benchmarks/`'s modules are measured in full: they are
 # exactly the modules the suite already imports and asserts against, and
 # living under a package changes where they are and not what covers them
-# -- `_results.py` is the one still omitted below, for its own reason
 source = ["scripts", "src", "tests"]
 # what is measured here is mostly parsing and provenance, and both are
 # written as a walk with an early exit: statement coverage calls a loop
@@ -473,19 +472,21 @@ branch = true
 # above, said in the form coverage understands: measured by a person, and
 # checked by a test only on whether they load.
 #
-# `_results.py` and `render.py` are here for a different reason, and it is
-# a decision rather than an oversight. Publishing a page is deliberately
-# not coupled to the suite: a run is saved as data and rendered back into
-# markdown by a command a person runs, and the whole value of that is that
-# it needs neither a machine nor a test run. A gate over them would put
-# the rewording of a heading behind the suite, which is the coupling this
-# split removes. What holds them honest instead is that they
-# are the *only* writer of those blocks -- `render.py --check` says
-# whether a page still matches the run it claims to publish, and a page
-# nobody can edit by hand cannot drift from its numbers
+# `render.py` is here for a different reason, and it is a decision rather
+# than an oversight. Publishing a page is deliberately not coupled to the
+# suite: a run is saved as data and rendered back into markdown by a
+# command a person runs, and the whole value of that is that it needs
+# neither a machine nor a test run. What holds it honest instead is that it
+# is the *only* writer of those blocks -- `render.py --check` says whether a
+# page still matches the run it claims to publish, and a page nobody can
+# edit by hand cannot drift from its numbers.
+#
+# `_results.py` is measured, though it renders the same pages: it ships in
+# the package, and its cases assert that a run is read, written and
+# rendered, not what the page says, so the rewording of a heading stays out
+# of the suite
 omit = [
     "*/site-packages/*",
-    "src/btclib_benchmarks/_results.py",
     "scripts/03-libraries.py",
     "scripts/02-btclib-vs-btclib.py",
     "scripts/05-key-reuse.py",

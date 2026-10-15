@@ -187,9 +187,8 @@ party supplies.
 - **Type confusion (CWE-843).** mypy runs `strict = true`
   (`pyproject.toml`) over `src/` and `tests/`, as a `.pre-commit-config.yaml`
   hook.
-- **Code that is wrong and still passes.** Coverage of `src/` (short of
-  `_results.py`, by design — [ARCHITECTURE](./ARCHITECTURE.md)'s *The
-  shared modules*) and of `tests/` is held to 100% by `fail_under` in
+- **Code that is wrong and still passes.** Coverage of `src/` and of
+  `tests/` is held to 100% by `fail_under` in
   `pyproject.toml`.
 - **Supply chain.** `uv.lock` pins every dependency, every workflow
   installs it with `--locked`, and `.github/dependabot.yml` groups a
