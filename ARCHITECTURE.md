@@ -30,9 +30,8 @@ run one. Five import `btclib` and time it against a comparand;
 `scripts/01-libsecp256k1.py` times `btclib_secp256k1` against the other
 wrappers of `bitcoin-core/secp256k1` and imports no pure-Python arithmetic
 to switch off. Every script keeps its timing loops behind a `main()`
-guard: importing one builds its fixtures and runs the cross-comparand
-assertions beside them, and times nothing, which is what lets
-`tests/scripts_import_test.py` import all six under the suite without
+guard: importing one builds its fixtures and times nothing, which is what
+lets `tests/scripts_import_test.py` import all six under the suite without
 spending the minutes a real run costs. `scripts/artifacts.py` is covered
 by `tests/artifacts_test.py`, and `scripts/render.py` by nothing, below.
 
@@ -48,8 +47,8 @@ an underscore):
   constants the whole pool is re-derivable from, in any language with a
   hash.
 - **`_vectors.py`** — the vendored BIP340, BIP32, Wycheproof and base58
-  vectors, parsed once for `tests/vectors_test.py` and for the fixtures a
-  benchmark checks itself against at import.
+  vectors, parsed once for `tests/vectors_test.py` and for 03's BIP32
+  fixtures.
 - **`_provenance.py`** — `describe`, `origin_of`, `artifact_of`: what a
   distribution's `direct_url.json` and `WHEEL` metadata say about where it
   came from, read before any row is trusted.
@@ -68,7 +67,7 @@ an underscore):
 `_results.py` and `scripts/render.py` import no benchmark, and that is a
 rule three ways rather than one, stated here and enforced by nothing but
 review: importing a benchmark script builds
-its fixtures and runs every cross-comparand assertion, which is the right
+its fixtures, which is the right
 cost for a measurement and the wrong one for rewording a heading. Nothing
 derived — a ratio, a savings figure, a sort order — is stored in
 `results/<name>.json`; each is computed at render time from the

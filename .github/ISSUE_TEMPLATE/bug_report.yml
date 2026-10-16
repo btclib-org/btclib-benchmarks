@@ -9,8 +9,8 @@ body:
       value: >
         What is reported here is a benchmark that has stopped measuring
         what its label says: a row whose backend is not the one it names,
-        a script that fails or whose cross-comparand assertions no longer
-        hold, a page whose numbers no longer come from the run beside it.
+        a script that fails, a comparand the suite finds disagreeing, a
+        page whose numbers no longer come from the run beside it.
         A defect in one of the packages timed here belongs to that
         project, and a defect in
         [btclib](https://github.com/btclib-org/btclib/issues) or

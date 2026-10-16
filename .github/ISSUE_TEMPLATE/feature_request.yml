@@ -37,10 +37,9 @@ body:
     attributes:
       label: What fixes the answer
       description: >
-        A row asserts before it times, against a published test vector
-        where one exists and against the other comparands where none
-        does. Name the vector, or say that the cross-comparand check is
-        all there is.
+        A row is checked in the suite, against a published test vector
+        where one exists and by a round trip where none does. Name the
+        vector, or say that the round trip is all there is.
     validations:
       required: true
 

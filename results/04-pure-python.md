@@ -111,8 +111,8 @@ command : uv run python scripts/04-pure-python.py
 what a timing contains
   one call per iteration, its answer discarded: no row checks
   itself, and no comparison is inside a measured loop
-  the answers are checked in tests/vectors_test.py, and where
-  each script builds its fixtures, which is before any clock
+  the answers are checked in tests/, not by a script
+  (CONTRIBUTING.md's Writing a row names where)
 
 public key from a private key: a multiplication of the generator
                                       μs/call     vs best   halves

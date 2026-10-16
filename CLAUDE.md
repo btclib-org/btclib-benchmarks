@@ -98,7 +98,7 @@ Do not use Fable unless instructed.
   cell is a comparand's build limit, not a choice — that workflow's own
   header is the full explanation.
 - **Every timing lives behind `main()`.** Importing a script must run
-  its fixtures and its cross-comparand assertions and time nothing —
+  its fixtures and time nothing —
   that is what makes the suite possible, and
   `tests/scripts_import_test.py` makes the clock raise to prove the last.
   `02-btclib-vs-btclib.py`, `04-pure-python.py` and `05-key-reuse.py`

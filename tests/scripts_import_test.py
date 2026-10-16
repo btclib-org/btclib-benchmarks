@@ -8,7 +8,7 @@ A measurement cannot be asserted -- the number is a property of the machine,
 not of the code -- so this file holds a script to two things:
 
 - the module imports, which builds the fixtures at its top. That the
-  comparands agree is not checked here.
+  comparands agree is `round_trip_test.py`'s, not checked here.
 - it times nothing while doing so. `time.perf_counter` raises for the length
   of the import, and every script reads its clock through it, so a timing at
   module level fails whether or not it goes through `main()`. Checking the

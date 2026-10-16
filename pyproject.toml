@@ -452,10 +452,11 @@ extend-ignore-re = ['`[^`]*`']
 # worse, it would put a measurement inside CI, where the numbers mean
 # nothing. What *is* testable in them is reached the other way round, by
 # importing the module: the `main()` guard exists so that an import runs
-# the fixtures and the cross-comparand assertions without timing anything,
-# and tests/scripts_import_test.py is what does it. So the scripts are
-# checked on the one property a test can hold them to -- that they load,
-# that their comparands agree -- and measured by a person.
+# the fixtures without timing anything, and tests/scripts_import_test.py is
+# what does it. So the scripts are checked on the one property a test can
+# hold them to -- that they load -- and measured by a person. Their answers
+# are checked in tests/, where a test exists: CONTRIBUTING.md's *Writing a row*
+# names which.
 #
 # `src/btclib_benchmarks/`'s modules are measured in full: they are
 # exactly the modules the suite already imports and asserts against, and
@@ -722,8 +723,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # the whole output of every one of these is the table a manual run reads,
-# and each asserts its comparands agree with each other before timing any
-# of them. T20 is selected for the same reason it is everywhere in this
+# and the check that comparands agree is the suite's, not theirs. T20 is
+# selected for the same reason it is everywhere in this
 # org -- a library writes to no stream of its own -- and a script whose
 # caller is a person at a terminal is the case it is not about. SLF001 is
 # what CLAUDE.md's own reasoning about `_libsecp256k1_available` already

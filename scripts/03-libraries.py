@@ -117,8 +117,8 @@ so where they are defined.
   everything about the code -- and they hold the one wrong answer in this
   benchmark: `python-bitcoinlib` encodes a witness-v1 program with bech32's
   checksum constant where BIP350 requires bech32m's, and rejects the address
-  BIP350 publishes. It has no bech32m row, and the script asserts both
-  halves of why.
+  BIP350 publishes. It has no bech32m row, and
+  `tests/round_trip_test.py` holds it to both halves of why.
 
 python-ecdsa carries only ECDSA and python-bitcoinlib carries neither BIP340
 nor BIP32, so neither has a row in those tables. pycoin's `ecdsa.Generator`
@@ -128,9 +128,10 @@ has no derivation function either, which is why its BIP32 row goes through
 A timed function calls one library and discards what it returns: no row
 checks its own answer, which would put the check inside the number.
 `tests/vectors_test.py` is where the answers are checked, running the
-vendored vectors against every library timed here. The assertions below run
-at import, where the fixtures are built, so the suite loading this module
-runs them and no timing carries them.
+vendored vectors against every library timed here; `tests/round_trip_test.py`,
+`tests/address_rows_test.py` and `tests/bip340_rows_test.py` check the rest
+(`CONTRIBUTING.md`'s *Writing a row*). This file asserts nothing, so importing
+it checks no answer and no timing carries one.
 
 Not part of the test suite and not run by CI: a shared runner disagrees with
 a laptop by more than most of the differences here.

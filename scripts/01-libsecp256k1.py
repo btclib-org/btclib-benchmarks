@@ -307,8 +307,8 @@ three lets a caller decline that. It is part of what signing through those
 packages costs, so it is in their rows -- reaching past the method into the C
 underneath would time something the package does not offer.
 
-Nothing below asserts, either -- not in a timed function and not in the
-fixtures. Whether these packages answer correctly is
+Nothing below asserts an answer, either -- not in a timed function and not
+in the fixtures. Whether these packages answer correctly is
 `tests/vectors_test.py`'s subject, where BIP340's vectors, Wycheproof's and
 BIP32's are run against every implementation this project times, in the
 configuration it times it in, negative cases included. A benchmark that

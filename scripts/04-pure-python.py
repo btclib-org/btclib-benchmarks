@@ -115,9 +115,9 @@ verifies with a table no real key gets.
 A timed function calls one implementation and discards what it returns:
 nothing here is a correctness check. `tests/vectors_test.py` is, and it runs
 the vendored vectors against every implementation timed here, in this
-script's pure-Python configuration as well as the default one. The
-assertions below run at import, where the fixtures are built, so the suite
-loading this module runs them and no timing carries them.
+script's pure-Python configuration as well as the default one, and
+`tests/round_trip_test.py` checks them against each other. This file asserts
+nothing, so importing it checks no answer and no timing carries a check.
 
 Not part of the test suite and not run by CI, as the others are not.
 

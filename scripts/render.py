@@ -36,8 +36,8 @@ wrong thing to have opinions about that.
 
 ## It imports no benchmark, and that is not an accident
 
-Importing one derives keys, signs a message per comparand and runs every
-cross-comparand assertion before it will answer a question. That is the
+Importing one derives keys and signs a message per comparand before it
+will answer a question. That is the
 right price for a measurement and an absurd one for a heading, so nothing
 here can pay it: this reads JSON and writes markdown, and the only module
 it shares with a benchmark is the one that defines the shape of a run.

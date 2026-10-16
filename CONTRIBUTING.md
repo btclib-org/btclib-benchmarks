@@ -560,8 +560,8 @@ fresh run, whose numbers are different, or a hand-edited block, whose
 numbers are nobody's.
 
 It reads the saved run and imports no benchmark. That matters more than
-it sounds: importing one derives keys, signs a message per comparand and
-runs every cross-comparand assertion before it will answer anything.
+it sounds: importing one derives keys and signs a message per comparand
+before it will answer anything.
 
 ### Which artifact an install resolved to, which is a third command
 
@@ -610,7 +610,8 @@ for the packaging lints, which build an sdist under it. A run records
 neither it nor this repository's commit.
 
 Read a fresh run's header before publishing its numbers. The suite
-proves the scripts load and that their comparands agree; it cannot prove
+proves the scripts load, and checks answers in the files *Writing a row*
+names; it cannot prove
 they still *measure* anything, and that is exactly what rots — a
 comparand renames a method, a backend stops being found, an
 implementation gets a fast path. A row whose backend has silently
@@ -645,10 +646,9 @@ What it does check is what survives being automated:
   stay off libsecp256k1. `tests/pure_python_path_test.py` blocks every
   libsecp256k1 entry point and calls every such row: a row that has kept a
   foot in C raises instead of answering. BIP32 derivation was such a row.
-- that every script *loads*, which runs the fixtures at its top and the
-  assertions comparing each comparand's answer against btclib's. A table
-  whose rows compute different things is worth nothing, and importing the
-  module is what catches it.
+- that every script *loads*, which runs the fixtures at its top. Loading
+  compares no comparand with another: the suite does, as *Writing a row*
+  says.
 - that loading one times nothing. Every script keeps its timing behind
   `main()`, and `tests/scripts_import_test.py` makes `time.perf_counter`
   raise while each is imported, so a timing at module level fails whether or
@@ -657,19 +657,23 @@ What it does check is what survives being automated:
 
 ### Writing a row
 
-- **assert where the fixtures are built, never inside a timing.** A timed
-  function calls one API and discards what it returns: a comparison in the
-  loop is time attributed to a comparand that did not spend it, and a row
-  that checks itself is measuring the check. The assertions live at module
-  level, where each comparand's answer is checked against btclib's — or,
-  where btclib is not a row, against the package the script is about — so
-  one that is merely fast and wrong cannot win a row, and the suite
-  importing the module is what runs them.
-
-  Correctness itself belongs to the suite rather than to any of this.
+- **compare comparands in the suite, never in a timing or a script.** A
+  timed function calls one API and discards what it returns: a comparison
+  in the loop is time attributed to a comparand that did not spend it, and
+  a row that checks itself is measuring the check. The scripts hold no
+  comparison between comparands at all, at module level or elsewhere, so
+  importing one runs none. `06-silentpayments.py` alone asserts, at module
+  level, that `scan_outputs` finds what `create_outputs` made. The suite
+  checks their answers, so that one that is merely fast and wrong cannot
+  win a row.
   `tests/vectors_test.py` runs the vendored vectors against every
   implementation these scripts time, in the configuration each is timed
   in, including the negative cases no benchmark row can express.
+  `tests/round_trip_test.py` holds what no vector publishes: that a package
+  verifies the signature it just made, and that the implementations derive
+  the same public key. `tests/address_rows_test.py` holds 03's address rows
+  to BIP173 and BIP350, and `tests/bip340_rows_test.py` checks that embit's
+  BIP340 signatures verify.
 - **take the input from the seeded pool**, `_inputs`, which every script
   draws its keys and messages from. `03-libraries.py`'s BIP32 derivation
   and address rows take published values instead, and say why where they
@@ -677,8 +681,8 @@ What it does check is what survives being automated:
   like any other valid key, which was checked. What a vector adds is a
   published answer the suite can hold an implementation to. Where none
   fixes the answer -- ECDSA's nonce is btclib's own RFC6979 -- the
-  cross-comparand check is what there is, and that is worth writing down
-  beside the row.
+  round trip in `tests/round_trip_test.py` is what there is, and that is
+  worth writing down beside the row.
 
   A made-up key is not merely weaker, it can be actively wrong, and the
   key this project signed with for a while — 1 — was wrong in two ways.

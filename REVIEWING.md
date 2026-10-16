@@ -518,14 +518,14 @@ document, and not this one, is where the rule lives.
   packages block is one to ask about, and a diff that changes a timed
   function while leaving the page alone is the same question from the
   other side.
-- **Does a changed row still owe what a row owes?** Its assertions at
-  module level rather than inside a timing, its input taken from the
-  seeded pool (03's BIP32 and address rows take published values
-  instead), the backend it resolved to named, its loop count per row
-  where a table mixes Python with C, and its sort on the measurement
-  rather than on btclib. `CONTRIBUTING.md`'s *Writing a row* carries each
-  with the reason that chose it, most of them written after a row was
-  published wrong.
+- **Does a changed row still owe what a row owes?** No comparison inside a
+  timing or between comparands in the script (*Writing a row*), its
+  input taken from the seeded pool (03's BIP32 and address rows take
+  published values instead), the backend it resolved to named, its
+  loop count per row where a table mixes Python with C, and its sort on
+  the measurement rather than on btclib. `CONTRIBUTING.md`'s *Writing a
+  row* carries each with the reason that chose it, most of them written
+  after a row was published wrong.
 - **Does a workflow run a benchmark?** None does, and
   `CONTRIBUTING.md`'s *What the suite can and cannot check* is why: a
   shared runner disagrees with a laptop by more than most of the
