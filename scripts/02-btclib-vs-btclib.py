@@ -318,7 +318,7 @@ XONLY = [_pub_key(k)[1:] for k in _keys("ssa_verify")]
 # the next key in its own slice, which keeps every pair distinct
 DH_SCALARS = [int.from_bytes(k, "big") for k in _keys("dh_shared_secret")]
 _DH_POINTS = [
-    sec_point.point_from_octets(_pub_key(k)) for k in _keys("dh_shared_secret")
+    sec_point.point_from_octets_var(_pub_key(k)) for k in _keys("dh_shared_secret")
 ]
 COUNTERPARTIES = _DH_POINTS[1:] + _DH_POINTS[:1]
 
@@ -488,7 +488,7 @@ def point_parse_33() -> None:
     way -- one code path, no dispatch, and nothing for a pair of columns
     to be a ratio of.
     """
-    sec_point.point_from_octets(next(PARSE_33_CYCLE))
+    sec_point.point_from_octets_var(next(PARSE_33_CYCLE))
 
 
 def mult() -> None:
