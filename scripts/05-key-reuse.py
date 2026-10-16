@@ -172,7 +172,7 @@ PRVKEYS = _inputs.keys()[:BINDINGS_CALLS]
 # they decompress to. Both are built here, before anything is timed, because
 # which one a row passes is the whole of what it measures
 SEC_OCTETS = _inputs.pubkeys_33()[:BINDINGS_CALLS]
-POINTS = [sec_point.point_from_octets(octets) for octets in SEC_OCTETS]
+POINTS = [sec_point.point_from_octets_var(octets) for octets in SEC_OCTETS]
 
 # grind=False: one signature per key, and the same one both paths verify
 DSA_SIGS = [
@@ -332,7 +332,7 @@ def verify_ecdsa_prepared() -> None:
 def parse_point() -> None:
     """Time decompressing the key once, which parsing a point once saves."""
     octets = next(PARSE)
-    sec_point.point_from_octets(octets)
+    sec_point.point_from_octets_var(octets)
 
 
 def _mean_of_fresh(

@@ -75,23 +75,24 @@ requires-python = ">=3.11"
 # README.md's *Measuring a working tree instead of a release* says how to
 # ask it without making it the default.
 dependencies = [
-    # the release the scripts are written against, where a public key is
-    # `PrvKeyData(q).pub.sec`: it has no `btclib.to_pub_key`. It requires
-    # the `btclib-ecc` floor below, and its `secp256k1` extra the
-    # `btclib-secp256k1` one
-    "btclib>=2026.10.3",
+    # where a public key is `PrvKeyData(q).pub.sec`: it has no
+    # `btclib.to_pub_key`. 2026.10.16 is the first release that imports
+    # btclib-ecc's `_var` names, and it requires the `btclib-ecc` floor
+    # below
+    "btclib>=2026.10.16",
     # the curve and the schemes, which the scripts and the suite import
-    # directly, among them the private switch `_libsecp256k1_available`
-    # and `dsa.sign_`'s `grind=`; the floor is the one btclib 2026.10.3
-    # requires
-    "btclib-ecc>=2026.10.2",
+    # directly, among them the private switch `_libsecp256k1_available`,
+    # `dsa.sign_`'s `grind=` and `sec_point.point_from_octets_var`, which
+    # 2026.10.16 is the first release to name so
+    "btclib-ecc>=2026.10.16",
     # `btclib_wallet.bip32`, which `scripts/03-libraries.py` and
-    # `tests/vectors_test.py` import. 2026.9.30 is the first release
-    # whose `bip32` takes its curve from `btclib_ecc`, the package these
-    # scripts take theirs from
-    "btclib-wallet>=2026.9.30",
-    # `ssa.Signer`, which these rows call, shipped in 0.8.0.3; 0.8.0.9 is
-    # the floor the `secp256k1` extra of btclib 2026.10.3 declares
+    # `tests/vectors_test.py` import. 2026.10.16 is the first release
+    # that imports btclib-ecc's `_var` names: an earlier one fails at
+    # import against the `btclib-ecc` floor above
+    "btclib-wallet>=2026.10.16",
+    # `ssa.Signer`, which these rows call. 0.8.0.9 is the build that
+    # `LIBSECP256K1_PINS` in `src/btclib_benchmarks/_releases.py` records,
+    # so a run at the floor names the libsecp256k1 revision its row carries
     "btclib-secp256k1>=0.8.0.9",
     "buidl>=0.2.36",
     "coincurve>=21.0.0",
