@@ -237,6 +237,18 @@ settings and why they are what they are.
 [roadmap]: https://github.com/btclib-org/.github/blob/main/ROADMAP.md
 [good-first]: https://github.com/search?q=org%3Abtclib-org+label%3A%22good+first+issue%22+is%3Aopen&type=issues
 
+## Worktrees
+
+Run `git fetch origin` in the primary checkout, then check that
+`git status --porcelain` is empty and `git branch --show-current` is
+`main`. Run `git pull --ff-only` only when both checks pass, then verify
+`git rev-parse HEAD origin/main` prints the same sha twice. Create a separate
+worktree for each task with `git worktree add <path> origin/main -b <branch>`,
+and remove it with `git worktree remove <path>` when done. Keep the primary
+checkout clean and on `main`; do not switch branches or stash there. Hooks can
+fix files in place, and the local `main` and `refs/stash` are shared by all
+worktrees.
+
 ## This repository in particular
 
 Everything above is the same file in every repository of the
