@@ -246,7 +246,7 @@ Run `git fetch origin` in the primary checkout, then check that
 worktree for each task with
 `git worktree add <path> origin/main -b <branch>`, and remove it with
 `git worktree remove --force <path>` because initialized submodules prevent
-plain removal. Keep the primary checkout and on `main`; do not switch branches or stash there. Hooks can
+plain removal. Keep the primary checkout clean and on `main`; do not switch branches or stash there. Hooks can
 fix files in place, and the local `main` and `refs/stash` are shared by all
 worktrees.
 
