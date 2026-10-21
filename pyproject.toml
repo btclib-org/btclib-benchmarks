@@ -21,11 +21,14 @@
 #       "import uv_build; print(uv_build.build_sdist('<outdir>'))"
 #
 # which answers with nothing below the boundary and with
-# pyproject.toml.orig at it. The ceiling is the next minor, which is
-# where uv's versioning policy puts a breaking change, this backend
-# releasing with uv and versioned by it. That a pure-Python project of
+# pyproject.toml.orig at it and in every minor measured above it, 0.13
+# the newest. The ceiling is the minor after the newest one measured,
+# so that a minor nobody measured is not admitted: uv's versioning
+# policy puts a breaking change at a minor, this backend releasing with
+# uv and versioned by it. Raising the ceiling takes that measurement at
+# the new minor. That a pure-Python project of
 # this organization uses this backend at all is btclib-org/.github#118
-requires = ["uv_build>=0.12.0,<0.13"]
+requires = ["uv_build>=0.12.0,<0.14"]
 build-backend = "uv_build"
 
 [project]
@@ -207,7 +210,7 @@ check = [
     # .pre-commit-config.yaml's own pyroma hook is what section 12 of the
     # organization standard asks for: a hook building the project uses a
     # backend [build-system] admits
-    "uv_build>=0.12.0,<0.13",
+    "uv_build>=0.12.0,<0.14",
 ]
 docs = ["furo>=2025.12.19", "myst-parser>=5.1.0", "sphinx>=9.0.4"]
 # what the mutation workflow and a local session both run against;
