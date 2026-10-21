@@ -512,9 +512,10 @@ repos:
   # with write access. --persona=auditor runs on every commit rather than
   # by hand, because this tree measures zero under it: claude-review.yml
   # and test.yml write a scope's reason on the grant's own line, which is
-  # what undocumented-permissions -- the one audit the persona has ever
-  # flagged here -- reads. A finding it raises from here on is this
-  # tree's own regression, not advice to weigh (btclib-org/.github#1164)
+  # what undocumented-permissions reads. A finding fails it, and is
+  # answered by a fix, a narrower grant, a reason on the grant's own line,
+  # or an inline decline with its reason beside it
+  # (btclib-org/.github#1164)
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.31.1
     hooks:
