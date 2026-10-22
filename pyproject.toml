@@ -730,8 +730,7 @@ ignore = [
 # selected for the same reason it is everywhere in this
 # org -- a library writes to no stream of its own -- and a script whose
 # caller is a person at a terminal is the case it is not about. SLF001 is
-# what CLAUDE.md's own reasoning about `_libsecp256k1_available` already
-# argues -- btclib's private dispatch switch, reached into on purpose so
+# needed for btclib's private dispatch switch, reached into on purpose so
 # `python_arithmetic_only()` can turn it off after the row that measures
 # through libsecp256k1. INP001 is `[tool.ruff]`'s own `namespace-packages`
 # comment above, read the other way: this directory is not a package and
