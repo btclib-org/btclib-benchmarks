@@ -12,14 +12,17 @@
 
 ## Checks
 
-<!-- CI runs all of this and rejects the pull request if any of it fails:
-     the point of running it locally is not to wait for CI to say so. -->
+<!-- CI runs these gates, each in a form of its own, and rejects the pull
+     request if one fails: the point of running them locally is not to
+     wait for CI to say so. -->
 
 - [ ] the lint gate is clean: `uv run pre-commit run --all-files`
 - [ ] the suite passes, with its coverage gate: `uv run pytest`
 - [ ] the documentation builds: `uv run --locked --no-default-groups
       --group docs sphinx-build -W -n -b html docs/source
       docs/build/html`
+- [ ] I have read and understood every line of this change, and can
+      answer a review of it without the model
 
 ## Anything the reviewer should know
 
