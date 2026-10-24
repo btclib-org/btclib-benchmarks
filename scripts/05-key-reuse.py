@@ -90,11 +90,11 @@ from hashlib import sha256
 from itertools import cycle
 from typing import TYPE_CHECKING, TypeVar
 
-import btclib_ecc
 import btclib_secp256k1
+import ecc
 import ecdsa
-from btclib_ecc.curves import curve, sec_point
-from btclib_ecc.ecc import dsa
+from ecc.curves import curve, sec_point
+from ecc.ecc import dsa
 
 from btclib_benchmarks import _inputs
 from btclib_benchmarks._provenance import described
@@ -116,7 +116,7 @@ from btclib_benchmarks._timing import benchmark, estimate, interleaved, saving_a
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from btclib_ecc.alias import Point
+    from ecc.alias import Point
 
 T = TypeVar("T")
 
@@ -132,7 +132,7 @@ def provenance() -> Provenance:
         columns=[],
         rows=[],
         notes=described(
-            ("btclib-ecc", btclib_ecc.__file__),
+            ("ecc", ecc.__file__),
             ("btclib-secp256k1", btclib_secp256k1.__file__),
             ("ecdsa", ecdsa.__file__),
         ),
@@ -261,8 +261,8 @@ def python_arithmetic_only() -> None:
     """Turn btclib's libsecp256k1 dispatch off, everywhere at once.
 
     Called once, from `main`, after every libsecp256k1 row has been timed:
-    the assignment cannot be undone within a process, so the order of the
-    rows below is the measurement's own requirement and not a choice.
+    the run never turns it back on, so the order of the rows below is the
+    measurement's own requirement and not a choice.
     """
     curve._libsecp256k1_available = False
 
@@ -434,8 +434,8 @@ METHOD = f"{ROUNDS} rounds per row, pairs in turn, minimum kept; calls per row"
 def main() -> None:
     """Time every row, libsecp256k1 first, print the tables and save the run.
 
-    The order is `python_arithmetic_only`'s requirement: it cannot be
-    undone within a process, so every row that is meant to reach the
+    The order is `python_arithmetic_only`'s requirement: the run never
+    turns it back on, so every row that is meant to reach the
     libsecp256k1 runs before it and every row that is meant to measure Python
     runs after. The cost of preparing a point is timed last, after the rows
     that read the cache: a cold preparation puts new tables in it.

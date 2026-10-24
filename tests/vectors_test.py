@@ -22,9 +22,8 @@ odd thing to have built.
 `scripts/03-libraries.py` and `scripts/01-libsecp256k1.py` measure
 these packages as installed, which is this process. `scripts/04-pure-python.py`
 and `scripts/02-btclib-vs-btclib.py` measure two of them with their C turned
-off, and neither switch can be undone: `PYCOIN_NATIVE` is read when pycoin
-is imported, and btclib's dispatch flag cannot be restored once cleared
-without leaving every later test measuring something it did not choose. So
+off, and pycoin's cannot be turned back on: `PYCOIN_NATIVE` is read when
+pycoin is imported. So
 the pure-Python configuration is this same file, re-run by pytest in a child
 process with `BENCHMARKS_PURE_PYTHON` set -- the same vectors, the same
 assertions, the other arithmetic underneath.
@@ -72,9 +71,9 @@ import pycoin.symbols.btc
 import pytest
 import secp256k1
 import secp256k1lab.bip340
-from btclib_ecc.curves import curve
-from btclib_ecc.ecc import dsa, ssa
 from btclib_wallet import bip32
+from ecc.curves import curve
+from ecc.ecc import dsa, ssa
 from ellipticcurve.ecdsa import Ecdsa as StarkbankEcdsa
 from ellipticcurve.publicKey import PublicKey as StarkbankPublicKey
 from ellipticcurve.signature import Signature as StarkbankSignature
@@ -115,10 +114,12 @@ PINS = {
 }
 
 # the pure-Python configuration, as `scripts/04-pure-python.py` measures it: the
-# environment variable pycoin reads at import, and btclib's dispatch off
+# environment variable pycoin reads at import, and `ecc`'s dispatch off,
+# which btclib and the wallet's BIP32 both read
 PURE_PYTHON = bool(os.environ.get("BENCHMARKS_PURE_PYTHON"))
 if PURE_PYTHON:  # pragma: no cover -- the child process is the one that runs it
     curve._libsecp256k1_available = False
+    assert not curve.is_libsecp256k1_serving()
 
 
 def _bip340_vectors() -> list[dict[str, str]]:
@@ -705,11 +706,11 @@ def test_bip32_derivation_matches_the_vector(
 def test_the_pure_python_configuration_answers_the_same_vectors() -> None:
     """Re-run this file with the C turned off, which is a second process.
 
-    `PYCOIN_NATIVE` is read when pycoin is imported and btclib's dispatch
-    flag cannot be restored, so the configuration `scripts/04-pure-python.py`
-    measures cannot be reached from inside a suite that also measures the
-    other one. What is asserted is what a reader of that benchmark needs:
-    the Python arithmetic answers every vector the C arithmetic answers.
+    `PYCOIN_NATIVE` is read when pycoin is imported, so the configuration
+    `scripts/04-pure-python.py` measures cannot be reached from inside a
+    suite that also measures the other one. What is asserted is what a
+    reader of that benchmark needs: the Python arithmetic answers every
+    vector the C arithmetic answers.
     """
     environment = dict(os.environ)
     environment["BENCHMARKS_PURE_PYTHON"] = "1"

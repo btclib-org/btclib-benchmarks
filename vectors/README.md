@@ -19,17 +19,17 @@ custody with two links that are both checkable beats two chains.
 
 Each file is pinned to the repository whose tests read it:
 `bip340_test_vectors.csv` and `WYCHEPROOF_COPYING` to
-`btclib-org/btclib-ecc`, `bip32_test_vectors.json` to
+`btclib-org/ecc`, `bip32_test_vectors.json` to
 `btclib-org/btclib-wallet`, and `base58_encode_decode.json` to
 `btclib-org/btclib`. `ecdsa_secp256k1_sha256_bitcoin_test.json` lives in
-btclib-ecc too, but our copy is an older revision than the one there, so
+ecc too, but our copy is an older revision than the one there, so
 its entry pins the btclib commit that holds our bytes and says how far
-behind btclib-ecc it is.
+behind ecc it is.
 
 The near link is what the entries below pin: that repository's blob against
 ours, which `git hash-object` reproduces without downloading anything. The
 far one is the provenance file of that repository, `tests/_data/README.md`
-([btclib's][pins], [btclib-ecc's][ecc-pins], [btclib-wallet's][wallet-pins]),
+([btclib's][pins], [ecc's][ecc-pins], [btclib-wallet's][wallet-pins]),
 and the upstream it names is not one project but several: `bitcoin/bips` for
 `bip340_test_vectors.csv`, `C2SP/wycheproof` for
 `ecdsa_secp256k1_sha256_bitcoin_test.json` and for the licence beside it,
@@ -40,7 +40,7 @@ rather than compared to a file, and the chain from here ends at that
 transcription.
 
 `WYCHEPROOF_COPYING` sits beside the Wycheproof file, as it does beside
-btclib-ecc's copy: that file is Google's, under Apache 2.0, and a licence
+ecc's copy: that file is Google's, under Apache 2.0, and a licence
 travels with what it covers. It has an entry like the rest, and it is the
 one entry no benchmark reads: `_vectors.read` checks a file as it hands it
 over, so what guards the licence is `vectors_test.py` reading this file
@@ -49,11 +49,11 @@ instead.
 ### `vectors/bip340_test_vectors.csv`
 
 ```text
-repo    btclib-org/btclib-ecc
-path    tests/ecc/_data/bip340_test_vectors.csv
-commit  69609d0996b5b5610a6706f11ef0e450a3f15668  2026-09-26
+repo    btclib-org/ecc
+path    tests/schemes/_data/bip340_test_vectors.csv
+commit  7a80b485d8ef8d8e60cbf0c031988cdd0c15a1a4  2026-10-19
 blob    aa317a3b3d53aa904def8b5a625b13073898b349
-pulled  2026-10-07
+pulled  2026-10-24
 behind  0 revisions; that commit is the tip of the path
 ```
 
@@ -80,20 +80,19 @@ path    tests/ecc/_data/ecdsa_secp256k1_sha256_bitcoin_test.json
 commit  c44634e3e0fbbe39d3d04d36ccc6d62bd671871c  2026-08-13
 blob    f737aabce273eb9485f21b84d32aa01d3e8b0246
 pulled  2026-08-15
-behind  1 revision: btclib-ecc 69609d0996b5b5610a6706f11ef0e450a3f15668, 2026-09-26
+behind  3 revisions: ecc 7a80b485d8ef8d8e60cbf0c031988cdd0c15a1a4, 2026-10-19
 ```
 
 Verdict: **identical** to the pinned blob. The commit above is in btclib's
 history; btclib's tip holds no such file.
-btclib-ecc's copy has blob `88097c48ba49f358179ac3aa6c6a64562d0f4e65`: the
-cases, their verdicts and `numberOfTests` are the same, and the
-difference is the `source` object per group that replaces the top-level
-`generatorVersion`. Taking btclib-ecc's revision
-is a decision rather than a chore, and it is not a free one here: the file
-carries a `valid`/`invalid` verdict per case and this suite asserts each
-package's answer against it, so a case whose verdict moved changes what the
-comparands are held to. What `behind` buys is that the choice is visible
-without anybody opening btclib-ecc.
+ecc's copy has blob `d5c273b5d0f54c502616ae0c651696d56d91618c`. It has the
+cases of ours and one more, `tcId` 464, an invalid signature, so its
+`numberOfTests` is one higher. A `source` object per group also replaces the
+top-level `generatorVersion`. Taking ecc's revision is a decision rather than
+a chore, and it is not a free one here: the file carries a `valid`/`invalid`
+verdict per case and this suite asserts each package's answer against it, so
+a case added or moved changes what the comparands are held to. What `behind`
+buys is that the choice is visible without anybody opening ecc.
 
 ### `vectors/base58_encode_decode.json`
 
@@ -111,11 +110,11 @@ Verdict: **identical**.
 ### `vectors/WYCHEPROOF_COPYING`
 
 ```text
-repo    btclib-org/btclib-ecc
-path    tests/ecc/_data/WYCHEPROOF_COPYING
-commit  69609d0996b5b5610a6706f11ef0e450a3f15668  2026-09-26
+repo    btclib-org/ecc
+path    tests/schemes/_data/WYCHEPROOF_COPYING
+commit  7a80b485d8ef8d8e60cbf0c031988cdd0c15a1a4  2026-10-19
 blob    d645695673349e3947e8e5ae42332d0ac3164cd7
-pulled  2026-10-07
+pulled  2026-10-24
 behind  0 revisions; that commit is the tip of the path
 ```
 
@@ -184,5 +183,5 @@ lists belong beside these, and the bech32m defect that benchmark found
 in `python-bitcoinlib` is exactly what an invalid-address list is for.
 
 [pins]: https://github.com/btclib-org/btclib/blob/2e5f944/tests/_data/README.md
-[ecc-pins]: https://github.com/btclib-org/btclib-ecc/blob/69609d0/tests/_data/README.md
+[ecc-pins]: https://github.com/btclib-org/ecc/blob/7a80b48/tests/_data/README.md
 [wallet-pins]: https://github.com/btclib-org/btclib-wallet/blob/67a7910/tests/_data/README.md

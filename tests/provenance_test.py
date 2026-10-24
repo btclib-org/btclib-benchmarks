@@ -425,27 +425,27 @@ def test_undeclared_lists_only_the_installs_that_are_not_declared(
         "_distribution",
         lambda name: _FakeDistribution(
             {"url": f"file:///dev/{name}", "dir_info": {"editable": True}}
-            if name == "btclib-ecc"
+            if name == "ecc"
             else None
         ),
     )
-    assert _provenance.undeclared("btclib", "btclib-ecc", "btclib-wallet") == [
-        "  btclib-ecc: editable: /dev/btclib-ecc"
+    assert _provenance.undeclared("btclib", "ecc", "btclib-wallet") == [
+        "  ecc: editable: /dev/ecc"
     ]
 
 
 # the distributions whose code a page's rows run, by page: btclib's curve and
-# schemes are `btclib-ecc`'s, its BIP32 `btclib-wallet`'s, and the rest
+# schemes are `ecc`'s, its BIP32 `btclib-wallet`'s, and the rest
 # `btclib`'s
 RUN_BY = [
     ("02-btclib-vs-btclib", "btclib"),
-    ("02-btclib-vs-btclib", "btclib-ecc"),
+    ("02-btclib-vs-btclib", "ecc"),
     ("03-libraries", "btclib"),
-    ("03-libraries", "btclib-ecc"),
+    ("03-libraries", "ecc"),
     ("03-libraries", "btclib-wallet"),
     ("04-pure-python", "btclib"),
-    ("04-pure-python", "btclib-ecc"),
-    ("05-key-reuse", "btclib-ecc"),
+    ("04-pure-python", "ecc"),
+    ("05-key-reuse", "ecc"),
 ]
 
 
