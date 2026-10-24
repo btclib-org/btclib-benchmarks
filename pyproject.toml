@@ -79,19 +79,18 @@ requires-python = ">=3.11"
 # ask it without making it the default.
 dependencies = [
     # where a public key is `PrvKeyData(q).pub.sec`: it has no
-    # `btclib.to_pub_key`. 2026.10.16 is the first release that imports
-    # btclib-ecc's `_var` names, and it requires the `btclib-ecc` floor
-    # below
-    "btclib>=2026.10.16",
+    # `btclib.to_pub_key`. The first release that reaches the bindings
+    # only through `ecc`, so that the one switch `ecc` holds turns its
+    # libsecp256k1 off, and whose `PubKeyData` caches `point_var`
+    "btclib>=2026.10.24",
     # the curve and the schemes, which the scripts and the suite import
     # directly, among them the private switch `_libsecp256k1_available`,
-    # `dsa.sign_`'s `grind=` and `sec_point.point_from_octets_var`, which
-    # 2026.10.16 is the first release to name so
-    "btclib-ecc>=2026.10.16",
+    # `dsa.sign_`'s `grind=` and `sec_point.point_from_octets_var`.
+    # 2026.10.23 is the floor `btclib` itself declares
+    "ecc>=2026.10.23",
     # `btclib_wallet.bip32`, which `scripts/03-libraries.py` and
-    # `tests/vectors_test.py` import. 2026.10.16 is the first release
-    # that imports btclib-ecc's `_var` names: an earlier one fails at
-    # import against the `btclib-ecc` floor above
+    # `tests/vectors_test.py` import. It still imports `btclib_ecc`, which
+    # it requires itself
     "btclib-wallet>=2026.10.16",
     # `ssa.Signer`, which these rows call. 0.8.0.9 is the build that
     # `LIBSECP256K1_PINS` in `src/btclib_benchmarks/_releases.py` records,

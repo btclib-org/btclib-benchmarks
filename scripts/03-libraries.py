@@ -179,8 +179,8 @@ import embit.bip32
 import embit.ec
 import pycoin.encoding.b58
 import pycoin.symbols.btc
-from btclib_ecc.curves import curve
-from btclib_ecc.ecc import dsa, ssa
+from ecc.curves import curve
+from ecc.ecc import dsa, ssa
 from btclib_wallet import bip32 as btclib_bip32
 
 from btclib_benchmarks import _inputs
@@ -214,14 +214,14 @@ def provenance() -> Provenance:
     three of these packages reach for a C library at import and fall back to
     Python without saying so. Sorted newest release first.
 
-    btclib is three distributions: `btclib-ecc` holds the curve and the
+    btclib is three distributions: `ecc` holds the curve and the
     signature schemes, `btclib-wallet` BIP32, and `btclib` the address
     encodings. Each has its row, and an install that is not the declared one
     goes under the table.
     """
     rows = (
         ("btclib", LIBSECP256K1),
-        ("btclib-ecc", LIBSECP256K1),
+        ("ecc", LIBSECP256K1),
         ("btclib-wallet", LIBSECP256K1),
         ("ecdsa", PURE_PYTHON),
         ("pycoin", _pycoin_backend()),
@@ -672,7 +672,7 @@ SSA_BTCLIB = cycle(
 # fresh row above it differ by the holding and by nothing else. Which of them
 # saves what is a reading of each library rather than an assumption:
 #
-# - `btclib_ecc.ecc.ssa.Signer` holds the `libsecp256k1_ssa.Signer` that
+# - `ecc.ecc.ssa.Signer` holds the `libsecp256k1_ssa.Signer` that
 #   `ssa.sign_` builds and wipes inside every call, and that is a keypair --
 #   a multiplication of the generator, and about half of what a BIP340
 #   signature costs on this path;

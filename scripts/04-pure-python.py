@@ -149,8 +149,8 @@ import ecdsa
 import pycoin.symbols.btc
 import secp256k1lab.bip340
 from btclib.key import PrvKeyData
-from btclib_ecc.curves import curve
-from btclib_ecc.ecc import dsa, ssa
+from ecc.curves import curve
+from ecc.ecc import dsa, ssa
 from ellipticcurve.ecdsa import Ecdsa as StarkbankEcdsa
 from ellipticcurve.privateKey import PrivateKey as StarkbankPrivateKey
 from secp256k1lab.secp256k1 import G as LAB_G
@@ -185,14 +185,14 @@ def provenance() -> Provenance:
     says Python on a row that loaded a shared object being worse than no
     benchmark. Sorted newest release first.
 
-    btclib's rows run `btclib-ecc` for the signatures and `btclib` for the
+    btclib's rows run `ecc` for the signatures and `btclib` for the
     public key, so both have their row, and an install that is not the
     declared one goes under the table.
     """
     held = "its delegation to btclib-secp256k1's cffi bindings switched off"
     rows = (
         ("btclib", held),
-        ("btclib-ecc", held),
+        ("ecc", held),
         (
             "pycoin",
             f"PYCOIN_NATIVE=none before its import, resolving to {_pycoin_backend()}",

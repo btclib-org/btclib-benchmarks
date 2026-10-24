@@ -188,7 +188,7 @@ def undeclared(*dist_names: str) -> list[str]:
 
     A path installed over the top is what a reader has to act on, and the
     distribution whose code a row times is the one to ask about: btclib's
-    arithmetic is `btclib-ecc`'s and its BIP32 is `btclib-wallet`'s, so an
+    arithmetic is `ecc`'s and its BIP32 is `btclib-wallet`'s, so an
     editable `btclib` beside released ones measures none of them.
     """
     return [

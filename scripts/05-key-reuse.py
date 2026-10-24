@@ -90,11 +90,11 @@ from hashlib import sha256
 from itertools import cycle
 from typing import TYPE_CHECKING, TypeVar
 
-import btclib_ecc
+import ecc
 import btclib_secp256k1
 import ecdsa
-from btclib_ecc.curves import curve, sec_point
-from btclib_ecc.ecc import dsa
+from ecc.curves import curve, sec_point
+from ecc.ecc import dsa
 
 from btclib_benchmarks import _inputs
 from btclib_benchmarks._provenance import described
@@ -116,7 +116,7 @@ from btclib_benchmarks._timing import benchmark, estimate, interleaved, saving_a
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from btclib_ecc.alias import Point
+    from ecc.alias import Point
 
 T = TypeVar("T")
 
@@ -132,7 +132,7 @@ def provenance() -> Provenance:
         columns=[],
         rows=[],
         notes=described(
-            ("btclib-ecc", btclib_ecc.__file__),
+            ("ecc", ecc.__file__),
             ("btclib-secp256k1", btclib_secp256k1.__file__),
             ("ecdsa", ecdsa.__file__),
         ),
