@@ -468,7 +468,7 @@ a mutant a test caught.
 ### Running a benchmark
 
 Every floor in `pyproject.toml` is a minimum a comparand upgrades past
-without a word, `btclib`, `btclib-ecc`, `btclib-wallet` and
+without a word, `btclib`, `ecc`, `btclib-wallet` and
 `btclib-secp256k1` included now that all resolve from a released index
 rather than a branch: `uv sync --locked` reinstalls the revision the lock
 names and never looks at whether a newer release has shipped since. So a
@@ -477,7 +477,7 @@ whatever was current the day the lock was last written, which is not what a
 page's provenance block claims it measured. Ask for it first, every time:
 
 ```shell
-uv lock --upgrade-package btclib --upgrade-package btclib-ecc \
+uv lock --upgrade-package btclib --upgrade-package ecc \
   --upgrade-package btclib-wallet --upgrade-package btclib-secp256k1
 uv sync --locked
 ```
@@ -543,12 +543,12 @@ flattered it.
 To measure a working tree instead of the published release:
 
 ```shell
-uv run --with-editable /path/to/btclib-ecc python scripts/03-libraries.py
+uv run --with-editable /path/to/ecc python scripts/03-libraries.py
 ```
 
-Install the package whose code the rows time: `btclib-ecc` for the curve
+Install the package whose code the rows time: `ecc` for the curve
 and the signature schemes, `btclib-wallet` for BIP32, `btclib` for the
-rest. The packages block then says `editable: /path/to/btclib-ecc`, which
+rest. The packages block then says `editable: /path/to/ecc`, which
 is the point of printing it.
 
 ### Publishing a run, which is a second command

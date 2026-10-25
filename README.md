@@ -141,7 +141,7 @@ findable.
 ### Measuring a working tree instead of a release
 
 The default is deliberate: every comparand is timed at its **published
-release**, btclib, btclib-ecc, btclib-wallet and btclib-secp256k1 included,
+release**, btclib, ecc, btclib-wallet and btclib-secp256k1 included,
 because `pip install` is what an end user gets and that is the only
 performance an end user has.
 
@@ -150,11 +150,11 @@ the package whose code the rows time over the top
 (`CONTRIBUTING.md`'s *Running a benchmark* says which).
 
 ```shell
-uv run --with-editable /path/to/btclib-ecc python scripts/03-libraries.py
+uv run --with-editable /path/to/ecc python scripts/03-libraries.py
 ```
 
 The packages block names the version, and where an install is not the
-declared one it names that too — `editable: /path/to/btclib-ecc` for the
+declared one it names that too — `editable: /path/to/ecc` for the
 command above, `sys.path:` for a checkout shadowing an install. So which
 of the two you measured is on the screen rather than assumed, and that is
 not decoration: an editable install and a released wheel of the same

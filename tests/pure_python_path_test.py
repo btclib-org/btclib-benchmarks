@@ -27,9 +27,9 @@ The predicates are left alone deliberately. `_libsecp256k1_serves` and
 same name, but they are the question rather than an answer: replacing them
 breaks the dispatch for every row and proves nothing about any of them.
 
-In a subprocess, because none of this can be undone in the process that
-does it -- neither the switch, which `02-btclib-vs-btclib.py` documents, nor
-the patching, which reaches into modules the rest of the suite imports.
+In a subprocess, because the patching reaches into modules the rest of the
+suite imports, and a suite that also measures the C path would run on the
+patched ones.
 """
 
 from __future__ import annotations
@@ -97,13 +97,15 @@ B.python_arithmetic_only()
 # no row loads a `btclib_wallet` module, so none is patched: after every
 # row has run, `sys.modules` holds none
 #
-# the names btclib bound at import time, `from btclib_secp256k1 import x as
+# the names `ecc` bound at import time, `from btclib_secp256k1 import x as
 # libsecp256k1_x` being a reference the module holds and not a lookup it
-# repeats -- patching the bindings alone would leave every one of them live
+# repeats -- patching the bindings alone would leave every one of them live.
+# btclib reaches the bindings only through `ecc`, so `btclib.` modules hold
+# none of them and the prefix is there for the ones it may gain
 for module in list(sys.modules.values()):
     if not isinstance(module, types.ModuleType):
         continue
-    if not (module.__name__ or "").startswith(("btclib.", "btclib_ecc.")):
+    if not (module.__name__ or "").startswith(("btclib.", "ecc.")):
         continue
     for attribute in dir(module):
         if "libsecp256k1" in attribute and attribute not in PREDICATES:
@@ -232,17 +234,17 @@ def test_collecting_the_suite_leaves_pycoin_its_own_backend() -> None:
 def test_taproot_tweak_hands_each_call_a_key_with_no_cached_point(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The Python arm caches `PubKeyData.point`; a row must not reuse a key.
+    """The Python arm caches `PubKeyData.point_var`; a row must not reuse a key.
 
     A key read twice would be lifted once, and the Python column would time
     the cache. Here one fixture is cycled twice and the call that reads it
-    stands in for the Python arm, which reads `point`.
+    stands in for the Python arm, which reads `point_var`.
     """
     seen: list[bool] = []
 
     def python_arm(internal_pubkey: PubKeyData) -> tuple[bytes, int]:
-        seen.append("point" in vars(internal_pubkey))
-        _ = internal_pubkey.point
+        seen.append("point_var" in vars(internal_pubkey))
+        _ = internal_pubkey.point_var
         return b"", 0
 
     monkeypatch.setattr(TWO_PATHS.taproot, "output_pubkey", python_arm)

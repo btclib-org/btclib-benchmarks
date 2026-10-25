@@ -7,7 +7,7 @@
 Not btclib against btclib-secp256k1. Every row is btclib called through the
 same public function, and its two columns are the two arithmetics that answer
 underneath -- the libsecp256k1 that btclib-secp256k1 bundles and compiles into
-a cffi extension, or the Python of `btclib_ecc/curves/curve_group.py`.
+a cffi extension, or the Python of `ecc/curves/curve_group.py`.
 `pip install btclib[secp256k1]` installs both, so neither column is a package
 a reader chooses between, and the ratio is what the Python costs when
 libsecp256k1 declines.
@@ -17,19 +17,21 @@ point at infinity, and for anything outside what libsecp256k1's entry points
 take.
 
 Which operations have two arithmetics is not a judgement call:
-every dispatch site asks `btclib_ecc.curves.curve._libsecp256k1_serves`, or
-`is_libsecp256k1_serving` in btclib and btclib_wallet, and both read the one
-switch `python_arithmetic_only` throws. The rows below are the ones reachable
-through a public function. `btclib_ecc.ecc.commit_nonce` dispatches too,
-and it and `btclib_ecc.ecc.pedersen` have no row: anti-exfil signing and
+every dispatch site in btclib and `ecc` asks
+`ecc.curves.curve._libsecp256k1_serves`, or
+`ecc.curves.is_libsecp256k1_serving`, and both read the one switch
+`python_arithmetic_only` throws. The rows below are the ones reachable
+through a public function. `ecc.ecc.commit_nonce` dispatches too,
+and it and `ecc.ecc.pedersen` have no row: anti-exfil signing and
 Pedersen commitments are protocol machinery rather than operations an
 application performs.
 
 ## BIP32 derivation is not a row
 
-btclib_wallet's BIP32 has a Python arm behind `is_libsecp256k1_serving`, and
-it is no row here because none was asked for. The dispatch is on the bindings
-being there and not on the curve, BIP32 being defined for secp256k1 alone.
+btclib_wallet's BIP32 has a Python arm behind `ecc`'s
+`is_libsecp256k1_serving`, so `python_arithmetic_only` reaches it. It is no row
+here because none was asked for. The dispatch is on the bindings being there
+and not on the curve, BIP32 being defined for secp256k1 alone.
 
 That a row belongs here is a property to prove.
 `tests/pure_python_path_test.py` blocks every libsecp256k1 entry point and
@@ -126,9 +128,9 @@ from btclib import b58
 from btclib.ecc import bms, ellswift
 from btclib.key import PrvKeyData, PubKeyData
 from btclib.script import taproot
-from btclib_ecc.curves import curve, sec_point
-from btclib_ecc.ecc import dh, dsa, ssa
-from btclib_ecc.ecc import ellswift as ecc_ellswift
+from ecc.curves import curve, sec_point
+from ecc.ecc import dh, dsa, ssa
+from ecc.ecc import ellswift as ecc_ellswift
 
 from btclib_benchmarks import _inputs
 from btclib_benchmarks._provenance import undeclared
@@ -163,18 +165,18 @@ def provenance() -> Provenance:
     numbers, which is here.
 
     The curve, ECDSA, BIP340, ECDH and ElligatorSwift encoding rows run
-    `btclib-ecc`; the others run `btclib`. The wrapper's
+    `ecc`; the others run `btclib`. The wrapper's
     version is btclib-secp256k1's, that being what a caller installs; which
     revision of libsecp256k1 it bundled is recorded in
     `LIBSECP256K1_PINS` of `src/btclib_benchmarks/_releases.py`, against the
     release it was read from, and `scripts/01-libsecp256k1.py` prints it.
     """
     packages = (
-        f"btclib-ecc {version('btclib-ecc')}, btclib {version('btclib')} "
+        f"ecc {version('ecc')}, btclib {version('btclib')} "
         f"(wrapper {version('btclib-secp256k1')})"
     )
     stated = "measured as \N{GREEK SMALL LETTER MU}s/call, sorted on the ratio"
-    odd = undeclared("btclib-ecc", "btclib", "btclib-secp256k1")
+    odd = undeclared("ecc", "btclib", "btclib-secp256k1")
     return Provenance(columns=[], rows=[], notes=[packages, stated, *odd])
 
 
@@ -292,7 +294,7 @@ def _messages(operation: str) -> list[bytes]:
 PUBKEYS_33 = _rotated(_PUBKEYS_33, "pubkey_parse_33")
 DSA_VERIFY_KEYS = [_pub_key(k) for k in _keys("dsa_verify")]
 # octets, not `PubKeyData`: the Python arm caches the lift on the key
-# (`point` is a cached_property), so `taproot_tweak` builds a fresh key
+# (`point_var` is a cached_property), so `taproot_tweak` builds a fresh key
 # per call and every call lifts afresh
 TAPROOT_KEYS = [_pub_key(k) for k in _keys("taproot_tweak")]
 ELLSWIFT_KEYS = [_pub_key(k) for k in _keys("ellswift_decode")]
@@ -722,7 +724,7 @@ def main() -> None:
     """Time every operation through both paths, print the table, save the run.
 
     The timing order is what the measurement requires:
-    `python_arithmetic_only` cannot be undone within a process, so every
+    `python_arithmetic_only` is called once and never undone, so every
     operation is timed through libsecp256k1 before it runs, and through
     Python after. The printing order is the run's own, sorted on the ratio,
     which is why the two are no longer the same loop.

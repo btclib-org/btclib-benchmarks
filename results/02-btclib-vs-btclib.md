@@ -179,8 +179,8 @@ of the ratio and pulls it towards one.
 ### What the table cannot be read for
 
 The whole libsecp256k1 column is timed before the whole Python one, because
-`python_arithmetic_only()` cannot be undone inside a process. The sort is
-applied afterwards, to numbers already in hand.
+the script calls `python_arithmetic_only()` once and never undoes it. The
+sort is applied afterwards, to numbers already in hand.
 
 The Python side is not a path nobody reaches: it answers for every curve
 that is not secp256k1, for a zero scalar, for the point at infinity, and for

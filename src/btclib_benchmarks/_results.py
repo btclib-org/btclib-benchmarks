@@ -574,7 +574,7 @@ def rendered_provenance(provenance: Provenance) -> str:
     """Return the packages block, its notes under it.
 
     Some benchmarks have no table to print here: one compares btclib with
-    btclib, one has btclib-ecc, btclib-secp256k1 and python-ecdsa, and one
+    btclib, one has ecc, btclib-secp256k1 and python-ecdsa, and one
     has a single comparand with no second implementation to set beside
     it. A column of so few cells is a table only in the sense that it has
     edges. Those say what they have to say in lines, which is what `notes`
