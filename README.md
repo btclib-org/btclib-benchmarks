@@ -206,9 +206,8 @@ numbers as they were measured, and everything the page states about how.
 A benchmark writes it, `scripts/render.py` writes the page from it, and
 the two are separate commands on purpose — the prose around a table gets
 rewritten far more often than a machine gets measured, and it must not
-cost a fresh run or a hand-edited number to do it. `CONTRIBUTING.md` has
-both commands, and `REVIEWING.md` what a pull request is answered
-against. How the organization decides, and who holds which role, is its
+cost a fresh run or a hand-edited number to do it. How the organization
+decides, and who holds which role, is its
 [GOVERNANCE.md](https://github.com/btclib-org/.github/blob/main/GOVERNANCE.md);
 what it intends to do, and what it deliberately does not, is its
 [ROADMAP.md](https://github.com/btclib-org/.github/blob/main/ROADMAP.md).
@@ -250,6 +249,17 @@ would carry one in.
 [btclib-security]: https://github.com/btclib-org/btclib/blob/main/SECURITY.md
 [secp256k1-security]: https://github.com/btclib-org/btclib-secp256k1/blob/main/SECURITY.md
 [i381]: https://github.com/btclib-org/btclib-benchmarks/issues/381
+
+## Contributing
+
+Development is LLM-based: humans are welcome, as long as they are
+comfortable with agentic development ;-). A contribution must have been
+read and understood by the person who submits it.
+[`CONTRIBUTING.md`](./CONTRIBUTING.md#working-with-an-llm) has the rules.
+
+It also has the commands that measure a run and render it.
+[`REVIEWING.md`](./REVIEWING.md) says what a pull request is answered
+against.
 
 ## Licence
 
