@@ -77,12 +77,12 @@ concurrency:
 jobs:
   # the checkout, the uv setup, the runner-image step, the hook cache,
   # the upgrade and the suite and lint runs over it are
-  # btclib-org/.github's: reusable-deps-latest.yml, called at @main so a
-  # fix there reaches this tree in one landing (section 10 of its
-  # README.md). What stays here is the trigger, the concurrency group,
-  # the workflow-level permissions and this job's own id, and the facts
-  # the called workflow asks a caller for rather than states itself: the
-  # matrix and `pre-suite-script` (btclib-org/.github#35)
+  # btclib-org/.github's: reusable-deps-latest.yml, called at a tagged
+  # commit (section 10 of btclib-org/.github's README.md). What stays
+  # here is the trigger, the concurrency group, the workflow-level
+  # permissions and this job's own id, and the facts the called workflow
+  # asks a caller for rather than states itself: the matrix and
+  # `pre-suite-script` (btclib-org/.github#35)
   #
   # one image and the two ends of the interpreter range, where
   # os-ubuntu.yml runs both images and everything between: the variable
@@ -107,7 +107,7 @@ jobs:
   # against, so the tags it prints are what a reader compares with the
   # provenance block of a page before believing that a row moved
   deps-latest:
-    uses: btclib-org/.github/.github/workflows/reusable-deps-latest.yml@main
+    uses: btclib-org/.github/.github/workflows/reusable-deps-latest.yml@0f5684ab3d7bf310b0d7a2e4dd91a03522f75d67 # v2026.10.25
     with:
       runners: '["ubuntu-latest"]'
       python-versions: '["3.11", "3.13"]'
