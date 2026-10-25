@@ -29,9 +29,10 @@
 #
 # The seven day cooldown is what the interval is really
 # trading against: a compromised release is usually yanked within days.
-# Weekly plus cooldown still means nothing is ever offered before it has
-# been public a week -- it means the offer comes at most a week after
-# that, rather than at most a month. Neither ecosystem tracks anything
+# Weekly plus cooldown still means nothing but btclib-org/.github's tags,
+# excluded in the github-actions block, is offered before it has been
+# public a week -- it means the offer comes at most a week after that,
+# rather than at most a month. Neither ecosystem tracks anything
 # security-critical, so nothing here wants to be faster than that
 version: 2
 updates:
@@ -52,6 +53,9 @@ updates:
         patterns: ["*"]
     cooldown:
       default-days: 7
+      # the exclude section 11 of btclib-org/.github's README.md gives for
+      # that repository's own tags, which the calls in .github/workflows pin
+      exclude: ["btclib-org/.github/*"]
 
   # uv.lock is committed and the workflows install from it with --locked, bar
   # the jobs that re-lock on purpose, while the dependency groups declare no

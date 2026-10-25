@@ -41,11 +41,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # the job itself is btclib-org/.github's, called at @main so a fix there
-  # reaches this tree in one landing (section 10 of its README.md); what
-  # stays here is the trigger and the rehearsal's inputs
+  # the job itself is btclib-org/.github's, called at a tagged commit
+  # (section 10 of btclib-org/.github's README.md); what stays here is
+  # the trigger and the rehearsal's inputs
   verified-signatures:
-    uses: btclib-org/.github/.github/workflows/reusable-verified-signatures.yml@main
+    uses: btclib-org/.github/.github/workflows/reusable-verified-signatures.yml@0f5684ab3d7bf310b0d7a2e4dd91a03522f75d67 # v2026.10.25
     with:
       before: ${{ inputs.before }}
       after: ${{ inputs.after }}
