@@ -17,7 +17,8 @@ question and the answer. The first test holds the script's constants to them.
 
 What a row does with the answer after the library call, the slice that cuts
 the program out of a decoded tuple, is not seen here: the wrapper keeps the
-whole tuple. Those slices are one index each.
+whole tuple. Those slices are one index each. base58-bech32's decoding rows
+make two calls, the codec and `convertbits`, and their test wraps both.
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ from __future__ import annotations
 import importlib
 from typing import Any
 
+import base58_bech32.bech32
 import bitcoin.bech32
 import btclib.b32
 import buidl.bech32
@@ -75,14 +77,24 @@ def _spy(
 # per row: the library call it makes, and what that call must return
 # for the specification's input. The decoders' returns are tuples whose
 # shape differs per library, so each names its own version and program
-ENCODERS: dict[str, tuple[object, str, str]] = {
+ENCODERS: dict[str, tuple[object, str, str | bytes]] = {
     "bech32_encode_btclib": (btclib.b32, "address_from_witness", BECH32_ADDRESS),
     "bech32_encode_embit": (embit.bech32, "encode", BECH32_ADDRESS),
     "bech32_encode_buidl": (buidl.script.P2WPKHScriptPubKey, "address", BECH32_ADDRESS),
     "bech32_encode_bitcoinlib": (bitcoin.bech32, "encode", BECH32_ADDRESS),
+    "bech32_encode_base58_bech32": (
+        base58_bech32.bech32,
+        "bech32_encode",
+        BECH32_ADDRESS.encode(),
+    ),
     "bech32m_encode_btclib": (btclib.b32, "address_from_witness", BECH32M_ADDRESS),
     "bech32m_encode_embit": (embit.bech32, "encode", BECH32M_ADDRESS),
     "bech32m_encode_buidl": (buidl.script.P2TRScriptPubKey, "address", BECH32M_ADDRESS),
+    "bech32m_encode_base58_bech32": (
+        base58_bech32.bech32,
+        "bech32_encode",
+        BECH32M_ADDRESS.encode(),
+    ),
 }
 
 
@@ -183,3 +195,42 @@ def test_a_decoding_row_answers_the_published_program(
     assert args[-1] == address
     assert bytes(answer[program_at]) == program
     assert answer[version_at] == version
+
+
+# row -> (address, version, constant, program): base58-bech32's decoder
+# returns the HRP, the 5-bit values and the checksum constant, and the row
+# converts the values after the version back to the program
+CODEC_DECODERS: dict[str, tuple[str, int, int, bytes]] = {
+    "bech32_decode_base58_bech32": (
+        BECH32_ADDRESS,
+        0,
+        base58_bech32.bech32.BECH32_1_CONST,
+        WITNESS_V0,
+    ),
+    "bech32m_decode_base58_bech32": (
+        BECH32M_ADDRESS,
+        1,
+        base58_bech32.bech32.BECH32_M_CONST,
+        WITNESS_V1,
+    ),
+}
+
+
+@pytest.mark.parametrize("row", sorted(CODEC_DECODERS))
+def test_a_codec_decoding_row_answers_the_published_program(
+    row: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Call the row; the codec read the BIP's address, the row its program.
+
+    The version is the first 5-bit value, and the constant is the one the
+    BIP requires for it.
+    """
+    address, version, constant, program = CODEC_DECODERS[row]
+    decoded = _spy(monkeypatch, base58_bech32.bech32, "bech32_decode")
+    converted = _spy(monkeypatch, base58_bech32.bech32, "convertbits")
+    getattr(LIBRARIES, row)()
+    assert len(decoded) == 1
+    args, (hrp, values, m) = decoded[0]
+    assert args[-1] == address
+    assert (hrp, values[0], m) == ("bc", version, constant)
+    assert [bytes(answer) for _, answer in converted] == [program]

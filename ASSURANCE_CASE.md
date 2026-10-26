@@ -73,7 +73,7 @@ EOF
 ```
 
 `scripts/` carries the wider population: every comparand `pyproject.toml`
-declares — `btclib`, `bitcoin` (`python-bitcoinlib`'s import name),
+declares — `base58_bech32`, `btclib`, `bitcoin` (`python-bitcoinlib`'s import name),
 `buidl`, `coincurve`, `ecdsa`, `electrum_ecc`, `ellipticcurve`
 (`starkbank-ecdsa`'s import name), `embit`, `pycoin`, `secp256k1`,
 `secp256k1lab` — none of which a script reaches for anything but the

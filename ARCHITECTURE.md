@@ -100,7 +100,8 @@ knowing what produced it.
 ## The comparands are dependencies, not a benchmark group
 
 `ecdsa`, `pycoin`, `buidl`, `embit`, `python-bitcoinlib`, `coincurve`,
-`secp256k1`, `secp256k1lab`, `electrum-ecc` and `starkbank-ecdsa` are
+`secp256k1`, `secp256k1lab`, `electrum-ecc`, `starkbank-ecdsa` and
+`base58-bech32` are
 `pyproject.toml`'s direct `dependencies`, resolved by `uv sync --locked`
 into this project's own `.venv` alongside `btclib` and
 `btclib_secp256k1`. `README.md`'s *Why this is its own repository* is the
@@ -108,6 +109,8 @@ reason: measured from inside btclib these would sit in a lock a library
 that never imports them still carries, so a Dependabot alert against one
 would misname what it is about. Here the relationship runs the other way,
 and an alert against a comparand names the package it is actually about.
+`base58-bech32` is btclib-org's own, and the reason holds for it only
+while btclib does not import it.
 
 ## What sits outside the scripts
 

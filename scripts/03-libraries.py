@@ -153,6 +153,8 @@ from collections.abc import Callable
 from importlib.metadata import version
 from itertools import cycle
 
+import base58_bech32.base58
+import base58_bech32.bech32
 import bitcoin.bech32
 import bitcoin.core.key as bitcoinlib_key
 import bitcoin.wallet as bitcoinlib_wallet
@@ -229,6 +231,7 @@ def provenance() -> Provenance:
         ("buidl", _buidl_backend()),
         ("embit", LIBSECP256K1),
         ("python-bitcoinlib", _arithmetic_bitcoinlib()),
+        ("base58-bech32", PURE_PYTHON),
     )
     return Provenance(
         columns=["package", "version", "released", "arithmetic"],
@@ -296,7 +299,7 @@ DIGESTS = [int.from_bytes(msg, "big") % ORDER for msg in MESSAGES]
 # machine that ran this. How each package got there -- what it bundles,
 # what it builds, what it happened to find -- is prose in
 # `results/03-libraries.md`, because it is a paragraph per package and
-# a table column has to be readable across six rows
+# a table column has to be readable across every row
 LIBSECP256K1 = "libsecp256k1 enhanced"
 PURE_PYTHON = "pure Python"
 OPENSSL = "OpenSSL's libcrypto"
@@ -934,7 +937,7 @@ BASE58_PAYLOAD = b"\x00" + WITNESS_V0
 
 # a witness-v1 program and its bech32m address, which is BIP350's business:
 # the same string under bech32's checksum constant is a different address
-# and not a valid one, and one row of five gets that wrong
+# and not a valid one, and python-bitcoinlib gets that wrong
 WITNESS_V1 = bytes.fromhex(
     "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
 )
@@ -965,10 +968,15 @@ def base58_encode_bitcoinlib() -> None:
     """Time python-bitcoinlib's, reached through the address class.
 
     Its `base58.encode` is base58 without the checksum, which is not the
-    operation the other four perform: `P2PKHBitcoinAddress.from_bytes` is
+    operation the other rows perform: `P2PKHBitcoinAddress.from_bytes` is
     where the checksummed encoding lives.
     """
     str(bitcoinlib_wallet.P2PKHBitcoinAddress.from_bytes(WITNESS_V0, 0))
+
+
+def base58_encode_base58_bech32() -> None:
+    """Time base58-bech32's, which answers with ascii bytes."""
+    base58_bech32.base58.b58encode_check(BASE58_PAYLOAD)
 
 
 def base58_decode_btclib() -> None:
@@ -996,6 +1004,11 @@ def base58_decode_bitcoinlib() -> None:
     bytes(bitcoinlib_wallet.CBitcoinAddress(BASE58_ADDRESS))
 
 
+def base58_decode_base58_bech32() -> None:
+    """Time base58-bech32's, which returns the version byte with the payload."""
+    base58_bech32.base58.b58decode_check(BASE58_ADDRESS)
+
+
 def bech32_encode_btclib() -> None:
     """Time btclib's bech32 encoding of a witness-v0 address."""
     btclib.b32.address_from_witness(0, WITNESS_V0)
@@ -1014,6 +1027,18 @@ def bech32_encode_buidl() -> None:
 def bech32_encode_bitcoinlib() -> None:
     """Time python-bitcoinlib's, a copy of the reference implementation."""
     bitcoin.bech32.encode("bc", 0, WITNESS_V0)
+
+
+def bech32_encode_base58_bech32() -> None:
+    """Time base58-bech32's, which takes 5-bit values, the version first.
+
+    The version picks the checksum constant. The row converts the program to
+    5-bit values, which the other libraries do inside their call. It checks
+    neither the witness version's range nor the program's length, which
+    embit's encoder and btclib's check.
+    """
+    values = base58_bech32.bech32.convertbits(WITNESS_V0, 8, 5)
+    base58_bech32.bech32.bech32_encode("bc", [0, *values])
 
 
 def bech32_decode_btclib() -> None:
@@ -1036,6 +1061,18 @@ def bech32_decode_bitcoinlib() -> None:
     bytes(bitcoin.bech32.decode("bc", BECH32_ADDRESS)[1])
 
 
+def bech32_decode_base58_bech32() -> None:
+    """Time base58-bech32's, a codec that returns 5-bit values.
+
+    The row converts them back to the program, and `convertbits` checks its
+    padding. It checks none of the other segwit rules embit's decoder
+    checks: the HRP, the witness version, the program length, and the
+    constant against the version.
+    """
+    values = base58_bech32.bech32.bech32_decode(BECH32_ADDRESS)[1]
+    base58_bech32.bech32.convertbits(values[1:], 5, 8, False)
+
+
 def bech32m_encode_btclib() -> None:
     """Time btclib's bech32m encoding of a witness-v1 address."""
     btclib.b32.address_from_witness(1, WITNESS_V1)
@@ -1051,6 +1088,12 @@ def bech32m_encode_buidl() -> None:
     buidl.script.P2TRScriptPubKey(WITNESS_V1).address()
 
 
+def bech32m_encode_base58_bech32() -> None:
+    """Time base58-bech32's, as its bech32 row does."""
+    values = base58_bech32.bech32.convertbits(WITNESS_V1, 8, 5)
+    base58_bech32.bech32.bech32_encode("bc", [1, *values])
+
+
 def bech32m_decode_btclib() -> None:
     """Time btclib's bech32m decoding."""
     btclib.b32.witness_from_address(BECH32M_ADDRESS)[1]
@@ -1064,6 +1107,12 @@ def bech32m_decode_embit() -> None:
 def bech32m_decode_buidl() -> None:
     """Time buidl's."""
     buidl.bech32.decode_bech32(BECH32M_ADDRESS)[2]
+
+
+def bech32m_decode_base58_bech32() -> None:
+    """Time base58-bech32's, as its bech32 row does."""
+    values = base58_bech32.bech32.bech32_decode(BECH32M_ADDRESS)[1]
+    base58_bech32.bech32.convertbits(values[1:], 5, 8, False)
 
 
 # python-bitcoinlib has no bech32m row in either direction, and the reason
@@ -1084,25 +1133,31 @@ for _encoding_row in (
     base58_encode_embit,
     base58_encode_buidl,
     base58_encode_bitcoinlib,
+    base58_encode_base58_bech32,
     base58_decode_btclib,
     base58_decode_pycoin,
     base58_decode_embit,
     base58_decode_buidl,
     base58_decode_bitcoinlib,
+    base58_decode_base58_bech32,
     bech32_encode_btclib,
     bech32_encode_embit,
     bech32_encode_buidl,
     bech32_encode_bitcoinlib,
+    bech32_encode_base58_bech32,
     bech32_decode_btclib,
     bech32_decode_embit,
     bech32_decode_buidl,
     bech32_decode_bitcoinlib,
+    bech32_decode_base58_bech32,
     bech32m_encode_btclib,
     bech32m_encode_embit,
     bech32m_encode_buidl,
+    bech32m_encode_base58_bech32,
     bech32m_decode_btclib,
     bech32m_decode_embit,
     bech32m_decode_buidl,
+    bech32m_decode_base58_bech32,
 ):
     _encoding_row()
 
@@ -1168,8 +1223,8 @@ def measured(title: str, rows: Rows) -> Ratios:
 
 
 # every table of this benchmark, declared rather than called: the label
-# column is one width for the whole page, which is a fact about all eleven
-# tables and cannot be known while the first is being measured
+# column is one width for the whole page, which is a fact about every table
+# and cannot be known while the first is being measured
 TABLES: tuple[tuple[str, Rows], ...] = (
     (
         "1. ECDSA sign (32-byte digest)",
@@ -1240,6 +1295,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
             (base58_encode_embit, 200_000),
             (base58_encode_buidl, 200_000),
             (base58_encode_bitcoinlib, 100_000),
+            (base58_encode_base58_bech32, 200_000),
         ),
     ),
     (
@@ -1250,6 +1306,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
             (base58_decode_embit, 200_000),
             (base58_decode_buidl, 200_000),
             (base58_decode_bitcoinlib, 100_000),
+            (base58_decode_base58_bech32, 200_000),
         ),
     ),
     (
@@ -1259,6 +1316,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
             (bech32_encode_embit, 200_000),
             (bech32_encode_buidl, 100_000),
             (bech32_encode_bitcoinlib, 200_000),
+            (bech32_encode_base58_bech32, 200_000),
         ),
     ),
     (
@@ -1268,6 +1326,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
             (bech32_decode_embit, 200_000),
             (bech32_decode_buidl, 100_000),
             (bech32_decode_bitcoinlib, 200_000),
+            (bech32_decode_base58_bech32, 200_000),
         ),
     ),
     (
@@ -1276,6 +1335,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
             (bech32m_encode_btclib, 200_000),
             (bech32m_encode_embit, 200_000),
             (bech32m_encode_buidl, 100_000),
+            (bech32m_encode_base58_bech32, 200_000),
         ),
     ),
     (
@@ -1284,6 +1344,7 @@ TABLES: tuple[tuple[str, Rows], ...] = (
             (bech32m_decode_btclib, 200_000),
             (bech32m_decode_embit, 200_000),
             (bech32m_decode_buidl, 100_000),
+            (bech32m_decode_base58_bech32, 200_000),
         ),
     ),
 )

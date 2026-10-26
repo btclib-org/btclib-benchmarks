@@ -97,6 +97,9 @@ dependencies = [
     # `LIBSECP256K1_PINS` in `src/btclib_benchmarks/_releases.py` records,
     # so a run at the floor names the libsecp256k1 revision its row carries
     "btclib-secp256k1>=0.8.0.9",
+    # the codecs leaving btclib for a package of their own
+    # (btclib-org/btclib#2712)
+    "base58-bech32>=2026.10.23",
     "buidl>=0.2.36",
     "coincurve>=21.0.0",
     "ecdsa>=0.19.2",
