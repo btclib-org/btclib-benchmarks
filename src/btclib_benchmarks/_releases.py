@@ -36,6 +36,7 @@ from btclib_benchmarks._provenance import origin_of
 # secp256k1lab is on no index and is taken from a git tag, which is still a
 # release someone cut on a day, so it is recorded like the rest.
 RELEASE_DATES: dict[str, dict[str, str]] = {
+    "base58-bech32": {"2026.10.23": "2026-10-23"},
     "btclib": {"2026.10.3": "2026-10-03", "2026.10.9": "2026-10-10"},
     "btclib-secp256k1": {"0.8.0.9": "2026-09-29"},
     "btclib-wallet": {"2026.10.9": "2026-10-08"},

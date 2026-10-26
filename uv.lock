@@ -316,6 +316,15 @@ wheels = [
 ]
 
 [[package]]
+name = "base58-bech32"
+version = "2026.10.23"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/b5/2be07df7539f1fff2c30078add5f0384088340fb9d6562e12d4442125937/base58_bech32-2026.10.23.tar.gz", hash = "sha256:aeced47802602b9801e9fb9a844bd29a017ce5439408278c998cb2c94c94267a", size = 564962, upload-time = "2026-10-23T07:04:17.642Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6b/63/c1fa815a46b10faee9a81ed86ff429fb245ba006a1e46889831f38b46c95/base58_bech32-2026.10.23-py3-none-any.whl", hash = "sha256:bcdb9fceff522b9cb8815b25f1c9cbfb5855887d670e19b28bf0988ce4af7c60", size = 28695, upload-time = "2026-10-23T07:04:16.095Z" },
+]
+
+[[package]]
 name = "beautifulsoup4"
 version = "4.15.0"
 source = { registry = "https://pypi.org/simple" }
@@ -364,6 +373,7 @@ name = "btclib-benchmarks"
 version = "2026.9"
 source = { editable = "." }
 dependencies = [
+    { name = "base58-bech32" },
     { name = "btclib" },
     { name = "btclib-secp256k1" },
     { name = "btclib-wallet" },
@@ -430,6 +440,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "base58-bech32", specifier = ">=2026.10.23" },
     { name = "btclib", specifier = ">=2026.10.24" },
     { name = "btclib-secp256k1", specifier = ">=0.8.0.9" },
     { name = "btclib-wallet", specifier = ">=2026.10.25" },

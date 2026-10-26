@@ -52,6 +52,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import base58_bech32.base58
 import bitcoin.base58
 import bitcoin.core.key
 import btclib.base58
@@ -603,6 +604,7 @@ BASE58_ENCODERS: dict[str, Callable[[bytes], str]] = {
     "embit": embit.base58.encode,
     "buidl": buidl.helper.encode_base58,
     "python-bitcoinlib": bitcoin.base58.encode,
+    "base58-bech32": lambda payload: base58_bech32.base58.b58encode(payload).decode(),
 }
 # buidl is not among the decoders, and cannot be: it publishes no base58
 # decode without a checksum. `raw_decode_base58` verifies one and raises
@@ -615,6 +617,7 @@ BASE58_DECODERS: dict[str, Callable[[str], bytes]] = {
     "pycoin": pycoin.encoding.b58.a2b_base58,
     "embit": embit.base58.decode,
     "python-bitcoinlib": bitcoin.base58.decode,
+    "base58-bech32": base58_bech32.base58.b58decode,
 }
 
 # buidl's encoder cannot be handed nothing: it goes through `int(s.hex(), 16)`,
