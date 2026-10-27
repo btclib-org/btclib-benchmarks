@@ -265,12 +265,12 @@ repos:
   # repairs the very seam the third check exists to name, so a hook
   # reading the file after it would find nothing left to report.
   - repo: https://github.com/btclib-org/.github
-    rev: c77894642d8f3d1228a68cc5ff6203e61ee43512 # frozen: v2026.10.25
+    rev: c3d81fbdf89364dd100be2dc37c58c21cc8d5888 # frozen: v2026.10.26
     hooks:
       - id: check-changelog
         args: [--grandfathered, "141"]
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.23.3
+    rev: v0.24.0
     hooks:
       # --fix: corrects in place, like every other fixing hook here
       - id: markdownlint-cli2
@@ -462,7 +462,7 @@ repos:
   # reads as yaml and nothing reads as a build definition, on a service
   # whose failure mode is a docs build that stops happening
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.2
+    rev: 0.39.0
     hooks:
       - id: check-dependabot
       - id: check-readthedocs
@@ -539,7 +539,7 @@ repos:
   # docformatter, flake8, isort, pydocstringformatter, pydocstyle, pylint,
   # pyupgrade, and yesqa
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.1
+    rev: v0.17.2
     hooks:
       - id: ruff-check
         name: ruff check (in place fixes)
