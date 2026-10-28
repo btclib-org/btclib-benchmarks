@@ -515,8 +515,8 @@ this heading.
 
 What this tree publishes is measurements, so what a review here checks
 beyond the generic is what makes a number mean something. Each of these
-is a question, and the document that answers it is named because that
-document, and not this one, is where the rule lives.
+is a question. Where another document holds the rule, the question names
+it.
 
 - **Does the diff state a measured number in prose?** A comment, a
   docstring, a `CHANGELOG.md` entry and `README.md` are all places a
