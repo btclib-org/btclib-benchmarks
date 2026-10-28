@@ -290,8 +290,8 @@ Rows = tuple[tuple[str, Callable[[], None], int], ...]
 # every table of this benchmark, declared rather than called: the label
 # column is one width for the whole page. The third entry is the packages
 # that implement the scheme and not the operation, printed as `NA`: embit
-# reads english alone, and its `generate_shares` splits a BIP39 sentence
-# rather than a master secret, into one-member groups
+# ships the english word-list alone, and its `generate_shares` splits a
+# BIP39 sentence rather than a master secret, into one-member groups
 TABLES: tuple[tuple[str, Rows, tuple[str, ...]], ...] = (
     (
         "1. BIP39 encode: 256 bits of entropy to 24 words",

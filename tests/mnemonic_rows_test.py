@@ -51,7 +51,7 @@ PASSPHRASE = MNEMONICS.PASSPHRASE
 TREZOR = MNEMONICS.TREZOR
 
 
-# the 24-word english vector of trezor's `vectors.json`, which
+# the all-zero 24-word english vector of trezor's `vectors.json`, which
 # btclib-org/bip39-slip39 vendors as `tests/_data/bip39_test_vectors.json`;
 # every seed there is stretched with the published passphrase "TREZOR",
 # which is no credential
@@ -194,7 +194,7 @@ def _split_shamir(secret: bytes) -> list[str]:
 
 @pytest.mark.parametrize("split", [_split_btclib, _split_shamir])
 def test_slip39_split(split: Callable[[bytes], list[str]]) -> None:
-    """Any three of a package's five shares give its secret back."""
+    """Three of a package's five shares give its secret back."""
     for secret in SECRETS[:5]:
         shares = split(secret)
         assert len(shares) == 5

@@ -20,7 +20,7 @@ mnemonic         0.21        2024-01-05
 
 Every row runs Python code over the standard library alone, each seed and
 each share encryption through `hashlib.pbkdf2_hmac`, so no column names a
-backend. `bip39-slip39` is the new name of `btclib-mnemonics`.
+backend.
 
 ## This run
 
@@ -38,9 +38,10 @@ python  : 3.13.14
 language given, detecting the language of a sentence, and stretching a
 sentence to its seed. `bip39-slip39` and `embit` verify the checksum
 before stretching, and each also offers to skip it; Trezor's `mnemonic`
-never verifies. So the seed table has a row for each of the five, and
-only the `noverify` rows answer the same question. `embit` reads english
-alone, and has no language detection.
+never verifies. So the seed table has a verify and a noverify row for
+each package that offers both, and only the `noverify` rows answer the
+same question. `embit` ships the english word-list alone, and has no
+language detection.
 
 **SLIP-0039.** Splitting a master secret into shares, combining shares
 back into the secret, parsing a share's words, and encoding a share back
@@ -66,6 +67,16 @@ vector and a published SLIP-0039 one, and to `bip39-slip39`'s answers on
 these fixtures. No row checks what it returns.
 
 ## The benchmarks
+
+Each row is timed in rounds, and the quickest round is kept. The numbers
+are an order of magnitude, never a figure to quote.
+
+**`vs best`** is a row's time over the fastest row of its table.
+**`halves`** is in microseconds, like the number beside it. The rounds are
+split in half, and the column is how far the quickest round of one half
+sat from the quickest of the other: this run's agreement with itself. Two
+adjacent rows closer together than their `halves` are not ordered by the
+run. Each row prints its rounds and its calls per round beside it.
 
 <!-- output: begin -->
 ```text

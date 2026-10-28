@@ -143,10 +143,10 @@ measuring rather than serving.
   a partial pool to repair, and `cached`'s writer builds a pool to a
   temporary file and renames it into place, so a run interrupted mid-write
   leaves no half-written cache for the next one to read as whole.
-- **Complete mediation.** `tests/vectors_test.py` holds every measured
-  package to the same vectors in the same configuration it is timed in,
-  never assuming a package that passed once still does after its own
-  release.
+- **Complete mediation.** `tests/vectors_test.py` holds every package
+  measured on an operation the vendored vectors cover to the same vectors
+  in the same configuration it is timed in, never assuming a package that
+  passed once still does after its own release.
 - **Open design.** `vectors/README.md` states where every vendored file
   came from; `_releases.py`'s `LIBSECP256K1_PINS` and
   `_provenance.artifact_of`'s docstring both say what is recorded by hand

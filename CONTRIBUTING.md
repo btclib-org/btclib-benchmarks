@@ -497,17 +497,19 @@ a mutant a test caught.
 ### Running a benchmark
 
 Every floor in `pyproject.toml` is a minimum a comparand upgrades past
-without a word, `btclib`, `ecc`, `btclib-wallet` and
-`btclib-secp256k1` included now that all resolve from a released index
-rather than a branch: `uv sync --locked` reinstalls the revision the lock
-names and never looks at whether a newer release has shipped since. So a
-measurement taken without asking for the upgrade is a measurement of
-whatever was current the day the lock was last written, which is not what a
-page's provenance block claims it measured. Ask for it first, every time:
+without a word, `btclib`, `ecc`, `btclib-wallet`, `btclib-secp256k1`,
+`bip39-slip39` and `base58-bech32` included now that all resolve from a
+released index rather than a branch: `uv sync --locked` reinstalls the
+revision the lock names and never looks at whether a newer release has
+shipped since. So a measurement taken without asking for the upgrade is a
+measurement of whatever was current the day the lock was last written,
+which is not what a page's provenance block claims it measured. Ask for it
+first, every time:
 
 ```shell
 uv lock --upgrade-package btclib --upgrade-package ecc \
-  --upgrade-package btclib-wallet --upgrade-package btclib-secp256k1
+  --upgrade-package btclib-wallet --upgrade-package btclib-secp256k1 \
+  --upgrade-package bip39-slip39 --upgrade-package base58-bech32
 uv sync --locked
 ```
 
@@ -670,19 +672,20 @@ of the differences being reported.
 
 What it does check is what survives being automated:
 
-- that every measured package answers the vendored vectors, in the
-  configuration it is measured in. `tests/vectors_test.py` runs BIP340's
-  vectors, BIP32's, Wycheproof's ECDSA file and Core's base58 pairs
-  against every implementation this project times,
-  btclib included — redundant with btclib's own suite, deliberately, it
-  being the one package these tables exist to publish. The negative cases
-  are the point: an implementation that accepts a public key off the curve
-  or an s past the order passes a round-trip check and fails this one. The
-  pure-Python configuration is a subprocess, `PYCOIN_NATIVE` being read at
-  import and btclib's dispatch flag being unrestorable. BIP39's and
-  SLIP-0039's vectors are not vendored (`vectors/README.md`'s *What is not
-  here yet*): `tests/mnemonic_rows_test.py` holds the mnemonic packages
-  to one published vector of each instead.
+- that every measured package answers the published vectors of what it
+  is measured on, in the configuration it is measured in.
+  `tests/vectors_test.py` runs BIP340's vectors, BIP32's, Wycheproof's
+  ECDSA file and Core's base58 pairs against every implementation of
+  those operations this project times, btclib included — redundant with
+  btclib's own suite, deliberately, it being the one package these tables
+  exist to publish. The negative cases are the point: an implementation
+  that accepts a public key off the curve or an s past the order passes a
+  round-trip check and fails this one. The pure-Python configuration is a
+  subprocess, `PYCOIN_NATIVE` being read at import and btclib's dispatch
+  flag being unrestorable. BIP39's and SLIP-0039's vectors are not vendored
+  (`vectors/README.md`'s *What is not here yet*), so
+  `tests/mnemonic_rows_test.py` holds the mnemonic packages to one
+  published vector of each, spelled out in the test.
 
   Where a package answers a case differently, the answer is recorded as an
   expected failure with the reason beside it, never excluded. `xfail_strict`
