@@ -30,9 +30,9 @@ Three regions, each opened and closed by an HTML comment:
 
 Whatever lies between a pair of markers is replaced, fences and all. A
 page with no `provenance` region keeps its packages block at the top of
-the output block instead, which is where three of these six have always
-carried it -- their prose reads around it that way, and a renderer is the
-wrong thing to have opinions about that.
+the output block instead, which is where some pages carry it -- their
+prose reads around it that way, and a renderer is the wrong thing to
+have opinions about that.
 
 ## It imports no benchmark, and that is not an accident
 
@@ -64,10 +64,10 @@ from btclib_benchmarks._results import RESULTS, Measurement
 SCRIPTS = Path(__file__).resolve().parent
 
 # the tuple a benchmark declares its tables in, each entry opening with
-# the title as a literal string. Four of the six carry one; the other
-# two build their tables inside `main()`, where nothing readable without
-# running them says what the titles are -- so those two get no comparison
-# rather than a wrong one
+# the title as a literal string. A script that builds its tables inside
+# `main()` instead carries none, and nothing readable without running it
+# says what the titles are -- so it gets no comparison rather than a
+# wrong one
 DECLARED_TABLES = "TABLES"
 
 # a region is named once, opened and closed with the same name: a page

@@ -45,9 +45,10 @@ says how the choice is enforced. -->
 
 ---
 
-Timings of [btclib](https://github.com/btclib-org/btclib) and
-[btclib-secp256k1](https://github.com/btclib-org/btclib-secp256k1)
-against the packages they are usefully compared with.
+Timings of [btclib](https://github.com/btclib-org/btclib),
+[btclib-secp256k1](https://github.com/btclib-org/btclib-secp256k1) and
+[bip39-slip39](https://github.com/btclib-org/bip39-slip39) against the
+packages they are usefully compared with.
 
 What a benchmark here can compare is bounded by what its comparands
 publish: `coincurve` builds no `cp314` wheel yet, `secp256k1` has none
@@ -73,6 +74,8 @@ The benchmarks, each answering a different question:
 - **`06-silentpayments.py`** — BIP352, which only `btclib-secp256k1`
   implements of every comparand here: a payment made and found, and what
   a recipient's setup costs before either
+- **`07-mnemonics.py`** — BIP39 and SLIP-0039: `bip39-slip39` against
+  Trezor's `mnemonic` and `shamir-mnemonic`, and `embit`
 
 [ARCHITECTURE](./ARCHITECTURE.md) is the design behind them: the shared
 modules under `src/btclib_benchmarks/`, and why measuring and publishing
@@ -80,13 +83,13 @@ stay two separate commands.
 
 ## Why this is its own repository
 
-The comparands are third-party packages: `ecdsa`, `pycoin`, `buidl`,
-`embit`, `python-bitcoinlib`, `coincurve`, `secp256k1`, `electrum-ecc`.
-Measured from inside btclib or btclib-secp256k1 they would be resolved
-into the lock of a library that never imports them — so a vulnerability
-reported against a comparand would be reported against btclib, and a
-reader of that alert would have to work out that the package was a
-benchmark row rather than a dependency.
+Most comparands are third-party packages, and `pyproject.toml`'s
+`dependencies` name them all. Measured from inside btclib or
+btclib-secp256k1 they would be resolved into the lock of a library that
+never imports them — so a vulnerability reported against a comparand
+would be reported against btclib, and a reader of that alert would have
+to work out that the package was a benchmark row rather than a
+dependency.
 
 Here the relationship is the right way round. The comparands are what
 this project is *for*, so an advisory against one names the package it is
@@ -195,6 +198,7 @@ ratio against its fastest row, never against btclib's:
 - [the libsecp256k1 wrappers][wrappers]
 - [one key, every signature under it][reuse]
 - [BIP352, the one comparand that implements it][silentpayments]
+- [BIP39 and SLIP-0039, `bip39-slip39` against its peers][mnemonics]
 
 The machine is named in each file. They are a record of one run, not a
 claim about anyone else's hardware:
@@ -218,6 +222,7 @@ what it intends to do, and what it deliberately does not, is its
 [wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 [silentpayments]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
+[mnemonics]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/07-mnemonics.md
 
 ## What a benchmark can get wrong, and where a defect is reported
 

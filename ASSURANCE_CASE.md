@@ -73,11 +73,8 @@ EOF
 ```
 
 `scripts/` carries the wider population: every comparand `pyproject.toml`
-declares — `base58_bech32`, `btclib`, `bitcoin` (`python-bitcoinlib`'s import name),
-`buidl`, `coincurve`, `ecdsa`, `electrum_ecc`, `ellipticcurve`
-(`starkbank-ecdsa`'s import name), `embit`, `pycoin`, `secp256k1`,
-`secp256k1lab` — none of which a script reaches for anything but the
-operation it times.
+declares as a dependency, none of which a script reaches for anything but
+the operation it times.
 
 **What is defended.** That a published table is checkable: which
 artifact of which package produced each row, and that the answers of
@@ -141,7 +138,7 @@ measuring rather than serving.
 - **Fail-safe defaults.** Every script's timing lives behind a `main()`
   guard; importing one runs its fixtures and times
   nothing, which is the same property `tests/scripts_import_test.py`
-  relies on to import all six under the suite. `_read`'s cache reader
+  relies on to import every one under the suite. `_read`'s cache reader
   in `_inputs.py` treats a short or ragged file as absent rather than as
   a partial pool to repair, and `cached`'s writer builds a pool to a
   temporary file and renames it into place, so a run interrupted mid-write

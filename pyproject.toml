@@ -36,7 +36,7 @@ name = "btclib-benchmarks"
 # the one place the version is declared; docs/source/conf.py's own
 # docstring says why it reads this file rather than installed metadata
 version = "2026.9"
-description = "Benchmarks of btclib and btclib_secp256k1 against their comparands"
+description = "Benchmarks of btclib, btclib_secp256k1 and bip39-slip39 against their comparands"
 readme = "README.md"
 # PEP 639: a SPDX expression and the files it refers to, replacing the
 # deprecated license table and the License :: classifier. COPYRIGHT is
@@ -100,6 +100,10 @@ dependencies = [
     # the codecs leaving btclib for a package of their own
     # (btclib-org/btclib#2712)
     "base58-bech32>=2026.10.23",
+    # BIP39 and SLIP-0039, which `scripts/07-mnemonics.py` times against
+    # `mnemonic`, `shamir-mnemonic` and `embit`: `btclib-mnemonics` under
+    # its new name, of which 2026.10.24 is the first release
+    "bip39-slip39>=2026.10.24",
     "buidl>=0.2.36",
     "coincurve>=21.0.0",
     "ecdsa>=0.19.2",
@@ -115,6 +119,8 @@ dependencies = [
     # interpreter and holds no part of the 3.13 ceiling below
     "electrum-ecc>=0.0.7",
     "embit>=0.8.0",
+    # Trezor's BIP39 implementation
+    "mnemonic>=0.21",
     "pycoin>=0.92718.20260405",
     "python-bitcoinlib>=0.12.2",
     "secp256k1>=0.14.0",
@@ -130,6 +136,8 @@ dependencies = [
     # with no check that it is non-zero) was fixed in 2.0.1, well below this
     # floor. It offers ECDSA sign and verify and nothing past them -- no
     # BIP340, no address encoding, no point multiplication exposed as such
+    # Trezor's SLIP-0039 implementation
+    "shamir-mnemonic>=0.3.0",
     "starkbank-ecdsa>=2.3.1",
 ]
 keywords = [
@@ -250,7 +258,7 @@ secp256k1lab = { git = "https://github.com/secp256k1lab/secp256k1lab", tag = "v1
 # default `src/` root -- `src/btclib_benchmarks/` exactly -- and that is
 # what the wheel ships: the modules the benchmarks and the suite both
 # import, `_inputs.py`, `_provenance.py`, `_releases.py`, `_results.py`,
-# `_timing.py` and `_vectors.py`. The six numbered scripts, `artifacts.py` and
+# `_timing.py` and `_vectors.py`. The numbered scripts, `artifacts.py` and
 # `render.py` are not part of it and stay under `scripts/`: a module
 # whose name opens with a digit or carries a hyphen is not a Python
 # identifier, so none of them could enter a package as they are, and the
@@ -451,7 +459,7 @@ extend-glob = ["CHANGELOG.md", ".pre-commit-config.yaml"]
 extend-ignore-re = ['`[^`]*`']
 
 [tool.coverage.run]
-# `src/btclib_benchmarks/` and the suite, and deliberately not the six
+# `src/btclib_benchmarks/` and the suite, and deliberately not the
 # benchmark scripts under `scripts/` beside them. What their bodies do is
 # time things: covering a timing function means running it, so a coverage
 # gate over them would make every test run a benchmark -- slow, and
@@ -474,7 +482,7 @@ source = ["scripts", "src", "tests"]
 # ever ended without finding what it looked for. That missing exit is
 # the shape a wrong default hides in, so the gate is over branches too
 branch = true
-# the six benchmarks themselves. Naming them here rather than leaving
+# the benchmarks themselves. Naming them here rather than leaving
 # them to fail the gate is the same decision as the `source` comment
 # above, said in the form coverage understands: measured by a person, and
 # checked by a test only on whether they load.
@@ -500,6 +508,7 @@ omit = [
     "scripts/01-libsecp256k1.py",
     "scripts/04-pure-python.py",
     "scripts/06-silentpayments.py",
+    "scripts/07-mnemonics.py",
     "scripts/render.py",
 ]
 
@@ -552,7 +561,7 @@ python_version = "3.11"
 # the start of the relative path matches_exclude builds, and the
 # trailing "/" is what stops it also matching a file merely named build
 exclude = ["^build/"]
-# `scripts` is for the eight files still reached by path -- the six
+# `scripts` is for the files still reached by path -- the
 # numbered benchmarks, `artifacts.py` and `render.py`, not part of the
 # installed `btclib_benchmarks` package: the same `sys.path` entry
 # tests/conftest.py makes for them, said to the type checker.
@@ -595,6 +604,7 @@ module = [
     "embit.*",
     "pycoin.*",
     "secp256k1.*",
+    "shamir_mnemonic.*",
 ]
 ignore_missing_imports = true
 
@@ -610,7 +620,7 @@ ignore_missing_imports = true
 #
 # scripts/ is not among them, and deliberately: the same option makes
 # ruff treat every file under it as a package module too, which is what
-# N999 then checks the six numbered benchmarks' own names against -- and
+# N999 then checks the numbered benchmarks' own names against -- and
 # none of them could pass, a name opening with a digit or carrying a
 # hyphen not being a Python identifier (tests/conftest.py's own docstring
 # gives the reason in full). scripts/*.py's own per-file-ignores entry
@@ -737,7 +747,7 @@ ignore = [
 # `python_arithmetic_only()` can turn it off after the row that measures
 # through libsecp256k1. INP001 is `[tool.ruff]`'s own `namespace-packages`
 # comment above, read the other way: this directory is not a package and
-# cannot become one, the six numbered benchmarks' own names not being
+# cannot become one, the numbered benchmarks' own names not being
 # Python identifiers
 "scripts/*.py" = [
     "S101",   # assert

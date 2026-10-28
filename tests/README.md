@@ -69,9 +69,11 @@ What the suite does check is a different set, and section 7 does not list
 them because they belong to this repository alone: that every benchmark
 imports without timing anything (`scripts_import_test.py`), that every
 measured package answers the vendored vectors before its numbers are
-believed (`vectors_test.py`, `round_trip_test.py`), that the provenance
-report each benchmark prints is true (`provenance_test.py`), and that a
-row claiming a pure-Python path has one (`pure_python_path_test.py`).
+believed (`vectors_test.py`, `round_trip_test.py`), or a published vector
+spelled out in the test where none is vendored
+(`mnemonic_rows_test.py`), that the provenance report each benchmark
+prints is true (`provenance_test.py`), and that a row claiming a
+pure-Python path has one (`pure_python_path_test.py`).
 Section 7's closing rule is what those are: a convention worth stating is
 worth a test.
 

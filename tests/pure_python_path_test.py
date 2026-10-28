@@ -47,7 +47,7 @@ import pytest
 if TYPE_CHECKING:
     from btclib.key import PubKeyData
 
-# `import` cannot spell it: the six scripts are named for the pages
+# `import` cannot spell it: the numbered scripts are named for the pages
 # they publish, which begin with a number and hold hyphens. Nothing
 # imports them by statement -- a person runs `python scripts/<name>.py`
 # and the suite asks `importlib` for them by string, which is indifferent

@@ -37,6 +37,7 @@ from btclib_benchmarks._provenance import origin_of
 # release someone cut on a day, so it is recorded like the rest.
 RELEASE_DATES: dict[str, dict[str, str]] = {
     "base58-bech32": {"2026.10.23": "2026-10-23"},
+    "bip39-slip39": {"2026.10.24": "2026-10-24"},
     "btclib": {"2026.10.3": "2026-10-03", "2026.10.9": "2026-10-10"},
     "btclib-secp256k1": {"0.8.0.9": "2026-09-29"},
     "btclib-wallet": {"2026.10.9": "2026-10-08"},
@@ -46,10 +47,12 @@ RELEASE_DATES: dict[str, dict[str, str]] = {
     "ecdsa": {"0.19.2": "2026-03-26"},
     "electrum-ecc": {"0.0.7": "2026-02-25"},
     "embit": {"0.8.0": "2024-05-30"},
+    "mnemonic": {"0.21": "2024-01-05"},
     "pycoin": {"0.92718.20260405": "2026-04-05"},
     "python-bitcoinlib": {"0.12.2": "2023-06-03"},
     "secp256k1": {"0.14.0 wheel": "2026-01-29", "0.14.0 sdist": "2021-11-06"},
     "secp256k1lab": {"1.0.0": "2025-03-26"},
+    "shamir-mnemonic": {"0.3.0": "2024-05-16"},
     "starkbank-ecdsa": {"2.3.1": "2026-04-23"},
 }
 

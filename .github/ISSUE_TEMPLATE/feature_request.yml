@@ -7,12 +7,13 @@ body:
   - type: markdown
     attributes:
       value: >
-        These tables compare btclib and btclib-secp256k1 with the
-        packages they are usefully compared with, so what belongs here is
-        an operation or a comparand the pages do not cover yet. What
-        bounds it is what a comparand publishes, which `README.md`'s
-        opening states: a package that will not install beside the others
-        on the interpreter the pages are taken on has no row.
+        These tables compare btclib, btclib-secp256k1 and bip39-slip39
+        with the packages they are usefully compared with, so what
+        belongs here is an operation or a comparand the pages do not cover
+        yet. What bounds it is what a comparand publishes, which
+        `README.md`'s opening states: a package that will not install
+        beside the others on the interpreter the pages are taken on has no
+        row.
 
   - type: textarea
     id: what

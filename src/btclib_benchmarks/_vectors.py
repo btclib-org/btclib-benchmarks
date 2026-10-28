@@ -16,9 +16,9 @@ blob SHA-1 it was compared against. That blob is checked here, on every
 read, because a benchmark reading a drifted copy would print numbers over
 inputs nobody can look up.
 
-The second module in `scripts/` that is not a benchmark, after
-`_provenance.py`: six scripts and the suite need one answer to "what are the
-inputs", and seven copies of a CSV parser is how they stop agreeing.
+A module of its own, as `_provenance.py` is: the scripts and the tests that
+read the vectors need one answer to "what are the inputs", and a CSV parser
+in each is how they stop agreeing.
 """
 
 from __future__ import annotations

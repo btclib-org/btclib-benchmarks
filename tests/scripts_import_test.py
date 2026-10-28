@@ -39,6 +39,7 @@ BENCHMARKS = [
     "04-pure-python",
     "05-key-reuse",
     "06-silentpayments",
+    "07-mnemonics",
 ]
 
 # where conftest.py points this process's own import path, spelled again
@@ -112,7 +113,7 @@ def test_the_benchmark_imports_and_reads_no_clock(
 
 @pytest.mark.usefixtures("no_clock")
 def test_the_clock_raises_for_whoever_reads_it() -> None:
-    """The detector itself: none of the six is the regression it looks for."""
+    """The detector itself: no benchmark is the regression it looks for."""
     with pytest.raises(AssertionError, match="read the clock"):
         time.perf_counter()
 
@@ -125,7 +126,7 @@ def test_main_is_never_called_outside_its_own_guard(name: str) -> None:
 
 
 def test_a_bare_module_level_call_to_main_is_detected() -> None:
-    """The detector itself: none of the six is the regression it looks for."""
+    """The detector itself: no benchmark is the regression it looks for."""
     source = "def main():\n    pass\n\n\nmain()\n"
     assert not _main_runs_only_behind_its_guard(source)
 
@@ -138,7 +139,7 @@ def test_the_method_line_fits_the_page(name: str) -> None:
 
 @pytest.mark.parametrize("name", BENCHMARKS)
 def test_every_benchmark_offers_the_same_entry_point(name: str) -> None:
-    """`main` and `provenance`, so the six are run and read alike."""
+    """`main` and `provenance`, so every benchmark is run and read alike."""
     module = importlib.import_module(name)
     assert callable(module.main)
     assert callable(module.provenance)

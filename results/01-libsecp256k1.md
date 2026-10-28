@@ -942,8 +942,8 @@ callers rather than a cost.
 Nothing here says whether any of the four is correct. That is deliberate and
 it is not a gap, but it is a debt the suite has to carry rather than one
 nobody pays. `tests/vectors_test.py` runs BIP340's vectors, Wycheproof's and
-BIP32's against every implementation this project measures, in the
-configuration it measures it in, negative cases included — which reaches
+BIP32's against every implementation of them this project measures, in
+the configuration it measures it in, negative cases included — which reaches
 three of the operations timed here, those being the ones somebody published
 a file for.
 
@@ -964,7 +964,7 @@ already exists, over inputs nobody published.
 
 ## More benchmarks
 
-Five other sets of benchmarks are published in `results/`, each with its own
+The other sets of benchmarks published in `results/`, each with its own
 comparands:
 
 - [btclib's two paths][two-paths] — btclib against itself, its pure-Python
@@ -977,12 +977,15 @@ comparands:
   under a key costs, which a table of fresh keys cannot show
 - [Silent Payments][sp] — what only `btclib_secp256k1` offers of BIP352,
   which no other comparand here implements at all
+- [mnemonics][mnemonics] — BIP39 and SLIP-0039, `bip39-slip39` against
+  Trezor's packages and `embit`
 
 [two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
 [libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
 [pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 [sp]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
+[mnemonics]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/07-mnemonics.md
 [i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [i83]: https://github.com/btclib-org/btclib-benchmarks/issues/83
 
