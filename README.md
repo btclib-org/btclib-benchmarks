@@ -87,9 +87,9 @@ Most comparands are third-party packages, and `pyproject.toml`'s
 `dependencies` name them all. Measured from inside btclib,
 btclib-secp256k1 or bip39-slip39 they would be resolved into the lock of
 a library that never imports them — so a vulnerability reported against
-a comparand would be reported against btclib, and a reader of that alert
-would have to work out that the package was a benchmark row rather than
-a dependency.
+a comparand would be reported against that library, and a reader of that
+alert would have to work out that the package was a benchmark row rather
+than a dependency.
 
 Here the relationship is the right way round. The comparands are what
 this project is *for*, so an advisory against one names the package it is

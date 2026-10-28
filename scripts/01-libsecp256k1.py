@@ -310,8 +310,8 @@ underneath would time something the package does not offer.
 Nothing below asserts an answer, either -- not in a timed function and not
 in the fixtures. Whether these packages answer correctly is
 `tests/vectors_test.py`'s subject, where BIP340's vectors, Wycheproof's and
-BIP32's are run against every implementation of them this project times,
-in the configuration it times it in, negative cases included. A benchmark that
+BIP32's are run against every implementation of them this project times, in
+the configuration it times it in, negative cases included. A benchmark that
 re-checked them would be a slower copy of a test that already exists, over
 inputs nobody published.
 
