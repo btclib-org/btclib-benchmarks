@@ -153,7 +153,7 @@ repos:
       # convention every module under tests/ follows, needs no args. No
       # exclude, and the hook's own exemption for conftest.py is what
       # keeps it that way: tests/conftest.py holds no test of its own,
-      # only the sys.path insert that lets a test import the six numbered
+      # only the sys.path insert that lets a test import the numbered
       # benchmarks, artifacts.py and render.py by path, so exempting its
       # name from the pattern costs nothing. The __init__.py exemption
       # goes unused -- there is no tests/__init__.py, tests/ is not a
@@ -553,7 +553,7 @@ repos:
   # to the ruff one.
   #
   # Scoped to `scripts/` and `src/`, which between them are where every
-  # function this repository writes lives: the six benchmarks and the
+  # function this repository writes lives: the numbered benchmarks and the
   # shared modules under `src/btclib_benchmarks/` included, a
   # fixture builder whose docstring no longer matches its parameters
   # being how a row starts measuring something other than what the page
@@ -615,7 +615,7 @@ repos:
   # it. The uv-lock hook below catches the stale lock in the same run, but
   # only after this one has already produced a verdict on the wrong
   # environment, and the lint workflow runs this file, so CI inherits that.
-  # Only the six numbered benchmarks make scripts/ need the
+  # Only the numbered benchmarks make scripts/ need the
   # ignore_missing_imports override: nothing else in this repository ever
   # calls one of their main() -- pytest's testpaths is tests/ alone, so
   # they are never collected, and tests/scripts_import_test.py's own

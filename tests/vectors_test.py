@@ -2,7 +2,7 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""Every measured package answers the vendored vectors, or its timings are void.
+"""A measured package answers the vendored vectors, or its timings are void.
 
 A benchmark row is a number produced by code nobody here wrote. The only
 thing that makes one worth printing is that the code answered a published
@@ -10,8 +10,9 @@ question correctly first, and "it agreed with btclib" is not that question:
 it cannot catch what btclib and a comparand get wrong together, and it says
 nothing at all about the cases a specification publishes to be *rejected*.
 
-So every implementation this project times is held here to BIP340's own
-vectors and BIP32's, in the configuration the benchmark measures it in.
+So every implementation this project times of an operation they cover is
+held here to BIP340's own vectors and BIP32's, in the configuration the
+benchmark measures it in.
 btclib is held to them too. That is redundant with btclib's own suite by
 design: it is the one package whose numbers this project exists to publish,
 and a table of comparands where the subject alone is unchecked would be an

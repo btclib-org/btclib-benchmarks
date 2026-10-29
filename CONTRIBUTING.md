@@ -497,17 +497,19 @@ a mutant a test caught.
 ### Running a benchmark
 
 Every floor in `pyproject.toml` is a minimum a comparand upgrades past
-without a word, `btclib`, `ecc`, `btclib-wallet` and
-`btclib-secp256k1` included now that all resolve from a released index
-rather than a branch: `uv sync --locked` reinstalls the revision the lock
-names and never looks at whether a newer release has shipped since. So a
-measurement taken without asking for the upgrade is a measurement of
-whatever was current the day the lock was last written, which is not what a
-page's provenance block claims it measured. Ask for it first, every time:
+without a word, `btclib`, `ecc`, `btclib-wallet`, `btclib-secp256k1`,
+`bip39-slip39` and `base58-bech32` included now that all resolve from a
+released index rather than a branch: `uv sync --locked` reinstalls the
+revision the lock names and never looks at whether a newer release has
+shipped since. So a measurement taken without asking for the upgrade is a
+measurement of whatever was current the day the lock was last written,
+which is not what a page's provenance block claims it measured. Ask for it
+first, every time:
 
 ```shell
 uv lock --upgrade-package btclib --upgrade-package ecc \
-  --upgrade-package btclib-wallet --upgrade-package btclib-secp256k1
+  --upgrade-package btclib-wallet --upgrade-package btclib-secp256k1 \
+  --upgrade-package bip39-slip39 --upgrade-package base58-bech32
 uv sync --locked
 ```
 
@@ -532,9 +534,8 @@ after measures a hot machine rather than the operation: measured that way,
 the pure-Python columns of `02-btclib-vs-btclib.py` came out up to three
 times their real cost, and a verification through the C library came out
 at twice. The dispersion column beside a row is what shows it, and which
-statistic it is belongs to the page. `01-libsecp256k1.py`,
-`03-libraries.py`, `04-pure-python.py`, `05-key-reuse.py` and
-`06-silentpayments.py` save `halves_apart`, how far the minima of the
+statistic it is belongs to the page. Every script but
+`02-btclib-vs-btclib.py` saves `halves_apart`, how far the minima of the
 halves of a row's rounds sat apart, so a wide one is a row whose own
 estimate moved while it was being measured; `spread`, the slowest round
 less the quickest, is the key a run saved before that carries, and it
@@ -556,10 +557,10 @@ time to cool between scripts rather than watched for it afterwards.
 Drift itself is measured on one page. `01-libsecp256k1.py` times every
 table twice in one invocation, idle in between, publishes the first pass
 and states in its run block how far apart the two passes began, how many
-rows came out quicker the second time, and by how much. It is the
-cheapest of the benchmarks, which is why it is the one that pays for a
-second pass; the rest state nothing, and an absent line there is a page
-that did not pay for one rather than a page whose two passes agreed.
+rows came out quicker the second time, and by how much. It is the one
+that pays for a second pass; the rest state nothing, and an absent line
+there is a page that did not pay for one rather than a page whose two
+passes agreed.
 
 Read the count before the magnitudes. Rows moving one way in the great
 majority is a difference between the two passes rather than noise between
@@ -576,9 +577,9 @@ uv run --with-editable /path/to/ecc python scripts/03-libraries.py
 ```
 
 Install the package whose code the rows time: `ecc` for the curve
-and the signature schemes, `btclib-wallet` for BIP32, `btclib` for the
-rest. The packages block then says `editable: /path/to/ecc`, which
-is the point of printing it.
+and the signature schemes, `btclib-wallet` for BIP32, `bip39-slip39` for
+the mnemonics, `btclib` for the rest. The packages block then says
+`editable: /path/to/ecc`, which is the point of printing it.
 
 ### Publishing a run, which is a second command
 
@@ -671,16 +672,20 @@ of the differences being reported.
 
 What it does check is what survives being automated:
 
-- that every measured package answers the vendored vectors, in the
-  configuration it is measured in. `tests/vectors_test.py` runs BIP340's
-  vectors, BIP32's, Wycheproof's ECDSA file and Core's base58 pairs
-  against every implementation this project times,
-  btclib included — redundant with btclib's own suite, deliberately, it
-  being the one package these tables exist to publish. The negative cases
-  are the point: an implementation that accepts a public key off the curve
-  or an s past the order passes a round-trip check and fails this one. The
-  pure-Python configuration is a subprocess, `PYCOIN_NATIVE` being read at
-  import and btclib's dispatch flag being unrestorable.
+- that every measured package answers the published vectors of what it
+  is measured on, in the configuration it is measured in.
+  `tests/vectors_test.py` runs BIP340's vectors, BIP32's, Wycheproof's
+  ECDSA file and Core's base58 pairs against every implementation of
+  those operations this project times, btclib included — redundant with
+  btclib's own suite, deliberately, it being the one package these tables
+  exist to publish. The negative cases are the point: an implementation
+  that accepts a public key off the curve or an s past the order passes a
+  round-trip check and fails this one. The pure-Python configuration is a
+  subprocess, `PYCOIN_NATIVE` being read at import and btclib's dispatch
+  flag being unrestorable. BIP39's and SLIP-0039's vectors are not vendored
+  (`vectors/README.md`'s *What is not here yet*), so
+  `tests/mnemonic_rows_test.py` holds the mnemonic packages to one
+  published vector of each, spelled out in the test.
 
   Where a package answers a case differently, the answer is recorded as an
   expected failure with the reason beside it, never excluded. `xfail_strict`
@@ -712,13 +717,16 @@ What it does check is what survives being automated:
   checks their answers, so that one that is merely fast and wrong cannot
   win a row.
   `tests/vectors_test.py` runs the vendored vectors against every
-  implementation these scripts time, in the configuration each is timed
-  in, including the negative cases no benchmark row can express.
+  implementation of their operations these scripts time, in the
+  configuration each is timed in, including the negative cases no
+  benchmark row can express.
   `tests/round_trip_test.py` holds what no vector publishes: that a package
   verifies the signature it just made, and that the implementations derive
   the same public key. `tests/address_rows_test.py` holds 03's address rows
   to BIP173 and BIP350, and `tests/bip340_rows_test.py` checks that embit's
-  BIP340 signatures verify.
+  BIP340 signatures verify. `tests/mnemonic_rows_test.py` holds 07's
+  packages to a published BIP39 vector and a published SLIP-0039 one, and
+  to `bip39-slip39`'s answers on the script's own inputs.
 - **take the input from the seeded pool**, `_inputs`, which every script
   draws its keys and messages from. `03-libraries.py`'s BIP32 derivation
   and address rows take published values instead, and say why where they

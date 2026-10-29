@@ -310,8 +310,8 @@ underneath would time something the package does not offer.
 Nothing below asserts an answer, either -- not in a timed function and not
 in the fixtures. Whether these packages answer correctly is
 `tests/vectors_test.py`'s subject, where BIP340's vectors, Wycheproof's and
-BIP32's are run against every implementation this project times, in the
-configuration it times it in, negative cases included. A benchmark that
+BIP32's are run against every implementation of them this project times, in
+the configuration it times it in, negative cases included. A benchmark that
 re-checked them would be a slower copy of a test that already exists, over
 inputs nobody published.
 
@@ -495,8 +495,9 @@ def provenance() -> Provenance:
 # so a vector proves nothing about their arithmetic that another input does
 # not, and what a table of them is read for is the boundary crossing. What
 # published vectors are for is correctness, and that is `tests/`: it holds
-# every measured package to BIP340, to Wycheproof and to BIP32, in the
-# configuration this script measures it in, so nothing below asserts.
+# every package this script measures to BIP340's vectors and to
+# Wycheproof's, in the configuration this script measures it in, so nothing
+# below asserts.
 #
 # How much of the pool each table reads, and each reads a different part of
 # it: a key signed in the first table is not the key verified in a later

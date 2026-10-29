@@ -374,6 +374,7 @@ version = "2026.9"
 source = { editable = "." }
 dependencies = [
     { name = "base58-bech32" },
+    { name = "bip39-slip39" },
     { name = "btclib" },
     { name = "btclib-secp256k1" },
     { name = "btclib-wallet" },
@@ -383,10 +384,12 @@ dependencies = [
     { name = "ecdsa" },
     { name = "electrum-ecc" },
     { name = "embit" },
+    { name = "mnemonic" },
     { name = "pycoin" },
     { name = "python-bitcoinlib" },
     { name = "secp256k1" },
     { name = "secp256k1lab" },
+    { name = "shamir-mnemonic" },
     { name = "starkbank-ecdsa" },
 ]
 
@@ -441,6 +444,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "base58-bech32", specifier = ">=2026.10.23" },
+    { name = "bip39-slip39", specifier = ">=2026.10.24" },
     { name = "btclib", specifier = ">=2026.10.24" },
     { name = "btclib-secp256k1", specifier = ">=0.8.0.9" },
     { name = "btclib-wallet", specifier = ">=2026.10.25" },
@@ -450,10 +454,12 @@ requires-dist = [
     { name = "ecdsa", specifier = ">=0.19.2" },
     { name = "electrum-ecc", specifier = ">=0.0.7" },
     { name = "embit", specifier = ">=0.8.0" },
+    { name = "mnemonic", specifier = ">=0.21" },
     { name = "pycoin", specifier = ">=0.92718.20260405" },
     { name = "python-bitcoinlib", specifier = ">=0.12.2" },
     { name = "secp256k1", specifier = ">=0.14.0" },
     { name = "secp256k1lab", git = "https://github.com/secp256k1lab/secp256k1lab?tag=v1.0.0" },
+    { name = "shamir-mnemonic", specifier = ">=0.3.0" },
     { name = "starkbank-ecdsa", specifier = ">=2.3.1" },
 ]
 
@@ -1798,6 +1804,15 @@ wheels = [
 ]
 
 [[package]]
+name = "mnemonic"
+version = "0.21"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/77/e6232ed59fbd7b90208bb8d4f89ed5aabcf30a524bc2fb8f0dafbe8e7df9/mnemonic-0.21.tar.gz", hash = "sha256:1fe496356820984f45559b1540c80ff10de448368929b9c60a2b55744cc88acf", size = 152462, upload-time = "2024-01-05T10:46:14.895Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/57/48/5abb16ce7f9d97b728e6b97c704ceaa614362e0847651f379ed0511942a0/mnemonic-0.21-py3-none-any.whl", hash = "sha256:72dc9de16ec5ef47287237b9b6943da11647a03fe7cf1f139fc3d7c4a7439288", size = 92701, upload-time = "2024-01-05T10:46:12.703Z" },
+]
+
+[[package]]
 name = "more-itertools"
 version = "11.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2599,6 +2614,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/70/b3/c19426f783614d625699a4b247faf628ea9ab1db228674491767b417f9e1/setuptools-84.2.1.tar.gz", hash = "sha256:3ff8b3b5492a0aa66960f4419365a86b84e013070d4313e4d4a6894f5d64d6bc", size = 1230289, upload-time = "2026-10-20T19:01:37.742Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ef/55/6dc6d6bb953bdfc52519a0059592c52b6e3b8ad51cf8256dffceb55b0610/setuptools-84.2.1-py3-none-any.whl", hash = "sha256:ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2", size = 876263, upload-time = "2026-10-20T19:01:35.678Z" },
+]
+
+[[package]]
+name = "shamir-mnemonic"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/fd/9f5b305b5280795209817efe6b0cd6017f4714e3f36d160b2d4dfcc78c02/shamir_mnemonic-0.3.0.tar.gz", hash = "sha256:bc04886a1ddfe2a64d8a3ec51abf0f664d98d5b557cc7e78a8ad2d10a1d87438", size = 21757, upload-time = "2024-05-16T10:08:51.37Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1d/38/2124e565afe40993949dbc89da6c654a2c9a1b24dd80039812ef7cdbaef3/shamir_mnemonic-0.3.0-py3-none-any.whl", hash = "sha256:188c6b5bd00d5e756e12e2b186c3cb7c98ff7ff44df608d4c1d2077f6b6e730f", size = 23159, upload-time = "2024-05-16T10:08:49.154Z" },
 ]
 
 [[package]]

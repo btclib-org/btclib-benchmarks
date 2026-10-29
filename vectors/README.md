@@ -1,10 +1,11 @@
 # Vendored test vectors
 
-The files, and what they are for: every package this project measures is
-held to them, in the configuration it is measured in, before any of its
-timings are believed. A benchmark row is a number produced by code nobody
-here wrote, and the only thing that makes one worth printing is that the
-code answered a published question correctly first.
+The files, and what they are for: every package this project measures on
+an operation they cover is held to them, in the configuration it is
+measured in, before any of its timings are believed. A benchmark row is a
+number produced by code nobody here wrote, and the only thing that makes
+one worth printing is that the code answered a published question
+correctly first.
 
 `tests/vectors_test.py` is what runs them. btclib is held to them too, which
 its own suite already does: redundant is the right amount for the one
@@ -181,6 +182,12 @@ The address encodings are timed in `scripts/03-libraries.py` and their
 vectors are not vendored: BIP173's and BIP350's valid and invalid address
 lists belong beside these, and the bech32m defect that benchmark found
 in `python-bitcoinlib` is exactly what an invalid-address list is for.
+
+BIP39 and SLIP-0039 are timed in `scripts/07-mnemonics.py`, and their
+vectors are not vendored either: trezor's `vectors.json` and SLIP-0039's,
+which `btclib-org/bip39-slip39` vendors in its `tests/_data/`, belong
+beside these. Until then `tests/mnemonic_rows_test.py` spells out one
+vector of each and holds every mnemonic package to it.
 
 [pins]: https://github.com/btclib-org/btclib/blob/2e5f944/tests/_data/README.md
 [ecc-pins]: https://github.com/btclib-org/ecc/blob/7a80b48/tests/_data/README.md

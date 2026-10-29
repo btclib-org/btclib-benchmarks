@@ -621,9 +621,8 @@ def _rendered_drift(measurement: Measurement) -> str | None:
     """Return the line stating how far two passes of a page disagreed.
 
     Nothing, on a page measured once: an absent line is a page that did
-    not pay for a second pass, which is what every page but the cheapest
-    of the six is, and writing it as zero would claim two passes that
-    agreed.
+    not pay for a second pass, which is what every page but the wrappers
+    page is, and writing it as zero would claim two passes that agreed.
 
     Every number here is derived and none is stored, which is this
     module's rule and matters twice over for a summary: "the worst row on

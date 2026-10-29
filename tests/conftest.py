@@ -6,13 +6,13 @@
 
 `src/btclib_benchmarks/` is a package, installed into this project's own
 venv, and a test of it imports it the way any caller does. What is left
-under `scripts/` -- the six numbered benchmarks, `artifacts.py` and
+under `scripts/` -- the numbered benchmarks, `artifacts.py` and
 `render.py` -- is not: a module whose name opens with a digit or carries
-a hyphen is not a Python identifier, so none of the six could become a
+a hyphen is not a Python identifier, so no benchmark could become a
 package member as it is, and the other two were never meant to be one.
-Nothing imports any of the eight in ordinary use, they are run by path,
-and a test that judges them has to reach them the way a person does --
-which is the whole of what the `sys.path` insert below buys.
+Nothing imports any of them in ordinary use, they are run by path, and a
+test that judges them has to reach them the way a person does -- which
+is the whole of what the `sys.path` insert below buys.
 
 `coverage_fail_under` is the other half. `--cov` is in addopts, so the
 100% ratchet is what a bare `uv run pytest` measures rather than

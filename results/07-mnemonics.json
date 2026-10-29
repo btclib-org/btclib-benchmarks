@@ -1,0 +1,291 @@
+{
+  "schema": 1,
+  "benchmark": "07-mnemonics",
+  "run": {
+    "when": "2026-10-28T04:23:20+01:00",
+    "timezone": "CET",
+    "python": "3.13.14",
+    "method": "10 rounds per row in two halves, minimum kept; calls per row",
+    "command": "uv run python scripts/07-mnemonics.py",
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
+  },
+  "provenance": {
+    "columns": [
+      "package",
+      "version",
+      "released"
+    ],
+    "rows": [
+      [
+        "bip39-slip39",
+        "2026.10.24",
+        "2026-10-24"
+      ],
+      [
+        "embit",
+        "0.8.0",
+        "2024-05-30"
+      ],
+      [
+        "shamir-mnemonic",
+        "0.3.0",
+        "2024-05-16"
+      ],
+      [
+        "mnemonic",
+        "0.21",
+        "2024-01-05"
+      ]
+    ],
+    "notes": []
+  },
+  "timing_note": [
+    "what a timing contains",
+    "  one call per iteration, its answer discarded: no row checks",
+    "  itself, and no comparison is inside a measured loop",
+    "  the answers are checked in tests/, not by a script",
+    "  (CONTRIBUTING.md's Writing a row names where)"
+  ],
+  "tables": [
+    {
+      "kind": "ratios",
+      "title": "1. BIP39 encode: 256 bits of entropy to 24 words",
+      "group": "",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "bip39-slip39",
+          "us_per_call": 12.929629199788906,
+          "halves_apart": 0.14054159983061254,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "mnemonic",
+          "us_per_call": 2.5721683399751782,
+          "halves_apart": 0.005652499967254698,
+          "rounds": 10,
+          "calls": 50000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 13.858662499114871,
+          "halves_apart": 0.1364958006888628,
+          "rounds": 10,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "2. BIP39 decode: 24 words to their entropy, the language given",
+      "group": "",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "bip39-slip39",
+          "us_per_call": 15.494312501687093,
+          "halves_apart": 0.049468748329671186,
+          "rounds": 10,
+          "calls": 8000
+        },
+        {
+          "label": "mnemonic",
+          "us_per_call": 138.62463866826147,
+          "halves_apart": 0.5797780080077644,
+          "rounds": 10,
+          "calls": 1500
+        },
+        {
+          "label": "embit",
+          "us_per_call": 185.3190420079045,
+          "halves_apart": 0.5365829856600612,
+          "rounds": 10,
+          "calls": 1000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "3. BIP39 language detection: 24 words",
+      "group": "",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "embit",
+          "unavailable": true
+        },
+        {
+          "label": "bip39-slip39",
+          "us_per_call": 4.457410000031814,
+          "halves_apart": 0.05278000026009977,
+          "rounds": 10,
+          "calls": 25000
+        },
+        {
+          "label": "mnemonic",
+          "us_per_call": 2180.7297573624446,
+          "halves_apart": 6.266671282771313,
+          "rounds": 10,
+          "calls": 70
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "4. BIP39 seed: 24 words, an empty passphrase",
+      "group": "",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "bip39-slip39, verify",
+          "us_per_call": 374.12968747958075,
+          "halves_apart": 0.06031252269167453,
+          "rounds": 10,
+          "calls": 400
+        },
+        {
+          "label": "bip39-slip39, noverify",
+          "us_per_call": 351.9001050153747,
+          "halves_apart": 0.11291747796349227,
+          "rounds": 10,
+          "calls": 400
+        },
+        {
+          "label": "mnemonic, noverify",
+          "us_per_call": 351.2284375028685,
+          "halves_apart": 0.17635247786529362,
+          "rounds": 10,
+          "calls": 400
+        },
+        {
+          "label": "embit, verify",
+          "us_per_call": 535.8344800333725,
+          "halves_apart": 1.0596874199109152,
+          "rounds": 10,
+          "calls": 400
+        },
+        {
+          "label": "embit, noverify",
+          "us_per_call": 350.99927248666063,
+          "halves_apart": 0.06729002052452415,
+          "rounds": 10,
+          "calls": 400
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "5. SLIP-0039 split: a 128-bit master secret into three-of-five shares",
+      "group": "",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "embit",
+          "unavailable": true
+        },
+        {
+          "label": "bip39-slip39",
+          "us_per_call": 739.5141699817032,
+          "halves_apart": 0.7993700273800641,
+          "rounds": 10,
+          "calls": 200
+        },
+        {
+          "label": "shamir-mnemonic",
+          "us_per_call": 774.3731250229757,
+          "halves_apart": 1.2743749539367855,
+          "rounds": 10,
+          "calls": 200
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "6. SLIP-0039 combine: three of five shares into the master secret",
+      "group": "",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "bip39-slip39",
+          "us_per_call": 717.8535399725661,
+          "halves_apart": 1.3416699948720634,
+          "rounds": 10,
+          "calls": 200
+        },
+        {
+          "label": "shamir-mnemonic",
+          "us_per_call": 738.6839599348605,
+          "halves_apart": 0.2947900793515146,
+          "rounds": 10,
+          "calls": 200
+        },
+        {
+          "label": "embit",
+          "us_per_call": 847.1477100101765,
+          "halves_apart": 0.9506200149189681,
+          "rounds": 10,
+          "calls": 200
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "7. SLIP-0039 share parse: 20 words to a share",
+      "group": "",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "bip39-slip39",
+          "us_per_call": 7.5107707489223685,
+          "halves_apart": 0.0833698759379331,
+          "rounds": 10,
+          "calls": 8000
+        },
+        {
+          "label": "shamir-mnemonic",
+          "us_per_call": 12.264644467116645,
+          "halves_apart": 0.012830534251405012,
+          "rounds": 10,
+          "calls": 15000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 48.96531934112621,
+          "halves_apart": 0.32861133028442424,
+          "rounds": 10,
+          "calls": 3000
+        }
+      ]
+    },
+    {
+      "kind": "ratios",
+      "title": "8. SLIP-0039 share encode: a share to 20 words",
+      "group": "",
+      "decimals": 2,
+      "rows": [
+        {
+          "label": "bip39-slip39",
+          "us_per_call": 6.346249999478459,
+          "halves_apart": 0.03104579809587449,
+          "rounds": 10,
+          "calls": 10000
+        },
+        {
+          "label": "shamir-mnemonic",
+          "us_per_call": 12.176799999239543,
+          "halves_apart": 0.020058334727462324,
+          "rounds": 10,
+          "calls": 15000
+        },
+        {
+          "label": "embit",
+          "us_per_call": 10.585933331943428,
+          "halves_apart": 0.06110833492130041,
+          "rounds": 10,
+          "calls": 15000
+        }
+      ]
+    }
+  ]
+}

@@ -1,8 +1,8 @@
-# The one module every implementation this project times is checked
-# against: BIP340's vectors, BIP32's, Wycheproof's ECDSA file and Core's
-# base58 pairs, decoded from the files `vectors/README.md` pins a git blob
-# SHA-1 for. A benchmark row is only as good as the fixture behind it, so
-# a field this module maps to the wrong column is a fixture every
+# The one module every implementation this project times of a vendored
+# operation is checked against: BIP340's vectors, BIP32's, Wycheproof's ECDSA
+# file and Core's base58 pairs, decoded from the files `vectors/README.md` pins
+# a git blob SHA-1 for. A benchmark row is only as good as the fixture behind
+# it, so a field this module maps to the wrong column is a fixture every
 # comparand agrees on for the wrong reason.
 #
 # The pure-Python run (`test_the_pure_python_configuration_answers_the_same_vectors`)

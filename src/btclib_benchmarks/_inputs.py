@@ -9,8 +9,8 @@ messages, derived from a seed written below rather than from a vector file:
 what a page of timings is read for is the boundary crossing, or which
 arithmetic answered, and neither is a property of the input. What published
 vectors are for is correctness, and correctness is `tests/`, which runs them
-against every implementation this project measures. So no timed loop
-checks what it computed.
+against every implementation this project measures of an operation they
+cover. So no timed loop checks what it computed.
 
 sha256 of the seed and a counter rather than `random`, whose stream is
 CPython's business and could change under a table nobody re-derived: this one

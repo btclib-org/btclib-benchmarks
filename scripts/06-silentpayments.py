@@ -302,10 +302,9 @@ METHOD = f"the quickest of {ROUNDS} rounds; the halves' gap is beside it"
 def main() -> None:
     """Print the two tables and save the run.
 
-    One pass, unlike the wrappers page: that page pays for a second one
-    because it is the cheapest of the six and states how far two passes
-    of it disagree for every page here to read. This one does not carry
-    that line, the way the other four do not either.
+    One pass, unlike the wrappers page: that page alone pays for a second
+    one and states how far two passes of it disagree for every page here
+    to read. This one does not carry that line.
     """
     packages = provenance()
     print(rendered_provenance(packages))

@@ -3,7 +3,7 @@
 btclib-benchmarks is a set of scripts run by hand from a checkout, never
 installed to an index and never run in CI. This page is its high-level
 design: what each part measures, how the two that are not benchmarks stay
-uncoupled from the six that are, and what the project depends on to run.
+uncoupled from the benchmarks, and what the project depends on to run.
 What a user can expect of it in terms of security is the
 [assurance case](./ASSURANCE_CASE.md).
 
@@ -24,14 +24,13 @@ The benchmarks, one question each:
   python-ecdsa's `precompute()`
 - `scripts/06-silentpayments.py` — BIP352, which only `btclib_secp256k1`
   implements of every comparand here
+- `scripts/07-mnemonics.py` — BIP39 and SLIP-0039, `bip39-slip39` against
+  Trezor's `mnemonic` and `shamir-mnemonic`, and `embit`
 
-`README.md`'s opening list is the same six for a reader deciding whether to
-run one. Five import `btclib` and time it against a comparand;
-`scripts/01-libsecp256k1.py` times `btclib_secp256k1` against the other
-wrappers of `bitcoin-core/secp256k1` and imports no pure-Python arithmetic
-to switch off. Every script keeps its timing loops behind a `main()`
-guard: importing one builds its fixtures and times nothing, which is what
-lets `tests/scripts_import_test.py` import all six under the suite without
+`README.md`'s opening list is the same list, for a reader deciding whether
+to run one. Every script keeps its timing loops behind a `main()` guard:
+importing one builds its fixtures and times nothing, which is what lets
+`tests/scripts_import_test.py` import every one under the suite without
 spending the minutes a real run costs. `scripts/artifacts.py` is covered
 by `tests/artifacts_test.py`, and `scripts/render.py` by nothing, below.
 
@@ -99,18 +98,17 @@ knowing what produced it.
 
 ## The comparands are dependencies, not a benchmark group
 
-`ecdsa`, `pycoin`, `buidl`, `embit`, `python-bitcoinlib`, `coincurve`,
-`secp256k1`, `secp256k1lab`, `electrum-ecc`, `starkbank-ecdsa` and
-`base58-bech32` are
-`pyproject.toml`'s direct `dependencies`, resolved by `uv sync --locked`
-into this project's own `.venv` alongside `btclib` and
-`btclib_secp256k1`. `README.md`'s *Why this is its own repository* is the
-reason: measured from inside btclib these would sit in a lock a library
-that never imports them still carries, so a Dependabot alert against one
-would misname what it is about. Here the relationship runs the other way,
-and an alert against a comparand names the package it is actually about.
-`base58-bech32` is btclib-org's own, and the reason holds for it only
-while btclib does not import it.
+The comparands are `pyproject.toml`'s direct `dependencies`, resolved by
+`uv sync --locked` into this project's own `.venv`, `btclib` and
+`btclib_secp256k1` among them. `README.md`'s *Why this is its own
+repository* is the reason: measured from inside btclib the third-party
+ones would sit in a lock a library that never imports them still
+carries, so a Dependabot alert against one would misname what it is
+about. Here the relationship runs the other way, and an alert against a
+comparand names the package it is actually about. `base58-bech32` and
+`bip39-slip39` are btclib-org's own: the reason holds for the first only
+while btclib does not import it, and not for the second, which
+`btclib-wallet` imports.
 
 ## What sits outside the scripts
 

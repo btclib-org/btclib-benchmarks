@@ -436,7 +436,8 @@ def test_undeclared_lists_only_the_installs_that_are_not_declared(
 
 # the pure-Python btclib-org distributions whose code a page's rows run, by
 # page: btclib's curve and schemes are `ecc`'s, its BIP32 `btclib-wallet`'s,
-# and the rest `btclib`'s. 03 also times `base58-bech32`'s codecs
+# and the rest `btclib`'s. 03 also times `base58-bech32`'s codecs, and 07
+# `bip39-slip39`'s mnemonics
 RUN_BY = [
     ("02-btclib-vs-btclib", "btclib"),
     ("02-btclib-vs-btclib", "ecc"),
@@ -447,6 +448,7 @@ RUN_BY = [
     ("04-pure-python", "btclib"),
     ("04-pure-python", "ecc"),
     ("05-key-reuse", "ecc"),
+    ("07-mnemonics", "bip39-slip39"),
 ]
 
 
