@@ -44,9 +44,11 @@ write text, and that is the whole of what publishing costs.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import platform
+import shutil
 import statistics
 import subprocess
 import tomllib
@@ -103,6 +105,10 @@ RESULTS = Path(__file__).resolve().parent.parent.parent / "results"
 # run is
 MACHINE_FILE = RESULTS / "machine.toml"
 
+# the checkout a run is taken from, whose commit and lock the run records
+ROOT = RESULTS.parent
+LOCK_FILE = ROOT / "uv.lock"
+
 # two spaces between columns, everywhere. Enough to read as a gap at any
 # width, and the same gap in every table of every page
 GAP = 2
@@ -140,6 +146,9 @@ DISPERSION_HEADINGS = {"spread": "spread", "halves_apart": "halves"}
 # is held to. `labelled` is that habit made into a rule, raising rather
 # than printing a line the page cannot carry
 LINE = 80
+
+# what the run block says for a commit or a lock the run did not record
+NOT_RECORDED = "not recorded"
 
 
 @dataclass(frozen=True)
@@ -368,6 +377,13 @@ class Run:
     published either way, so a page is always dated where the numbers on it
     were taken. Two instants and not the gap between them: the gap is
     arithmetic over two facts, and arithmetic here is the renderer's.
+
+    `commit` is this repository's commit, with `, with uncommitted changes`
+    where the tree held other changes, and `lock` the SHA-256 of the
+    `uv.lock` the run was taken under. Each is absent on a run saved before
+    a script recorded it, or where git, its status or `uv.lock` did not
+    answer, and the run block then says so. What a reader can check with
+    them is README.md's *One run of each, published*.
     """
 
     when: str
@@ -377,6 +393,8 @@ class Run:
     command: str
     machine: str
     when_again: str | None = None
+    commit: str | None = None
+    lock: str | None = None
 
 
 def page_of(script: str) -> str:
@@ -457,18 +475,22 @@ def _measured_twice(tables: Sequence[Table]) -> list[tuple[float, float]]:
 
 
 def _spoken_by(command: tuple[str, ...]) -> str:
-    """Return a system command's one-line answer, or nothing if it has none.
+    """Return a system command's answer, stripped, or nothing if it has none.
 
-    Absolute paths and a fixed argv, no shell and no input: what S603
+    Nothing if the command is missing, fails or runs past five seconds: the
+    callers read an empty answer as no answer. For the machine line that
+    leaves the line to `machine.toml`; for the commit it records none.
+
+    No shell, and every argument is written in this module: what S603
     guards against is a command assembled from something a caller
-    supplied, and there is nothing here for anyone to supply. A machine
-    that answers differently -- or not at all, this being asked on any
-    platform -- leaves the line to `machine.toml`.
+    supplied. The programs are absolute paths, sysctl and sw_vers, or git
+    as `shutil.which` finds it on PATH, which is the git a person running
+    the benchmark would run themselves.
 
     The encoding is named rather than left to the locale: these answers
-    are a chip's name and a build number, and a machine whose locale
-    decodes them differently would put the difference in a published
-    page.
+    are a chip's name, a build number, a sha and a status listing, and a
+    machine whose locale decodes them differently would put the difference
+    in a published page.
     """
     try:
         answered = subprocess.run(  # noqa: S603
@@ -504,6 +526,51 @@ def _machine_file() -> dict[str, str]:
         return {}
     read = tomllib.loads(MACHINE_FILE.read_text(encoding="utf-8"))
     return {key: str(value) for key, value in read.items()}
+
+
+def _commit() -> str | None:
+    """Return the commit the run is taken from, or nothing outside a checkout.
+
+    A change not yet committed is said beside the sha, because the commit
+    alone then names code other than what ran. `results/` is left out of
+    that question: each run writes its own file there, and the next run
+    would otherwise find the tree changed by the one before it.
+
+    The status is asked in its v2 form with `--branch`, which opens with
+    `#` header lines even for a clean tree. So an empty answer is a git
+    that failed or timed out, and the tree's state is then unknown: no
+    commit is recorded, rather than a bare sha that would read as clean.
+    """
+    git = shutil.which("git")
+    if git is None:
+        return None
+    head = _spoken_by((git, "-C", str(ROOT), "rev-parse", "HEAD"))
+    if not head:
+        return None
+    status = _spoken_by(
+        (
+            git,
+            "-C",
+            str(ROOT),
+            "status",
+            "--porcelain=v2",
+            "--branch",
+            "--",
+            ".",
+            ":!results",
+        )
+    )
+    if not status:
+        return None
+    changed = [line for line in status.splitlines() if not line.startswith("#")]
+    return f"{head}, with uncommitted changes" if changed else head
+
+
+def _lock() -> str | None:
+    """Return the SHA-256 of the lock the run resolved from, if there is one."""
+    if not LOCK_FILE.is_file():
+        return None
+    return hashlib.sha256(LOCK_FILE.read_bytes()).hexdigest()
 
 
 def moment() -> datetime:
@@ -547,6 +614,8 @@ def taken_now(
         command=f"uv run python scripts/{Path(script).name}",
         machine=recorded.get("machine") or _detected_machine(),
         when_again=None if again is None else again.isoformat(timespec="seconds"),
+        commit=_commit(),
+        lock=_lock(),
     )
 
 
@@ -665,7 +734,11 @@ def _rendered_drift(measurement: Measurement) -> str | None:
 
 
 def rendered_run(measurement: Measurement) -> str:
-    """Return the block naming when and where a run took place.
+    """Return the block naming when and where a run took place, and on what.
+
+    `commit` and `uv.lock` are printed as the run recorded them, and as
+    `not recorded` where it did not; README.md's *One run of each,
+    published* says what a reader can check with them.
 
     Local time and UTC both: a run is dated for whoever reads it next, and
     the two answers are the same instant said twice rather than a
@@ -687,6 +760,8 @@ def rendered_run(measurement: Measurement) -> str:
         labelled("when", f"{when:%Y-%m-%d %H:%M} {run.timezone} ({utc:%H:%M} UTC)"),
         labelled("machine", run.machine),
         labelled("python", run.python),
+        labelled("commit", run.commit or NOT_RECORDED),
+        labelled("uv.lock", run.lock or NOT_RECORDED),
     ]
     drift = _rendered_drift(measurement)
     return "\n".join(lines if drift is None else [*lines, drift])
@@ -1116,6 +1191,8 @@ def as_json(measurement: Measurement) -> dict[str, object]:
             "command": run.command,
             "machine": run.machine,
             **({} if run.when_again is None else {"when_again": run.when_again}),
+            **({} if run.commit is None else {"commit": run.commit}),
+            **({} if run.lock is None else {"lock": run.lock}),
         },
         "provenance": {
             "columns": measurement.provenance.columns,

@@ -47,6 +47,8 @@ interpreter is 3.13, not the newest* gives the reason.
 when    : 2026-08-21 01:54 CEST (23:54 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
+commit  : not recorded
+uv.lock : not recorded
 drift   : second pass 7 min later: 49/92 quicker, median 0.099%, worst 4.8%
 ```
 <!-- run: end -->
@@ -847,7 +849,7 @@ report the friendlier of the two, and the shape a signing service actually
 runs is the other one.
 
 The btclib pages do not carry this pair yet, and what was stopping them has
-gone. `btclib_ecc.ecc.ssa.Signer` delegates to the one timed here and now takes
+gone. `ecc.ecc.ssa.Signer` delegates to the one timed here and now takes
 the same argument: btclib has grown a `verify` keyword on both its signing
 calls and on that signer, so a held row there prices a policy the caller
 chooses rather than the only one on offer. That was [ISS 23][i23]'s question,

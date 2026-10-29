@@ -201,9 +201,21 @@ ratio against its fastest row, never against btclib's:
 - [BIP39 and SLIP-0039, `bip39-slip39` against its peers][mnemonics]
 
 The machine is named in each file. They are a record of one run, not a
-claim about anyone else's hardware:
-what makes them worth publishing is that they are reproducible by one
-command, not that they are authoritative.
+claim about anyone else's hardware. Where the run recorded them, its run
+block names this repository's commit and the SHA-256 of the `uv.lock` the
+run used. The commit is the one CONTRIBUTING.md's *Running a benchmark*
+asks to be on `main`, and the page names the command that took the run.
+Checked out at that commit, synced with `uv sync --locked` and checked with
+`shasum -a 256 uv.lock`, that command runs the same scripts on the same
+package versions where the packages block names no other origin: a package
+it marks `editable:`, `local:` or `sys.path:` was not the one the lock
+installs. It does not reproduce the numbers, which belong to the machine.
+
+`not recorded` in place of either is a run saved before runs recorded
+them, or taken where git or `uv.lock` could not answer, and a reader
+cannot check what it ran. `, with uncommitted changes` beside a commit says
+the tree held changes outside `results/` when the run was saved, at its
+end, so the commit alone does not name the code that ran.
 
 Beside each page is the run it publishes, `results/<name>.json`: the
 numbers as they were measured, and everything the page states about how.

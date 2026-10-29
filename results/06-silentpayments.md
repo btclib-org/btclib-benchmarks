@@ -4,14 +4,23 @@
 other comparand on [the wrappers page][wrappers] does, and found two whole
 modules with no sibling to be read against there: `ellswift` and
 `silentpayments`. `ellswift`'s two deterministic calls turned out to have a
-real second arithmetic after all — btclib's pure Python (`decode_var` in
-`btclib_ecc.ecc.ellswift`, `xdh` in `btclib.ecc.ellswift`) dispatches through
-the same switch [btclib's own page][two-paths] already reads every row
-through, so `decode` and `xdh` are timed there now, against Python rather
-than against a same-package ratio. btclib_wallet's `silent_payments` has a
-Python arm, but no page times it against the bindings, so this page is the
-whole of where it is priced: one comparand, and every ratio between two of
-its own calls rather than between two packages.
+real second arithmetic after all — btclib's pure Python (`decode_var` and
+`xdh` in `btclib.ecc.ellswift`, in the btclib this page's run was taken
+beside, from git at `5f7ad542`) dispatches through the same switch
+[btclib's own page][two-paths] already reads every row through, so `decode`
+and `xdh` are timed there, against Python rather than against a
+same-package ratio. That btclib's `silent_payments` has a Python arm, but
+no page times it against the bindings, so this page is the whole of where it
+is priced: one comparand, and every ratio between two of its own calls
+rather than between two packages.
+
+## The packages downloaded from PyPI
+
+<!-- provenance: begin -->
+```text
+btclib-secp256k1    : 0.8.0.3
+```
+<!-- provenance: end -->
 
 ## This run
 
@@ -20,6 +29,8 @@ its own calls rather than between two packages.
 when    : 2026-08-21 03:06 CEST (01:06 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
+commit  : not recorded
+uv.lock : not recorded
 ```
 <!-- run: end -->
 
@@ -74,8 +85,6 @@ and every one of its five relevant calls has a row.
 
 <!-- output: begin -->
 ```text
-btclib-secp256k1    : 0.8.0.3
-
 method  : the quickest of ten rounds; the halves' gap is beside it
 command : uv run python scripts/06-silentpayments.py
 

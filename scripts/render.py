@@ -20,19 +20,21 @@ a different mood, or an edit to the block by hand, which produces numbers
 no run ever printed. Here it costs the edit and this command, and the
 numbers stay the ones the last measurement found.
 
-## What is replaced, and what a page without a marker gets
+## What is replaced
 
-Three regions, each opened and closed by an HTML comment:
+Regions, each opened and closed by an HTML comment:
 
     <!-- provenance: begin -->  which build of each package was measured
-    <!-- run: begin -->         the clock, the machine, and the method
+    <!-- run: begin -->         the clock, the machine, the commit, the lock
     <!-- output: begin -->      what a timing contains, and every table
+    <!-- method: begin -->      how the numbers were taken, on a split page
+    <!-- tables: <group>: begin -->  one group's tables, on a split page
 
-Whatever lies between a pair of markers is replaced, fences and all. A
-page with no `provenance` region keeps its packages block at the top of
-the output block instead, which is where some pages carry it -- their
-prose reads around it that way, and a renderer is the wrong thing to
-have opinions about that.
+Whatever lies between a pair of markers is replaced, fences and all.
+Every page carries `provenance` and `run`, and either `output` or a
+`tables: <group>` region for every group of its run (`TABLES_PREFIX`
+below). A page without its packages block is a table nobody can check,
+so a page missing one is refused rather than rendered.
 
 ## It imports no benchmark, and that is not an accident
 
@@ -93,25 +95,13 @@ def _fenced(block: str) -> list[str]:
     return ["```text", *block.split("\n"), "```"]
 
 
-def blocks(
-    measurement: Measurement, *, has_own_provenance: bool
-) -> dict[str, list[str]]:
-    """Return the lines each region of a page is to be given.
-
-    A page with nowhere of its own to put the packages block gets it above
-    the numbers, in the same fence: that is one block for the reader
-    either way, and which of the two a page wants is a property of the
-    prose written around it.
-    """
-    provenance = _results.rendered_provenance(measurement.provenance)
-    output = _results.rendered_output(measurement)
+def blocks(measurement: Measurement) -> dict[str, list[str]]:
+    """Return the lines each region of a page is to be given."""
     filled = {
-        "provenance": _fenced(provenance),
+        "provenance": _fenced(_results.rendered_provenance(measurement.provenance)),
         "run": _fenced(_results.rendered_run(measurement)),
         "method": _fenced(_results.rendered_method(measurement)),
-        "output": _fenced(
-            output if has_own_provenance else f"{provenance}\n\n{output}"
-        ),
+        "output": _fenced(_results.rendered_output(measurement)),
     }
     for group in _results.groups_of(measurement):
         filled[f"{TABLES_PREFIX}{group}"] = _fenced(
@@ -148,13 +138,17 @@ def rendered_page(page: str, measurement: Measurement) -> str:
     ]
     bounds = {name: _region_bounds(lines, name) for name in names}
     split = [name for name in names if name.startswith(TABLES_PREFIX) and bounds[name]]
-    if bounds["run"] is None or (bounds["output"] is None and not split):
-        err_msg = "a page needs a run region, and output or table regions"
+    if (
+        bounds["provenance"] is None
+        or bounds["run"] is None
+        or (bounds["output"] is None and not split)
+    ):
+        err_msg = "a page needs provenance and run regions, and output or tables"
         raise ValueError(err_msg)
     if split and len(split) != len(_results.groups_of(measurement)):
         err_msg = "a split page carries a region for every group of the run"
         raise ValueError(err_msg)
-    filled = blocks(measurement, has_own_provenance=bounds["provenance"] is not None)
+    filled = blocks(measurement)
     # last region first, so that replacing one does not move the next
     for name, where in sorted(
         ((name, where) for name, where in bounds.items() if where),

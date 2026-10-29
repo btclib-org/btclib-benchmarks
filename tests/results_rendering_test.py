@@ -14,6 +14,7 @@ of them.
 
 from __future__ import annotations
 
+import importlib
 import json
 
 import pytest
@@ -125,6 +126,16 @@ def test_a_run_measured_twice_states_how_far_the_passes_were_apart() -> None:
     assert "1/2" in twice[-1]
 
 
+def test_a_run_block_names_its_commit_and_lock_or_says_it_has_none() -> None:
+    """A run saved without them says so; one saved with them prints both."""
+    unrecorded = _results.rendered_run(_measurement(twice=False)).splitlines()
+    assert "commit  : not recorded" in unrecorded
+    assert "uv.lock : not recorded" in unrecorded
+    recorded = _results.rendered_run(_full()).splitlines()
+    assert "commit  : c0ffee" in recorded
+    assert "uv.lock : 10c4" in recorded
+
+
 @pytest.mark.parametrize("title", ["t", ""])
 def test_pairs_are_sorted_on_what_the_second_column_costs(title: str) -> None:
     """The row whose second column loses least is first; no title, no line."""
@@ -198,6 +209,8 @@ def _full() -> _results.Measurement:
         command="c",
         machine="somewhere",
         when_again=AGAIN,
+        commit="c0ffee",
+        lock="10c4",
     )
     return _results.Measurement(
         benchmark="00-x",
@@ -273,3 +286,15 @@ def test_a_group_is_listed_once_and_a_table_without_one_not_at_all() -> None:
     )
     assert _results.groups_of(measurement) == ["one", "two"]
     assert "\n\n" not in _results.rendered_method(measurement)
+
+
+def test_a_page_without_a_provenance_region_is_refused() -> None:
+    """A page whose packages block has nowhere to go is not rendered."""
+    render = importlib.import_module("render")
+    measurement = _measurement(twice=False)
+    page = "<!-- run: begin -->\n<!-- run: end -->\n"
+    page += "<!-- output: begin -->\n<!-- output: end -->\n"
+    with pytest.raises(ValueError, match="provenance"):
+        render.rendered_page(page, measurement)
+    given = "<!-- provenance: begin -->\n<!-- provenance: end -->\n" + page
+    assert "commit  : not recorded" in render.rendered_page(given, measurement)

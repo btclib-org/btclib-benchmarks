@@ -518,6 +518,13 @@ already cost a session: btclib's lock was stale while the wrapper's was
 current, the two commits did not fit together, and the mismatch read
 convincingly as an upstream breakage that did not exist.
 
+The upgraded lock lands on `main` first, in a pull request of its own, and
+the runs are taken from a checkout of that `main` commit. `main` lands by
+squash and the branch is deleted, so a branch commit named in a run block
+is on no branch once it lands, and may be gone; a commit on `main` stays.
+README.md's *One run of each, published* says what the run block then lets
+a reader check.
+
 Then the benchmark itself:
 
 ```shell
@@ -585,10 +592,10 @@ the mnemonics, `btclib` for the rest. The packages block then says
 
 A run writes `results/<name>.json` as it finishes: every number, the
 packages block, and what the run block states — the clock, the
-interpreter, the machine, the method. Nothing about the page is decided
-there. With no argument every page renders from its own run; naming one
-page renders only that one; `--check` names what is stale and writes
-nothing.
+interpreter, the machine, the method, this repository's commit and the
+SHA-256 of `uv.lock`. Nothing about the page is decided there. With no
+argument every page renders from its own run; naming one page renders
+only that one; `--check` names what is stale and writes nothing.
 
 ```shell
 uv run python scripts/render.py
@@ -637,9 +644,10 @@ machine it was taken on. Edit it when that stops being true; every run
 taken afterwards carries the new answer, and runs already saved keep the
 one they were taken under.
 
-`--check` says whether a page still matches the run it publishes. It is
-not wired into CI, and deliberately: a page is written by a command a
-person runs, not by a gate.
+`--check` says whether a page still matches the run it publishes, and
+the `render-check` hook in `.pre-commit-config.yaml` runs it wherever the
+lint gate runs. What it holds is the page against its saved run: a page
+is still written by a command a person runs, not by a gate.
 
 ### No release
 
@@ -652,8 +660,9 @@ own absence is this paragraph instead.
 
 This repository cuts no versions and pushes no tags. `project.version`
 in `pyproject.toml` is there for the docs build, which shows it, and
-for the packaging lints, which build an sdist under it. A run records
-neither it nor this repository's commit.
+for the packaging lints, which build an sdist under it. A run does not
+record it; README.md's *One run of each, published* says what the commit
+a run records names.
 
 Read a fresh run's header before publishing its numbers. The suite
 proves the scripts load, and checks answers in the files *Writing a row*

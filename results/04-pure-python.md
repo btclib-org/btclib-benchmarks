@@ -1,6 +1,6 @@
 # Every pure-Python implementation
 
-## The packages downloaded from PyPI
+## The packages
 
 <!-- provenance: begin -->
 ```text
@@ -28,6 +28,8 @@ tag, which is still a release somebody cut on a day.
 when    : 2026-08-21 02:45 CEST (00:45 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
+commit  : not recorded
+uv.lock : not recorded
 ```
 <!-- run: end -->
 
