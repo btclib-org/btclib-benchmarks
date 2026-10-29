@@ -1,5 +1,13 @@
 # btclib vs btclib
 
+## The packages
+
+<!-- provenance: begin -->
+```text
+btclib 2026.9 (wrapper 0.8.0.3), measured as μs/call, sorted on the ratio
+```
+<!-- provenance: end -->
+
 ## This run
 
 <!-- run: begin -->
@@ -7,6 +15,8 @@
 when    : 2026-08-21 02:15 CEST (00:15 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
+commit  : not recorded
+uv.lock : not recorded
 ```
 <!-- run: end -->
 
@@ -15,8 +25,9 @@ python  : 3.13.14
 Not btclib against btclib-secp256k1: `pip install btclib[secp256k1]` installs
 both, and every row is btclib called the same way. What differs is which
 arithmetic answers — the libsecp256k1 that btclib-secp256k1 compiles into a
-cffi extension, or the Python of `btclib_ecc/curves/curve_group.py` with the
-dispatch off.
+cffi extension, or the Python of `btclib/curves/curve_group.py` with the
+dispatch off. That path is in the btclib this run installed from git, at
+`5f7ad542`, which the packages block above calls 2026.9.
 
 The inputs are drawn from a seed written into the script, as [the wrappers
 table][wrappers] draws its own: a secret key and a message per call, and
@@ -30,8 +41,7 @@ vectors are run against both paths.
 No row checks what it computed, and nothing in this benchmark asserts: a
 comparison inside a timed loop would be time charged to an arithmetic that
 did not spend it. The dispatch sites ask
-`btclib_ecc.curves.curve._libsecp256k1_serves`, or `is_libsecp256k1_serving`
-in btclib and btclib_wallet, and both read the one switch
+`btclib.curves.curve._libsecp256k1_serves`, which reads the one switch
 `python_arithmetic_only` throws. The rows are operations reachable through a
 public function; BIP32 and silent payments have a Python arm and no row here.
 
@@ -115,8 +125,6 @@ joins the wide group below rather than the narrow one decoding sits in.
 
 <!-- output: begin -->
 ```text
-btclib 2026.9 (wrapper 0.8.0.3), measured as μs/call, sorted on the ratio
-
 method  : one run, kept whole — nothing repeated, no outlier discarded
 command : uv run python scripts/02-btclib-vs-btclib.py
 
@@ -189,9 +197,9 @@ it is what a caller outside the fast case gets.
 
 ## BIP32 derivation is not a row
 
-btclib_wallet's BIP32 has a Python arm behind `is_libsecp256k1_serving`, and
-it is no row here because none was asked for. The dispatch is on the bindings
-being there and not on the curve, BIP32 being defined for secp256k1 alone.
+btclib's BIP32, `btclib.bip32`, has a Python arm behind
+`_libsecp256k1_serves`, and it is no row here because none was asked for. The
+dispatch names secp256k1 itself, BIP32 being defined for that curve alone.
 
 BIP32 derivation is timed in [the libraries table][libs] instead, where being
 C is the premise.

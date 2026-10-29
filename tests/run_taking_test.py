@@ -12,7 +12,9 @@ every branch is reached on whichever machine runs the suite.
 
 from __future__ import annotations
 
+import hashlib
 import platform
+import shutil
 import sys
 from typing import TYPE_CHECKING
 
@@ -136,3 +138,70 @@ def test_a_saved_run_is_loaded_back_equal(
     written = _results.save(measurement)
     assert written == tmp_path / "00-x.json"
     assert _results.load("00-x") == measurement
+
+
+def test_a_run_outside_a_checkout_records_no_commit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """No git, or a git that answers nothing, records no commit."""
+    monkeypatch.setattr(shutil, "which", lambda _: None)
+    assert _results._commit() is None
+    monkeypatch.setattr(shutil, "which", lambda _: "/usr/bin/git")
+    monkeypatch.setattr(_results, "_spoken_by", lambda _: "")
+    assert _results._commit() is None
+
+
+def test_a_status_that_does_not_answer_records_no_commit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A sha with an unknown tree state is not recorded as a clean one."""
+    monkeypatch.setattr(shutil, "which", lambda _: "/usr/bin/git")
+    monkeypatch.setattr(
+        _results, "_spoken_by", lambda command: "abc" if "rev-parse" in command else ""
+    )
+    assert _results._commit() is None
+
+
+@pytest.mark.parametrize(
+    "status, expected",
+    [
+        pytest.param("# branch.oid abc", "abc", id="clean"),
+        pytest.param(
+            "# branch.oid abc\n1 .M N... 100644 100644 100644 a b scripts/x.py",
+            "abc, with uncommitted changes",
+            id="changed",
+        ),
+    ],
+)
+def test_a_commit_says_when_the_tree_had_changed_since(
+    monkeypatch: pytest.MonkeyPatch, status: str, expected: str
+) -> None:
+    """A change not committed is said beside the sha; `results/` is left out."""
+    asked: list[tuple[str, ...]] = []
+
+    def answer(command: tuple[str, ...]) -> str:
+        asked.append(command)
+        return "abc" if "rev-parse" in command else status
+
+    monkeypatch.setattr(shutil, "which", lambda _: "/usr/bin/git")
+    monkeypatch.setattr(_results, "_spoken_by", answer)
+    assert _results._commit() == expected
+    assert ":!results" in asked[-1]
+
+
+def test_a_commit_is_read_from_this_checkout() -> None:
+    """In the suite's own checkout the sha is forty hexadecimal digits."""
+    commit = _results._commit()
+    assert commit is not None
+    assert len(commit.split(",")[0]) == 40
+
+
+def test_a_lock_is_its_sha256_and_its_absence_is_nothing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The lock's hash is of its bytes, so a reader can check theirs."""
+    lock = tmp_path / "uv.lock"
+    monkeypatch.setattr(_results, "LOCK_FILE", lock)
+    assert _results._lock() is None
+    lock.write_bytes(b"version = 1\n")
+    assert _results._lock() == hashlib.sha256(b"version = 1\n").hexdigest()

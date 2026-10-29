@@ -120,10 +120,12 @@ from __future__ import annotations
 
 import sys
 import time
-from importlib.metadata import version
 from itertools import cycle
 from typing import TYPE_CHECKING
 
+import btclib
+import btclib_secp256k1
+import ecc
 from btclib import b58
 from btclib.ecc import bms, ellswift
 from btclib.key import PrvKeyData, PubKeyData
@@ -133,7 +135,7 @@ from ecc.ecc import dh, dsa, ssa
 from ecc.ecc import ellswift as ecc_ellswift
 
 from btclib_benchmarks import _inputs
-from btclib_benchmarks._provenance import undeclared
+from btclib_benchmarks._provenance import described
 from btclib_benchmarks._results import (
     Measurement,
     Pair,
@@ -156,28 +158,26 @@ def provenance() -> Provenance:
 
     A released wheel and a working tree satisfy the same requirement and
     resolve in silence, so which one ran is something the output has to
-    state rather than something the reader assumes. Where an install is not
-    the declared one, that is what a reader has to act on, and it goes
-    under the lines rather than inside them.
+    state rather than something the reader assumes. One line per package
+    and no columns, as `results/05-key-reuse.md` states its own: a header over
+    three cells would be furniture.
 
-    No columns: a table of so few rows is a table only in the sense that it
-    has edges, and the unit and the sort have to be said somewhere above the
-    numbers, which is here.
-
-    The curve, ECDSA, BIP340, ECDH and ElligatorSwift encoding rows run
-    `ecc`; the others run `btclib`. The wrapper's
-    version is btclib-secp256k1's, that being what a caller installs; which
-    revision of libsecp256k1 it bundled is recorded in
-    `LIBSECP256K1_PINS` of `src/btclib_benchmarks/_releases.py`, against the
-    release it was read from, and `scripts/01-libsecp256k1.py` prints it.
+    The curve, ECDSA, BIP340, ECDH and ElligatorSwift decoding rows run
+    `ecc`; the others run `btclib`. Both call libsecp256k1 through
+    btclib-secp256k1, whose version is the third line; which revision of
+    libsecp256k1 it bundled is recorded in `LIBSECP256K1_PINS` of
+    `src/btclib_benchmarks/_releases.py`, against the release it was read
+    from, and `scripts/01-libsecp256k1.py` prints it.
     """
-    packages = (
-        f"ecc {version('ecc')}, btclib {version('btclib')} "
-        f"(wrapper {version('btclib-secp256k1')})"
+    return Provenance(
+        columns=[],
+        rows=[],
+        notes=described(
+            ("ecc", ecc.__file__),
+            ("btclib", btclib.__file__),
+            ("btclib-secp256k1", btclib_secp256k1.__file__),
+        ),
     )
-    stated = "measured as \N{GREEK SMALL LETTER MU}s/call, sorted on the ratio"
-    odd = undeclared("ecc", "btclib", "btclib-secp256k1")
-    return Provenance(columns=[], rows=[], notes=[packages, stated, *odd])
 
 
 # The inputs are `_inputs`': one pool, shared by every benchmark here, built
@@ -765,7 +765,7 @@ def main() -> None:
     # table; here that row would divide a signature by a point parse, which
     # is two amounts of work and no comparison at all.
     table = Pairs(
-        title="",
+        title="\N{GREEK SMALL LETTER MU}s/call, sorted on the ratio",
         columns=("libsecp256k1", "pure python"),
         rows=[
             Pair(

@@ -29,6 +29,8 @@ backend.
 when    : 2026-10-28 04:23 CET (03:23 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
+commit  : not recorded
+uv.lock : not recorded
 ```
 <!-- run: end -->
 
