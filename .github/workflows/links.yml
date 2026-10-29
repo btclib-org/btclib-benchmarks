@@ -107,6 +107,6 @@ jobs:
   # the trigger, the schedule and which files are this tree's
   # documentation
   links:
-    uses: btclib-org/.github/.github/workflows/reusable-links.yml@0f5684ab3d7bf310b0d7a2e4dd91a03522f75d67 # v2026.10.25
+    uses: btclib-org/.github/.github/workflows/reusable-links.yml@ed616d71c43cd4c8bded40d1182befccd99e6ee7 # v2026.10.29
     with:
       targets: '"**/*.md" ".github/**/*.md" ".claude/**/*.md"'
