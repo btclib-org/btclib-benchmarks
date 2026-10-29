@@ -38,14 +38,18 @@ from btclib_benchmarks._provenance import origin_of
 RELEASE_DATES: dict[str, dict[str, str]] = {
     "base58-bech32": {"2026.10.23": "2026-10-23"},
     "bip39-slip39": {"2026.10.24": "2026-10-24"},
-    "btclib": {"2026.10.3": "2026-10-03", "2026.10.9": "2026-10-10"},
-    "btclib-secp256k1": {"0.8.0.9": "2026-09-29"},
-    "btclib-wallet": {"2026.10.9": "2026-10-08"},
+    "btclib": {
+        "2026.10.3": "2026-10-03",
+        "2026.10.9": "2026-10-10",
+        "2026.10.28": "2026-10-28",
+    },
+    "btclib-secp256k1": {"0.8.0.9": "2026-09-29", "0.8.0.13": "2026-10-23"},
+    "btclib-wallet": {"2026.10.9": "2026-10-08", "2026.10.29": "2026-10-29"},
     "buidl": {"0.2.36": "2022-02-28"},
     "coincurve": {"21.0.0": "2025-03-08"},
-    "ecc": {"2026.10.23": "2026-10-23"},
+    "ecc": {"2026.10.23": "2026-10-23", "2026.10.28": "2026-10-28"},
     "ecdsa": {"0.19.2": "2026-03-26"},
-    "electrum-ecc": {"0.0.7": "2026-02-25"},
+    "electrum-ecc": {"0.0.7": "2026-02-25", "0.0.8": "2026-09-09"},
     "embit": {"0.8.0": "2024-05-30"},
     "mnemonic": {"0.21": "2024-01-05"},
     "pycoin": {"0.92718.20260405": "2026-04-05"},
@@ -62,6 +66,8 @@ RELEASE_DATES: dict[str, dict[str, str]] = {
 #
 # - btclib-secp256k1 0.8.0.9: the `secp256k1` tree in its sdist, which is
 #   upstream's v0.8.0 tag, 6e2c8bc, file for file
+# - btclib-secp256k1 0.8.0.13: the `secp256k1` tree in its sdist, whose
+#   configure.ac names 0.8.0 as a release
 # - coincurve: `VENDORED_UPSTREAM_REF` in its pyproject.toml, 0cdc758a,
 #   which is upstream's v0.6.0
 # - secp256k1: two, one per artifact, which is the whole reason these are
@@ -74,7 +80,8 @@ RELEASE_DATES: dict[str, dict[str, str]] = {
 #   points that release added, where the tree in the sdist has four modules
 #   and neither that one nor `ellswift`
 # - electrum-ecc: the libsecp256k1 tree carried in its sdist and compiled
-#   at install time, whose configure.ac names 0.7.1 as a release
+#   at install time, whose configure.ac names 0.7.1 as a release in 0.0.7
+#   and 0.8.0 in 0.0.8
 #
 # Keyed by what identifies a build, which `01-libsecp256k1.py`'s
 # `_build_of` decides and is not one thing for every wrapper: a branch install
@@ -86,13 +93,13 @@ RELEASE_DATES: dict[str, dict[str, str]] = {
 # artifacts change is a key that cannot fire, which is why the key is the
 # build.
 LIBSECP256K1_PINS: dict[str, dict[str, str]] = {
-    "btclib-secp256k1": {"0.8.0.9": "v0.8.0"},
+    "btclib-secp256k1": {"0.8.0.9": "v0.8.0", "0.8.0.13": "v0.8.0"},
     "coincurve": {"21.0.0": "v0.6.0"},
     "secp256k1": {
         "0.14.0 wheel": "v0.6.0",
         "0.14.0 sdist": "9526874d, pre-v0.1.0",
     },
-    "electrum-ecc": {"0.0.7": "v0.7.1"},
+    "electrum-ecc": {"0.0.7": "v0.7.1", "0.0.8": "v0.8.0"},
 }
 
 
