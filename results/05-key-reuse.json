@@ -2,19 +2,21 @@
   "schema": 1,
   "benchmark": "05-key-reuse",
   "run": {
-    "when": "2026-10-15T09:44:33+02:00",
-    "timezone": "CEST",
+    "when": "2026-10-30T19:46:12+07:00",
+    "timezone": "+07",
     "python": "3.13.14",
     "method": "10 rounds per row, pairs in turn, minimum kept; calls per row",
     "command": "uv run python scripts/05-key-reuse.py",
-    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64",
+    "commit": "090c60363adc1833453098ce2061d77d85e842a2",
+    "lock": "b4fdc6f0fe4ab496c148f7c13430bf4f1c6035704a40258237f28ae753b2e344"
   },
   "provenance": {
     "columns": [],
     "rows": [],
     "notes": [
-      "btclib              : 2026.10.9",
-      "btclib-secp256k1    : 0.8.0.11",
+      "ecc                 : 2026.10.30",
+      "btclib-secp256k1    : 0.8.0.13",
       "ecdsa               : 0.19.2"
     ]
   },
@@ -34,71 +36,71 @@
       "rows": [
         {
           "label": "btclib, libsecp256k1, octets",
-          "us_per_call": 19.26749580015894,
-          "halves_apart": 0.01084795076167211,
+          "us_per_call": 18.687762500485405,
+          "halves_apart": 0.16677500098012388,
           "rounds": 10,
           "calls": 20000
         },
         {
           "label": "btclib, libsecp256k1, parsed point",
-          "us_per_call": 17.962547950446606,
-          "halves_apart": 0.002774949825834483,
+          "us_per_call": 17.49559585005045,
+          "halves_apart": 0.14393335150089115,
           "rounds": 10,
           "calls": 20000
         },
         {
           "label": "btclib, libsecp256k1, parsed point, few keys",
-          "us_per_call": 17.061458350508474,
-          "halves_apart": 0.021352099429350346,
+          "us_per_call": 16.70590835274197,
+          "halves_apart": 0.12892084778286517,
           "rounds": 10,
           "calls": 20000
         },
         {
           "label": "btclib, libsecp256k1, PreparedPoint",
-          "us_per_call": 17.122806249244604,
-          "halves_apart": 0.015308351430576295,
+          "us_per_call": 16.75564165052492,
+          "halves_apart": 0.1121125475037843,
           "rounds": 10,
           "calls": 20000
         },
         {
           "label": "btclib, Python, octets",
-          "us_per_call": 646.1802499834448,
-          "halves_apart": 9.660250041633844,
+          "us_per_call": 631.5976659534499,
+          "halves_apart": 1.7235841369256377,
           "rounds": 10,
           "calls": 500
         },
         {
           "label": "btclib, Python, parsed point",
-          "us_per_call": 575.5860839853995,
-          "halves_apart": 12.431747978553176,
+          "us_per_call": 563.3865840500221,
+          "halves_apart": 1.0331659577786922,
           "rounds": 10,
           "calls": 500
         },
         {
           "label": "btclib, Python, parsed point, few keys",
-          "us_per_call": 583.1673340289854,
-          "halves_apart": 5.149081989657134,
+          "us_per_call": 564.5225000334904,
+          "halves_apart": 3.2615000382065773,
           "rounds": 10,
           "calls": 500
         },
         {
           "label": "btclib, Python, PreparedPoint",
-          "us_per_call": 435.84058398846537,
-          "halves_apart": 12.567082012537867,
+          "us_per_call": 428.97166789043695,
+          "halves_apart": 0.2810821169987321,
           "rounds": 10,
           "calls": 500
         },
         {
           "label": "python-ecdsa",
-          "us_per_call": 1110.4716659756377,
-          "halves_apart": 5.3573339828290045,
+          "us_per_call": 1112.3464159900323,
+          "halves_apart": 10.721668018959463,
           "rounds": 10,
           "calls": 500
         },
         {
           "label": "python-ecdsa, precomputed",
-          "us_per_call": 567.8557500359602,
-          "halves_apart": 0.2384159597568214,
+          "us_per_call": 560.3269999846816,
+          "halves_apart": 4.592666053213179,
           "rounds": 10,
           "calls": 500
         }
@@ -111,38 +113,38 @@
       "rows": [
         {
           "label": "btclib, libsecp256k1, parse once",
-          "prepare": 4.760356250335462,
-          "plain": 19.26749580015894,
-          "prepared": 17.962547950446606,
-          "saving_halves_apart": 0.013622900587506592
+          "prepare": 4.682320848223753,
+          "plain": 18.687762500485405,
+          "prepared": 17.49559585005045,
+          "saving_halves_apart": 0.02284164947923273
         },
         {
           "label": "btclib, libsecp256k1, PreparedPoint",
-          "prepare": 1.4983895496698096,
-          "plain": 17.061458350508474,
-          "prepared": 17.122806249244604,
-          "saving_halves_apart": 0.006043747998774052
+          "prepare": 1.4945375005481765,
+          "plain": 16.70590835274197,
+          "prepared": 16.75564165052492,
+          "saving_halves_apart": 0.016808300279080868
         },
         {
           "label": "btclib, Python, parse once",
-          "prepare": 67.99377099378034,
-          "plain": 646.1802499834448,
-          "prepared": 575.5860839853995,
-          "saving_halves_apart": 2.7714979369193316
+          "prepare": 66.15324999438599,
+          "plain": 631.5976659534499,
+          "prepared": 563.3865840500221,
+          "saving_halves_apart": 0.6904181791469455
         },
         {
           "label": "btclib, Python, PreparedPoint",
-          "prepare": 3116.813466884196,
-          "plain": 583.1673340289854,
-          "prepared": 435.84058398846537,
-          "saving_halves_apart": 7.418000022880733
+          "prepare": 3036.4950369112194,
+          "plain": 564.5225000334904,
+          "prepared": 428.97166789043695,
+          "saving_halves_apart": 2.980417921207845
         },
         {
           "label": "python-ecdsa, precompute()",
-          "prepare": 3299.8229464283213,
-          "plain": 1110.4716659756377,
-          "prepared": 567.8557500359602,
-          "saving_halves_apart": 5.118918023072183
+          "prepare": 3202.462400076911,
+          "plain": 1112.3464159900323,
+          "prepared": 560.3269999846816,
+          "saving_halves_apart": 6.1290019657462835
         }
       ]
     }

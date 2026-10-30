@@ -2,25 +2,29 @@
   "schema": 1,
   "benchmark": "02-btclib-vs-btclib",
   "run": {
-    "when": "2026-08-21T02:15:02+02:00",
-    "timezone": "CEST",
+    "when": "2026-10-30T19:25:29+07:00",
+    "timezone": "+07",
     "python": "3.13.14",
     "method": "one run, kept whole — nothing repeated, no outlier discarded",
     "command": "uv run python scripts/02-btclib-vs-btclib.py",
-    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64",
+    "commit": "090c60363adc1833453098ce2061d77d85e842a2",
+    "lock": "b4fdc6f0fe4ab496c148f7c13430bf4f1c6035704a40258237f28ae753b2e344"
   },
   "provenance": {
     "columns": [],
     "rows": [],
     "notes": [
-      "btclib 2026.9 (wrapper 0.8.0.3), measured as μs/call, sorted on the ratio"
+      "ecc                 : 2026.10.30",
+      "btclib              : 2026.10.30",
+      "btclib-secp256k1    : 0.8.0.13"
     ]
   },
   "timing_note": [],
   "tables": [
     {
       "kind": "pairs",
-      "title": "",
+      "title": "μs/call, sorted on the ratio",
       "group": "",
       "columns": [
         "libsecp256k1",
@@ -30,106 +34,106 @@
         {
           "label": "pubkey_from_prvkey",
           "values": [
-            10.123231679899618,
-            150.49856250698213
+            9.361529999878258,
+            124.12597899674437
           ]
         },
         {
           "label": "pubkey_parse_33",
           "values": [
-            3.4042674995725974,
-            74.03011660207994
+            4.742841660045087,
+            66.10585839953274
           ]
         },
         {
           "label": "generator_mult",
           "values": [
-            8.093804999953136,
-            139.06608350225724
+            8.203404999803752,
+            125.60252100229263
           ]
         },
         {
           "label": "dsa_sign_nogrind_noverify",
           "values": [
-            14.993600000161678,
-            158.89250001055188
+            13.497190000489354,
+            141.89783349866048
           ]
         },
         {
           "label": "dsa_verify",
           "values": [
-            19.548378320178017,
-            667.1564170101192
+            24.74158831872046,
+            708.1895839655772
           ]
         },
         {
           "label": "dsa_recover",
           "values": [
-            35.31558329996187,
-            1309.8375000117812
+            35.79800000297837,
+            1246.49195803795
           ]
         },
         {
           "label": "ssa_sign_noverify",
           "values": [
-            25.378143320558593,
-            315.8042914874386
+            23.945289999246597,
+            279.5216250233352
           ]
         },
         {
           "label": "ssa_sign_held_noverify",
           "values": [
-            9.256509999977425,
-            313.2699164998485
+            9.338279999792576,
+            157.63654149486683
           ]
         },
         {
           "label": "ssa_verify",
           "values": [
-            20.952679999172688,
-            655.135999986669
+            20.175268319435418,
+            631.2211669865064
           ]
         },
         {
           "label": "dh_shared_secret",
           "values": [
-            14.208351640263572,
-            547.3650834901491
+            18.52138499962166,
+            503.64902100409375
           ]
         },
         {
           "label": "bms_sign",
           "values": [
-            50.722322201666735,
-            322.3402914882172
+            49.93700833292678,
+            282.57722899434157
           ]
         },
         {
           "label": "bms_verify",
           "values": [
-            24.05646666690397,
-            684.5849999808706
+            31.126286066137258,
+            669.0269160317257
           ]
         },
         {
           "label": "taproot_tweak",
           "values": [
-            15.208293360192329,
-            232.08939550386276
+            15.317486678250136,
+            203.30183301120996
           ]
         },
         {
           "label": "ellswift_decode",
           "values": [
-            5.4019199998583645,
-            134.279416660623
+            5.683170000556856,
+            101.70576399347435
           ]
         },
         {
           "label": "ellswift_xdh",
           "values": [
-            18.624019999988377,
-            686.9486874929862
+            23.78297168063,
+            603.9557079784572
           ]
         }
       ]

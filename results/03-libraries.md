@@ -5,9 +5,10 @@
 <!-- provenance: begin -->
 ```text
 package            version           released    arithmetic
-btclib             2026.10.9         2026-10-10  libsecp256k1 enhanced
-btclib-ecc         2026.10.10        2026-10-10  libsecp256k1 enhanced
-btclib-wallet      2026.10.9         2026-10-08  libsecp256k1 enhanced
+btclib             2026.10.30        2026-10-30  libsecp256k1 enhanced
+ecc                2026.10.30        2026-10-29  libsecp256k1 enhanced
+btclib-wallet      2026.10.29        2026-10-29  libsecp256k1 enhanced
+base58-bech32      2026.10.23        2026-10-23  pure Python
 pycoin             0.92718.20260405  2026-04-05  libsecp256k1 enhanced
 ecdsa              0.19.2            2026-03-26  pure Python
 embit              0.8.0             2024-05-30  libsecp256k1 enhanced
@@ -16,17 +17,18 @@ buidl              0.2.36            2022-02-28  pure Python
 ```
 <!-- provenance: end -->
 
-The last column says which arithmetic answered on the machine that ran
-this, and nothing about how the package got there. That part is one
-paragraph each, and none of the six is the same story:
+The last column says which arithmetic answered on the machine that ran this,
+and nothing about how the package got there. That part is one paragraph each,
+and no two are the same story:
 
-- **btclib** is three rows of the table: `btclib-ecc` holds the curve and the
+- **btclib** is three rows of the table: `ecc` holds the curve and the
   signature schemes, `btclib-wallet` BIP32, and `btclib` the address
   encodings. They take `btclib-secp256k1` as the `secp256k1` extra, which
-  bundles libsecp256k1 and compiles it into a cffi extension at install
-  time, so a wheel from PyPI is enhanced by installing
-  `btclib[secp256k1]`. Which revision it bundles is in [the wrappers
-  table][wrappers].
+  bundles libsecp256k1 and compiles it into a cffi extension at install time,
+  so a wheel from PyPI is enhanced by installing `btclib[secp256k1]`. Which
+  revision it bundles is in [the wrappers table][wrappers].
+- **base58-bech32** is btclib-org's codec package, on the standard library
+  alone, and has rows in the address tables only.
 - **pycoin** bundles nothing and builds nothing. `pycoin.ecdsa.native` is a
   ctypes loader that asks the machine for a library by name, and a PyPI
   install therefore gets pure Python unless one is already there. Here one
@@ -53,11 +55,11 @@ paragraph each, and none of the six is the same story:
 
 <!-- run: begin -->
 ```text
-when    : 2026-10-15 20:33 CEST (18:33 UTC)
+when    : 2026-10-30 19:36 +07 (12:36 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
-commit  : not recorded
-uv.lock : not recorded
+commit  : 090c60363adc1833453098ce2061d77d85e842a2
+uv.lock : b4fdc6f0fe4ab496c148f7c13430bf4f1c6035704a40258237f28ae753b2e344
 ```
 <!-- run: end -->
 
@@ -69,19 +71,18 @@ whichever row came out quickest, with a dispersion column beside it in the
 same microseconds as the value it sits beside.
 
 **The dispersion column is `halves`, not the `spread` earlier runs of this
-page printed.** `spread` was a maximum less a minimum — a row's slowest
-round against its quickest — dominated by whichever round happened to go
-badly: it has enormous variance by construction, it grows as rounds are
-added, and it reports the worst interruption a row happened to catch rather
-than anything about the package. Whether two adjacent rows are really in the
-order printed is not a question it answers. `halves` is the distance
-between the minima of two halves of the row's rounds — the statistic [the
-wrappers page][wrappers] prints, arriving here under a key of its own so a
-number in a saved run means what its key says — and it does answer that
-question: near zero, the row agreed with itself measured twice, seconds
-apart; a large fraction of a neighbour's lead, and this run has not
-separated the two. [ISS 47][i47] moved the script to it, and [ISS 53][i53]
-is the re-measurement that carries it.
+page printed.** `spread` was a maximum less a minimum — a row's slowest round
+against its quickest — dominated by whichever round happened to go badly: it
+has enormous variance by construction, it grows as rounds are added, and it
+reports the worst interruption a row happened to catch rather than anything
+about the package. Whether two adjacent rows are really in the order printed
+is not a question it answers. `halves` is the distance between the minima of
+two halves of the row's rounds — the statistic [the wrappers page][wrappers]
+prints, arriving here under a key of its own so a number in a saved run means
+what its key says — and it does answer that question: near zero, the row
+agreed with itself measured twice, seconds apart; a large fraction of a
+neighbour's lead, and this run has not separated the two. [ISS 47][i47] moved
+the script to it.
 
 Four rounds and not more, where the wrappers page takes ten: this page's
 pure-Python rows are orders of magnitude slower, which is why its loop count
@@ -98,18 +99,15 @@ instead; the address rows are the other exception, calling the witness
 programs and addresses that BIP173 and BIP350 publish, and the base58check
 address of the same 20 bytes.
 
-**BIP340 signing is two tables now, a fresh key and a key held already**, and
-the split corrects a comparison as much as it adds one. A signer does not
-sign one message any more than a verifier verifies one signature, and no page
-in this project timed a held one on either of btclib's arms — [ISS 42][i42].
-It also puts the old single table right: buidl and embit are called through an
-object built from the secret, and that object was built once outside the
-clock, so those rows were already the held shape while btclib's row was handed
-32 octets and built everything per call. Two tables put each library in both
-shapes.
+**BIP340 signing is two tables, a fresh key and a key held already.** A signer
+does not sign one message any more than a verifier verifies one signature:
+[ISS 42][i42]. In the fresh table each row builds what its call needs from the
+secret inside the timed call, buidl's and embit's key objects included; in the
+held table each is built once, outside the clock. Two tables put each library
+in both shapes.
 
 What each library holds is different, and it is a reading of the source rather
-than of the shape of its API. btclib's `ssa.Signer` holds the keypair that
+than of the shape of its API. `ecc.ecc.ssa.Signer` holds the keypair that
 `ssa.sign_` builds and wipes inside every call. buidl's `PrivateKey` computes
 `secret * G` in its constructor and `sign_schnorr` reads the point it kept.
 embit's holds the 32 secret octets and validates them, and hands those octets
@@ -125,17 +123,16 @@ own. buidl and embit answer with objects of their own in both tables.
 
 **btclib's four ECDSA signing rows and its two BIP340 pairs state both flags
 of the check in their name:** `grind` or `nogrind`, then `verify` or
-`noverify`, in the order the call performs them. btclib verifies the
-signature it has just made before answering with it, by default and on both
-arms, and the grinding row pays the check once — the loop and the check
-cross into the bindings together, so what is proved is the signature the
-loop kept rather than every attempt discarded, the ordering [ISS 982
-(btclib-org/btclib)][i982] asked for. The unchecked row of each pair is what
-compares with the libraries beside it that verify nothing; the checked row
-is what the guarantee costs — printing one of the two alone would make
-whichever comparison it is not in wrong. [ISS 23][i23] is the shape these
-rows settled on and [ISS 53][i53] the re-measurement that produced them; [the
-wrappers table][wrappers] took the same shape for the same question first.
+`noverify`, in the order the call performs them. btclib verifies the signature
+it has just made before answering with it, by default and on both arms, and
+the grinding row pays the check once — the loop and the check cross into the
+bindings together, so what is proved is the signature the loop kept rather
+than every attempt discarded, the ordering [ISS 982 (btclib-org/btclib)][i982]
+asked for. The unchecked row of each pair is what compares with the libraries
+beside it that verify nothing; the checked row is what the guarantee costs —
+printing one of the two alone would make whichever comparison it is not in
+wrong. [ISS 23][i23] is the shape these rows settled on; [the wrappers
+table][wrappers] took the same shape for the same question first.
 
 Every row states both of its flags for the same reason a library that takes
 no argument is named as plainly as one that does: what a row did is a
@@ -164,94 +161,100 @@ what a timing contains
 
 1. ECDSA sign (32-byte digest)
                                   μs/call     vs best   halves
-  pycoin_nogrind_noverify           12.38        1.0x     0.00   (4x50,000 calls)
-  btclib_nogrind_noverify           13.41        1.1x     0.02   (4x50,000 calls)
-  embit_nogrind_noverify            14.15        1.1x     0.01   (4x50,000 calls)
-  btclib_grind_noverify             25.49        2.1x     0.03   (4x20,000 calls)
-  embit_grind_noverify              29.64        2.4x     0.03   (4x20,000 calls)
-  btclib_nogrind_verify             33.73        2.7x     0.04   (4x20,000 calls)
-  btclib_grind_verify               45.71        3.7x     0.17   (4x15,000 calls)
-  bitcoinlib_nogrind_noverify      197.96       16.0x     0.07   (4x8,000 calls)
-  ecdsa_nogrind_noverify           290.47       23.5x     0.35   (4x5,000 calls)
-  buidl_nogrind_noverify         29903.13     2415.3x    66.42   (4x50 calls)
+  pycoin_nogrind_noverify           12.26        1.0x     0.01   (4x50,000 calls)
+  btclib_nogrind_noverify           13.41        1.1x     0.04   (4x50,000 calls)
+  embit_nogrind_noverify            14.09        1.1x     0.00   (4x50,000 calls)
+  btclib_grind_noverify             25.36        2.1x     0.00   (4x20,000 calls)
+  embit_grind_noverify              29.47        2.4x     0.03   (4x20,000 calls)
+  btclib_nogrind_verify             33.67        2.7x     0.04   (4x20,000 calls)
+  btclib_grind_verify               45.62        3.7x     0.07   (4x15,000 calls)
+  bitcoinlib_nogrind_noverify      191.52       15.6x     0.19   (4x8,000 calls)
+  ecdsa_nogrind_noverify           292.21       23.8x     2.91   (4x5,000 calls)
+  buidl_nogrind_noverify         29866.27     2435.9x    12.41   (4x50 calls)
 
 2. ECDSA verify (32-byte digest)
                                   μs/call     vs best   halves
-  pycoin                            13.89        1.0x     0.03   (4x50,000 calls)
-  embit                             24.22        1.7x     0.03   (4x50,000 calls)
-  btclib                            24.55        1.8x     0.02   (4x50,000 calls)
-  bitcoinlib                       222.56       16.0x     1.98   (4x7,000 calls)
-  ecdsa                           1092.50       78.7x     1.03   (4x3,000 calls)
-  buidl                          59485.96     4283.0x    58.56   (4x25 calls)
+  pycoin                            13.81        1.0x     0.01   (4x50,000 calls)
+  embit                             24.08        1.7x     0.03   (4x50,000 calls)
+  btclib                            24.53        1.8x     0.09   (4x50,000 calls)
+  bitcoinlib                       224.02       16.2x     0.37   (4x7,000 calls)
+  ecdsa                           1102.87       79.8x     8.15   (4x3,000 calls)
+  buidl                          59645.20     4318.4x    15.33   (4x25 calls)
 
 3. BIP340 sign (32-byte message, a fresh key)
                                   μs/call     vs best   halves
-  btclib_noverify                   20.42        1.0x     0.02   (4x50,000 calls)
-  embit_noverify                    21.66        1.1x     0.07   (4x50,000 calls)
-  btclib_verify                     33.82        1.7x     0.07   (4x30,000 calls)
-  buidl_verify                  140410.25     6876.3x  3795.65   (4x10 calls)
+  btclib_noverify                   20.43        1.0x     0.03   (4x50,000 calls)
+  embit_noverify                    21.47        1.1x     0.03   (4x50,000 calls)
+  btclib_verify                     33.83        1.7x     0.01   (4x30,000 calls)
+  buidl_verify                  140366.29     6869.1x  4208.52   (4x10 calls)
 
 4. BIP340 sign (32-byte message, the key held already)
                                   μs/call     vs best   halves
-  btclib_noverify                    8.71        1.0x     0.06   (4x50,000 calls)
-  embit_noverify                    21.27        2.4x     0.27   (4x50,000 calls)
-  btclib_verify                     21.97        2.5x     0.01   (4x30,000 calls)
-  buidl_verify                  110284.16    12664.1x  2080.02   (4x20 calls)
+  btclib_noverify                    8.63        1.0x     0.04   (4x50,000 calls)
+  embit_noverify                    21.17        2.5x     0.02   (4x50,000 calls)
+  btclib_verify                     21.89        2.5x     0.00   (4x30,000 calls)
+  buidl_verify                  110030.11    12753.8x  1821.04   (4x20 calls)
 
 5. BIP340 verify (32-byte message)
                                   μs/call     vs best   halves
-  btclib                            20.28        1.0x     0.19   (4x50,000 calls)
-  embit                             25.08        1.2x     0.50   (4x50,000 calls)
-  buidl                          68267.81     3366.9x   171.12   (4x25 calls)
+  btclib                            20.25        1.0x     0.02   (4x50,000 calls)
+  embit                             24.99        1.2x     0.04   (4x50,000 calls)
+  buidl                          68157.22     3365.7x    25.19   (4x25 calls)
 
 6. BIP32 derive, seed to child, every chain BIP32 publishes
                                   μs/call     vs best   halves
-  btclib                            37.90        1.0x     0.02   (4x30,000 calls)
-  pycoin                            47.73        1.3x     0.01   (4x30,000 calls)
-  embit                             85.89        2.3x     0.64   (4x15,000 calls)
-  buidl                         101102.78     2667.3x 10026.93   (4x12 calls)
+  btclib                            38.12        1.0x     0.04   (4x30,000 calls)
+  pycoin                            47.67        1.3x     0.16   (4x30,000 calls)
+  embit                             85.87        2.3x     0.13   (4x15,000 calls)
+  buidl                         100857.61     2645.8x 10465.40   (4x12 calls)
 
 7. base58check encode, a P2PKH address from a hash160
                                   μs/call     vs best   halves
-  embit                              2.07        1.0x     0.03   (4x200,000 calls)
-  buidl                              2.21        1.1x     0.02   (4x200,000 calls)
-  bitcoinlib                         2.49        1.2x     0.00   (4x100,000 calls)
-  btclib                             2.63        1.3x     0.01   (4x200,000 calls)
-  pycoin                             3.63        1.8x     0.03   (4x200,000 calls)
+  embit                              2.06        1.0x     0.00   (4x200,000 calls)
+  base58_bech32                      2.08        1.0x     0.00   (4x200,000 calls)
+  buidl                              2.24        1.1x     0.01   (4x200,000 calls)
+  bitcoinlib                         2.44        1.2x     0.02   (4x100,000 calls)
+  btclib                             2.63        1.3x     0.03   (4x200,000 calls)
+  pycoin                             3.59        1.7x     0.03   (4x200,000 calls)
 
 8. base58check decode, a hash160 from a P2PKH address
                                   μs/call     vs best   halves
-  embit                              2.35        1.0x     0.03   (4x200,000 calls)
-  btclib                             2.65        1.1x     0.06   (4x200,000 calls)
-  buidl                              2.92        1.2x     0.03   (4x200,000 calls)
-  pycoin                             3.69        1.6x     0.04   (4x200,000 calls)
-  bitcoinlib                         4.14        1.8x     0.01   (4x100,000 calls)
+  base58_bech32                      1.64        1.0x     0.02   (4x200,000 calls)
+  embit                              2.36        1.4x     0.03   (4x200,000 calls)
+  btclib                             2.58        1.6x     0.02   (4x200,000 calls)
+  buidl                              2.83        1.7x     0.02   (4x200,000 calls)
+  pycoin                             3.73        2.3x     0.01   (4x200,000 calls)
+  bitcoinlib                         4.08        2.5x     0.04   (4x100,000 calls)
 
 9. bech32 encode, a witness-v0 address from a 20-byte program
                                   μs/call     vs best   halves
-  btclib                             7.95        1.0x     0.07   (4x200,000 calls)
-  buidl                             11.67        1.5x     0.20   (4x100,000 calls)
-  bitcoinlib                        26.61        3.3x     0.05   (4x200,000 calls)
-  embit                             26.69        3.4x     0.09   (4x200,000 calls)
+  base58_bech32                      7.24        1.0x     0.08   (4x200,000 calls)
+  btclib                             7.88        1.1x     0.01   (4x200,000 calls)
+  buidl                             11.67        1.6x     0.04   (4x100,000 calls)
+  bitcoinlib                        26.41        3.6x     0.05   (4x200,000 calls)
+  embit                             26.65        3.7x     0.03   (4x200,000 calls)
 
 10. bech32 decode, a 20-byte program from a witness-v0 address
                                   μs/call     vs best   halves
-  btclib                             7.78        1.0x     0.04   (4x200,000 calls)
-  buidl                             10.53        1.4x     0.21   (4x100,000 calls)
-  embit                             14.57        1.9x     0.13   (4x200,000 calls)
-  bitcoinlib                        14.78        1.9x     0.15   (4x200,000 calls)
+  base58_bech32                      6.67        1.0x     0.02   (4x200,000 calls)
+  btclib                             7.71        1.2x     0.06   (4x200,000 calls)
+  buidl                             10.30        1.5x     0.02   (4x100,000 calls)
+  bitcoinlib                        14.54        2.2x     0.04   (4x200,000 calls)
+  embit                             14.54        2.2x     0.01   (4x200,000 calls)
 
 11. bech32m encode, a witness-v1 address from a 32-byte program
                                   μs/call     vs best   halves
-  btclib                            12.79        1.0x     0.04   (4x200,000 calls)
-  buidl                             18.53        1.4x     0.10   (4x100,000 calls)
-  embit                             39.61        3.1x     1.45   (4x200,000 calls)
+  base58_bech32                     10.31        1.0x     0.05   (4x200,000 calls)
+  btclib                            12.72        1.2x     0.04   (4x200,000 calls)
+  buidl                             17.30        1.7x     0.02   (4x100,000 calls)
+  embit                             39.86        3.9x     0.04   (4x200,000 calls)
 
 12. bech32m decode, a 32-byte program from a witness-v1 address
                                   μs/call     vs best   halves
-  btclib                            13.11        1.0x     0.07   (4x200,000 calls)
-  buidl                             16.29        1.2x     0.18   (4x100,000 calls)
-  embit                             23.09        1.8x     0.22   (4x200,000 calls)
+  base58_bech32                      9.51        1.0x     0.03   (4x200,000 calls)
+  buidl                             15.58        1.6x     0.13   (4x100,000 calls)
+  btclib                            19.10        2.0x     0.01   (4x200,000 calls)
+  embit                             21.71        2.3x     0.09   (4x200,000 calls)
 ```
 <!-- output: end -->
 
@@ -285,15 +288,15 @@ Handed the private key 1, python-ecdsa returns the generator *object* as the
 public key — precomputed table and all — and a row verifying against it
 verifies with a table no real key gets, at about half the cost. The keys here
 are drawn from the shared pool, and a drawn key is not the generator, so the
-row costs what verification costs. It is the sharpest reason in these five
-files for drawing the input rather than choosing it: a chosen key can be
-special in ways a table of timings cannot show.
+row costs what verification costs. It is the sharpest reason on these pages
+for drawing the input rather than choosing it: a chosen key can be special in
+ways a table of timings cannot show.
 
 ### The encoding tables
 
 base58check, bech32 and bech32m are the only tables here that are not curve
-work, and they are where these libraries differ most: pure Python in all
-five, so what separates them is the code and nothing else. A wrapper cannot
+work, and they are where these libraries differ most: pure Python in every
+row, so what separates them is the code and nothing else. A wrapper cannot
 help an address encoder.
 
 ## What these packages get wrong
@@ -362,7 +365,6 @@ comparands:
 [i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [i42]: https://github.com/btclib-org/btclib-benchmarks/issues/42
 [i47]: https://github.com/btclib-org/btclib-benchmarks/issues/47
-[i53]: https://github.com/btclib-org/btclib-benchmarks/issues/53
 [i982]: https://github.com/btclib-org/btclib/issues/982
 
 <!-- The blocks above are rendered from the saved run beside this file,

@@ -4,8 +4,8 @@
 
 <!-- provenance: begin -->
 ```text
-btclib              : 2026.10.9
-btclib-secp256k1    : 0.8.0.11
+ecc                 : 2026.10.30
+btclib-secp256k1    : 0.8.0.13
 ecdsa               : 0.19.2
 ```
 <!-- provenance: end -->
@@ -14,24 +14,24 @@ ecdsa               : 0.19.2
 
 <!-- run: begin -->
 ```text
-when    : 2026-10-15 09:44 CEST (07:44 UTC)
+when    : 2026-10-30 19:46 +07 (12:46 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
-commit  : not recorded
-uv.lock : not recorded
+commit  : 090c60363adc1833453098ce2061d77d85e842a2
+uv.lock : b4fdc6f0fe4ab496c148f7c13430bf4f1c6035704a40258237f28ae753b2e344
 ```
 <!-- run: end -->
 
 What `scripts/05-key-reuse.py` printed on the machine named above: the same
-ECDSA verification, with the public key handed in raw and with it
-prepared, on both of the paths of `btclib_ecc` and against `python-ecdsa`.
-The other benchmarks time one verification with a fresh key; a verifier
-never does one, so this is the question they leave out.
+ECDSA verification, with the public key handed in raw and with it prepared, on
+both of the paths of `ecc` and against `python-ecdsa`. The other benchmarks
+time one verification with a fresh key; a verifier never does one, so this is
+the question they leave out.
 
-The rows labelled btclib called `btclib_ecc`'s `curves` and `ecc.dsa`
-modules, from the `btclib-ecc` 2026.10.10 distribution in this run's lock.
-The packages block above does not list `btclib-ecc`: its first line is the
-version of `btclib`, which installed it.
+The rows labelled btclib call the `ecc.curves` and `ecc.ecc.dsa` modules, from
+the `ecc` release the packages block names. The script imports no module of
+btclib's: btclib's curve and signature schemes are `ecc`'s, and the label
+names the project.
 
 Two tables and one point between them. The first is what a verification
 costs in the steady state, once the key is whatever it is going to be.
@@ -82,24 +82,24 @@ what a timing contains
 
 ECDSA verify, one key, every signature under it
                                                    μs/call     vs best   halves
-  btclib, libsecp256k1, parsed point, few keys       17.06        1.0x     0.02   (10x20,000 calls)
-  btclib, libsecp256k1, PreparedPoint                17.12        1.0x     0.02   (10x20,000 calls)
-  btclib, libsecp256k1, parsed point                 17.96        1.1x     0.00   (10x20,000 calls)
-  btclib, libsecp256k1, octets                       19.27        1.1x     0.01   (10x20,000 calls)
-  btclib, Python, PreparedPoint                     435.84       25.5x    12.57   (10x500 calls)
-  python-ecdsa, precomputed                         567.86       33.3x     0.24   (10x500 calls)
-  btclib, Python, parsed point                      575.59       33.7x    12.43   (10x500 calls)
-  btclib, Python, parsed point, few keys            583.17       34.2x     5.15   (10x500 calls)
-  btclib, Python, octets                            646.18       37.9x     9.66   (10x500 calls)
-  python-ecdsa                                     1110.47       65.1x     5.36   (10x500 calls)
+  btclib, libsecp256k1, parsed point, few keys       16.71        1.0x     0.13   (10x20,000 calls)
+  btclib, libsecp256k1, PreparedPoint                16.76        1.0x     0.11   (10x20,000 calls)
+  btclib, libsecp256k1, parsed point                 17.50        1.0x     0.14   (10x20,000 calls)
+  btclib, libsecp256k1, octets                       18.69        1.1x     0.17   (10x20,000 calls)
+  btclib, Python, PreparedPoint                     428.97       25.7x     0.28   (10x500 calls)
+  python-ecdsa, precomputed                         560.33       33.5x     4.59   (10x500 calls)
+  btclib, Python, parsed point                      563.39       33.7x     1.03   (10x500 calls)
+  btclib, Python, parsed point, few keys            564.52       33.8x     3.26   (10x500 calls)
+  btclib, Python, octets                            631.60       37.8x     1.72   (10x500 calls)
+  python-ecdsa                                     1112.35       66.6x    10.72   (10x500 calls)
 
 what preparing the key costs, and after how many verifications it pays
                                                    prepare   saves/call   halves   break-even
-  btclib, libsecp256k1, parse once                    4.76         1.30     0.01          3.6
-  btclib, libsecp256k1, PreparedPoint                 1.50        -0.06     0.01        never
-  btclib, Python, parse once                         67.99        70.59     2.77          1.0
-  btclib, Python, PreparedPoint                    3116.81       147.33     7.42         21.2
-  python-ecdsa, precompute()                       3299.82       542.62     5.12          6.1
+  btclib, libsecp256k1, parse once                    4.68         1.19     0.02          3.9
+  btclib, libsecp256k1, PreparedPoint                 1.49        -0.05     0.02        never
+  btclib, Python, parse once                         66.15        68.21     0.69          1.0
+  btclib, Python, PreparedPoint                    3036.50       135.55     2.98         22.4
+  python-ecdsa, precompute()                       3202.46       552.02     6.13          5.8
 ```
 <!-- output: end -->
 
@@ -116,7 +116,7 @@ sees the key again, not that it changes which implementation is fastest.
 It is nearly free where the key is only parsed once, and costs a table's
 worth of work where the Python path builds one.
 
-### Parsing once is a saving `btclib_ecc` already offers
+### Parsing once is a saving `ecc` already offers
 
 It pays back almost immediately. `assert_as_valid_` takes the public key as a parsed
 point wherever it takes sec octets, and on the Python path a caller who
@@ -129,20 +129,20 @@ reason this table is interesting.
 
 ### `PreparedPoint` pays on the Python path and not on the C one
 
-`btclib_ecc` has a prepared key, `curve.PreparedPoint`, which keeps the
-multiplication tables of the key in a cache under the point a caller wraps
-in it. On the Python path it is the fastest btclib row here, and quicker
-than `python-ecdsa`'s precomputed key. The price is the tables, built by
-the first verification under the point, and its break-even is the longest of
-the break-evens that pay: it is a saving for a verifier that sees the same keys
+`ecc` has a prepared key, `curve.PreparedPoint`, which keeps the
+multiplication tables of the key in a cache under the point a caller wraps in
+it. On the Python path it is the fastest btclib row here, and quicker than
+`python-ecdsa`'s precomputed key. The price is the tables, built by the first
+verification under the point, and its break-even is the longest of the
+break-evens that pay: it is a saving for a verifier that sees the same keys
 again, and a loss for one that sees each key only a few times. The cache is
 bounded, so the rows keep few prepared keys.
 
 On the libsecp256k1 path the same wrapper is accepted and its tables go
 unused, the bindings holding tables of their own. On this path the prepared
-point is no quicker than the parsed point over the same few keys, and in
-this run slightly slower, by more than the `halves` beside it. The
-break-even prints `never`.
+point is no quicker than the parsed point over the same few keys: the two rows
+land within the `halves` beside them. The saving comes out below zero by more
+than its own `halves`, and the break-even prints `never`.
 
 ### `python-ecdsa` has a prepared key too
 
@@ -174,11 +174,11 @@ multiples. An observer of any signature already has it. There is no
 secret being cached, so the question is only whether the memory is worth
 the calls, which is what the second table answers.
 
-The private key has no counterpart. The one table a signature leans on is
-the generator's, which every key shares and which `btclib_ecc` already
-memoizes; none of these implementations builds per-private-key state. So
-there is no signing half of this benchmark, and that absence is a result
-rather than an omission.
+The private key has no counterpart here. The one table a signature leans on is
+the generator's, which every key shares and which `ecc` memoizes. What a
+signer can keep per key is what `ecc.ecc.ssa.Signer` and `ecc.ecc.dsa.Signer`
+hold across calls, and [btclib's two paths][two-paths] prices the first. So
+this page has no signing half.
 
 ## More benchmarks
 

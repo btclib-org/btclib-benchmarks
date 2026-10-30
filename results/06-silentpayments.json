@@ -2,18 +2,20 @@
   "schema": 1,
   "benchmark": "06-silentpayments",
   "run": {
-    "when": "2026-08-21T03:06:22+02:00",
-    "timezone": "CEST",
+    "when": "2026-10-30T19:50:37+07:00",
+    "timezone": "+07",
     "python": "3.13.14",
-    "method": "the quickest of ten rounds; the halves' gap is beside it",
+    "method": "the quickest of 10 rounds; the halves' gap is beside it",
     "command": "uv run python scripts/06-silentpayments.py",
-    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64",
+    "commit": "090c60363adc1833453098ce2061d77d85e842a2",
+    "lock": "b4fdc6f0fe4ab496c148f7c13430bf4f1c6035704a40258237f28ae753b2e344"
   },
   "provenance": {
     "columns": [],
     "rows": [],
     "notes": [
-      "btclib-secp256k1    : 0.8.0.3"
+      "btclib-secp256k1    : 0.8.0.13"
     ]
   },
   "timing_note": [],
@@ -26,15 +28,15 @@
       "rows": [
         {
           "label": "create_outputs",
-          "us_per_call": 45.70364999817684,
-          "halves_apart": 0.40069170063361526,
+          "us_per_call": 44.827525003347546,
+          "halves_apart": 0.5237208970356733,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "scan_outputs",
-          "us_per_call": 30.09665830177255,
-          "halves_apart": 0.05974579835310578,
+          "us_per_call": 33.151333301793784,
+          "halves_apart": 0.003174995072185993,
           "rounds": 10,
           "calls": 10000
         }
@@ -48,22 +50,22 @@
       "rows": [
         {
           "label": "prevouts_summary",
-          "us_per_call": 3.8866541988681997,
-          "halves_apart": 0.00989580003079027,
+          "us_per_call": 8.988137502456084,
+          "halves_apart": 0.0016124977264553308,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "label",
-          "us_per_call": 8.144629100570455,
-          "halves_apart": 0.09899589931592345,
+          "us_per_call": 8.060500002466142,
+          "halves_apart": 0.0005416979547590017,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "labeled_spend_pubkey",
-          "us_per_call": 6.0368375008692965,
-          "halves_apart": 0.01332079991698265,
+          "us_per_call": 6.038491596700624,
+          "halves_apart": 0.06987920496612787,
           "rounds": 10,
           "calls": 10000
         }

@@ -2,12 +2,14 @@
   "schema": 1,
   "benchmark": "07-mnemonics",
   "run": {
-    "when": "2026-10-28T04:23:20+01:00",
-    "timezone": "CET",
+    "when": "2026-10-30T19:55:26+07:00",
+    "timezone": "+07",
     "python": "3.13.14",
     "method": "10 rounds per row in two halves, minimum kept; calls per row",
     "command": "uv run python scripts/07-mnemonics.py",
-    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64"
+    "machine": "Apple M5, macOS 26.6 (build 25G72), arm64",
+    "commit": "090c60363adc1833453098ce2061d77d85e842a2",
+    "lock": "b4fdc6f0fe4ab496c148f7c13430bf4f1c6035704a40258237f28ae753b2e344"
   },
   "provenance": {
     "columns": [
@@ -55,22 +57,22 @@
       "rows": [
         {
           "label": "bip39-slip39",
-          "us_per_call": 12.929629199788906,
-          "halves_apart": 0.14054159983061254,
+          "us_per_call": 12.98155840486288,
+          "halves_apart": 0.19731658976525068,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "mnemonic",
-          "us_per_call": 2.5721683399751782,
-          "halves_apart": 0.005652499967254698,
+          "us_per_call": 2.5940750003792346,
+          "halves_apart": 0.034946680534631014,
           "rounds": 10,
           "calls": 50000
         },
         {
           "label": "embit",
-          "us_per_call": 13.858662499114871,
-          "halves_apart": 0.1364958006888628,
+          "us_per_call": 14.073695900151506,
+          "halves_apart": 0.030741601949557662,
           "rounds": 10,
           "calls": 10000
         }
@@ -84,22 +86,22 @@
       "rows": [
         {
           "label": "bip39-slip39",
-          "us_per_call": 15.494312501687093,
-          "halves_apart": 0.049468748329671186,
+          "us_per_call": 15.815510370885024,
+          "halves_apart": 0.06246363045647563,
           "rounds": 10,
           "calls": 8000
         },
         {
           "label": "mnemonic",
-          "us_per_call": 138.62463866826147,
-          "halves_apart": 0.5797780080077644,
+          "us_per_call": 138.1467500080665,
+          "halves_apart": 0.2106386624897425,
           "rounds": 10,
           "calls": 1500
         },
         {
           "label": "embit",
-          "us_per_call": 185.3190420079045,
-          "halves_apart": 0.5365829856600612,
+          "us_per_call": 183.6862500058487,
+          "halves_apart": 17.209541983902454,
           "rounds": 10,
           "calls": 1000
         }
@@ -117,15 +119,15 @@
         },
         {
           "label": "bip39-slip39",
-          "us_per_call": 4.457410000031814,
-          "halves_apart": 0.05278000026009977,
+          "us_per_call": 4.407208319753408,
+          "halves_apart": 0.08113167947158217,
           "rounds": 10,
           "calls": 25000
         },
         {
           "label": "mnemonic",
-          "us_per_call": 2180.7297573624446,
-          "halves_apart": 6.266671282771313,
+          "us_per_call": 2209.759528549122,
+          "halves_apart": 10.87499965381403,
           "rounds": 10,
           "calls": 70
         }
@@ -139,36 +141,36 @@
       "rows": [
         {
           "label": "bip39-slip39, verify",
-          "us_per_call": 374.12968747958075,
-          "halves_apart": 0.06031252269167453,
+          "us_per_call": 364.6942701016087,
+          "halves_apart": 0.4814573912881315,
           "rounds": 10,
           "calls": 400
         },
         {
           "label": "bip39-slip39, noverify",
-          "us_per_call": 351.9001050153747,
-          "halves_apart": 0.11291747796349227,
+          "us_per_call": 342.7504150022287,
+          "halves_apart": 1.0680225386749953,
           "rounds": 10,
           "calls": 400
         },
         {
           "label": "mnemonic, noverify",
-          "us_per_call": 351.2284375028685,
-          "halves_apart": 0.17635247786529362,
+          "us_per_call": 343.61604251898825,
+          "halves_apart": 4.625625006156042,
           "rounds": 10,
           "calls": 400
         },
         {
           "label": "embit, verify",
-          "us_per_call": 535.8344800333725,
-          "halves_apart": 1.0596874199109152,
+          "us_per_call": 537.7888549992349,
+          "halves_apart": 1.0732274677138776,
           "rounds": 10,
           "calls": 400
         },
         {
           "label": "embit, noverify",
-          "us_per_call": 350.99927248666063,
-          "halves_apart": 0.06729002052452415,
+          "us_per_call": 344.13312503602356,
+          "halves_apart": 0.733542547095567,
           "rounds": 10,
           "calls": 400
         }
@@ -186,15 +188,15 @@
         },
         {
           "label": "bip39-slip39",
-          "us_per_call": 739.5141699817032,
-          "halves_apart": 0.7993700273800641,
+          "us_per_call": 736.3985449774191,
+          "halves_apart": 1.2135397992096841,
           "rounds": 10,
           "calls": 200
         },
         {
           "label": "shamir-mnemonic",
-          "us_per_call": 774.3731250229757,
-          "halves_apart": 1.2743749539367855,
+          "us_per_call": 771.2118749623187,
+          "halves_apart": 2.849169832188636,
           "rounds": 10,
           "calls": 200
         }
@@ -208,22 +210,22 @@
       "rows": [
         {
           "label": "bip39-slip39",
-          "us_per_call": 717.8535399725661,
-          "halves_apart": 1.3416699948720634,
+          "us_per_call": 715.197085228283,
+          "halves_apart": 0.6524997297674417,
           "rounds": 10,
           "calls": 200
         },
         {
           "label": "shamir-mnemonic",
-          "us_per_call": 738.6839599348605,
-          "halves_apart": 0.2947900793515146,
+          "us_per_call": 735.595625010319,
+          "halves_apart": 1.0587499127723277,
           "rounds": 10,
           "calls": 200
         },
         {
           "label": "embit",
-          "us_per_call": 847.1477100101765,
-          "halves_apart": 0.9506200149189681,
+          "us_per_call": 846.0333300172351,
+          "halves_apart": 1.704794995021075,
           "rounds": 10,
           "calls": 200
         }
@@ -237,22 +239,22 @@
       "rows": [
         {
           "label": "bip39-slip39",
-          "us_per_call": 7.5107707489223685,
-          "halves_apart": 0.0833698759379331,
+          "us_per_call": 7.599901131470688,
+          "halves_apart": 0.01888012047857046,
           "rounds": 10,
           "calls": 8000
         },
         {
           "label": "shamir-mnemonic",
-          "us_per_call": 12.264644467116645,
-          "halves_apart": 0.012830534251405012,
+          "us_per_call": 12.312563931724677,
+          "halves_apart": 0.030977736848097237,
           "rounds": 10,
           "calls": 15000
         },
         {
           "label": "embit",
-          "us_per_call": 48.96531934112621,
-          "halves_apart": 0.32861133028442424,
+          "us_per_call": 49.667986012840025,
+          "halves_apart": 0.11776399333029275,
           "rounds": 10,
           "calls": 3000
         }
@@ -266,22 +268,22 @@
       "rows": [
         {
           "label": "bip39-slip39",
-          "us_per_call": 6.346249999478459,
-          "halves_apart": 0.03104579809587449,
+          "us_per_call": 6.3069374999031425,
+          "halves_apart": 0.040754099609330297,
           "rounds": 10,
           "calls": 10000
         },
         {
           "label": "shamir-mnemonic",
-          "us_per_call": 12.176799999239543,
-          "halves_apart": 0.020058334727462324,
+          "us_per_call": 12.49594446659709,
+          "halves_apart": 0.14242773177102208,
           "rounds": 10,
           "calls": 15000
         },
         {
           "label": "embit",
-          "us_per_call": 10.585933331943428,
-          "halves_apart": 0.06110833492130041,
+          "us_per_call": 10.77428333616505,
+          "halves_apart": 0.039766662909340056,
           "rounds": 10,
           "calls": 15000
         }
