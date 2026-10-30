@@ -357,15 +357,15 @@ wheels = [
 
 [[package]]
 name = "btclib"
-version = "2026.10.28"
+version = "2026.10.30"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ecc" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/a9/78af618f5f1731d89afebf2556dd9ba7997151ad139b86dfe61f41882185/btclib-2026.10.28.tar.gz", hash = "sha256:82bb3907da76137db202a736e40f4a327192310247cfe3939e81c54addb1e2e5", size = 8256251, upload-time = "2026-10-28T08:35:43.894Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/50/4c/9121120de8a4c7bc0682e63cab6d3a9658d4c9111f44b7dbae16f232c089/btclib-2026.10.30.tar.gz", hash = "sha256:c79668e82f543b87d302b6c93aa46009caf4b0d19ee7bd6fde429846da606a5b", size = 8264351, upload-time = "2026-10-30T03:28:46.338Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/20/72bb8814443e7afb1476e982e75f05f62306be24164ff4a8d757574f3094/btclib-2026.10.28-py3-none-any.whl", hash = "sha256:d7c725ab186cbe6a8dc68ce2af85c9c9694d504d56060e98a6eb3c9ba585a0fc", size = 452311, upload-time = "2026-10-28T08:35:42.258Z" },
+    { url = "https://files.pythonhosted.org/packages/47/45/c4b98b33c31d968d70f6036254028b8dba493e756591a43f68ddf1f93378/btclib-2026.10.30-py3-none-any.whl", hash = "sha256:4aeeacbc0218721e90a61c95daa5b17b91b0625deb819773fc405c11da9d0289", size = 455990, upload-time = "2026-10-30T03:28:44.647Z" },
 ]
 
 [[package]]
@@ -1175,14 +1175,14 @@ wheels = [
 
 [[package]]
 name = "ecc"
-version = "2026.10.28"
+version = "2026.10.30"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3e/dd/62441bc3c7e4cfb4dd0a9f3aa03e30d107aa68e2c57ee584c669731b1675/ecc-2026.10.28.tar.gz", hash = "sha256:78a4768200a16badd922e28f04423f5f152defdd9fa55cfae8fcc65ecc28ebca", size = 2082102, upload-time = "2026-10-28T03:01:48.797Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/c1/959c698187a9328844b40fd9f7f60ca04b7dac560099860b8c7cb3842416/ecc-2026.10.30.tar.gz", hash = "sha256:2e07fd160191b027ce312307b6288ef2ad1266d8757f21620d8baa5184557409", size = 2093295, upload-time = "2026-10-29T20:56:12.324Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/95/0e949e277bf8e64502b30036d8a9ad86bb2d8b4ad91bc4d13865b61c6d04/ecc-2026.10.28-py3-none-any.whl", hash = "sha256:9e933dd6128dc5fc76c3f69f9edc47bda7fcc9df9b8e29bf9f0c8ed2f843d460", size = 300598, upload-time = "2026-10-28T03:01:47.356Z" },
+    { url = "https://files.pythonhosted.org/packages/28/f6/5c679bba44cb72519fc8a4e14c4977d680218b59fc1ca8307462b3d7f25d/ecc-2026.10.30-py3-none-any.whl", hash = "sha256:6109c1cb2abc363b3f74daa37cb3fb949d2c65d6eca1210daa75673baf0a6406", size = 304435, upload-time = "2026-10-29T20:56:10.793Z" },
 ]
 
 [[package]]
