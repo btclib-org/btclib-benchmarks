@@ -105,13 +105,13 @@ than against the rest of the table.
 
 The row is here because a caller who signs again holds a signer, on either
 arm: [ISS 42][i42]. It is also the one fixture the switch cannot reach — a
-signer decides which arm it is on when it is built and keeps the answer, so
-the held objects are built once per pass, off the clock both times, by the
-same call that throws the switch. Every other fixture here is octets or a
-point, and is read by whichever arithmetic is on when the row runs. Written
-the obvious way, that row's pure-Python column printed a libsecp256k1 number,
-silently and convincingly, and the suite's own pure-Python probe is what said
-so.
+signer built while libsecp256k1 answers holds a keypair and signs on the
+bindings for the rest of its life, so the held objects are built once per
+pass, off the clock both times, by the same call that throws the switch. Every
+other fixture here is octets or a point, and is read by whichever arithmetic
+is on when the row runs. Written the obvious way, that row's pure-Python
+column printed a libsecp256k1 number, silently and convincingly, and the
+suite's own pure-Python probe is what said so.
 
 **`ellswift_xdh` is ElligatorSwift's x-only ECDH, beside the decode above
 it.** `ecc/ecc/ellswift.py` gates each of its public functions on the same

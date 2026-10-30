@@ -176,8 +176,8 @@ the calls, which is what the second table answers.
 
 The private key has no counterpart here. The one table a signature leans on is
 the generator's, which every key shares and which `ecc` memoizes. What a
-signer can keep per key is `ecc.ecc.ssa.Signer`'s keypair, or on the Python
-path its public point, and [btclib's two paths][two-paths] prices that. So
+signer can keep per key is what `ecc.ecc.ssa.Signer` and `ecc.ecc.dsa.Signer`
+hold across calls, and [btclib's two paths][two-paths] prices the first. So
 this page has no signing half.
 
 ## More benchmarks

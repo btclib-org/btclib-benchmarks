@@ -60,7 +60,7 @@ check was read out of each implementation rather than assumed, and the two
 schemes do not answer alike.
 
 In the ECDSA table nothing else checks, so a single checked btclib row would
-sit among three implementations that sign and stop and would read as btclib's
+sit among implementations that sign and stop and would read as btclib's
 arithmetic having grown several times slower, when what changed is that its
 row had become a different operation from the ones beside it. That is the
 pair's whole reason here, and the increment is the largest the check comes to

@@ -58,10 +58,10 @@ above it rather than against the rest of the table. It is here because a
 caller who signs again holds a signer, on either arm.
 
 It is also the one fixture `python_arithmetic_only` cannot reach. A signer
-decides which arm it is on when it is built and keeps the answer, so the
-held objects are built twice, once per pass, off the clock both times. Every
-other fixture here is bytes or a point and is read by whichever arithmetic
-is switched on when the row runs.
+built while libsecp256k1 answers holds a keypair and signs on the bindings
+for the rest of its life, so the held objects are built twice, once per
+pass, off the clock both times. Every other fixture here is bytes or a point
+and is read by whichever arithmetic is switched on when the row runs.
 
 ## Which flags a signing row passed, in its name
 
@@ -393,12 +393,12 @@ def _held_signers() -> cycle[tuple[ssa.Signer, bytes]]:
 
 # **A held object is the one fixture `python_arithmetic_only` cannot reach**,
 # and this is the whole of why it is a list with one cycle in it rather than
-# the cycle. `ssa.Signer.__init__` asks `_libsecp256k1_serves` once and keeps
-# the answer: where the bindings serve it builds their signer and sets its
-# own scalar to zero, that scalar being a second copy of the secret it would
-# otherwise be holding for nothing. So a signer built while the dispatch was
-# on stays on the bindings for the rest of its life and could not sign in
-# Python if asked -- it has no scalar left to sign with.
+# the cycle. `ssa.Signer.__init__` builds the bindings' signer where
+# `_libsecp256k1_serves` answers, and sets its own scalar to zero, that
+# scalar being a second copy of the secret it would otherwise be holding for
+# nothing. So a signer built while the dispatch was on stays on the bindings
+# for the rest of its life and could not sign in Python if asked -- it has no
+# scalar left to sign with.
 #
 # Every other fixture here is bytes or a point and is read by whichever
 # arithmetic is switched on when the row runs. This one carries its
@@ -455,12 +455,12 @@ def python_arithmetic_only() -> None:
 
     The held signers are rebuilt here rather than by the caller, and that is
     the whole of why this function has a second line. `SSA_HELD` above says
-    what they are: the one fixture the assignment cannot reach, each object
-    having decided which arm it is on when it was built. Leaving the rebuild
-    to whoever throws the switch is leaving it to be forgotten, and what
-    forgetting it produces is not an error -- it is a pure-Python column
-    printing a libsecp256k1 number. `tests/pure_python_path_test.py` throws
-    this switch too, and it caught exactly that.
+    what they are: the one fixture the assignment cannot reach, a signer
+    built on the bindings staying on them. Leaving the rebuild to whoever
+    throws the switch is leaving it to be forgotten, and what forgetting it
+    produces is not an error -- it is a pure-Python column printing a
+    libsecp256k1 number. `tests/pure_python_path_test.py` throws this switch
+    too, and it caught exactly that.
 
     Off the clock, as the first set was: this runs between the two passes and
     inside neither.

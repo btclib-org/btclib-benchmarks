@@ -30,11 +30,12 @@ secret in a decompressed point or in a table of its odd multiples, and
 nothing is being kept alive that an observer of the signature does not
 already have.
 
-The private key has no counterpart to prepare. The one table a signature
-leans on is the generator's, which every key shares and which btclib
-already memoizes; there is no per-private-key state any of these
-implementations builds. So this benchmark is about verification, and its
-absence of a signing table is a result and not an omission.
+The private key has no counterpart here. The one table a signature leans
+on is the generator's, which every key shares and which `ecc` memoizes.
+What a signer can keep per key is what `ecc.ecc.ssa.Signer` and
+`ecc.ecc.dsa.Signer` hold across calls, and `scripts/02-btclib-vs-btclib.py`
+prices the first. So this benchmark is about verification and has no
+signing table.
 
 ## What it does not show, said before the rows say it
 
