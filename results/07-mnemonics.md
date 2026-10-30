@@ -26,11 +26,11 @@ backend.
 
 <!-- run: begin -->
 ```text
-when    : 2026-10-28 04:23 CET (03:23 UTC)
+when    : 2026-10-30 19:55 +07 (12:55 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
-commit  : not recorded
-uv.lock : not recorded
+commit  : 090c60363adc1833453098ce2061d77d85e842a2
+uv.lock : b4fdc6f0fe4ab496c148f7c13430bf4f1c6035704a40258237f28ae753b2e344
 ```
 <!-- run: end -->
 
@@ -93,53 +93,53 @@ what a timing contains
 
 1. BIP39 encode: 256 bits of entropy to 24 words
                              μs/call     vs best   halves
-  mnemonic                      2.57       1.00x     0.01   (10x50,000 calls)
-  bip39-slip39                 12.93       5.03x     0.14   (10x10,000 calls)
-  embit                        13.86       5.39x     0.14   (10x10,000 calls)
+  mnemonic                      2.59       1.00x     0.03   (10x50,000 calls)
+  bip39-slip39                 12.98       5.00x     0.20   (10x10,000 calls)
+  embit                        14.07       5.43x     0.03   (10x10,000 calls)
 
 2. BIP39 decode: 24 words to their entropy, the language given
                              μs/call     vs best   halves
-  bip39-slip39                 15.49       1.00x     0.05   (10x8,000 calls)
-  mnemonic                    138.62       8.95x     0.58   (10x1,500 calls)
-  embit                       185.32      11.96x     0.54   (10x1,000 calls)
+  bip39-slip39                 15.82       1.00x     0.06   (10x8,000 calls)
+  mnemonic                    138.15       8.73x     0.21   (10x1,500 calls)
+  embit                       183.69      11.61x    17.21   (10x1,000 calls)
 
 3. BIP39 language detection: 24 words
                              μs/call     vs best   halves
-  bip39-slip39                  4.46       1.00x     0.05   (10x25,000 calls)
-  mnemonic                   2180.73     489.24x     6.27   (10x70 calls)
+  bip39-slip39                  4.41       1.00x     0.08   (10x25,000 calls)
+  mnemonic                   2209.76     501.40x    10.87   (10x70 calls)
   embit                           NA
 
 4. BIP39 seed: 24 words, an empty passphrase
                              μs/call     vs best   halves
-  embit, noverify             351.00       1.00x     0.07   (10x400 calls)
-  mnemonic, noverify          351.23       1.00x     0.18   (10x400 calls)
-  bip39-slip39, noverify      351.90       1.00x     0.11   (10x400 calls)
-  bip39-slip39, verify        374.13       1.07x     0.06   (10x400 calls)
-  embit, verify               535.83       1.53x     1.06   (10x400 calls)
+  bip39-slip39, noverify      342.75       1.00x     1.07   (10x400 calls)
+  mnemonic, noverify          343.62       1.00x     4.63   (10x400 calls)
+  embit, noverify             344.13       1.00x     0.73   (10x400 calls)
+  bip39-slip39, verify        364.69       1.06x     0.48   (10x400 calls)
+  embit, verify               537.79       1.57x     1.07   (10x400 calls)
 
 5. SLIP-0039 split: a 128-bit master secret into three-of-five shares
                              μs/call     vs best   halves
-  bip39-slip39                739.51       1.00x     0.80   (10x200 calls)
-  shamir-mnemonic             774.37       1.05x     1.27   (10x200 calls)
+  bip39-slip39                736.40       1.00x     1.21   (10x200 calls)
+  shamir-mnemonic             771.21       1.05x     2.85   (10x200 calls)
   embit                           NA
 
 6. SLIP-0039 combine: three of five shares into the master secret
                              μs/call     vs best   halves
-  bip39-slip39                717.85       1.00x     1.34   (10x200 calls)
-  shamir-mnemonic             738.68       1.03x     0.29   (10x200 calls)
-  embit                       847.15       1.18x     0.95   (10x200 calls)
+  bip39-slip39                715.20       1.00x     0.65   (10x200 calls)
+  shamir-mnemonic             735.60       1.03x     1.06   (10x200 calls)
+  embit                       846.03       1.18x     1.70   (10x200 calls)
 
 7. SLIP-0039 share parse: 20 words to a share
                              μs/call     vs best   halves
-  bip39-slip39                  7.51       1.00x     0.08   (10x8,000 calls)
-  shamir-mnemonic              12.26       1.63x     0.01   (10x15,000 calls)
-  embit                        48.97       6.52x     0.33   (10x3,000 calls)
+  bip39-slip39                  7.60       1.00x     0.02   (10x8,000 calls)
+  shamir-mnemonic              12.31       1.62x     0.03   (10x15,000 calls)
+  embit                        49.67       6.54x     0.12   (10x3,000 calls)
 
 8. SLIP-0039 share encode: a share to 20 words
                              μs/call     vs best   halves
-  bip39-slip39                  6.35       1.00x     0.03   (10x10,000 calls)
-  embit                        10.59       1.67x     0.06   (10x15,000 calls)
-  shamir-mnemonic              12.18       1.92x     0.02   (10x15,000 calls)
+  bip39-slip39                  6.31       1.00x     0.04   (10x10,000 calls)
+  embit                        10.77       1.71x     0.04   (10x15,000 calls)
+  shamir-mnemonic              12.50       1.98x     0.14   (10x15,000 calls)
 ```
 <!-- output: end -->
 

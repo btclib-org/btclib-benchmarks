@@ -49,14 +49,13 @@ Python.
 ## The one row whose two columns do not save the same thing
 
 `ssa_sign_held_noverify` signs under an `ssa.Signer`, which holds across
-calls the keypair that `ssa.sign_` builds and wipes inside each one. There
-is a keypair to hold only where libsecp256k1 answers: with the dispatch off
-a `Signer` holds a scalar and every signature is `sign_`'s again. So that
-row's ratio is the crossing multiplied by a saving one column has and the
-other does not, and it is read against the fresh signing row above it rather
-than against the rest of the table. It is here because the asymmetry is the
-answer -- what btclib's fallback cannot offer is as much this page's subject
-as what it costs.
+calls what `ssa.sign_` builds inside each one. Where libsecp256k1 answers
+that is a keypair; with the dispatch off it is the key's public point,
+multiplied once when the signer is built. Each column saves a multiplication
+of the generator, but not the same share of a signature, so that row's ratio
+is not the crossing alone, and it is read against the fresh signing row
+above it rather than against the rest of the table. It is here because a
+caller who signs again holds a signer, on either arm.
 
 It is also the one fixture `python_arithmetic_only` cannot reach. A signer
 decides which arm it is on when it is built and keeps the answer, so the
@@ -559,13 +558,12 @@ def ssa_sign_held_noverify() -> None:
     with the octets where the fresh one answers with a `Sig`.
 
     **The two columns do not save the same thing, and that is the row's
-    finding rather than a defect in it.** There is a keypair to hold only
-    where libsecp256k1 answers. Turn the dispatch off and `Signer` holds a
-    scalar and nothing else -- every signature is `sign_`'s again -- so the
-    pure-Python column here is the pure-Python column above, and this row's
-    ratio is the crossing multiplied by a saving one side has and the other
-    does not. Read it against the row above rather than against the rest of
-    the table.
+    finding rather than a defect in it.** Where libsecp256k1 answers the
+    signer holds a keypair. Turn the dispatch off and it holds the key's
+    public point instead, multiplied once when it is built, so each column
+    saves a multiplication of the generator but not the same share of a
+    signature, and this row's ratio is not the crossing alone. Read it
+    against the row above rather than against the rest of the table.
 
     `verify=False`, as the fresh row passes, so nothing in the pair is the
     check.

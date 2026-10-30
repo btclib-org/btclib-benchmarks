@@ -4,32 +4,34 @@
 
 <!-- provenance: begin -->
 ```text
-package       version           released           held to Python by
-btclib        2026.9            main@5f7ad5422544  its delegation to btclib-secp256k1's cffi bindings switched off
-pycoin        0.92718.20260405  2026-04-05         PYCOIN_NATIVE=none before its import, resolving to pure Python
-ecdsa         0.19.2            2026-03-26         having no compiled backend at all
-secp256k1lab  1.0.0             2025-03-26         having no compiled backend at all
-buidl         0.2.36            2022-02-28         being imported as buidl.pecc, not buidl.ecc
+package          version           released    held to Python by
+btclib           2026.10.30        2026-10-30  its delegation to btclib-secp256k1's cffi bindings switched off
+ecc              2026.10.30        2026-10-29  its delegation to btclib-secp256k1's cffi bindings switched off
+starkbank-ecdsa  2.3.1             2026-04-23  having no compiled backend at all
+pycoin           0.92718.20260405  2026-04-05  PYCOIN_NATIVE=none before its import, resolving to pure Python
+ecdsa            0.19.2            2026-03-26  having no compiled backend at all
+secp256k1lab     1.0.0             2025-03-26  having no compiled backend at all
+buidl            0.2.36            2022-02-28  being imported as buidl.pecc, not buidl.ecc
 ```
 <!-- provenance: end -->
 
 Every row here is Python, so the word belongs in the heading rather than in
-five cells; the last column carries what makes it true, which is different
-for each of them and is the only part of the claim a reader could doubt.
-pycoin's cell is read back after the fact rather than written down: a
-benchmark that says Python on a row that loaded a shared object is worse
-than no benchmark. `secp256k1lab` is on no index and comes from its git
-tag, which is still a release somebody cut on a day.
+every cell; the last column carries what makes it true, which is different for
+each of them and is the only part of the claim a reader could doubt. pycoin's
+cell is read back after the fact rather than written down: a benchmark that
+says Python on a row that loaded a shared object is worse than no benchmark.
+`secp256k1lab` is on no index and comes from its git tag, which is still a
+release somebody cut on a day.
 
 ## This run
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-21 02:45 CEST (00:45 UTC)
+when    : 2026-10-30 19:41 +07 (12:41 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
-commit  : not recorded
-uv.lock : not recorded
+commit  : 090c60363adc1833453098ce2061d77d85e842a2
+uv.lock : b4fdc6f0fe4ab496c148f7c13430bf4f1c6035704a40258237f28ae753b2e344
 ```
 <!-- run: end -->
 
@@ -39,24 +41,21 @@ Microseconds per call, fastest row first, and a ratio against whichever row
 came out quickest — no row here is C, so none of them is a reference line and
 none is named in advance.
 
-**The `halves` column is new, and this page needed it more than the pages
-that had it first.** Each row is timed in rounds now; the rounds are halved,
-the quickest is what is published, and the column is how far the two halves'
-minima sat apart, in the same microseconds as the value beside it. So it
-says whether a row agreed with itself when measured twice, seconds apart —
-which is what a reader checks an ordering by before believing it.
+**The `halves` column is what an ordering on this page is checked by.** Each
+row is timed in rounds; the rounds are halved, the quickest is what is
+published, and the column is how far the two halves' minima sat apart, in the
+same microseconds as the value beside it. So it says whether a row agreed with
+itself when measured twice, seconds apart — which is what a reader checks an
+ordering by before believing it.
 
 What it answers here is not only the ordering. This is the page whose tables
-are read by *subtracting*: an unchecked signing row taken from its checked
-one is what btclib's own verification costs, and a difference keeps an error
-that a ratio would divide away. Without the column, the two subtractions
-that must agree could disagree with nothing on the page to say so — which is
-what [ISS 111][i111] found them doing, the two checked rows having priced
-one check at two sizes a factor of two apart. The counts each row is
-averaged over are beside it for the same reason, and they are much larger
-than they were: the previous ones were chosen so the slowest rows here were
-bearable, which left the quickest running for milliseconds a scheduler could
-take a large share of.
+are read by *subtracting*: an unchecked signing row taken from its checked one
+is what btclib's own verification costs, and a difference keeps an error that
+a ratio would divide away. Without the column, the two subtractions that must
+agree could disagree with nothing on the page to say so — which is what [ISS
+111][i111] found them doing, the two checked rows having priced one check at
+two sizes a factor of two apart. The counts each row is averaged over are
+beside it for the same reason.
 
 Read it as this run's agreement with itself and not as an error bar. Two
 halves seconds apart say nothing about two runs a day apart; [the wrappers
@@ -82,16 +81,15 @@ BIP340 row is.
 Nowhere else in this project is that check so large a share of what it
 protects, and the tables below say why between them: verifying multiplies an
 arbitrary point as well as the generator, where signing multiplies the
-generator alone and starts from a table btclib has already built. Which
-makes this the page where one row cannot carry the default: in the ECDSA
-table nothing else checks, so a single btclib row would fall behind
-implementations that sign and stop and read as arithmetic that had grown
-slower, when what changed is that the row had become a different operation
-from the ones beside it. [The wrappers table][wrappers] met that with a
-pair, and this page carries the same one: an unchecked row for the
-comparison with the three that check nothing, and a checked row beside it
-for what the guarantee costs — [ISS 55][i55] is that decision, and [ISS
-23][i23] the run that carries it. The check runs once on the signature the
+generator alone and starts from a table `ecc` has already built. Which makes
+this the page where one row cannot carry the default: in the ECDSA table
+nothing else checks, so a single btclib row would fall behind implementations
+that sign and stop and read as arithmetic that had grown slower, when what
+changed is that the row had become a different operation from the ones beside
+it. [The wrappers table][wrappers] met that with a pair, and this page carries
+the same one: an unchecked row for the comparison with the implementations
+that check nothing, and a checked row beside it for what the guarantee costs —
+[ISS 55][i55] is that decision. The check runs once on the signature the
 grinding loop settled on, so the two flags add rather than multiply, and
 btclib's ECDSA rows are four rather than two.
 
@@ -105,6 +103,16 @@ comparands and its unchecked row that stands alone — the same pair read the
 other way round, and the reason it has to be a pair rather than a choice
 between two rows.
 
+**A third flag joins the ECDSA table alone**: `deterministic` where the nonce
+is reproducible from the key and the message, and `hedged` where the call
+mixes fresh entropy into it. starkbank-ecdsa is the row that hedges.
+`scripts/04-pure-python.py`'s docstring says how each row derives its nonce.
+
+The rows labelled btclib call `btclib.key` for the public key, and the
+`ecc.ecc.dsa` and `ecc.ecc.ssa` modules for the signatures and the
+verifications, all of them on the curve arithmetic of `ecc.curves`. The
+packages block names both releases.
+
 <!-- output: begin -->
 ```text
 method  : 4 rounds per row in two halves, minimum kept; calls per row
@@ -117,58 +125,59 @@ what a timing contains
   (CONTRIBUTING.md's Writing a row names where)
 
 public key from a private key: a multiplication of the generator
-                                      μs/call     vs best   halves
-  btclib                               137.96        1.0x     0.28   (4x2,700 calls)
-  python-ecdsa                         269.72        2.0x     2.08   (4x1,800 calls)
-  secp256k1lab                        1256.94        9.1x     2.68   (4x400 calls)
-  pycoin                              5610.96       40.7x    51.69   (4x90 calls)
-  buidl.pecc                         29420.44      213.2x   150.42   (4x17 calls)
+                                                     μs/call     vs best   halves
+  btclib                                              119.09        1.0x     4.00   (4x2,700 calls)
+  python-ecdsa                                        279.88        2.4x     1.08   (4x1,800 calls)
+  secp256k1lab                                       1260.48       10.6x    18.34   (4x400 calls)
+  pycoin                                             5852.42       49.1x    83.97   (4x90 calls)
+  buidl.pecc                                        29809.15      250.3x    22.65   (4x17 calls)
 
 ECDSA sign, over a 32-byte digest
-                                      μs/call     vs best   halves
-  btclib, nogrind, noverify            156.95        1.0x     0.01   (4x3,000 calls)
-  python-ecdsa, nogrind, noverify      294.73        1.9x     1.42   (4x1,700 calls)
-  btclib, grind, noverify              325.68        2.1x     1.91   (4x1,300 calls)
-  btclib, nogrind, verify              870.37        5.5x     1.94   (4x500 calls)
-  btclib, grind, verify               1039.41        6.6x     0.88   (4x500 calls)
-  pycoin, nogrind, noverify           5950.61       37.9x    75.97   (4x88 calls)
-  buidl.pecc, nogrind, noverify      29970.88      191.0x     7.91   (4x17 calls)
+                                                     μs/call     vs best   halves
+  btclib, nogrind, noverify, deterministic            141.21        1.0x     1.06   (4x3,000 calls)
+  starkbank-ecdsa, nogrind, noverify, hedged          286.01        2.0x     1.10   (4x350 calls)
+  btclib, grind, noverify, deterministic              290.32        2.1x     1.74   (4x1,300 calls)
+  python-ecdsa, nogrind, noverify, deterministic      292.48        2.1x     1.12   (4x1,700 calls)
+  btclib, nogrind, verify, deterministic              813.57        5.8x     2.37   (4x500 calls)
+  btclib, grind, verify, deterministic                966.15        6.8x    36.90   (4x500 calls)
+  pycoin, nogrind, noverify, deterministic           5907.36       41.8x    93.15   (4x88 calls)
+  buidl.pecc, nogrind, noverify, deterministic      29990.59      212.4x    32.42   (4x17 calls)
 
 ECDSA verify, over a 32-byte digest
-                                      μs/call     vs best   halves
-  btclib                               660.02        1.0x     0.56   (4x750 calls)
-  python-ecdsa                        1082.96        1.6x     1.84   (4x450 calls)
-  pycoin                             18658.30       28.3x    98.01   (4x28 calls)
-  buidl.pecc                         59548.50       90.2x   169.96   (4x8 calls)
+                                                     μs/call     vs best   halves
+  btclib                                              643.45        1.0x     3.78   (4x750 calls)
+  starkbank-ecdsa                                     794.45        1.2x     0.33   (4x100 calls)
+  python-ecdsa                                       1124.02        1.7x     9.76   (4x450 calls)
+  pycoin                                            18111.19       28.1x   659.14   (4x28 calls)
+  buidl.pecc                                        59769.91       92.9x   630.80   (4x8 calls)
 
 BIP340 sign, over a 32-byte message
-                                      μs/call     vs best   halves
-  btclib, noverify                     323.02        1.0x     0.26   (4x1,500 calls)
-  btclib, verify                       968.41        3.0x     1.21   (4x500 calls)
-  secp256k1lab, verify                7635.17       23.6x     7.90   (4x65 calls)
-  buidl.pecc, verify                104045.51      322.1x  1164.38   (4x5 calls)
+                                                     μs/call     vs best   halves
+  btclib, noverify                                    283.76        1.0x     0.49   (4x1,500 calls)
+  btclib, verify                                      912.37        3.2x     0.28   (4x500 calls)
+  secp256k1lab, verify                               7593.78       26.8x    16.45   (4x65 calls)
+  buidl.pecc, verify                               103242.06      363.8x    59.56   (4x5 calls)
 
 BIP340 verify, over a 32-byte message
-                                      μs/call     vs best   halves
-  btclib                               656.34        1.0x     0.26   (4x740 calls)
-  secp256k1lab                        5069.08        7.7x     3.86   (4x100 calls)
-  buidl.pecc                         70183.08      106.9x   308.47   (4x7 calls)
+                                                     μs/call     vs best   halves
+  btclib                                              636.08        1.0x     2.82   (4x740 calls)
+  secp256k1lab                                       5029.56        7.9x    38.86   (4x100 calls)
+  buidl.pecc                                        70123.36      110.2x   818.47   (4x7 calls)
 ```
 <!-- output: end -->
 
 ## Results
 
-btclib's Python arithmetic leads every table here,
-`python-ecdsa` is second in each one it has a row in, and `buidl.pecc` is
-last in all five by a distance nothing on this machine would reorder. In
-every table they share, btclib and python-ecdsa are within a factor of each
-other rather than an order of magnitude, and the verification table is the
-closest of the three. That last is something this run settles rather than
-suggests, and it is the first thing the new column buys: the distance
-printed beside each of those rows is far smaller than the distance between
-them, so the ordering is the packages and not the afternoon. Everywhere
-else on this page the gaps are wider still, which is why the ratio column
-is the one to read and not the ranking.
+btclib's Python arithmetic leads every table here, `starkbank-ecdsa` is second
+in each table it has a row in, ahead of `python-ecdsa`, which is second in the
+public-key table, and `buidl.pecc` is last in every table by a distance
+nothing on this machine would reorder. In every table they share, btclib and
+python-ecdsa are within a factor of each other rather than an order of
+magnitude, and the verification table is the closest of the three. That last
+is something this run settles rather than suggests, and it is what the
+`halves` column buys: the distance printed beside each of those rows is far
+smaller than the distance between them, so the ordering is the packages and
+not the afternoon.
 
 ### Signing: btclib's default is the last row, not the first
 
@@ -250,7 +259,6 @@ comparands:
 [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
 [sp]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
 [mnemonics]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/07-mnemonics.md
-[i23]: https://github.com/btclib-org/btclib-benchmarks/issues/23
 [i55]: https://github.com/btclib-org/btclib-benchmarks/issues/55
 [i111]: https://github.com/btclib-org/btclib-benchmarks/issues/111
 

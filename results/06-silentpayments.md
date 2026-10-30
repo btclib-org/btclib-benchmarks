@@ -1,24 +1,22 @@
 # Silent Payments
 
-[ISS 83][i83] took a census of what `btclib_secp256k1` exports that no
-other comparand on [the wrappers page][wrappers] does, and found two whole
-modules with no sibling to be read against there: `ellswift` and
-`silentpayments`. `ellswift`'s two deterministic calls turned out to have a
-real second arithmetic after all — btclib's pure Python (`decode_var` and
-`xdh` in `btclib.ecc.ellswift`, in the btclib this page's run was taken
-beside, from git at `5f7ad542`) dispatches through the same switch
-[btclib's own page][two-paths] already reads every row through, so `decode`
-and `xdh` are timed there, against Python rather than against a
-same-package ratio. That btclib's `silent_payments` has a Python arm, but
-no page times it against the bindings, so this page is the whole of where it
-is priced: one comparand, and every ratio between two of its own calls
-rather than between two packages.
+[ISS 83][i83] took a census of what `btclib_secp256k1` exports that no other
+comparand on [the wrappers page][wrappers] does, and found two whole modules
+with no sibling to be read against there: `ellswift` and `silentpayments`.
+`ellswift`'s two deterministic calls have a second arithmetic in Python —
+`decode_var` in `ecc.ecc.ellswift`, and `xdh` in `btclib.ecc.ellswift`, which
+builds on it — reached through the same switch [btclib's own page][two-paths]
+reads every row through, so `decode` and `xdh` are timed there, against Python
+rather than against a same-package ratio. `btclib-wallet`'s `silent_payments`
+has a Python arm too, but no page times it against the bindings, so this page
+is the whole of where BIP352 is priced: one comparand, and every ratio between
+two of its own calls rather than between two packages.
 
 ## The packages downloaded from PyPI
 
 <!-- provenance: begin -->
 ```text
-btclib-secp256k1    : 0.8.0.3
+btclib-secp256k1    : 0.8.0.13
 ```
 <!-- provenance: end -->
 
@@ -26,11 +24,11 @@ btclib-secp256k1    : 0.8.0.3
 
 <!-- run: begin -->
 ```text
-when    : 2026-08-21 03:06 CEST (01:06 UTC)
+when    : 2026-10-30 19:50 +07 (12:50 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14
-commit  : not recorded
-uv.lock : not recorded
+commit  : 090c60363adc1833453098ce2061d77d85e842a2
+uv.lock : b4fdc6f0fe4ab496c148f7c13430bf4f1c6035704a40258237f28ae753b2e344
 ```
 <!-- run: end -->
 
@@ -85,19 +83,19 @@ and every one of its five relevant calls has a row.
 
 <!-- output: begin -->
 ```text
-method  : the quickest of ten rounds; the halves' gap is beside it
+method  : the quickest of 10 rounds; the halves' gap is beside it
 command : uv run python scripts/06-silentpayments.py
 
 1. a payment, made and found
                            μs/call     vs best   halves
-  scan_outputs               30.10       1.00x     0.06
-  create_outputs             45.70       1.52x     0.40
+  scan_outputs               33.15       1.00x     0.00
+  create_outputs             44.83       1.35x     0.52
 
 2. the recipient's setup, before any scan
                            μs/call     vs best   halves
-  prevouts_summary            3.89       1.00x     0.01
-  labeled_spend_pubkey        6.04       1.55x     0.01
-  label                       8.14       2.10x     0.10
+  labeled_spend_pubkey        6.04       1.00x     0.07
+  label                       8.06       1.33x     0.00
+  prevouts_summary            8.99       1.49x     0.00
 ```
 <!-- output: end -->
 
