@@ -141,27 +141,27 @@ Either way the wrapper rows are honest: each times the libsecp256k1 that
 `pip install` delivered, not whatever system library happened to be
 findable.
 
-### Measuring a working tree instead of a release
+### Measuring a default branch or a working tree
 
 The default is deliberate: every comparand is timed at its **published
 release**, btclib, ecc, btclib-wallet and btclib-secp256k1 included,
 because `pip install` is what an end user gets and that is the only
 performance an end user has.
 
-To time a checkout instead — an unreleased optimization, say — install
-the package whose code the rows time over the top
-(`CONTRIBUTING.md`'s *Running a benchmark* says which).
+A comparand can also be timed at its default branch, or at a checkout —
+an unreleased optimization, say — by installing it over the top.
+`CONTRIBUTING.md`'s *Running a benchmark* gives the commands and says
+which package to install, and that a working-tree run is not saved.
+Its *Publishing a run, which is a second command* says where a
+default-branch run is kept apart from the release pages.
 
-```shell
-uv run --with-editable /path/to/ecc python scripts/03-libraries.py
-```
-
-The packages block names the version, and where an install is not the
-declared one it names that too — `editable: /path/to/ecc` for the
-command above, `sys.path:` for a checkout shadowing an install. So which
-of the two you measured is on the screen rather than assumed, and that is
-not decoration: an editable install and a released wheel of the same
-package resolve silently, and the wrong one produces a plausible table.
+The packages block names the version, and where an install is not a
+release it names that too — the branch and the commit for a git install,
+`editable:` for a working tree, `sys.path:` for a checkout shadowing an
+install. So which build you measured is on the screen rather than
+assumed, and that is not decoration: a branch, an editable install and a
+released wheel of the same package resolve silently, and the wrong one
+produces a plausible table.
 
 ## Reading the output
 
@@ -185,12 +185,12 @@ stale one is not the comparison the table looks like, and where
 
 ## One run of each, published
 
-`results/` carries what the scripts printed in one sitting on one
-machine, each file keeping the header its script printed above the
-numbers — the versions, where each package came from, and the backend
-every comparand resolved to — because that header is what makes a table
-checkable at all. Every table is sorted fastest row first and carries a
-ratio against its fastest row, never against btclib's:
+`results/` carries the release runs: what the scripts printed in one
+sitting on one machine, each file keeping the header its script printed
+above the numbers — the versions, where each package came from, and the
+backend every comparand resolved to — because that header is what makes a
+table checkable at all. Every table is sorted fastest row first and
+carries a ratio against its fastest row, never against btclib's:
 
 - [btclib's two paths][two-paths]
 - [btclib against the other bitcoin libraries][libraries]
@@ -205,11 +205,14 @@ claim about anyone else's hardware. Where the run recorded them, its run
 block names this repository's commit and the SHA-256 of the `uv.lock` the
 run used. The commit is the one CONTRIBUTING.md's *Running a benchmark*
 asks to be on `main`, and the page names the command that took the run.
-Checked out at that commit, synced with `uv sync --locked` and checked with
-`shasum -a 256 uv.lock`, that command runs the same scripts on the same
-package versions where the packages block names no other origin: a package
-it marks `editable:`, `local:` or `sys.path:` was not the one the lock
-installs. It does not reproduce the numbers, which belong to the machine.
+Checked out at that commit, synced with `uv sync --locked` and checked
+with `shasum -a 256 uv.lock`, that command runs the same scripts on the
+same package versions where the packages block names no other origin: a
+package it marks `sys.path:` was not the one the lock installs. It does
+not reproduce the numbers, which belong to the machine. A run with a git
+install the lock does not pin, or with a package from neither an index nor
+git, is not one of these pages (CONTRIBUTING.md's *Publishing a run, which
+is a second command*).
 
 `not recorded` in place of either is a run saved before runs recorded
 them, or taken where git or `uv.lock` could not answer, and a reader

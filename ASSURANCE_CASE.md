@@ -37,7 +37,7 @@ derives is used to protect anything after the run ends.
   print which artifact of every comparand answered — released, an editable
   checkout, a git ref, or a wheel built where it is installed — and
   `README.md`'s *A vulnerability in a package this project measures*
-  and *Measuring a working tree instead of a release* both name a number
+  and *Measuring a default branch or a working tree* both name a number
   printed without that header as unverified.
 - **Every measured package answers the published vectors it is checked
   against, in the configuration it is timed in, before any row of it is
@@ -115,10 +115,12 @@ itself.
 **Files.** Everything read at run time is either vendored in this
 repository (`vectors/`, read once by `_vectors.py`) or written by this
 project's own earlier run (`.inputs/`'s cache, `results/<name>.json`,
-`results/machine.toml`). No script opens a file a caller names on the
-command line: `scripts/render.py` reduces each name it is given to its
-stem and resolves it under `results/`, so a name with no page there ends
-the run on a `FileNotFoundError` rather than reaching another path.
+`results/default-branch/<name>.json`, `results/machine.toml`). No script
+opens a file a caller names on the command line: `scripts/render.py`
+reduces each name it is given to its stem, and to whether its directory
+is `default-branch`, and resolves it under `results/`, so a name with no
+saved run there ends the run on a `FileNotFoundError` rather than
+reaching another path.
 
 **The environment.** `results/machine.toml` overrides the one line
 `_results.py`'s `_detected_machine` may get wrong about the host running

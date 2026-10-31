@@ -123,11 +123,12 @@ Not part of the test suite and not run by CI, as the others are not.
 
 ## What a run leaves behind
 
-The numbers are written to `results/04-pure-python.json` as this finishes,
-and `scripts/render.py` writes the page beside it from that file
-alone. So the prose around a table is rewritten and re-published
-without a machine and without a number being retyped: measuring and
-publishing are two commands.
+The numbers are saved as this finishes, where CONTRIBUTING.md's
+*Publishing a run, which is a second command* says, and
+`scripts/render.py` writes the page beside them from that file alone. So
+the prose around a table is rewritten and re-published without a machine
+and without a number being retyped: measuring and publishing are two
+commands.
 """
 
 from __future__ import annotations
@@ -168,6 +169,7 @@ from btclib_benchmarks._results import (
     rendered_provenance,
     rendered_table,
     save,
+    saved_line,
     taken_now,
     width_for,
 )
@@ -185,9 +187,10 @@ def provenance() -> Provenance:
     says Python on a row that loaded a shared object being worse than no
     benchmark. Sorted newest release first.
 
-    btclib's rows run `ecc` for the signatures and `btclib` for the
-    public key, so both have their row, and an install that is not the
-    declared one goes under the table.
+    btclib's rows run `ecc` for the signatures and `btclib` for the public
+    key, so both have their row. A package from neither an index nor git is
+    named under the table, and a git install in the `released` column, by
+    its ref and commit where no release is recorded for that commit.
     """
     held = "its delegation to btclib-secp256k1's cffi bindings switched off"
     rows = (
@@ -791,7 +794,7 @@ def main() -> None:
             tables=tables,
         )
     )
-    print(f"saved to {saved}", file=sys.stderr)
+    print(saved_line(saved), file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

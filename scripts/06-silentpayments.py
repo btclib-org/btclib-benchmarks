@@ -70,11 +70,12 @@ there is one comparand and every one of its five relevant calls has a row.
 
 ## What a run leaves behind
 
-The numbers are written to `results/06-silentpayments.json` as this
-finishes, and `scripts/render.py` writes the page beside it from that
-file alone. So the prose around a table is rewritten and re-published
-without a machine and without a number being retyped: measuring and
-publishing are two commands.
+The numbers are saved as this finishes, where CONTRIBUTING.md's
+*Publishing a run, which is a second command* says, and
+`scripts/render.py` writes the page beside them from that file alone. So
+the prose around a table is rewritten and re-published without a machine
+and without a number being retyped: measuring and publishing are two
+commands.
 """
 
 from __future__ import annotations
@@ -99,6 +100,7 @@ from btclib_benchmarks._results import (
     rendered_provenance,
     rendered_table,
     save,
+    saved_line,
     taken_now,
     width_for,
 )
@@ -328,7 +330,7 @@ def main() -> None:
             timing_note=[],
         )
     )
-    print(f"saved to {saved}", file=sys.stderr)
+    print(saved_line(saved), file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

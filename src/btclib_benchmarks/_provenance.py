@@ -20,8 +20,11 @@ produced it.
 from __future__ import annotations
 
 import json
+import re
+import tomllib
 from importlib.metadata import PackageNotFoundError, version
 from importlib.metadata import distribution as _distribution
+from importlib.metadata import distributions as _distributions
 from pathlib import Path
 
 # the platform an index will not serve, so a wheel tagged for it was built
@@ -37,6 +40,14 @@ from pathlib import Path
 # `manylinux_2_17_x86_64` contains this word, and a substring test called
 # every downloaded Linux wheel a local build
 NOT_FROM_AN_INDEX = "linux_"
+
+# the checkout's lock, which names the commit of each git source it pins
+LOCK_FILE = Path(__file__).resolve().parents[2] / "uv.lock"
+
+# this project's own distribution, which `uv sync` installs editable from
+# the checkout a run is taken from. It is not a comparand, and its install
+# says nothing about what a row times
+PROJECT = "btclib-benchmarks"
 
 
 def origin_of(dist_name: str) -> str:
@@ -63,14 +74,128 @@ def origin_of(dist_name: str) -> str:
     direct = json.loads(raw)
     url = direct.get("url", "")
     if "vcs_info" in direct:
-        vcs = direct["vcs_info"]
-        requested = vcs.get("requested_revision")
-        commit = (vcs.get("commit_id") or "")[:12]
-        ref = f"{requested}@{commit}" if requested else commit
+        ref = _revision(direct["vcs_info"])
         return f"{url.removeprefix('https://github.com/')} {ref}".strip()
     if direct.get("dir_info", {}).get("editable"):
         return f"editable: {url.removeprefix('file://')}"
     return f"local: {url.removeprefix('file://')}"
+
+
+def _revision(vcs: dict[str, str]) -> str:
+    """Return a git install's requested ref and its commit, `main@8720a7df02b0`.
+
+    The commit alone where no ref was requested: a commit pinned directly
+    has no branch or tag to name beside it.
+    """
+    requested = vcs.get("requested_revision")
+    commit = (vcs.get("commit_id") or "")[:12]
+    return f"{requested}@{commit}" if requested else commit
+
+
+def git_revision(dist_name: str) -> str | None:
+    """Return the ref and the commit a git install was built from, or nothing.
+
+    Nothing for an install from an index or from anywhere but git, and for a
+    name nothing installed. The commit is what names a git build: its
+    version is whatever that tree's metadata says, and nothing makes it
+    differ from the version of a release.
+    """
+    try:
+        raw = _distribution(dist_name).read_text("direct_url.json")
+    except PackageNotFoundError:
+        return None
+    vcs = None if raw is None else json.loads(raw).get("vcs_info")
+    return None if vcs is None else _revision(vcs)
+
+
+def _locked_commits(lock: Path) -> dict[str, str]:
+    """Return the commit `uv.lock` pins for each distribution it takes from git.
+
+    Nothing where there is no lock: every git install is then one the lock
+    did not ask for, which keeps such a run off a release page.
+    """
+    if not lock.is_file():
+        return {}
+    packages = tomllib.loads(lock.read_text(encoding="utf-8")).get("package", [])
+    return {
+        package["name"]: package["source"]["git"].rsplit("#", 1)[-1]
+        for package in packages
+        if "git" in package.get("source", {})
+    }
+
+
+def _normalized(name: str) -> str:
+    """Return a distribution name as PEP 503 and `uv.lock` spell it."""
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def _overlay(
+    name: str, raw: str | None, locked: dict[str, str]
+) -> tuple[str, str] | None:
+    """Return a git install the lock does not pin: its requirement, its ref.
+
+    Nothing for any other install, a git install at the commit the lock
+    pins included.
+    """
+    direct = {} if raw is None else json.loads(raw)
+    vcs = direct.get("vcs_info")
+    if vcs is None or locked.get(_normalized(name)) == vcs.get("commit_id"):
+        return None
+    commit = vcs.get("commit_id")
+    ref = vcs.get("requested_revision") or commit
+    return f"{name} @ {vcs['vcs']}+{direct['url']}@{commit}", ref
+
+
+def git_overlays(lock: Path) -> list[tuple[str, str]]:
+    """Return each git install `uv.lock` does not pin, and the ref it named.
+
+    These are the installs `uv run --with '<name> @ git+<url>@<branch>'`
+    lays over the locked environment. Each requirement is spelled as that
+    `--with` takes it, at the commit that was installed rather than the
+    branch, so that the command a run records installs the same builds
+    again; the ref, a branch or the commit itself, is returned beside it so
+    that the run can still name the branch. A git install at the commit the
+    lock pins, secp256k1lab's tag, is part of the locked environment and
+    not one of them.
+
+    Every distribution on the path is read, not only the comparands: a git
+    install of a dependency changes what a row times as much as one of the
+    package the row names.
+    """
+    locked = _locked_commits(lock)
+    found = {
+        _overlay(dist.metadata["Name"], dist.read_text("direct_url.json"), locked)
+        for dist in _distributions()
+    }
+    return sorted(overlay for overlay in found if overlay)
+
+
+def overlaid(dist_name: str) -> bool:
+    """Say whether a distribution is a git install `uv.lock` does not pin.
+
+    Asked only after `version` has answered for the same name.
+    """
+    raw = _distribution(dist_name).read_text("direct_url.json")
+    return _overlay(dist_name, raw, _locked_commits(LOCK_FILE)) is not None
+
+
+def direct_installs() -> list[str]:
+    """Return a line for each distribution from neither an index nor git.
+
+    These are the installs PEP 610 records with a `direct_url.json` and no
+    `vcs_info`: an editable or local directory, a local file, or an archive
+    at a URL. This project's own install is left out. Every distribution
+    on the path is read, as `git_overlays` reads them.
+    """
+    found = set()
+    for dist in _distributions():
+        name = dist.metadata["Name"]
+        raw = dist.read_text("direct_url.json")
+        direct = {} if raw is None else json.loads(raw)
+        url = str(direct.get("url", ""))
+        if raw and "vcs_info" not in direct and _normalized(name) != PROJECT:
+            found.add(f"  {name}: {url.removeprefix('file://')}")
+    return sorted(found)
 
 
 def wheel_tags(dist_name: str) -> list[str] | None:
@@ -164,37 +289,38 @@ def _under_install_root(module_file: str) -> bool:
     )
 
 
-def from_a_declared_source(dist_name: str) -> bool:
-    """Say whether an install came from an index or from a pinned revision.
+def from_an_index_or_git(dist_name: str) -> bool:
+    """Say whether an install came from an index or from git, any commit.
 
-    Those are the two origins that need no saying, being what a declared
-    source gives: pyproject.toml names an index requirement or
-    `[tool.uv.sources]` names a revision, and either way the version number
-    beside the name carries it -- `secp256k1lab`'s says which, being the
-    version its own pyproject.toml carries at the tag pinned there where
-    a released comparand's is the one the index published. Printing them
-    is a parenthesis that never varies.
+    Those are the two origins a note under a table need not name. An index
+    install is what pyproject.toml asks for. A git install, the revision
+    `[tool.uv.sources]` pins or a branch installed over the top, is named
+    by the table's own `released` column, which `_releases.released` fills
+    with its ref and commit wherever no release is recorded for that
+    commit. `describe` has no such column, and names a git install the
+    lock does not pin itself.
 
-    What is not declared is a path installed over the top, and that is
-    worth a line of its own. No `PackageNotFoundError` to catch here: this
-    is asked only after `version` has already answered for the same name.
+    What is left is an install from neither an index nor git, a path or an
+    archive at a URL, and that is worth a line of its own. No
+    `PackageNotFoundError` to catch here: this is asked only after `version`
+    has already answered for the same name.
     """
     raw = _distribution(dist_name).read_text("direct_url.json")
     return raw is None or "vcs_info" in json.loads(raw)
 
 
 def undeclared(*dist_names: str) -> list[str]:
-    """Return a line for each distribution not from a declared source.
+    """Return a line for each distribution from neither an index nor git.
 
-    A path installed over the top is what a reader has to act on, and the
-    distribution whose code a row times is the one to ask about: btclib's
-    arithmetic is `ecc`'s and its BIP32 is `btclib-wallet`'s, so an
-    editable `btclib` beside released ones measures none of them.
+    Such an install is what a reader has to act on, and the distribution
+    whose code a row times is the one to ask about: btclib's arithmetic is
+    `ecc`'s and its BIP32 is `btclib-wallet`'s, so an editable `btclib`
+    beside released ones measures none of them.
     """
     return [
         f"  {dist_name}: {origin_of(dist_name)}"
         for dist_name in dist_names
-        if not from_a_declared_source(dist_name)
+        if not from_an_index_or_git(dist_name)
     ]
 
 
@@ -213,7 +339,10 @@ def describe(dist_name: str, module_file: str) -> str:
     reporting it at all: `editable:` and `local:` say a path was installed
     over the top, `sys.path:` says the import never reached the install,
     and a run showing any of the three is measuring something other than
-    what a `uv sync` produces.
+    what a `uv sync` produces. A git install the lock does not pin names
+    its repository, its ref and its commit, which is what a reader needs to
+    install that build again; the git revision the lock pins is what a
+    `uv sync` produces, and its line is the version alone.
 
     The origin is asked before the import path: an editable install's code
     sits outside every install directory by construction, so the other
@@ -223,7 +352,7 @@ def describe(dist_name: str, module_file: str) -> str:
         released = version(dist_name)
     except PackageNotFoundError:
         return f"{dist_name:<20}: not installed"
-    if not from_a_declared_source(dist_name):
+    if not from_an_index_or_git(dist_name) or overlaid(dist_name):
         return f"{dist_name:<20}: {released:<24} ({origin_of(dist_name)})"
     if not _under_install_root(module_file):
         return f"{dist_name:<20}: {released:<24} (sys.path: {module_file})"

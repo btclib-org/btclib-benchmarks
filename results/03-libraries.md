@@ -55,6 +55,7 @@ and no two are the same story:
 
 <!-- run: begin -->
 ```text
+mode    : release
 when    : 2026-10-30 19:36 +07 (12:36 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14

@@ -138,11 +138,12 @@ a laptop by more than most of the differences here.
 
 ## What a run leaves behind
 
-The numbers are written to `results/03-libraries.json` as this finishes,
-and `scripts/render.py` writes the page beside it from that file
-alone. So the prose around a table is rewritten and re-published
-without a machine and without a number being retyped: measuring and
-publishing are two commands.
+The numbers are saved as this finishes, where CONTRIBUTING.md's
+*Publishing a run, which is a second command* says, and
+`scripts/render.py` writes the page beside them from that file alone. So
+the prose around a table is rewritten and re-published without a machine
+and without a number being retyped: measuring and publishing are two
+commands.
 """
 
 from __future__ import annotations
@@ -200,6 +201,7 @@ from btclib_benchmarks._results import (
     rendered_provenance,
     rendered_table,
     save,
+    saved_line,
     taken_now,
     width_for,
 )
@@ -217,10 +219,11 @@ def provenance() -> Provenance:
     three of these packages reach for a C library at import and fall back to
     Python without saying so. Sorted newest release first.
 
-    btclib is three distributions: `ecc` holds the curve and the
-    signature schemes, `btclib-wallet` BIP32, and `btclib` the address
-    encodings. Each has its row, and an install that is not the declared one
-    goes under the table.
+    btclib is three distributions: `ecc` holds the curve and the signature
+    schemes, `btclib-wallet` BIP32, and `btclib` the address encodings. Each
+    has its row. A package from neither an index nor git is named under the
+    table, and a git install in the `released` column, by its ref and commit
+    where no release is recorded for that commit.
     """
     rows = (
         ("btclib", LIBSECP256K1),
@@ -1385,7 +1388,7 @@ def main() -> None:
             tables=tables,
         )
     )
-    print(f"saved to {saved}", file=sys.stderr)
+    print(saved_line(saved), file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are
