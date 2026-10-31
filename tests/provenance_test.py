@@ -138,6 +138,16 @@ def test_a_module_outside_an_install_root_is_reported_as_shadowing(
 
 INSTALLED = "/env/lib/python3.13/site-packages/pkg/__init__.py"
 
+# what uv writes for `<name> @ git+https://github.com/btclib-org/btclib@main`
+GIT_MAIN: dict[str, object] = {
+    "url": "https://github.com/btclib-org/btclib",
+    "vcs_info": {
+        "vcs": "git",
+        "requested_revision": "main",
+        "commit_id": "8720a7df02b05c1e14c720eaaea38d74160a86f3",
+    },
+}
+
 
 def test_a_declared_install_is_described_by_its_version_alone(
     monkeypatch: pytest.MonkeyPatch, fake_dist: InstallFake
@@ -155,18 +165,38 @@ def test_a_declared_install_is_described_by_its_version_alone(
     assert line == "btclib-secp256k1    : 0.8.0.1"
 
 
-def test_a_pinned_revision_is_also_described_by_its_version_alone(
+def test_a_git_install_is_described_by_its_ref_and_commit(
     monkeypatch: pytest.MonkeyPatch, fake_dist: InstallFake
 ) -> None:
-    """`[tool.uv.sources]` is a declaration too, and the version dates it."""
-    fake_dist(
-        {
-            "url": "https://github.com/btclib-org/btclib",
-            "vcs_info": {"vcs": "git", "commit_id": "0123456789abcdef"},
-        }
-    )
+    """A branch build carries whatever version its tree says, so it is named.
+
+    The version a branch's metadata carries can be a release's, and the
+    line would then read as that release.
+    """
+    fake_dist(GIT_MAIN)
     monkeypatch.setattr(_provenance, "version", lambda _: "2026.9")
-    assert _provenance.describe("btclib", INSTALLED) == "btclib              : 2026.9"
+    assert _provenance.describe("btclib", INSTALLED) == (
+        "btclib              : 2026.9                   "
+        "(btclib-org/btclib main@8720a7df02b0)"
+    )
+
+
+def test_git_revision_answers_for_a_git_install_and_for_nothing_else(
+    monkeypatch: pytest.MonkeyPatch, fake_dist: InstallFake
+) -> None:
+    """The ref and the commit of a git build, and nothing for any other."""
+    fake_dist(GIT_MAIN)
+    assert _provenance.git_revision("btclib") == "main@8720a7df02b0"
+    fake_dist(None)
+    assert _provenance.git_revision("btclib") is None
+    fake_dist({"url": "file:///home/dev/btclib", "dir_info": {"editable": True}})
+    assert _provenance.git_revision("btclib") is None
+
+    def absent(_: str) -> object:
+        raise PackageNotFoundError
+
+    monkeypatch.setattr(_provenance, "_distribution", absent)
+    assert _provenance.git_revision("nowhere") is None
 
 
 def test_a_path_install_is_named_in_the_line(
@@ -452,17 +482,26 @@ RUN_BY = [
 ]
 
 
-def _block_with_editable(page: str, dist_name: str | None) -> str:
-    """Return a page's packages block, one distribution installed editable."""
+class _FakeInstall:
+    """A distribution whose `direct_url.json` is a test's, and no `WHEEL`."""
+
+    def __init__(self, payload: dict[str, object] | None) -> None:
+        self.payload = payload
+
+    def read_text(self, filename: str) -> str | None:
+        """Answer `direct_url.json`, and nothing for any other file."""
+        if filename != "direct_url.json" or self.payload is None:
+            return None
+        return json.dumps(self.payload)
+
+
+def _block_with(page: str, dist_name: str | None, payload: dict[str, object]) -> str:
+    """Return a page's packages block, `dist_name` installed as `payload`."""
 
     def pick(name: str) -> object:
         # every other distribution is a released one, whatever the
         # environment the suite runs in has installed over the top
-        if name != dist_name:
-            return _FakeDistribution(None)
-        return _FakeDistribution(
-            {"url": f"file:///dev/{name}", "dir_info": {"editable": True}}
-        )
+        return _FakeInstall(payload if name == dist_name else None)
 
     benchmark = importlib.import_module(page)
     with pytest.MonkeyPatch.context() as patch:
@@ -470,9 +509,18 @@ def _block_with_editable(page: str, dist_name: str | None) -> str:
         # the module of an editable install is in the working tree, outside
         # site-packages, and a page that reads `__file__` must still say so
         module = sys.modules.get((dist_name or "").replace("-", "_"))
-        if module is not None:
+        if module is not None and "dir_info" in payload:
             patch.setattr(module, "__file__", f"/dev/{dist_name}/__init__.py")
         return _results.rendered_provenance(benchmark.provenance())
+
+
+def _block_with_editable(page: str, dist_name: str | None) -> str:
+    """Return a page's packages block, one distribution installed editable."""
+    editable: dict[str, object] = {
+        "url": f"file:///dev/{dist_name}",
+        "dir_info": {"editable": True},
+    }
+    return _block_with(page, dist_name, editable)
 
 
 @pytest.mark.parametrize("page, dist_name", RUN_BY)
@@ -486,3 +534,107 @@ def test_an_editable_install_of_a_package_a_page_runs_is_named_on_it(
     """
     assert "editable:" not in _block_with_editable(page, None)
     assert f"editable: /dev/{dist_name}" in _block_with_editable(page, dist_name)
+
+
+@pytest.mark.parametrize(
+    "page, dist_name",
+    [*RUN_BY, ("01-libsecp256k1", "btclib-secp256k1"), ("03-libraries", "embit")],
+)
+def test_a_git_install_of_a_package_a_page_runs_is_named_on_it(
+    page: str, dist_name: str
+) -> None:
+    """A default-branch run names the branch and the commit of what it built.
+
+    Its line or row carries `main@<commit>`, whatever version the branch's
+    metadata carries, and every other package stays as it was in the block
+    with nothing swapped. `embit` is a comparand outside btclib-org.
+    """
+    released = _block_with(page, None, GIT_MAIN).split("\n")
+    branch = _block_with(page, dist_name, GIT_MAIN).split("\n")
+    assert "main@" not in "\n".join(released)
+    named = [line for line in branch if "main@8720a7df02b0" in line]
+    assert len(named) == 1
+    assert named[0].split()[0] == dist_name
+    # the rest are the released block's own lines, compared word by word: a
+    # wider cell re-pads its column, and the row it sits in sorts elsewhere
+    assert sorted(line.split() for line in branch if line not in named) == sorted(
+        line.split() for line in released if line.split()[:1] != [dist_name]
+    )
+
+
+class _NamedDistribution(_FakeDistribution):
+    """A fake distribution with a name, as `distributions()` yields one."""
+
+    def __init__(self, name: str, payload: dict[str, object] | None) -> None:
+        super().__init__(payload)
+        self.metadata = {"Name": name}
+
+
+def _git(url: str, commit: str, requested: str | None = None) -> dict[str, object]:
+    """Return the `direct_url.json` of a git install."""
+    vcs: dict[str, str] = {"vcs": "git", "commit_id": commit}
+    if requested:
+        vcs["requested_revision"] = requested
+    return {"url": url, "vcs_info": vcs}
+
+
+LOCKED = "c0ffee" * 6 + "c0ff"
+
+
+def test_only_a_git_install_the_lock_does_not_pin_is_an_overlay(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The lock's own git source, an index install and a path install are not.
+
+    A branch is named by its ref and a pinned commit by itself, as `--with`
+    takes them, and a name the lock spells normalized still matches.
+    """
+    lock = tmp_path / "uv.lock"
+    lock.write_text(
+        "[[package]]\n"
+        'name = "secp256k1lab"\n'
+        'source = { git = "https://github.com/secp256k1lab/secp256k1lab'
+        f'?tag=v1.0.0#{LOCKED}" }}\n'
+        "[[package]]\n"
+        'name = "ecdsa"\n'
+        'source = { registry = "https://pypi.org/simple" }\n',
+        encoding="utf-8",
+    )
+    installed = [
+        _NamedDistribution(
+            "secp256k1lab",
+            _git("https://github.com/secp256k1lab/secp256k1lab", LOCKED, "v1.0.0"),
+        ),
+        _NamedDistribution("ecdsa", None),
+        _NamedDistribution("btclib", {"url": "file:///x", "dir_info": {}}),
+        _NamedDistribution(
+            "ecc", _git("https://github.com/btclib-org/ecc", "ab", "main")
+        ),
+        _NamedDistribution("embit", _git("https://github.com/x/embit", "cd")),
+    ]
+    monkeypatch.setattr(_provenance, "_distributions", lambda: installed)
+    assert _provenance.git_overlays(lock) == [
+        "ecc @ git+https://github.com/btclib-org/ecc@main",
+        "embit @ git+https://github.com/x/embit@cd",
+    ]
+    installed[0] = _NamedDistribution(
+        "secp256k1lab",
+        _git("https://github.com/secp256k1lab/secp256k1lab", "ef", "master"),
+    )
+    assert "secp256k1lab" in _provenance.git_overlays(lock)[-1]
+
+
+def test_without_a_lock_every_git_install_is_an_overlay(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """With nothing pinned, the lock's own git source is laid over nothing."""
+    installed = [
+        _NamedDistribution(
+            "secp256k1lab",
+            _git("https://github.com/secp256k1lab/secp256k1lab", LOCKED, "v1.0.0"),
+        )
+    ]
+    monkeypatch.setattr(_provenance, "_distributions", lambda: installed)
+    assert _provenance.git_overlays(tmp_path / "absent.lock") == [
+        "secp256k1lab @ git+https://github.com/secp256k1lab/secp256k1lab@v1.0.0"
+    ]

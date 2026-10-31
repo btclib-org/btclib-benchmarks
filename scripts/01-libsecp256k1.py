@@ -324,11 +324,12 @@ a machine whose state they know.
 
 ## What a run leaves behind
 
-The numbers are written to `results/01-libsecp256k1.json` as this
-finishes, and `scripts/render.py` writes the page beside it from that file
-alone. So the prose around a table is rewritten and re-published
-without a machine and without a number being retyped: measuring and
-publishing are two commands.
+The numbers are saved as this finishes, where CONTRIBUTING.md's
+*Publishing a run, which is a second command* says, and
+`scripts/render.py` writes the page beside them from that file alone. So
+the prose around a table is rewritten and re-published without a machine
+and without a number being retyped: measuring and publishing are two
+commands.
 """
 
 from __future__ import annotations
@@ -351,10 +352,15 @@ from btclib_benchmarks import _inputs
 from btclib_benchmarks._provenance import (
     built_here,
     from_a_declared_source,
+    git_revision,
     origin_of,
     wheel_tags,
 )
-from btclib_benchmarks._releases import LIBSECP256K1_PINS, RELEASE_DATES
+from btclib_benchmarks._releases import (
+    LIBSECP256K1_PINS,
+    build_of,
+    released,
+)
 from btclib_benchmarks._results import (
     Measurement,
     Provenance,
@@ -397,28 +403,21 @@ def _build_of(dist_name: str) -> str:
     The answer then is a string no record in `_releases.py` is keyed by, so
     both columns say `unrecorded` rather than pick between two libraries.
     """
-    if dist_name not in RELEASE_DATES:
-        # the branch and the commit, without the repository the package
-        # column has already named
-        return origin_of(dist_name).split()[-1]
-    released = version(dist_name)
-    if dist_name not in INDEX_WHEELS:
-        return released
+    if git_revision(dist_name) is not None or dist_name not in INDEX_WHEELS:
+        return build_of(dist_name)
+    installed = version(dist_name)
     if any(tag in INDEX_WHEELS[dist_name] for tag in wheel_tags(dist_name) or []):
-        return f"{released} wheel"
-    return f"{released} sdist" if built_here(dist_name) else "unrecorded"
+        return f"{installed} wheel"
+    return f"{installed} sdist" if built_here(dist_name) else "unrecorded"
 
 
 def _built_from(dist_name: str) -> str:
     """Say when this build was published, or where it came from instead.
 
-    `_releases.released` has the rule. This reads the record by `_build_of`
-    and not by version; a distribution with no record is named by its build.
+    `_releases.released` has the rule, and this reads the record by
+    `_build_of`, which tells the artifacts of one version apart.
     """
-    build = _build_of(dist_name)
-    if dist_name not in RELEASE_DATES:
-        return build
-    return RELEASE_DATES[dist_name].get(build, "unrecorded")
+    return released(dist_name, _build_of(dist_name))
 
 
 def _vendored_pin(dist_name: str) -> str:

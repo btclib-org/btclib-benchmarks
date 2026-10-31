@@ -24,6 +24,10 @@ from btclib_benchmarks import _results
 WIDTH = 8
 FIRST = "2026-01-01T10:00:00+00:00"
 AGAIN = "2026-01-01T10:30:00+00:00"
+COMMAND = (
+    "uv run --with 'a @ git+https://example.org/a@main'"
+    " --with 'b @ git+https://example.org/b@master' python scripts/00-x.py"
+)
 
 
 def _ratios(*rows: _results.Timing) -> _results.Ratios:
@@ -157,7 +161,8 @@ def _full() -> _results.Measurement:
     All three kinds of table, each in a group of its own; rows measured
     twice, with each dispersion, a deviation and an unavailable row; calls
     given with and without rounds, so that no count is shared by the page;
-    and a packages block with columns, beside one with notes alone.
+    a packages block with columns, beside one with notes alone; and a run at
+    a default branch, its command carrying two `--with`.
     """
     ratios = _results.Ratios(
         title="r",
@@ -206,11 +211,12 @@ def _full() -> _results.Measurement:
         timezone="UTC",
         python="3.13",
         method="m",
-        command="c",
+        command=COMMAND,
         machine="somewhere",
         when_again=AGAIN,
         commit="c0ffee",
         lock="10c4",
+        mode=_results.DEFAULT_BRANCH,
     )
     return _results.Measurement(
         benchmark="00-x",
@@ -239,6 +245,48 @@ def test_a_run_of_every_shape_is_rendered_in_every_block() -> None:
     for group in _results.groups_of(measurement):
         assert _results.rendered_group(measurement, group)
     assert _results.groups_of(measurement) == ["timed", "halves", "pairs", "paid"]
+
+
+def test_a_run_block_opens_with_its_mode() -> None:
+    """A release run and a default-branch run each name their mode first."""
+    release = _results.rendered_run(_measurement(twice=False)).splitlines()
+    assert release[0] == "mode    : release"
+    assert _results.rendered_run(_full()).splitlines()[0] == "mode    : default branch"
+
+
+def test_a_command_with_installs_is_one_line_per_install() -> None:
+    """Each `--with` continues the command on a line of its own."""
+    lines = _results._rendered_command(_full().run)
+    assert lines[0] == "command : uv run \\"
+    assert lines[1] == "  --with 'a @ git+https://example.org/a@main' \\"
+    assert lines[-1] == "  python scripts/00-x.py"
+    joined = " ".join(line.removesuffix(" \\").strip() for line in lines)
+    assert joined.removeprefix("command : ") == COMMAND
+
+
+def test_a_command_without_installs_is_one_line() -> None:
+    """A release run's command is printed as it was recorded."""
+    assert _results._rendered_command(_measurement(twice=False).run) == ["command : c"]
+
+
+def test_a_mode_this_module_does_not_know_is_refused() -> None:
+    """A run naming another mode has no directory to be saved in."""
+    run = _results.Run(
+        when=FIRST,
+        timezone="UTC",
+        python="3.13",
+        method="m",
+        command="c",
+        machine="somewhere",
+        mode="nightly",
+    )
+    with pytest.raises(ValueError, match="no mode"):
+        _results.Measurement(
+            benchmark="00-x",
+            run=run,
+            provenance=_results.Provenance(columns=[], rows=[]),
+            tables=[],
+        )
 
 
 def test_a_provenance_with_no_columns_is_its_notes() -> None:

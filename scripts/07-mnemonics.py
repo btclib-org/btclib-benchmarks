@@ -12,8 +12,9 @@ The entropy and the master secrets are read from the top of `_inputs`'
 pool. `tests/mnemonic_rows_test.py` checks every package's answers on
 these fixtures: no row checks what it returns.
 
-The numbers are written to `results/07-mnemonics.json` as this finishes,
-and `scripts/render.py` writes the page beside it from that file alone.
+The numbers are saved as this finishes, where CONTRIBUTING.md's
+*Publishing a run, which is a second command* says, and
+`scripts/render.py` writes the page beside them from that file alone.
 """
 
 from __future__ import annotations

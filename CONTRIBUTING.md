@@ -577,7 +577,23 @@ move either way — it is the first, and fixed, because a rule chosen once
 both passes are in hand is how a page comes to publish whichever of them
 flattered it.
 
-To measure a working tree instead of the published release:
+To time a comparand at its default branch instead of its release,
+install it from git, one `--with` for each package:
+
+```shell
+uv run \
+  --with 'ecc @ git+https://github.com/btclib-org/ecc@main' \
+  --with 'embit @ git+https://github.com/diybitcoinhardware/embit@master' \
+  python scripts/03-libraries.py
+```
+
+`--with` layers these installs over the locked environment, so every
+other comparand is still timed at its release. The default branch is the
+one `gh api repos/<owner>/<repo> --jq .default_branch` names: `main` for
+btclib-org's packages, `master` for embit's.
+
+To time a working tree, uncommitted changes included, install it
+editable instead:
 
 ```shell
 uv run --with-editable /path/to/ecc python scripts/03-libraries.py
@@ -585,13 +601,15 @@ uv run --with-editable /path/to/ecc python scripts/03-libraries.py
 
 Install the package whose code the rows time: `ecc` for the curve
 and the signature schemes, `btclib-wallet` for BIP32, `bip39-slip39` for
-the mnemonics, `btclib` for the rest. The packages block then says
-`editable: /path/to/ecc`, which is the point of printing it.
+the mnemonics, `btclib` for the rest. The packages block then names where
+it came from: a git install by its branch and commit, `main@<commit>`,
+which is what installs the same build again, and an editable one by its
+path, `editable: /path/to/ecc`.
 
 ### Publishing a run, which is a second command
 
 A run writes `results/<name>.json` as it finishes: every number, the
-packages block, and what the run block states — the clock, the
+packages block, and what the run block states — the mode, the clock, the
 interpreter, the machine, the method, this repository's commit and the
 SHA-256 of `uv.lock`. Nothing about the page is decided there. With no
 argument every page renders from its own run; naming one page renders
@@ -602,6 +620,16 @@ uv run python scripts/render.py
 uv run python scripts/render.py 05-key-reuse
 uv run python scripts/render.py --check
 ```
+
+A run with a git install that `uv.lock` does not pin, as the `--with`
+command in *Running a benchmark* makes, is a default-branch run. It is
+written to `results/default-branch/<name>.json` instead, and its page is
+`results/default-branch/<name>.md`, so it never replaces a release page.
+Its run block says `mode    : default branch`, and the command it records
+carries each `--with`. `render.py` renders both directories, a page in
+the second named as `default-branch/<name>`, and writes a default-branch
+page that does not exist yet with one paragraph pointing at the release
+page.
 
 `render.py` puts the numbers, the packages block and the run block into
 the page between the markers it carries, and touches nothing else in

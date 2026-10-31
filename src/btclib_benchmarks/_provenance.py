@@ -20,8 +20,11 @@ produced it.
 from __future__ import annotations
 
 import json
+import re
+import tomllib
 from importlib.metadata import PackageNotFoundError, version
 from importlib.metadata import distribution as _distribution
+from importlib.metadata import distributions as _distributions
 from pathlib import Path
 
 # the platform an index will not serve, so a wheel tagged for it was built
@@ -63,14 +66,83 @@ def origin_of(dist_name: str) -> str:
     direct = json.loads(raw)
     url = direct.get("url", "")
     if "vcs_info" in direct:
-        vcs = direct["vcs_info"]
-        requested = vcs.get("requested_revision")
-        commit = (vcs.get("commit_id") or "")[:12]
-        ref = f"{requested}@{commit}" if requested else commit
+        ref = _revision(direct["vcs_info"])
         return f"{url.removeprefix('https://github.com/')} {ref}".strip()
     if direct.get("dir_info", {}).get("editable"):
         return f"editable: {url.removeprefix('file://')}"
     return f"local: {url.removeprefix('file://')}"
+
+
+def _revision(vcs: dict[str, str]) -> str:
+    """Return a git install's requested ref and its commit, `main@8720a7df02b0`.
+
+    The commit alone where no ref was requested: a commit pinned directly
+    has no branch or tag to name beside it.
+    """
+    requested = vcs.get("requested_revision")
+    commit = (vcs.get("commit_id") or "")[:12]
+    return f"{requested}@{commit}" if requested else commit
+
+
+def git_revision(dist_name: str) -> str | None:
+    """Return the ref and the commit a git install was built from, or nothing.
+
+    Nothing for an install from an index or from a path, and for a name
+    nothing installed. The commit is what names a git build: its version is
+    whatever that tree's metadata says, and nothing makes it differ from the
+    version of a release.
+    """
+    try:
+        raw = _distribution(dist_name).read_text("direct_url.json")
+    except PackageNotFoundError:
+        return None
+    vcs = None if raw is None else json.loads(raw).get("vcs_info")
+    return None if vcs is None else _revision(vcs)
+
+
+def _locked_commits(lock: Path) -> dict[str, str]:
+    """Return the commit `uv.lock` pins for each distribution it takes from git.
+
+    Nothing where there is no lock: every git install is then one the lock
+    did not ask for, which keeps such a run off a release page.
+    """
+    if not lock.is_file():
+        return {}
+    packages = tomllib.loads(lock.read_text(encoding="utf-8")).get("package", [])
+    return {
+        package["name"]: package["source"]["git"].rsplit("#", 1)[-1]
+        for package in packages
+        if "git" in package.get("source", {})
+    }
+
+
+def git_overlays(lock: Path) -> list[str]:
+    """Return the requirement of each git install `uv.lock` does not pin.
+
+    These are the installs `uv run --with '<name> @ git+<url>@<branch>'`
+    lays over the locked environment, each spelled as that `--with` takes
+    it, so that the command a run records installs them again. A git
+    install at the commit the lock pins, secp256k1lab's tag, is part of the
+    locked environment and not one of them.
+
+    Every distribution on the path is read, not only the comparands: a git
+    install of a dependency changes what a row times as much as one of the
+    package the row names.
+    """
+    locked = _locked_commits(lock)
+    found = set()
+    for dist in _distributions():
+        raw = dist.read_text("direct_url.json")
+        direct = {} if raw is None else json.loads(raw)
+        vcs = direct.get("vcs_info")
+        name = dist.metadata["Name"]
+        # the lock spells a name as PEP 503 normalizes it
+        normalized = re.sub(r"[-_.]+", "-", name).lower()
+        if vcs is None or locked.get(normalized) == vcs.get("commit_id"):
+            continue
+        ref = vcs.get("requested_revision") or vcs.get("commit_id")
+        found.add(f"{name} @ {vcs['vcs']}+{direct['url']}@{ref}")
+    return sorted(found)
 
 
 def wheel_tags(dist_name: str) -> list[str] | None:
@@ -165,15 +237,14 @@ def _under_install_root(module_file: str) -> bool:
 
 
 def from_a_declared_source(dist_name: str) -> bool:
-    """Say whether an install came from an index or from a pinned revision.
+    """Say whether an install came from an index or from a git revision.
 
-    Those are the two origins that need no saying, being what a declared
-    source gives: pyproject.toml names an index requirement or
-    `[tool.uv.sources]` names a revision, and either way the version number
-    beside the name carries it -- `secp256k1lab`'s says which, being the
-    version its own pyproject.toml carries at the tag pinned there where
-    a released comparand's is the one the index published. Printing them
-    is a parenthesis that never varies.
+    Those are the two origins a note under a table need not name. An index
+    install is what pyproject.toml asks for. A git install, the revision
+    `[tool.uv.sources]` pins or a branch installed over the top, is named
+    by the table's own `released` column, which `_releases.released` fills
+    with its ref and commit wherever no release is recorded for that
+    commit. `describe` has no such column, and names a git install itself.
 
     What is not declared is a path installed over the top, and that is
     worth a line of its own. No `PackageNotFoundError` to catch here: this
@@ -213,7 +284,9 @@ def describe(dist_name: str, module_file: str) -> str:
     reporting it at all: `editable:` and `local:` say a path was installed
     over the top, `sys.path:` says the import never reached the install,
     and a run showing any of the three is measuring something other than
-    what a `uv sync` produces.
+    what a `uv sync` produces. A git install names its repository, its ref
+    and its commit, which is what a reader needs to install that build
+    again.
 
     The origin is asked before the import path: an editable install's code
     sits outside every install directory by construction, so the other
@@ -223,7 +296,7 @@ def describe(dist_name: str, module_file: str) -> str:
         released = version(dist_name)
     except PackageNotFoundError:
         return f"{dist_name:<20}: not installed"
-    if not from_a_declared_source(dist_name):
+    if not from_a_declared_source(dist_name) or git_revision(dist_name):
         return f"{dist_name:<20}: {released:<24} ({origin_of(dist_name)})"
     if not _under_install_root(module_file):
         return f"{dist_name:<20}: {released:<24} (sys.path: {module_file})"

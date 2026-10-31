@@ -7,12 +7,14 @@
 A run is dated, placed on a machine and written beside its page. The machine
 is asked of the platform and of `machine.toml`, and neither is the test
 machine's to decide: the platform and the file are replaced here, so that
-every branch is reached on whichever machine runs the suite.
+every branch is reached on whichever machine runs the suite. The same holds
+for the git installs that make a run a default-branch one.
 """
 
 from __future__ import annotations
 
 import hashlib
+import importlib
 import platform
 import shutil
 import sys
@@ -138,6 +140,81 @@ def test_a_saved_run_is_loaded_back_equal(
     written = _results.save(measurement)
     assert written == tmp_path / "00-x.json"
     assert _results.load("00-x") == measurement
+
+
+def _pairs_run(run: _results.Run) -> _results.Measurement:
+    """Return a run of one table of pairs, which needs no second pass."""
+    return _results.Measurement(
+        benchmark="00-x",
+        run=run,
+        provenance=_results.Provenance(columns=[], rows=[]),
+        tables=[
+            _results.Pairs(
+                title="p", columns=("a", "b"), rows=[_results.Pair("x", (1.0, 2.0))]
+            )
+        ],
+    )
+
+
+OVERLAY = "a @ git+https://example.org/a@main"
+
+
+def test_a_run_with_a_git_install_the_lock_does_not_pin_is_a_default_branch_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The mode follows the installs, and the command carries each `--with`."""
+    monkeypatch.setattr(_results, "git_overlays", lambda _: [OVERLAY])
+    run = _results.taken_now("scripts/00-x.py", "m")
+    assert run.mode == _results.DEFAULT_BRANCH
+    assert run.command == f"uv run --with '{OVERLAY}' python scripts/00-x.py"
+    monkeypatch.setattr(_results, "git_overlays", lambda _: [])
+    run = _results.taken_now("scripts/00-x.py", "m")
+    assert run.mode == _results.RELEASE
+    assert run.command == "uv run python scripts/00-x.py"
+
+
+def test_a_default_branch_run_never_replaces_a_release_run_or_page(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Saved and rendered, it lands in its own directory, the release untouched.
+
+    The release run and its page are compared byte for byte before and after,
+    and the default-branch page is created and names its mode.
+    """
+    render = importlib.import_module("render")
+    monkeypatch.setattr(_results, "RESULTS", tmp_path)
+    monkeypatch.setattr(_results, "git_overlays", lambda _: [])
+    release = _results.save(_pairs_run(_results.taken_now("scripts/00-x.py", "m")))
+    release.with_suffix(".md").write_text(
+        render.DEFAULT_BRANCH_PAGE.format(benchmark="00-x"), encoding="utf-8"
+    )
+    render.publish("00-x", check=False)
+    before = {path: path.read_bytes() for path in tmp_path.glob("00-x.*")}
+    monkeypatch.setattr(_results, "git_overlays", lambda _: [OVERLAY])
+    written = _results.save(_pairs_run(_results.taken_now("scripts/00-x.py", "m")))
+    assert written == tmp_path / "default-branch" / "00-x.json"
+    changed, _ = render.publish("00-x", _results.DEFAULT_BRANCH, check=False)
+    assert changed
+    assert {path: path.read_bytes() for path in tmp_path.glob("00-x.*")} == before
+    page = written.with_suffix(".md").read_text(encoding="utf-8")
+    assert "mode    : default branch" in page
+    assert "mode    : release" in release.with_suffix(".md").read_text(encoding="utf-8")
+    assert _results.saved_runs() == [
+        (_results.RELEASE, "00-x"),
+        (_results.DEFAULT_BRANCH, "00-x"),
+    ]
+
+
+def test_a_run_saved_under_another_modes_directory_is_refused(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A default-branch run moved beside the release runs is not read as one."""
+    monkeypatch.setattr(_results, "RESULTS", tmp_path)
+    monkeypatch.setattr(_results, "git_overlays", lambda _: [OVERLAY])
+    written = _results.save(_pairs_run(_results.taken_now("scripts/00-x.py", "m")))
+    written.rename(tmp_path / "00-x.json")
+    with pytest.raises(ValueError, match="default branch run"):
+        _results.load("00-x")
 
 
 def test_a_run_outside_a_checkout_records_no_commit(

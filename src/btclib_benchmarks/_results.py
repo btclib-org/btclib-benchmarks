@@ -6,8 +6,8 @@
 
 A measurement and the page about it are two different things, and only
 the first of them needs a machine. So a run is kept here as data: one
-JSON file per benchmark, beside the page it feeds, holding every number
-as measured and everything that page states about how -- the clock, the
+JSON file per benchmark and mode, beside the page it feeds, holding every
+number as measured and everything that page states about how -- the clock, the
 interpreter, the machine, what else was running on it.
 `scripts/render.py` builds the page from that file, so rewording a
 heading costs neither a fresh measurement, whose numbers are different,
@@ -48,6 +48,7 @@ import hashlib
 import json
 import math
 import platform
+import shlex
 import shutil
 import statistics
 import subprocess
@@ -57,7 +58,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS
+from btclib_benchmarks._provenance import WHAT_A_TIMING_CONTAINS, git_overlays
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -96,9 +97,20 @@ if TYPE_CHECKING:
 SCHEMA = 1
 
 # where a run is saved and where the page it feeds lives, which are one
-# directory: a measurement nobody can find beside its page is a
-# measurement that gets taken again
+# directory, this one or a mode's under it (`MODE_DIRECTORIES`): a
+# measurement nobody can find beside its page is a measurement that gets
+# taken again
 RESULTS = Path(__file__).resolve().parent.parent.parent / "results"
+
+# the two modes a run is taken in. A release run times every comparand as
+# `uv.lock` installs it. A default-branch run has a git install laid over
+# that, one the lock does not pin, and is kept in a directory of its own:
+# saved beside the release run, it would replace the page README.md links.
+# A run file with no mode is a release run, which keeps the runs saved
+# before the mode was recorded the files they are
+RELEASE = "release"
+DEFAULT_BRANCH = "default branch"
+MODE_DIRECTORIES = {RELEASE: ".", DEFAULT_BRANCH: "default-branch"}
 
 # where a machine says what it is, when the run cannot work it out well
 # enough on its own. Everything else in the run block is taken where the
@@ -384,6 +396,10 @@ class Run:
     a script recorded it, or where git, its status or `uv.lock` did not
     answer, and the run block then says so. What a reader can check with
     them is README.md's *One run of each, published*.
+
+    `mode` is `RELEASE` or `DEFAULT_BRANCH`, and decides the directory the
+    run is saved in. `command` is what took the run, its `--with`
+    arguments included.
     """
 
     when: str
@@ -395,6 +411,7 @@ class Run:
     when_again: str | None = None
     commit: str | None = None
     lock: str | None = None
+    mode: str = RELEASE
 
 
 def page_of(script: str) -> str:
@@ -446,6 +463,9 @@ class Measurement:
         """
         if bool(self.run.when_again) != bool(_measured_twice(self.tables)):
             err_msg = f"{self.benchmark} records half of a second pass"
+            raise ValueError(err_msg)
+        if self.run.mode not in MODE_DIRECTORIES:
+            err_msg = f"{self.benchmark} records no mode this module knows"
             raise ValueError(err_msg)
 
 
@@ -603,19 +623,26 @@ def taken_now(
     instant it finished as the instant it happened. `again` is when the
     second pass began, and a run naming one without rows measured twice is
     refused by `Measurement` rather than published.
+
+    The mode is read from what is installed, not asked of the person
+    running: a git install the lock does not pin makes a default-branch
+    run, so that no such run is saved over a release run.
     """
     recorded = _machine_file()
     now = began or moment()
+    overlays = git_overlays(LOCK_FILE)
+    with_args = "".join(f"--with {shlex.quote(overlay)} " for overlay in overlays)
     return Run(
         when=now.isoformat(timespec="seconds"),
         timezone=now.tzname() or "local",
         python=platform.python_version(),
         method=method,
-        command=f"uv run python scripts/{Path(script).name}",
+        command=f"uv run {with_args}python scripts/{Path(script).name}",
         machine=recorded.get("machine") or _detected_machine(),
         when_again=None if again is None else again.isoformat(timespec="seconds"),
         commit=_commit(),
         lock=_lock(),
+        mode=DEFAULT_BRANCH if overlays else RELEASE,
     )
 
 
@@ -736,6 +763,7 @@ def _rendered_drift(measurement: Measurement) -> str | None:
 def rendered_run(measurement: Measurement) -> str:
     """Return the block naming when and where a run took place, and on what.
 
+    `mode` opens it, so that a page says whether it is a release run.
     `commit` and `uv.lock` are printed as the run recorded them, and as
     `not recorded` where it did not; README.md's *One run of each,
     published* says what a reader can check with them.
@@ -757,6 +785,7 @@ def rendered_run(measurement: Measurement) -> str:
     when = datetime.fromisoformat(run.when)
     utc = when.astimezone(UTC)
     lines = [
+        labelled("mode", run.mode),
         labelled("when", f"{when:%Y-%m-%d %H:%M} {run.timezone} ({utc:%H:%M} UTC)"),
         labelled("machine", run.machine),
         labelled("python", run.python),
@@ -1004,12 +1033,29 @@ def rendered_method(measurement: Measurement) -> str:
     are one block.
     """
     run = measurement.run
-    lines = [
-        "\n".join([labelled("method", run.method), labelled("command", run.command)])
-    ]
+    lines = ["\n".join([labelled("method", run.method), *_rendered_command(run)])]
     if measurement.timing_note:
         lines.append("\n".join(measurement.timing_note))
     return "\n\n".join(lines)
+
+
+def _rendered_command(run: Run) -> list[str]:
+    """Return the command's lines: one, or one per `--with` it carries.
+
+    A `--with` names a URL, which no width can be imposed on, so each goes
+    on a line of its own, continued as a shell continues one, and only the
+    first line is held to `LINE`.
+    """
+    words = shlex.split(run.command)
+    if "--with" not in words:
+        return [labelled("command", run.command)]
+    lines = [labelled("command", " ".join(words[:2]))]
+    rest = words[2:]
+    while rest[0] == "--with":
+        lines.append(f"  --with {shlex.quote(rest[1])}")
+        rest = rest[2:]
+    lines.append(f"  {shlex.join(rest)}")
+    return [f"{line} \\" for line in lines[:-1]] + lines[-1:]
 
 
 def rendered_group(measurement: Measurement, group: str) -> str:
@@ -1193,6 +1239,7 @@ def as_json(measurement: Measurement) -> dict[str, object]:
             **({} if run.when_again is None else {"when_again": run.when_again}),
             **({} if run.commit is None else {"commit": run.commit}),
             **({} if run.lock is None else {"lock": run.lock}),
+            **({} if run.mode == RELEASE else {"mode": run.mode}),
         },
         "provenance": {
             "columns": measurement.provenance.columns,
@@ -1235,14 +1282,27 @@ def from_json(saved: dict[str, object]) -> Measurement:
     )
 
 
-def saved_run(benchmark: str) -> Path:
-    """Return where one benchmark's run is written and read back."""
-    return RESULTS / f"{benchmark}.json"
+def saved_run(benchmark: str, mode: str = RELEASE) -> Path:
+    """Return where one benchmark's run in one mode is written and read back.
+
+    The page it feeds is the same path with `.md` for `.json`.
+    """
+    return RESULTS / MODE_DIRECTORIES[mode] / f"{benchmark}.json"
+
+
+def saved_runs() -> list[tuple[str, str]]:
+    """Return the mode and the benchmark of every saved run, release first."""
+    return [
+        (mode, path.stem)
+        for mode in MODE_DIRECTORIES
+        for path in sorted(saved_run("*", mode).parent.glob("*.json"))
+    ]
 
 
 def save(measurement: Measurement) -> Path:
     """Write the run beside the page it feeds, and return where it went."""
-    path = saved_run(measurement.benchmark)
+    path = saved_run(measurement.benchmark, measurement.run.mode)
+    path.parent.mkdir(exist_ok=True)
     path.write_text(
         json.dumps(as_json(measurement), indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -1250,7 +1310,16 @@ def save(measurement: Measurement) -> Path:
     return path
 
 
-def load(benchmark: str) -> Measurement:
-    """Read back one saved run, which is all a re-render is given."""
-    path = saved_run(benchmark)
-    return from_json(json.loads(path.read_text(encoding="utf-8")))
+def load(benchmark: str, mode: str = RELEASE) -> Measurement:
+    """Read back one saved run, which is all a re-render is given.
+
+    A run whose recorded mode is not its directory's is refused: rendered,
+    a default-branch run moved beside the release runs would publish as a
+    release page.
+    """
+    path = saved_run(benchmark, mode)
+    measurement = from_json(json.loads(path.read_text(encoding="utf-8")))
+    if measurement.run.mode != mode:
+        err_msg = f"{path} records a {measurement.run.mode} run, not a {mode} run"
+        raise ValueError(err_msg)
+    return measurement

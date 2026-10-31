@@ -115,10 +115,11 @@ while btclib does not import it, and not for the second, which
 - **`vectors/`** — vendored, static, read by `tests/vectors_test.py` and
   by every benchmark's own fixtures; `vectors/README.md` says where each
   file came from.
-- **`results/`** — one JSON and one Markdown page per benchmark, written
-  by a person running a script and `scripts/render.py` in turn, never by
-  a workflow: `CONTRIBUTING.md`'s *What the suite can and cannot check* is
-  why nothing here times anything on a schedule.
+- **`results/`** — one JSON and one Markdown page per benchmark, and under
+  `results/default-branch/` one of each per benchmark run at a default
+  branch, written by a person running a script and `scripts/render.py` in
+  turn, never by a workflow: `CONTRIBUTING.md`'s *What the suite can and
+  cannot check* is why nothing here times anything on a schedule.
 - **`.inputs/`** — the derived key and message pool, gitignored, rebuilt
   from `_inputs.SEED` on a machine that has not run a benchmark yet.
 - **`results/machine.toml`** — the one line a process may get wrong about

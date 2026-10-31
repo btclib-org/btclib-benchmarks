@@ -138,11 +138,12 @@ a laptop by more than most of the differences here.
 
 ## What a run leaves behind
 
-The numbers are written to `results/03-libraries.json` as this finishes,
-and `scripts/render.py` writes the page beside it from that file
-alone. So the prose around a table is rewritten and re-published
-without a machine and without a number being retyped: measuring and
-publishing are two commands.
+The numbers are saved as this finishes, where CONTRIBUTING.md's
+*Publishing a run, which is a second command* says, and
+`scripts/render.py` writes the page beside them from that file alone. So
+the prose around a table is rewritten and re-published without a machine
+and without a number being retyped: measuring and publishing are two
+commands.
 """
 
 from __future__ import annotations

@@ -26,6 +26,7 @@ backend.
 
 <!-- run: begin -->
 ```text
+mode    : release
 when    : 2026-10-30 19:55 +07 (12:55 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14

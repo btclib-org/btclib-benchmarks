@@ -68,15 +68,16 @@ requires-python = ">=3.11"
 # this inherits: the premise of the comparison is whatever `pip install`
 # currently gives a user, so a new release is to be picked up and
 # measured rather than refused. Each floor is the oldest release
-# `deps-oldest` runs the suite against; the provenance block of a page
-# under `results/` names the releases that page was measured at.
+# `deps-oldest` runs the suite against; the provenance block of a release
+# page, directly under `results/`, names the releases that page was
+# measured at.
 #
 # `btclib` and `btclib_secp256k1` are comparands too, at their published
 # releases and not a checkout: what `pip install btclib[secp256k1]` gives
 # is what an end user gets, and that is the only performance an end user
-# has. Measuring a working tree instead is a different question, and
-# README.md's *Measuring a working tree instead of a release* says how to
-# ask it without making it the default.
+# has. Measuring a default branch or a working tree instead is a different
+# question, and README.md's *Measuring a default branch or a working tree*
+# says how to ask it without making it the default.
 dependencies = [
     # where a public key is `PrvKeyData(q).pub.sec`: it has no
     # `btclib.to_pub_key`. The first release that reaches the bindings
