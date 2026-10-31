@@ -6,13 +6,16 @@
 
     uv run python scripts/render.py            # every page, from its run
     uv run python scripts/render.py 05-key-reuse   # one of them
+    uv run python scripts/render.py default-branch/05-key-reuse
     uv run python scripts/render.py --check    # say what is stale, write none
 
-A benchmark writes `results/<name>.json` when it is run. This reads that
-file and puts its three blocks into `results/<name>.md`, between the
-markers the page carries. Everything else in the page -- the headings,
-the paragraph explaining what a column means, the analysis under the
-numbers -- is prose somebody wrote, and this never touches it.
+A benchmark writes `results/<name>.json` when it is run, or
+`results/default-branch/<name>.json` for a run at a default branch
+(`_results.taken_now` says which). This reads that file and puts its
+three blocks into the `.md` page beside it, between the markers the page
+carries. Everything else in the page -- the headings, the paragraph
+explaining what a column means, the analysis under the numbers -- is
+prose somebody wrote, and this never touches it.
 
 That separation is the point. Rewording a heading otherwise costs either
 a run of the benchmark, which produces different numbers on a machine in
@@ -59,7 +62,7 @@ import sys
 from pathlib import Path
 
 from btclib_benchmarks import _results
-from btclib_benchmarks._results import RESULTS, Measurement
+from btclib_benchmarks._results import DEFAULT_BRANCH, RELEASE, Measurement
 
 # where the benchmarks are, this file sitting beside them. Read as text
 # and never imported, which is the paragraph above
@@ -84,6 +87,42 @@ REGIONS = ("provenance", "run", "output", "method")
 # number on the page and having no single block to sit above once the
 # tables are six of them
 TABLES_PREFIX = "tables: "
+
+# the page a default-branch run is first rendered into. Its prose points
+# at the release page, whose analysis is about other numbers and is not
+# copied. A brace that is not `{benchmark}` is doubled for `str.format`
+DEFAULT_BRANCH_PAGE = """\
+# At a default branch: {benchmark}
+
+A run with a comparand installed from git, at the ref its command names.
+The script, and the page of its release run:
+
+- `scripts/{benchmark}.py`
+- [`results/{benchmark}.md`][release]
+
+## The packages
+
+<!-- provenance: begin -->
+<!-- provenance: end -->
+
+## This run
+
+<!-- run: begin -->
+<!-- run: end -->
+
+## The benchmarks
+
+<!-- output: begin -->
+<!-- output: end -->
+
+[release]: ../{benchmark}.md
+
+<!-- The blocks above are rendered from the saved run beside this file,
+     and their columns are sized from what is in them, so MD013 does not
+     hold them to 80. A script's name follows the last space on its line,
+     so no name makes a line of prose fail MD013. -->
+<!-- markdownlint-configure-file {{ "MD013": {{ "code_blocks": false }} }} -->
+"""
 
 
 def _fenced(block: str) -> list[str]:
@@ -227,40 +266,68 @@ def table_drift(benchmark: str, measurement: Measurement) -> list[str]:
     ]
 
 
-def publish(benchmark: str, *, check: bool) -> tuple[bool, list[str]]:
+def publish(
+    benchmark: str, mode: str = RELEASE, *, check: bool
+) -> tuple[bool, list[str]]:
     """Write one page from its saved run; say what it had changed, and drifted.
 
     Returned rather than announced here, so that `--check` and a real
     render are the same walk over the same pages and cannot disagree
     about what is stale -- which is why the drift lines come back the same
     way rather than being printed only under `--check`.
+
+    A release page is never created: one that is missing is a mistake. A
+    default-branch page that is missing is rendered from
+    `DEFAULT_BRANCH_PAGE`, and `--check` calls it stale.
     """
-    page = RESULTS / f"{benchmark}.md"
-    was = page.read_text(encoding="utf-8")
-    measurement = _results.load(benchmark)
-    now = rendered_page(was, measurement)
+    run = _results.saved_run(benchmark, mode)
+    page = run.with_suffix(".md")
+    measurement = _results.load(benchmark, mode)
+    if mode == RELEASE or page.is_file():
+        was = page.read_text(encoding="utf-8")
+        now = rendered_page(was, measurement)
+    else:
+        was = ""
+        now = rendered_page(
+            DEFAULT_BRANCH_PAGE.format(benchmark=benchmark), measurement
+        )
     if now != was and not check:
         page.write_text(now, encoding="utf-8")
     return now != was, table_drift(benchmark, measurement)
 
 
-def main(arguments: list[str]) -> int:
-    """Render the pages named, or every page that has a saved run.
+def _named(argument: str) -> tuple[str, str]:
+    """Return the mode and the benchmark one argument names.
 
-    A name is a benchmark's, and a path to either of its two files is
-    taken as that name: `results/05-key-reuse.md` is what tab completion
-    offers, and refusing it would be a puzzle rather than a rule.
+    A path to either of a run's two files is taken as that name:
+    `results/05-key-reuse.md` is what tab completion offers, and refusing
+    it would be a puzzle rather than a rule. A name whose directory is
+    `default-branch` is that mode's run.
     """
+    path = Path(argument)
+    directory = _results.MODE_DIRECTORIES[DEFAULT_BRANCH]
+    return (DEFAULT_BRANCH if path.parent.name == directory else RELEASE), path.stem
+
+
+def main(arguments: list[str]) -> int:
+    """Render the pages named, or every page that has a saved run."""
     check = "--check" in arguments
-    named = [Path(argument).stem for argument in arguments if argument[:1] != "-"]
-    benchmarks = named or sorted(path.stem for path in RESULTS.glob("*.json"))
+    named = [_named(argument) for argument in arguments if argument[:1] != "-"]
+    pages = named or _results.saved_runs()
+    labels = [
+        benchmark
+        if mode == RELEASE
+        else f"{_results.MODE_DIRECTORIES[mode]}/{benchmark}"
+        for mode, benchmark in pages
+    ]
+    width = max([24, *(len(label) + 2 for label in labels)])
     stale = []
-    for benchmark in benchmarks:
-        changed, drifted = publish(benchmark, check=check)
+    for (mode, benchmark), label in zip(pages, labels, strict=True):
+        changed, drifted = publish(benchmark, mode, check=check)
         if changed:
-            stale.append(benchmark)
+            stale.append(label)
         said = ("stale" if check else "written") if changed else "up to date"
-        print(f"{benchmark:<24}{said}")
+        print(f"{label:<{width}}{said}")
         for line in drifted:
             print(line)
     if stale and check:

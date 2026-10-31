@@ -12,8 +12,9 @@ The entropy and the master secrets are read from the top of `_inputs`'
 pool. `tests/mnemonic_rows_test.py` checks every package's answers on
 these fixtures: no row checks what it returns.
 
-The numbers are written to `results/07-mnemonics.json` as this finishes,
-and `scripts/render.py` writes the page beside it from that file alone.
+The numbers are saved as this finishes, where CONTRIBUTING.md's
+*Publishing a run, which is a second command* says, and
+`scripts/render.py` writes the page beside them from that file alone.
 """
 
 from __future__ import annotations
@@ -43,6 +44,7 @@ from btclib_benchmarks._results import (
     rendered_provenance,
     rendered_table,
     save,
+    saved_line,
     taken_now,
     width_for,
 )
@@ -59,8 +61,9 @@ def provenance() -> Provenance:
     the same requirement and resolve in silence. Every row runs Python code
     over the standard library alone, each seed and each share encryption
     through `hashlib.pbkdf2_hmac`, so no column names a backend. Sorted
-    newest release first; an install that is not the declared one goes
-    under the table.
+    newest release first. A package from neither an index nor git is named
+    under the table, and a git install in the `released` column, by its ref
+    and commit where no release is recorded for that commit.
     """
     packages = ("bip39-slip39", "mnemonic", "shamir-mnemonic", "embit")
     return Provenance(
@@ -434,7 +437,7 @@ def main() -> None:
             tables=tables,
         )
     )
-    print(f"saved to {saved}", file=sys.stderr)
+    print(saved_line(saved), file=sys.stderr)
 
 
 # a guard rather than bare module-level calls: the helpers above are

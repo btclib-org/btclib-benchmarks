@@ -14,6 +14,7 @@ btclib-secp256k1    : 0.8.0.13
 
 <!-- run: begin -->
 ```text
+mode    : release
 when    : 2026-10-30 19:25 +07 (12:25 UTC)
 machine : Apple M5, macOS 26.6 (build 25G72), arm64
 python  : 3.13.14

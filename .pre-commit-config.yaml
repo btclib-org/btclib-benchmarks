@@ -107,7 +107,7 @@ repos:
         # prettier below is given that directory and fails on what it
         # cannot parse, which is the question this hook asks. What
         # check-json reaches instead is
-        # `results/*.json`, `vectors/*.json` and .claude/settings.json,
+        # `results/**/*.json`, `vectors/*.json` and .claude/settings.json,
         # none of them jsonc and none of them under prettier's `files`
         # allowlist -- so this is the only parser in the gate for the
         # first two, and the one pretty-format-json below shares the third
@@ -115,7 +115,7 @@ repos:
         exclude: ^\.vscode/
       # pretty-format-json reaches the json written by hand, which is
       # .claude/settings.json, and the exclude keeps it off the rest for a
-      # reason that is not the one above: `results/*.json` is
+      # reason that is not the one above: `results/**/*.json` is
       # `src/btclib_benchmarks/_results.py`'s output (json.dumps(...,
       # indent=2, ensure_ascii=False), read there), so a formatter with
       # its own idea of indent or key order is a second writer of a file
@@ -642,7 +642,7 @@ repos:
       # `--check` and never the write. Rendering in CI would be the coupling
       # the split between measuring and publishing exists to remove, a
       # heading's rewording put behind a machine. This reads a JSON file and
-      # a markdown file per script under results/, imports no benchmark,
+      # a markdown file per saved run under results/, imports no benchmark,
       # compiles no comparand, takes no measurement and writes nothing --
       # the same category as asking a formatter whether the file it would
       # write is the file that is there, which several hooks above already

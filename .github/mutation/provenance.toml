@@ -5,13 +5,15 @@
 # one script built entirely on top of it, declared dependencies in and one
 # line per comparand out.
 #
-# `test_an_editable_install_of_a_package_a_page_runs_is_named_on_it` is
-# excluded from the test command below. It imports benchmark scripts,
-# which runs their fixtures, and is most of what the test command costs:
-# with it, the baseline takes longer than the timeout on CI (issue #484).
-# The rest of the command kills every mutant it kills: a session with and
-# without it kills the same mutants and leaves the same equivalent ones
-# listed below.
+# `test_an_editable_install_of_a_package_a_page_runs_is_named_on_it` and
+# `test_a_git_install_of_a_package_a_page_runs_is_named_on_it` are excluded
+# from the test command below, by the words their names share. They import
+# benchmark scripts, which runs their fixtures, and are most of what the
+# test command costs: with the first, the baseline takes longer than the
+# timeout on CI (issue #484). The rest of the command kills every mutant
+# the first kills: a session with and without it kills the same mutants
+# and leaves the same equivalent ones listed below. No session has been
+# compared with and without the second.
 
 [cosmic-ray]
 module-path = [
@@ -19,7 +21,7 @@ module-path = [
     "scripts/artifacts.py",
 ]
 
-test-command = "python -m pytest -x -q -n0 -p no:randomly --no-cov -k 'not test_an_editable_install_of_a_package_a_page_runs_is_named_on_it' tests/provenance_test.py tests/artifacts_test.py"
+test-command = "python -m pytest -x -q -n0 -p no:randomly --no-cov -k 'not a_package_a_page_runs_is_named_on_it' tests/provenance_test.py tests/artifacts_test.py"
 
 timeout = 60
 
@@ -27,10 +29,9 @@ excluded-modules = []
 
 # Both modules carry `from __future__ import annotations` (PEP 563), so an
 # annotation's own operators are strings Python never evaluates -- the same
-# argument inputs.toml makes, for the two `X | None` returns this module
-# declares (`wheel_tags`, `described`'s `dates` parameter). Measured:
-# `grep -n '|' src/btclib_benchmarks/_provenance.py` answers with exactly
-# those two lines
+# argument inputs.toml makes, for the `X | None` annotations this module
+# declares. Measured: every line `grep -n '|'
+# src/btclib_benchmarks/_provenance.py` answers with is such an annotation
 [cosmic-ray.filters.operators-filter]
 exclude-operators = ["core/ReplaceBinaryOperator_BitOr_.*"]
 

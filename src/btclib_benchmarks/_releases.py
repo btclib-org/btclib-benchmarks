@@ -9,7 +9,8 @@ vendors can be read from an installed package, so a person reads them from
 the index and the sources and writes them down here. Each is keyed by the
 build it was read for, and any other build is `unrecorded`, so an upgraded
 comparand says it has outgrown its record rather than going on printing a
-fact that has stopped being true. A pinned wrapper needs its date and its
+fact that has stopped being true. A git build no record names prints its
+ref and commit instead. A pinned wrapper needs its date and its
 pin, both here.
 """
 
@@ -17,7 +18,7 @@ from __future__ import annotations
 
 from importlib.metadata import version
 
-from btclib_benchmarks._provenance import origin_of
+from btclib_benchmarks._provenance import git_revision, origin_of
 
 # When each of these builds was published, read from the index -- where
 # `uv.lock` keeps it too, an `upload-time` per artifact -- and recorded
@@ -30,11 +31,12 @@ from btclib_benchmarks._provenance import origin_of
 # Keyed by build rather than by version, which for secp256k1 are not the
 # same thing: its sdist and the wheels re-published under that version
 # years afterwards are two builds, and a key by version would give the
-# sdist's date to an installed wheel. For every other distribution the
-# build is its version.
+# sdist's date to an installed wheel. A git install's build is its commit,
+# `build_of` below, and every other distribution's is its version.
 #
 # secp256k1lab is on no index and is taken from a git tag, which is still a
-# release someone cut on a day, so it is recorded like the rest.
+# release someone cut on a day, so it is recorded like the rest, by the
+# commit of the tag `[tool.uv.sources]` pins.
 RELEASE_DATES: dict[str, dict[str, str]] = {
     "base58-bech32": {"2026.10.23": "2026-10-23"},
     "bip39-slip39": {"2026.10.24": "2026-10-24"},
@@ -60,7 +62,7 @@ RELEASE_DATES: dict[str, dict[str, str]] = {
     "pycoin": {"0.92718.20260405": "2026-04-05"},
     "python-bitcoinlib": {"0.12.2": "2023-06-03"},
     "secp256k1": {"0.14.0 wheel": "2026-01-29", "0.14.0 sdist": "2021-11-06"},
-    "secp256k1lab": {"1.0.0": "2025-03-26"},
+    "secp256k1lab": {"44dc4bd893b8": "2025-03-26"},
     "shamir-mnemonic": {"0.3.0": "2024-05-16"},
     "starkbank-ecdsa": {"2.3.1": "2026-04-23"},
 }
@@ -108,18 +110,37 @@ LIBSECP256K1_PINS: dict[str, dict[str, str]] = {
 }
 
 
-def released(dist_name: str) -> str:
+def build_of(dist_name: str) -> str:
+    """Return what identifies an installed build: a commit, or a version.
+
+    The commit for a git install, whose version is whatever the tree's
+    metadata says and can be a release's: keyed by version, a branch
+    installed at a released version would be given that release's date.
+    The version for every other install.
+    """
+    revision = git_revision(dist_name)
+    return version(dist_name) if revision is None else revision.split("@")[-1]
+
+
+def released(dist_name: str, build: str | None = None) -> str:
     """Say when this build was published, or where it came from instead.
+
+    `build` is the key the record is read by, `build_of` where none is
+    given; `01-libsecp256k1.py` passes the artifact it tells apart.
 
     A build resolved from a branch has no publish date to report -- a
     release that has not happened cannot be dated -- so the column names
     the branch and the commit instead, which is what a reader has to look
-    up to get that build again. A distribution with no entry here is treated
-    as that case. The build is the installed version, so a distribution
-    recorded by artifact, as `secp256k1` is, reads `unrecorded`.
+    up to get that build again. A git install whose commit is recorded, as
+    secp256k1lab's tag is, is dated like any release. A distribution with no
+    entry here is named by its origin. A recorded distribution at a build
+    the record was not read for, an upgraded release or one recorded by
+    artifact as `secp256k1` is, reads `unrecorded`.
     """
+    # the ref and the commit, without the repository the package column has
+    # already named
+    revision = git_revision(dist_name)
     if dist_name not in RELEASE_DATES:
-        # the branch and the commit, without the repository the package
-        # column has already named
-        return origin_of(dist_name).split()[-1]
-    return RELEASE_DATES[dist_name].get(version(dist_name), "unrecorded")
+        return revision or origin_of(dist_name).split()[-1]
+    date = RELEASE_DATES[dist_name].get(build or build_of(dist_name))
+    return date or revision or "unrecorded"

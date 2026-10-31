@@ -14,6 +14,7 @@ of them.
 
 from __future__ import annotations
 
+import dataclasses
 import importlib
 import json
 
@@ -24,6 +25,10 @@ from btclib_benchmarks import _results
 WIDTH = 8
 FIRST = "2026-01-01T10:00:00+00:00"
 AGAIN = "2026-01-01T10:30:00+00:00"
+COMMAND = (
+    "uv run --with 'a @ git+https://example.org/a@main'"
+    " --with 'b @ git+https://example.org/b@master' python scripts/00-x.py"
+)
 
 
 def _ratios(*rows: _results.Timing) -> _results.Ratios:
@@ -157,7 +162,8 @@ def _full() -> _results.Measurement:
     All three kinds of table, each in a group of its own; rows measured
     twice, with each dispersion, a deviation and an unavailable row; calls
     given with and without rounds, so that no count is shared by the page;
-    and a packages block with columns, beside one with notes alone.
+    a packages block with columns, beside one with notes alone; and a run at
+    a default branch, its command carrying two `--with`.
     """
     ratios = _results.Ratios(
         title="r",
@@ -206,11 +212,13 @@ def _full() -> _results.Measurement:
         timezone="UTC",
         python="3.13",
         method="m",
-        command="c",
+        command=COMMAND,
         machine="somewhere",
         when_again=AGAIN,
         commit="c0ffee",
         lock="10c4",
+        mode=_results.DEFAULT_BRANCH,
+        branches="a main\nb master",
     )
     return _results.Measurement(
         benchmark="00-x",
@@ -239,6 +247,117 @@ def test_a_run_of_every_shape_is_rendered_in_every_block() -> None:
     for group in _results.groups_of(measurement):
         assert _results.rendered_group(measurement, group)
     assert _results.groups_of(measurement) == ["timed", "halves", "pairs", "paid"]
+
+
+def test_a_run_block_opens_with_its_mode() -> None:
+    """Each run names its mode first, and a branch install its branch next."""
+    release = _results.rendered_run(_measurement(twice=False)).splitlines()
+    assert release[0] == "mode    : release"
+    lines = _results.rendered_run(_full()).splitlines()
+    assert lines[:3] == [
+        "mode    : default branch",
+        "branch  : a main",
+        "branch  : b master",
+    ]
+
+
+def test_a_branch_of_any_length_renders_inside_a_code_block() -> None:
+    """A branch name nobody here chose is printed whole, never refused.
+
+    Its line is in the run block's fence, which the default-branch page
+    exempts from MD013 as the release pages do.
+    """
+    render = importlib.import_module("render")
+    branch = (
+        "btclib-secp256k1 feature/a-rather-long-branch-name-for-the-bindings-rework"
+    )
+    assert len(branch) > 70
+    run = dataclasses.replace(_full().run, branches=branch)
+    measurement = dataclasses.replace(_full(), run=run)
+    page = render.rendered_page(
+        render.DEFAULT_BRANCH_PAGE.format(benchmark="00-x"), measurement
+    )
+    assert '"code_blocks": false' in page
+    lines = page.splitlines()
+    at = lines.index(f"branch  : {branch}")
+    assert len(lines[at]) > 80
+    # an odd number of fences above it: the line is inside one
+    assert sum(line.startswith("```") for line in lines[:at]) % 2 == 1
+    assert lines[at - 2] == "```text"
+
+
+def test_a_command_with_installs_is_one_line_per_install() -> None:
+    """Each `--with` continues the command on a line of its own."""
+    lines = _results._rendered_command(_full().run)
+    assert lines[0] == "command : uv run \\"
+    assert lines[1] == "  --with 'a @ git+https://example.org/a@main'\\"
+    assert lines[-1] == "  python scripts/00-x.py"
+    joined = " ".join(line.removesuffix("\\").strip() for line in lines)
+    assert joined.removeprefix("command : ") == COMMAND
+
+
+def _fails_md013(line: str) -> bool:
+    """Say whether markdownlint's MD013, at its defaults, refuses a line.
+
+    A line past 80 columns passes where nothing after column 80 is
+    whitespace: a URL no width can be imposed on.
+    """
+    return len(line) > 80 and any(c.isspace() for c in line[80:])
+
+
+def test_a_default_branch_page_passes_md013_for_the_longest_names() -> None:
+    """The longest script name and a long `--with` fail no line of the page.
+
+    The prose is checked line by line, and the command's lines too, though
+    the page also switches MD013 off inside its code blocks.
+    """
+    render = importlib.import_module("render")
+    longest = max((p.stem for p in render.SCRIPTS.glob("[0-9]*.py")), key=len)
+    overlay = (
+        "btclib-secp256k1 @ git+https://github.com/btclib-org/btclib-secp256k1@"
+        + "c0ffee" * 6
+        + "c0ff"
+    )
+    command = f"uv run --with '{overlay}' python scripts/{longest}.py"
+    run = dataclasses.replace(_full().run, command=command)
+    measurement = dataclasses.replace(_full(), benchmark=longest, run=run)
+    page = render.rendered_page(
+        render.DEFAULT_BRANCH_PAGE.format(benchmark=longest), measurement
+    )
+    assert '"code_blocks": false' in page
+    fenced = False
+    for line in page.splitlines():
+        fenced ^= line.startswith("```")
+        if not fenced or line.lstrip().startswith(("--with", "command", "branch")):
+            assert not _fails_md013(line), line
+    # the control: a backslash after a space, past column 80, is refused
+    assert not _fails_md013(f"  --with '{overlay}'\\")
+    assert _fails_md013(f"  --with '{overlay}' \\")
+
+
+def test_a_command_without_installs_is_one_line() -> None:
+    """A release run's command is printed as it was recorded."""
+    assert _results._rendered_command(_measurement(twice=False).run) == ["command : c"]
+
+
+def test_a_mode_this_module_does_not_know_is_refused() -> None:
+    """A run naming another mode has no directory to be saved in."""
+    run = _results.Run(
+        when=FIRST,
+        timezone="UTC",
+        python="3.13",
+        method="m",
+        command="c",
+        machine="somewhere",
+        mode="nightly",
+    )
+    with pytest.raises(ValueError, match="no mode"):
+        _results.Measurement(
+            benchmark="00-x",
+            run=run,
+            provenance=_results.Provenance(columns=[], rows=[]),
+            tables=[],
+        )
 
 
 def test_a_provenance_with_no_columns_is_its_notes() -> None:
