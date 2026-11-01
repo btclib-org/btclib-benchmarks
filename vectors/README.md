@@ -21,7 +21,7 @@ custody with two links that are both checkable beats two chains.
 Each file is pinned to the repository whose tests read it:
 `bip340_test_vectors.csv` and `WYCHEPROOF_COPYING` to
 `btclib-org/ecc`, `bip32_test_vectors.json` to
-`btclib-org/btclib-wallet`, and `base58_encode_decode.json` to
+`btclib-org/bip32-descriptors`, and `base58_encode_decode.json` to
 `btclib-org/btclib`. `ecdsa_secp256k1_sha256_bitcoin_test.json` lives in
 ecc too, but our copy is an older revision than the one there, so
 its entry pins the btclib commit that holds our bytes and says how far
@@ -30,15 +30,15 @@ behind ecc it is.
 The near link is what the entries below pin: that repository's blob against
 ours, which `git hash-object` reproduces without downloading anything. The
 far one is the provenance file of that repository, `tests/_data/README.md`
-([btclib's][pins], [ecc's][ecc-pins], [btclib-wallet's][wallet-pins]),
-and the upstream it names is not one project but several: `bitcoin/bips` for
+([btclib's][pins], [ecc's][ecc-pins], [bip32-descriptors'][bip32-pins]), and
+the upstream it names is not one project but several: `bitcoin/bips` for
 `bip340_test_vectors.csv`, `C2SP/wycheproof` for
 `ecdsa_secp256k1_sha256_bitcoin_test.json` and for the licence beside it,
 `bitcoin/bitcoin` for `base58_encode_decode.json`. There is no far blob for
 `bip32_test_vectors.json` at all: BIP32 publishes its vectors as prose, so
-btclib-wallet's entry for that one is transcribed from `bip-0032.mediawiki`
-rather than compared to a file, and the chain from here ends at that
-transcription.
+bip32-descriptors' entry for that one is transcribed from
+`bip-0032.mediawiki` rather than compared to a file, and the chain from here
+ends at that transcription.
 
 `WYCHEPROOF_COPYING` sits beside the Wycheproof file, as it does beside
 ecc's copy: that file is Google's, under Apache 2.0, and a licence
@@ -63,11 +63,11 @@ Verdict: **identical**.
 ### `vectors/bip32_test_vectors.json`
 
 ```text
-repo    btclib-org/btclib-wallet
+repo    btclib-org/bip32-descriptors
 path    tests/bip32/_data/bip32_test_vectors.json
-commit  67a791023895c39662c74f4c16f3b6a762326380  2026-09-24
+commit  9b03d64b637fc96261bf335514a0444c9f93ece5  2026-10-31
 blob    eb692228a6fb84a694a699f62937808bc2c640aa
-pulled  2026-10-07
+pulled  2026-11-01
 behind  0 revisions; that commit is the tip of the path
 ```
 
@@ -191,4 +191,4 @@ vector of each and holds every mnemonic package to it.
 
 [pins]: https://github.com/btclib-org/btclib/blob/2e5f944/tests/_data/README.md
 [ecc-pins]: https://github.com/btclib-org/ecc/blob/7a80b48/tests/_data/README.md
-[wallet-pins]: https://github.com/btclib-org/btclib-wallet/blob/67a7910/tests/_data/README.md
+[bip32-pins]: https://github.com/btclib-org/bip32-descriptors/blob/9b03d64/tests/_data/README.md

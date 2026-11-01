@@ -314,7 +314,7 @@ def undeclared(*dist_names: str) -> list[str]:
 
     Such an install is what a reader has to act on, and the distribution
     whose code a row times is the one to ask about: btclib's arithmetic is
-    `ecc`'s and its BIP32 is `btclib-wallet`'s, so an editable `btclib`
+    `ecc`'s and its BIP32 is `bip32-descriptors`', so an editable `btclib`
     beside released ones measures none of them.
     """
     return [

@@ -14,8 +14,8 @@ import importlib
 from typing import TYPE_CHECKING
 
 import pytest
-from btclib_wallet import bip32
-from btclib_wallet.bip32 import BIP32KeyData
+from bip32_descriptors import bip32
+from bip32_descriptors.bip32 import BIP32KeyData
 
 from btclib_benchmarks import _vectors
 

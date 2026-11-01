@@ -497,7 +497,7 @@ a mutant a test caught.
 ### Running a benchmark
 
 Every floor in `pyproject.toml` is a minimum a comparand upgrades past
-without a word, `btclib`, `ecc`, `btclib-wallet`, `btclib-secp256k1`,
+without a word, `btclib`, `ecc`, `bip32-descriptors`, `btclib-secp256k1`,
 `bip39-slip39` and `base58-bech32` included now that all resolve from a
 released index rather than a branch: `uv sync --locked` reinstalls the
 revision the lock names and never looks at whether a newer release has
@@ -508,7 +508,7 @@ first, every time:
 
 ```shell
 uv lock --upgrade-package btclib --upgrade-package ecc \
-  --upgrade-package btclib-wallet --upgrade-package btclib-secp256k1 \
+  --upgrade-package bip32-descriptors --upgrade-package btclib-secp256k1 \
   --upgrade-package bip39-slip39 --upgrade-package base58-bech32
 uv sync --locked
 ```
@@ -606,7 +606,7 @@ a URL included, this project's own install aside, and the run says so on
 stderr instead of where it saved.
 
 Install the package whose code the rows time: `ecc` for the curve and the
-signature schemes, `btclib-wallet` for BIP32, `bip39-slip39` for the
+signature schemes, `bip32-descriptors` for BIP32, `bip39-slip39` for the
 mnemonics, `btclib` for the rest. The packages block then names where it
 came from: a git install by its branch and commit, `main@<commit>`, and an
 editable one by its path, `editable: /path/to/ecc`.

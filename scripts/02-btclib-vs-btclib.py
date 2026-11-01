@@ -28,7 +28,7 @@ application performs.
 
 ## BIP32 derivation is not a row
 
-btclib_wallet's BIP32 has a Python arm behind `ecc`'s
+bip32_descriptors' BIP32 has a Python arm behind `ecc`'s
 `is_libsecp256k1_serving`, so `python_arithmetic_only` reaches it. It is no row
 here because none was asked for. The dispatch is on the bindings being there
 and not on the curve, BIP32 being defined for secp256k1 alone.

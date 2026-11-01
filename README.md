@@ -144,7 +144,7 @@ findable.
 ### Measuring a default branch or a working tree
 
 The default is deliberate: every comparand is timed at its **published
-release**, btclib, ecc, btclib-wallet and btclib-secp256k1 included,
+release**, btclib, ecc, bip32-descriptors and btclib-secp256k1 included,
 because `pip install` is what an end user gets and that is the only
 performance an end user has.
 

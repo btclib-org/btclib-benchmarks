@@ -94,7 +94,7 @@ PREDICATES = {"_libsecp256k1_serves", "is_libsecp256k1_serving"}
 
 B.python_arithmetic_only()
 
-# no row loads a `btclib_wallet` module, so none is patched: after every
+# no row loads a `bip32_descriptors` module, so none is patched: after every
 # row has run, `sys.modules` holds none
 #
 # the names `ecc` bound at import time, `from btclib_secp256k1 import x as
