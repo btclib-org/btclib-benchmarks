@@ -89,11 +89,10 @@ dependencies = [
     # `dsa.sign_`'s `grind=` and `sec_point.point_from_octets_var`.
     # 2026.10.23 is the floor `btclib` itself declares
     "ecc>=2026.10.23",
-    # `btclib_wallet.bip32`, which `scripts/03-libraries.py` and
-    # `tests/vectors_test.py` import. The first release that imports `ecc`
-    # and no `btclib_ecc`, so that its BIP32 reads the one switch `ecc`
-    # holds
-    "btclib-wallet>=2026.10.25",
+    # `bip32_descriptors.bip32`, which 03's BIP32 rows and the suite's BIP32
+    # tests import. Its BIP32 imports `ecc`, so it reads the one switch
+    # `ecc` holds. 2026.10.31 is its first release
+    "bip32-descriptors>=2026.10.31",
     # `ssa.Signer`, which these rows call. 0.8.0.9 is the build that
     # `LIBSECP256K1_PINS` in `src/btclib_benchmarks/_releases.py` records,
     # so a run at the floor names the libsecp256k1 revision its row carries

@@ -183,7 +183,7 @@ import embit.bip32
 import embit.ec
 import pycoin.encoding.b58
 import pycoin.symbols.btc
-from btclib_wallet import bip32 as btclib_bip32
+from bip32_descriptors import bip32 as btclib_bip32
 from ecc.curves import curve
 from ecc.ecc import dsa, ssa
 
@@ -220,15 +220,15 @@ def provenance() -> Provenance:
     Python without saying so. Sorted newest release first.
 
     btclib is three distributions: `ecc` holds the curve and the signature
-    schemes, `btclib-wallet` BIP32, and `btclib` the address encodings. Each
-    has its row. A package from neither an index nor git is named under the
-    table, and a git install in the `released` column, by its ref and commit
-    where no release is recorded for that commit.
+    schemes, `bip32-descriptors` BIP32, and `btclib` the address encodings.
+    Each has its row. A package from neither an index nor git is named under
+    the table, and a git install in the `released` column, by its ref and
+    commit where no release is recorded for that commit.
     """
     rows = (
         ("btclib", LIBSECP256K1),
         ("ecc", LIBSECP256K1),
-        ("btclib-wallet", LIBSECP256K1),
+        ("bip32-descriptors", LIBSECP256K1),
         ("ecdsa", PURE_PYTHON),
         ("pycoin", _pycoin_backend()),
         ("buidl", _buidl_backend()),

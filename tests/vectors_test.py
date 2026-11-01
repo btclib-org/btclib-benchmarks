@@ -73,7 +73,7 @@ import pycoin.symbols.btc
 import pytest
 import secp256k1
 import secp256k1lab.bip340
-from btclib_wallet import bip32
+from bip32_descriptors import bip32
 from ecc.curves import curve
 from ecc.ecc import dsa, ssa
 from ellipticcurve.ecdsa import Ecdsa as StarkbankEcdsa
@@ -117,7 +117,7 @@ PINS = {
 
 # the pure-Python configuration, as `scripts/04-pure-python.py` measures it: the
 # environment variable pycoin reads at import, and `ecc`'s dispatch off,
-# which btclib and the wallet's BIP32 both read
+# which btclib and bip32-descriptors' BIP32 both read
 PURE_PYTHON = bool(os.environ.get("BENCHMARKS_PURE_PYTHON"))
 if PURE_PYTHON:  # pragma: no cover -- the child process is the one that runs it
     curve._libsecp256k1_available = False

@@ -22,7 +22,7 @@ and nothing about how the package got there. That part is one paragraph each,
 and no two are the same story:
 
 - **btclib** is three rows of the table: `ecc` holds the curve and the
-  signature schemes, `btclib-wallet` BIP32, and `btclib` the address
+  signature schemes, `bip32-descriptors` BIP32, and `btclib` the address
   encodings. They take `btclib-secp256k1` as the `secp256k1` extra, which
   bundles libsecp256k1 and compiles it into a cffi extension at install time,
   so a wheel from PyPI is enhanced by installing `btclib[secp256k1]`. Which

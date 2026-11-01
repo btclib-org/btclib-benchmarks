@@ -202,7 +202,7 @@ it is what a caller outside the fast case gets.
 
 ## BIP32 derivation is not a row
 
-BIP32 is `btclib-wallet`'s, and its Python arm is behind `ecc`'s
+BIP32 is `bip32-descriptors`', and its Python arm is behind `ecc`'s
 `is_libsecp256k1_serving`, so `python_arithmetic_only` reaches it. It is no
 row here because none was asked for. The dispatch is on the bindings being
 there and not on the curve, BIP32 being defined for secp256k1 alone.
