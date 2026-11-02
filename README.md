@@ -30,18 +30,18 @@ MD013, whose 80 columns bind only where a space follows them.
 A badge that reports no state -- "we use ruff", "we use uv" -- reports a
 choice instead, and those are in CONTRIBUTING.md, beside the prose that
 says how the choice is enforced. -->
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/btclib-org/btclib-benchmarks/main.svg)](https://results.pre-commit.ci/latest/github/btclib-org/btclib-benchmarks/main)
-[![lint workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/lint.yml?query=branch%3Amain)
-[![test workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/test.yml?query=branch%3Amain)
-[![docs workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/docs.yml?query=branch%3Amain)
-[![vendored-vectors workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/vendored-vectors.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/vendored-vectors.yml?query=branch%3Amain)
-[![mutation workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/mutation.yml?query=branch%3Amain)
-[![deps-latest workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-latest.yml?query=branch%3Amain)
-[![deps-oldest workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-oldest.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/deps-oldest.yml?query=branch%3Amain)
-[![os-macos workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-macos.yml?query=branch%3Amain)
-[![os-ubuntu workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/os-ubuntu.yml?query=branch%3Amain)
-[![links workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/links.yml?query=branch%3Amain)
-[![codeql workflow status](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/btclib-org/btclib-benchmarks/actions/workflows/codeql.yml?query=branch%3Amain)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/btclib-org/benchmarks/main.svg)](https://results.pre-commit.ci/latest/github/btclib-org/benchmarks/main)
+[![lint workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/lint.yml?query=branch%3Amain)
+[![test workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/test.yml?query=branch%3Amain)
+[![docs workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/docs.yml?query=branch%3Amain)
+[![vendored-vectors workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/vendored-vectors.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/vendored-vectors.yml?query=branch%3Amain)
+[![mutation workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/mutation.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/mutation.yml?query=branch%3Amain)
+[![deps-latest workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/deps-latest.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/deps-latest.yml?query=branch%3Amain)
+[![deps-oldest workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/deps-oldest.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/deps-oldest.yml?query=branch%3Amain)
+[![os-macos workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/os-macos.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/os-macos.yml?query=branch%3Amain)
+[![os-ubuntu workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/os-ubuntu.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/os-ubuntu.yml?query=branch%3Amain)
+[![links workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/links.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/links.yml?query=branch%3Amain)
+[![codeql workflow status](https://github.com/btclib-org/benchmarks/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/btclib-org/benchmarks/actions/workflows/codeql.yml?query=branch%3Amain)
 
 ---
 
@@ -231,13 +231,13 @@ decides, and who holds which role, is its
 what it intends to do, and what it deliberately does not, is its
 [ROADMAP.md](https://github.com/btclib-org/.github/blob/main/ROADMAP.md).
 
-[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
-[libraries]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
-[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
-[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
-[silentpayments]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/06-silentpayments.md
-[mnemonics]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/07-mnemonics.md
+[two-paths]: https://github.com/btclib-org/benchmarks/blob/main/results/02-btclib-vs-btclib.md
+[libraries]: https://github.com/btclib-org/benchmarks/blob/main/results/03-libraries.md
+[pure]: https://github.com/btclib-org/benchmarks/blob/main/results/04-pure-python.md
+[wrappers]: https://github.com/btclib-org/benchmarks/blob/main/results/01-libsecp256k1.md
+[reuse]: https://github.com/btclib-org/benchmarks/blob/main/results/05-key-reuse.md
+[silentpayments]: https://github.com/btclib-org/benchmarks/blob/main/results/06-silentpayments.md
+[mnemonics]: https://github.com/btclib-org/benchmarks/blob/main/results/07-mnemonics.md
 
 ## What a benchmark can get wrong, and where a defect is reported
 
@@ -268,7 +268,7 @@ would carry one in.
 
 [btclib-security]: https://github.com/btclib-org/btclib/blob/main/SECURITY.md
 [secp256k1-security]: https://github.com/btclib-org/btclib-secp256k1/blob/main/SECURITY.md
-[i381]: https://github.com/btclib-org/btclib-benchmarks/issues/381
+[i381]: https://github.com/btclib-org/benchmarks/issues/381
 
 ## Contributing
 

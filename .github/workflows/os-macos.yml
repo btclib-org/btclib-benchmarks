@@ -23,7 +23,7 @@ name: os-macos
 # reported missing and exit 127 before a single comparand answers the
 # vendored vectors -- confirmed on every interpreter cell of
 # `macos-26-intel` in
-# https://github.com/btclib-org/btclib-benchmarks/actions/runs/33302522716.
+# https://github.com/btclib-org/benchmarks/actions/runs/33302522716.
 # Homebrew's shipped automake version and a version pin baked into an
 # sdist this project does not control are both outside this repository's
 # reach, so this is environment drift rather than a project regression,
@@ -31,7 +31,7 @@ name: os-macos
 # binary again are not this repository's to do. Put the Intel cell back
 # once `secp256k1` ships an x86_64 wheel or an sdist that builds under
 # current Homebrew, whichever comes first
-# ([ISS 244](https://github.com/btclib-org/btclib-benchmarks/issues/244)).
+# ([ISS 244](https://github.com/btclib-org/benchmarks/issues/244)).
 #
 # It gates no commit and no merge -- a macOS regression sits on main for
 # at most a week -- and nothing calls it, this project having nothing to

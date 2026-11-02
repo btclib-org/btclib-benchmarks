@@ -398,7 +398,7 @@ sha, and a reviewer may rely on that rather than establishing it again;
 contexts `main` requires,
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
+gh api repos/btclib-org/benchmarks/branches/main/protection \
   --jq '.required_status_checks.checks[].context'
 ```
 

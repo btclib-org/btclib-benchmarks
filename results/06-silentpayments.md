@@ -118,11 +118,11 @@ comparands:
 - [mnemonics][mnemonics] — BIP39 and SLIP-0039, `bip39-slip39` against
   Trezor's packages and `embit`
 
-[wrappers]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/01-libsecp256k1.md
-[two-paths]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/02-btclib-vs-btclib.md
-[libs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/03-libraries.md
-[pure]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/04-pure-python.md
-[reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
-[mnemonics]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/07-mnemonics.md
-[inputs]: https://github.com/btclib-org/btclib-benchmarks/blob/main/src/btclib_benchmarks/_inputs.py
-[i83]: https://github.com/btclib-org/btclib-benchmarks/issues/83
+[wrappers]: https://github.com/btclib-org/benchmarks/blob/main/results/01-libsecp256k1.md
+[two-paths]: https://github.com/btclib-org/benchmarks/blob/main/results/02-btclib-vs-btclib.md
+[libs]: https://github.com/btclib-org/benchmarks/blob/main/results/03-libraries.md
+[pure]: https://github.com/btclib-org/benchmarks/blob/main/results/04-pure-python.md
+[reuse]: https://github.com/btclib-org/benchmarks/blob/main/results/05-key-reuse.md
+[mnemonics]: https://github.com/btclib-org/benchmarks/blob/main/results/07-mnemonics.md
+[inputs]: https://github.com/btclib-org/benchmarks/blob/main/src/btclib_benchmarks/_inputs.py
+[i83]: https://github.com/btclib-org/benchmarks/issues/83

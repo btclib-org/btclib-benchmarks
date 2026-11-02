@@ -16,7 +16,7 @@ contact_links:
   # first, because a vulnerability is the one report that must not be
   # filed as an issue at all
   - name: Security vulnerability
-    url: https://github.com/btclib-org/btclib-benchmarks/security/advisories/new
+    url: https://github.com/btclib-org/benchmarks/security/advisories/new
     about: >
       Never a public issue. This opens a private advisory, visible to
       the maintainers alone; the policy on the Security tab, which this

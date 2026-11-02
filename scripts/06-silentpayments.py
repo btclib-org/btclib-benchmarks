@@ -16,7 +16,7 @@ a same-package ratio. btclib_wallet's `silent_payments` has a Python arm, but
 no page times it against the bindings, so this page is the whole of where it
 is priced, one comparand and no ratio against anything but itself.
 
-[iss83]: https://github.com/btclib-org/btclib-benchmarks/issues/83
+[iss83]: https://github.com/btclib-org/benchmarks/issues/83
 
 ## What is here, and what a ratio between two rows means
 
@@ -117,7 +117,7 @@ def provenance() -> Provenance:
     single comparand: what a reader of this table needs is which build
     answered, and a header over one cell would be furniture.
 
-    [reuse]: https://github.com/btclib-org/btclib-benchmarks/blob/main/results/05-key-reuse.md
+    [reuse]: https://github.com/btclib-org/benchmarks/blob/main/results/05-key-reuse.md
     """
     return Provenance(
         columns=[],

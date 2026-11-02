@@ -183,10 +183,10 @@ classifiers = [
 # second is what `repository` below carries and what a reader following
 # the *About* link is already looking at
 homepage = "https://btclib.org"
-download = "https://github.com/btclib-org/btclib-benchmarks/releases"
-repository = "https://github.com/btclib-org/btclib-benchmarks"
-issues = "https://github.com/btclib-org/btclib-benchmarks/issues"
-pull_requests = "https://github.com/btclib-org/btclib-benchmarks/pulls"
+download = "https://github.com/btclib-org/benchmarks/releases"
+repository = "https://github.com/btclib-org/benchmarks"
+issues = "https://github.com/btclib-org/benchmarks/issues"
+pull_requests = "https://github.com/btclib-org/benchmarks/pulls"
 
 [dependency-groups]
 # every entry carries a lower bound, the release the committed uv.lock
