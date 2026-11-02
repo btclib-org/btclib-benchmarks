@@ -16,10 +16,19 @@ perimeter is section 11's rather than this file's, so a setting inside
 it that no section below reads back is a gap rather than a decision, and
 *What this file passes over* at the foot is what falls outside it.
 
+GitHub redirects the repository's former name, `btclib-benchmarks`, to
+this one, and an answer below recorded before 2026-11-02 was read under
+that name. Read back on 2026-11-02:
+
+```shell
+gh api repos/btclib-org/btclib-benchmarks --jq .full_name
+# btclib-org/benchmarks
+```
+
 ## Required checks on main
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
+gh api repos/btclib-org/benchmarks/branches/main/protection \
   --jq '.required_status_checks | {strict, contexts}'
 # {"contexts":["test: every job passed","docs / Build the documentation",
 #              "lint / Lint and type-check","lint / Dependency review",
@@ -88,7 +97,7 @@ watches. That was not hypothetical: the pull request that filed
 [ISS 95][iss95] hit it twice, and only because the build was run by
 hand.
 
-[iss95]: https://github.com/btclib-org/btclib-benchmarks/issues/95
+[iss95]: https://github.com/btclib-org/benchmarks/issues/95
 
 Its `if:` declines two cases, and neither is a hole this rule can fall
 through. A draft pull request spends no runner, and a draft cannot merge
@@ -119,7 +128,7 @@ would show it answered.
 ## Branch protection
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
+gh api repos/btclib-org/benchmarks/branches/main/protection \
   --jq '{
     linear: .required_linear_history.enabled,
     force: .allow_force_pushes.enabled,
@@ -135,7 +144,7 @@ gh api repos/btclib-org/btclib-benchmarks/branches/main/protection \
 `main` is the repository's default branch and its only one:
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks --jq '.default_branch'
+gh api repos/btclib-org/benchmarks --jq '.default_branch'
 # main
 ```
 
@@ -148,8 +157,8 @@ tags rather than `main`, so the command below lists it too without it
 enforcing anything on `main` itself:
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/rulesets --jq '.[].id' \
-  | xargs -I{} gh api repos/btclib-org/btclib-benchmarks/rulesets/{} \
+gh api repos/btclib-org/benchmarks/rulesets --jq '.[].id' \
+  | xargs -I{} gh api repos/btclib-org/benchmarks/rulesets/{} \
     --jq '{name, rules: [.rules[].type],
            bypass: [.bypass_actors[].bypass_mode]}'
 ```
@@ -199,7 +208,7 @@ lightweight, so the rule does not check a tag's signature
 ## Signed commits
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/branches/main/protection\
+gh api repos/btclib-org/benchmarks/branches/main/protection\
 /required_signatures --jq '.enabled'
 # false
 ```
@@ -217,7 +226,7 @@ what catches it first, an `N` being a defect to fix rather than to explain.
 ## Merge methods
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks \
+gh api repos/btclib-org/benchmarks \
   --jq '{squash: .allow_squash_merge, merge: .allow_merge_commit,
          rebase: .allow_rebase_merge, auto: .allow_auto_merge,
          delete_on_merge: .delete_branch_on_merge,
@@ -248,7 +257,7 @@ standing is a pull request that was closed rather than merged.
 ## Features
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks \
+gh api repos/btclib-org/benchmarks \
   --jq '{issues: .has_issues, visibility: .visibility,
          wiki: .has_wiki, projects: .has_projects}'
 # {"issues":true,"projects":false,"visibility":"public","wiki":false}
@@ -275,7 +284,7 @@ the record agrees with the rule.
 ## Topics
 
 ```shell
-diff <(gh api repos/btclib-org/btclib-benchmarks --jq '.topics[]' | sort) \
+diff <(gh api repos/btclib-org/benchmarks --jq '.topics[]' | sort) \
      <(sed -n '/^keywords = \[/,/^]/s/^ *"\(.*\)",$/\1/p' pyproject.toml \
        | sort)
 ```
@@ -320,7 +329,7 @@ What those declarations sit on top of is a repository setting, and it is
 read back rather than assumed:
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/actions/permissions/workflow
+gh api repos/btclib-org/benchmarks/actions/permissions/workflow
 # {"default_workflow_permissions":"read",
 #  "can_approve_pull_request_reviews":false}
 ```
@@ -353,7 +362,7 @@ it did not:
 
 ```shell
 gh api -X PUT \
-  repos/btclib-org/btclib-benchmarks/actions/permissions/workflow \
+  repos/btclib-org/benchmarks/actions/permissions/workflow \
   -f default_workflow_permissions=read \
   -F can_approve_pull_request_reviews=false
 ```
@@ -361,7 +370,7 @@ gh api -X PUT \
 ## Allowed actions and SHA pinning
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/actions/permissions
+gh api repos/btclib-org/benchmarks/actions/permissions
 # {"enabled":true,"allowed_actions":"all","sha_pinning_required":true}
 gh api orgs/btclib-org/actions/permissions \
   --jq '{allowed_actions, sha_pinning_required}'
@@ -375,7 +384,7 @@ fields](https://github.com/btclib-org/.github/blob/main/README.md#tokens-publish
 ## Sign-off on web commits
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks --jq .web_commit_signoff_required
+gh api repos/btclib-org/benchmarks --jq .web_commit_signoff_required
 # true
 gh api orgs/btclib-org --jq .web_commit_signoff_required
 # true
@@ -387,7 +396,7 @@ gives](https://github.com/btclib-org/.github/blob/main/README.md#signatures).
 ## Security and analysis
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks --jq '.security_and_analysis'
+gh api repos/btclib-org/benchmarks --jq '.security_and_analysis'
 # {"dependabot_security_updates":{"status":"enabled"},
 #  "secret_scanning":{"status":"enabled"},
 #  "secret_scanning_non_provider_patterns":{"status":"disabled"},
@@ -413,15 +422,15 @@ Dependabot security updates is a separate `PUT`, to
 which `security_and_analysis` itself accepts:
 
 ```shell
-gh api -X PUT repos/btclib-org/btclib-benchmarks/vulnerability-alerts
+gh api -X PUT repos/btclib-org/benchmarks/vulnerability-alerts
 gh api -X PUT \
-  repos/btclib-org/btclib-benchmarks/automated-security-fixes
+  repos/btclib-org/benchmarks/automated-security-fixes
 ```
 
 Read back with no existing secret-scanning alert on this repository:
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/secret-scanning/alerts \
+gh api repos/btclib-org/benchmarks/secret-scanning/alerts \
   --jq 'length'
 # 0
 ```
@@ -432,7 +441,7 @@ From the alignment audit of 21 August 2026,
 ## Private vulnerability reporting
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/private-vulnerability-reporting
+gh api repos/btclib-org/benchmarks/private-vulnerability-reporting
 # {"enabled":true}
 ```
 
@@ -445,7 +454,7 @@ tier 1's row.
 ## Code scanning, and which setup performs it
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/code-scanning/default-setup \
+gh api repos/btclib-org/benchmarks/code-scanning/default-setup \
   --jq '{state, languages, query_suite}'
 # {"languages":["actions","python"],"query_suite":"default",
 #  "state":"not-configured"}
@@ -463,7 +472,7 @@ the configuration is read from.
 The alerts, once there are runs to produce them:
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/code-scanning/alerts \
+gh api repos/btclib-org/benchmarks/code-scanning/alerts \
   --jq 'length'
 ```
 
@@ -502,7 +511,7 @@ scanning's non-provider patterns and validity checks, is read back under
   dependency group exists so that `check-sdist`, `pyroma` and `twine`
   can still inspect the distribution and its metadata, which is a lint
   of the packaging rather than a step toward a release.
-- **No GitHub Pages.** `gh api repos/btclib-org/btclib-benchmarks/pages`
+- **No GitHub Pages.** `gh api repos/btclib-org/benchmarks/pages`
   answers `404`: the pages under `results/` are read in the tree, and
   nothing deploys a site from it.
 - **No Read the Docs.** `.readthedocs.yaml` is present and the `docs`
@@ -548,10 +557,10 @@ against. This section is the other edge of the scope at the top: what an
 endpoint answers for this repository and no section here asks about.
 
 **Most of the repository document is not a setting.** `gh api
-repos/btclib-org/btclib-benchmarks` answers it whole, and the greater
-part of what comes back is URLs, counts, timestamps and state GitHub
-derives from the tree. No call here reads any of that back, a scope of
-the settings the standard asks about reaching none of it.
+repos/btclib-org/benchmarks` answers it whole, and the greater part of
+what comes back is URLs, counts, timestamps and state GitHub derives
+from the tree. No call here reads any of that back, a scope of the
+settings the standard asks about reaching none of it.
 
 **A field of that document no rule reaches.** `allow_forking`,
 `allow_update_branch`, `has_discussions`, `has_downloads` and
@@ -585,7 +594,7 @@ GitHub's API rather than with the standard.
 that the two surfaces still agree:
 
 ```shell
-diff <(gh api repos/btclib-org/btclib-benchmarks --jq '.homepage') \
+diff <(gh api repos/btclib-org/benchmarks --jq '.homepage') \
      <(sed -n '/^\[project.urls\]/,/^\[/p' pyproject.toml \
        | sed -n 's/^homepage = "\(.*\)"$/\1/p')
 ```
@@ -608,7 +617,7 @@ section 11 of the standard makes it the organization's rather than each
 repository's:
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/actions/secrets \
+gh api repos/btclib-org/benchmarks/actions/secrets \
   --jq '.total_count'
 # 0
 gh api orgs/btclib-org/actions/secrets \
@@ -627,7 +636,7 @@ over one of the same name on the organization, so the repository's own
 store is read too:
 
 ```shell
-gh api repos/btclib-org/btclib-benchmarks/actions/variables --jq .total_count
+gh api repos/btclib-org/benchmarks/actions/variables --jq .total_count
 # 0
 ```
 

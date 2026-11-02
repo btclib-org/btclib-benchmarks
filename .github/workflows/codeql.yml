@@ -15,7 +15,7 @@ name: codeql
 # rather than at the start, so a run would build its database and then be
 # refused. Asked here:
 #
-#     gh api repos/btclib-org/btclib-benchmarks/code-scanning/default-setup
+#     gh api repos/btclib-org/benchmarks/code-scanning/default-setup
 #
 # it answers `state: not-configured`, and REPOSITORY.md is where that is
 # recorded with the rest of what is set outside the tree. Turning the
