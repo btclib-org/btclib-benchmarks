@@ -112,11 +112,11 @@ jobs:
 
       # which of an index's two artifacts each comparand's install
       # resolved to. On this one image every comparand that publishes a
-      # wheel resolves to it -- `secp256k1` publishes an arm64 wheel, the one
-      # image here -- so what the record buys is the day that stops
-      # being true: an index dropping the wheel is a different binary
-      # under an unchanged version, and this is what says so instead of
-      # leaving the divergence to be blamed on the wrapper.
+      # wheel resolves to it -- `secp256k1` publishes a wheel for arm64,
+      # the architecture of the one image here -- so what the record buys
+      # is the day that stops being true: an index dropping the wheel is a
+      # different binary under an unchanged version, and this is what says
+      # so instead of leaving the divergence to be blamed on the wrapper.
       # Recorded and not asserted, for the reason the same step gives in
       # test.yml
       - name: Record which artifact each comparand's install resolved to
