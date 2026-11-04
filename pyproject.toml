@@ -387,6 +387,7 @@ git-only = [
     ".markdownlint.jsonc",
     ".readthedocs.yaml",
     ".secrets.baseline",
+    ".sourcery.yaml",
     ".taplo.toml",
     ".vscode/",
     ".yamllint.yaml",

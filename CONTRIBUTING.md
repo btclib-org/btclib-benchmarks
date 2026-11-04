@@ -455,6 +455,11 @@ check*, below, is where that rule and its reason live.
 commit pushed is `verified`; [the standard's *Signatures*][s-sigs] has the
 rule.
 
+`sourcery.yml` reports on every pull request that is not a draft, and is
+not a required check, so it gates nothing; [the standard's *The set, and its
+cadence*](https://github.com/btclib-org/.github#the-set-and-its-cadence)
+says when a tree requires it.
+
 ### Running a mutation session
 
 The `mutation` workflow, weekly and on demand, gates nothing: it asks

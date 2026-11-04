@@ -411,8 +411,10 @@ def test_a_page_without_a_provenance_region_is_refused() -> None:
     """A page whose packages block has nowhere to go is not rendered."""
     render = importlib.import_module("render")
     measurement = _measurement(twice=False)
-    page = "<!-- run: begin -->\n<!-- run: end -->\n"
-    page += "<!-- output: begin -->\n<!-- output: end -->\n"
+    page = (
+        "<!-- run: begin -->\n<!-- run: end -->\n"
+        "<!-- output: begin -->\n<!-- output: end -->\n"
+    )
     with pytest.raises(ValueError, match="provenance"):
         render.rendered_page(page, measurement)
     given = "<!-- provenance: begin -->\n<!-- provenance: end -->\n" + page

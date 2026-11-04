@@ -584,7 +584,7 @@ def test_ecdsa_verification_matches_wycheproof(
         answer = DSA_VERIFIERS[package](case.pubkey, digest, case.sig)
     except Exception:  # noqa: BLE001 - any refusal is a rejection
         answer = False
-    assert bool(answer) == expected, f"tc{case.number}: {case.comment}"
+    assert answer == expected, f"tc{case.number}: {case.comment}"
 
 
 # --- base58, Bitcoin Core's own pairs -----------------------------------
@@ -668,8 +668,7 @@ def _pycoin_derive(seed: bytes, path: str) -> str:
     other library's derive accepts `m` and answers.
     """
     key = pycoin.symbols.btc.network.keys.bip32_seed(seed)
-    steps = path.removeprefix("m").removeprefix("/")
-    if steps:
+    if steps := path.removeprefix("m").removeprefix("/"):
         key = key.subkey_for_path(steps)
     return str(key.hwif(as_private=True))
 

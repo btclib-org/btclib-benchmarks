@@ -125,6 +125,10 @@ analysis an edit to the list above rather than to a workflow. Whether to
 make it is branch protection's to answer, and the command above is what
 would show it answered.
 
+Another is `sourcery.yml`'s `sourcery / Sourcery`. [Section 10 of the
+standard](https://github.com/btclib-org/.github#the-set-and-its-cadence)
+says when a tree's protection gains it.
+
 ## Branch protection
 
 ```shell

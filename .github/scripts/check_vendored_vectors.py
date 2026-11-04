@@ -121,8 +121,7 @@ def _entries_at_tip(readme: str) -> tuple[list[Entry], list[str]]:
     heading = ""
     pos = 0
     for match in re.finditer(r"```text\n(.*?)\n```", readme, re.DOTALL):
-        headings_before = _HEADING.findall(readme[pos : match.start()])
-        if headings_before:
+        if headings_before := _HEADING.findall(readme[pos : match.start()]):
             heading = headings_before[-1]
         pos = match.end()
 
