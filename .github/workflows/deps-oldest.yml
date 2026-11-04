@@ -45,7 +45,7 @@ concurrency:
 
 jobs:
   suite-oldest:
-    uses: btclib-org/.github/.github/workflows/reusable-deps-oldest.yml@ed616d71c43cd4c8bded40d1182befccd99e6ee7 # v2026.10.29
+    uses: btclib-org/.github/.github/workflows/reusable-deps-oldest.yml@5be4b0fbb5231cff001a3ee0eaa8f7d82bffef11 # v2026.11.5
     with:
       python-version: "3.11"
       pre-suite-script: scripts/artifacts.py

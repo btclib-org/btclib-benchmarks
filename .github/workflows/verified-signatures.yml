@@ -45,7 +45,7 @@ jobs:
   # (section 10 of btclib-org/.github's README.md); what stays here is
   # the trigger and the rehearsal's inputs
   verified-signatures:
-    uses: btclib-org/.github/.github/workflows/reusable-verified-signatures.yml@ed616d71c43cd4c8bded40d1182befccd99e6ee7 # v2026.10.29
+    uses: btclib-org/.github/.github/workflows/reusable-verified-signatures.yml@5be4b0fbb5231cff001a3ee0eaa8f7d82bffef11 # v2026.11.5
     with:
       before: ${{ inputs.before }}
       after: ${{ inputs.after }}

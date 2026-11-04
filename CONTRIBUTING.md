@@ -321,8 +321,9 @@ interpreter half of that is what the pin is for, and the comment there
 says why. `secp256k1lab` comes from a git tag, having no release on any
 index.
 
-The gates are three commands, and CI runs exactly them: the suite,
-gated at 100% coverage; every lint hook; and the documentation build.
+The gates are three, and CI runs exactly them: the suite, gated at 100%
+coverage; every lint hook; and the documentation build with the checks
+of the pages it writes.
 
 ```shell
 uv run pytest
@@ -333,6 +334,17 @@ if grep -rn 'href="#\.\.\?/' docs/build/html --include='*.html'; then
   echo "::error::the links above resolve to no page (unresolved relative path)"
   exit 1
 fi
+served=$(mktemp -d)
+git clone --quiet --filter=blob:none --sparse \
+    https://github.com/btclib-org/.github "$served"
+git -C "$served" sparse-checkout set .github/scripts
+git -C "$served" checkout --quiet \
+    "$(sed -n 's/.*reusable-docs\.yml@\([0-9a-f]*\).*/\1/p' .github/workflows/docs.yml)"
+found=0
+uv run --no-project --python 3.15 \
+    "$served"/.github/scripts/check_included_links.py docs/build/html || found=$?
+rm -rf "$served"
+test "$found" -eq 0
 ```
 
 The documentation build is the one a contributor used to meet by having
@@ -354,10 +366,17 @@ what gates the pull request rather than a request of its own; no page
 under `docs/source` carries an autodoc directive, so `--only-group
 docs` still succeeds here, it is simply no longer the command that
 decides the check (issue btclib-org/.github#35). The `grep` after the
-build is `reusable-docs.yml`'s own second step: what myst renders for a
-link it cannot resolve is an anchor on the page already rendering it,
-which `-W` and `-n` do not fail on, so the check reads the built HTML
-for one directly.
+build is `reusable-docs.yml`'s own unresolved-link step: what myst
+renders for a link it cannot resolve is an anchor on the page already
+rendering it, which `-W` and `-n` do not fail on, so the check reads the
+built HTML for one directly.
+
+The commands after the `grep` run btclib-org/.github's
+`check_included_links.py`, at the commit `docs.yml` pins, over the same
+pages, as the job's next steps do. It fails on a link to a file the docs
+render that is left at the repository's `/blob/main/` address rather
+than at the file's page here. Section 2 of the standard, *The
+documentation*, is the rule.
 
 A fixture that is a key or a signature trips detect-secrets, correctly: it
 cannot tell a private key published in a BIP from a credential. Record the
