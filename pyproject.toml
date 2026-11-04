@@ -365,9 +365,9 @@ source-exclude = [
 # [tool.uv.build-backend] source-exclude names is not repeated here:
 # check-sdist reads that list for the uv backend, so this holds only
 # what no include pattern adds in the first place -- the files the lint
-# hooks read, the workspaces of an editor and of an agent, and what git
-# and a documentation service read. Patterns are gitignore's, so a
-# directory covers what is under it at any depth.
+# hooks read, the workspaces of an editor and of an agent, and what git,
+# a documentation service and a review service read. Patterns are
+# gitignore's, so a directory covers what is under it at any depth.
 #
 # The hook's own default ignore list carries .github and
 # .pre-commit-config.yaml, so neither the workflows nor the file that
@@ -381,6 +381,7 @@ source-exclude = [
 # cover and nothing besides
 git-only = [
     ".claude/",
+    ".coderabbit.yaml",
     "COPYRIGHT",
     ".gitignore",
     ".markdownlint.jsonc",
