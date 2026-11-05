@@ -408,13 +408,13 @@ Run the gate by hand before committing — the `uv run pre-commit run
 
 ### What gates a merge, and what only reports
 
-The commands above are required checks, and so are `lint / Dependency
-review` and `lint / Sign-off`. The first has no local command: it asks the
-forge's dependency graph what a pull request adds. So nothing reaches a
-review without having passed them or passing them beside it on the same
-sha, and a reviewer may rely on that rather than establishing it again;
-`REVIEWING.md` has what the reliance takes. One command names the
-contexts `main` requires,
+The commands above are required checks, and so are some with no command
+here, such as `lint / Dependency review`, which asks the forge's
+dependency graph what a pull request adds. So nothing reaches a review
+without having passed them or passing them beside it on the same sha, and
+a reviewer may rely on that rather than establishing it again;
+`REVIEWING.md` has what the reliance takes. One command names the contexts
+`main` requires,
 
 ```shell
 gh api repos/btclib-org/benchmarks/branches/main/protection \
@@ -454,6 +454,12 @@ check*, below, is where that rule and its reason live.
 `verified-signatures.yml` reports after each push to `main` whether every
 commit pushed is `verified`; [the standard's *Signatures*][s-sigs] has the
 rule.
+
+`sourcery.yml` runs on every pull request that is not a draft, and its
+check, `sourcery / Sourcery`, is one `main` requires: `REPOSITORY.md`'s
+*Required checks on main* reads it back, and [the standard's *The set, and its
+cadence*](https://github.com/btclib-org/.github#the-set-and-its-cadence)
+says when a tree requires it.
 
 ### Running a mutation session
 

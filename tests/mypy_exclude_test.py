@@ -105,8 +105,8 @@ def test_the_old_and_new_patterns_agree_on_every_tracked_path_today() -> None:
     census = _census(_gate_roots())
     unanchored_hits = [path for path in census if _excluded(path, ("build",))]
     anchored_hits = [path for path in census if _excluded(path, ("^build/",))]
-    assert unanchored_hits == []
-    assert anchored_hits == []
+    assert not unanchored_hits
+    assert not anchored_hits
 
 
 def test_the_patterns_disagree_on_a_plausible_future_path() -> None:

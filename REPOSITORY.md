@@ -27,12 +27,14 @@ gh api repos/btclib-org/btclib-benchmarks --jq .full_name
 
 ## Required checks on main
 
+Read back on 2026-11-04T23:40Z:
+
 ```shell
 gh api repos/btclib-org/benchmarks/branches/main/protection \
   --jq '.required_status_checks | {strict, contexts}'
 # {"contexts":["test: every job passed","docs / Build the documentation",
 #              "lint / Lint and type-check","lint / Dependency review",
-#              "lint / Sign-off"],
+#              "lint / Sign-off","sourcery / Sourcery"],
 #  "strict":false}
 ```
 
@@ -107,6 +109,12 @@ request that has just merged: the run is triggered so that the merge
 cancels anything the ref's concurrency group is still holding, and it
 arrives at the merge rather than before it. On an open pull request the
 job runs, and there is no `paths` filter for it to sit out.
+
+Also required is `sourcery.yml`'s call of `reusable-sourcery.yml`. Its
+context joins the calling job's id to the called job's name, producing
+`sourcery / Sourcery`. [Section 10 of the
+standard](https://github.com/btclib-org/.github#the-set-and-its-cadence)
+says when a tree requires it.
 
 `strict` is off: a branch need not be up to date with main to merge. The
 ground is in [section 11 of the
