@@ -305,6 +305,19 @@ is empty: the two lists already agree, sorted because GitHub returns
 topics in an order of its own rather than `pyproject.toml`'s relevance
 order.
 
+## Homepage
+
+Read back on 2026-11-05:
+
+```shell
+gh api repos/btclib-org/benchmarks --jq .homepage
+# https://btclib.org/benchmarks/
+```
+
+Section 3 makes the `.homepage` this repository's page on btclib.org, the
+URL `pyproject.toml`'s `[project.urls] homepage` also carries, and
+`homepage_test.py` holds this repository to it.
+
 ## Token permissions
 
 Every workflow declares `permissions: contents: read` at the top level,
@@ -595,29 +608,6 @@ the standard does state a rule about, and a field this file does quote
 in a `--jq` object, the bracket in the second keeping that line from
 matching itself. Recording a field on no rule grows this file with
 GitHub's API rather than with the standard.
-
-**A field the standard scopes to a releasing tree.** `.homepage` is the
-*About* link on this repository's page and `pyproject.toml`'s
-`[project.urls] homepage` is the same URL, so what is checkable here is
-that the two surfaces still agree:
-
-```shell
-diff <(gh api repos/btclib-org/benchmarks --jq '.homepage') \
-     <(sed -n '/^\[project.urls\]/,/^\[/p' pyproject.toml \
-       | sed -n 's/^homepage = "\(.*\)"$/\1/p')
-```
-
-The diff above is empty. Which URL it is, and why it is the
-organization site rather than something of this tree's, is at that key
-in `pyproject.toml` and nowhere here: no limb of the scope at the top
-reaches the field in a tree that releases nothing, so this file holds it
-to no value. Section 3 of the standard states its rule of "a releasing
-tree's `homepage`" and says of a tree that releases nothing that it
-"publishes no URL that outlives a correction, so this asks it nothing";
-section 16's checklist sets the field "where the tree releases"; and
-section 11 calls it "a releasing tree's" where it names what a copy
-records that has another form in the tree. *What is not configured, and
-why* above is this repository's answer to releasing.
 
 **A credential this repository does not hold.** `claude-review.yml`
 passes `secrets.CLAUDE_CODE_OAUTH_TOKEN` to the workflow it calls, and
